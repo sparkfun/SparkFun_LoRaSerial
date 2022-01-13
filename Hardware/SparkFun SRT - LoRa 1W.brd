@@ -19,34 +19,34 @@
 <layer number="22" name="bPlace" color="14" fill="1" visible="yes" active="yes"/>
 <layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="yes"/>
 <layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="yes"/>
-<layer number="25" name="tNames" color="7" fill="1" visible="no" active="yes"/>
-<layer number="26" name="bNames" color="7" fill="1" visible="no" active="yes"/>
-<layer number="27" name="tValues" color="7" fill="1" visible="no" active="yes"/>
-<layer number="28" name="bValues" color="7" fill="1" visible="no" active="yes"/>
-<layer number="29" name="tStop" color="7" fill="3" visible="no" active="yes"/>
-<layer number="30" name="bStop" color="7" fill="6" visible="no" active="yes"/>
-<layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
-<layer number="32" name="bCream" color="7" fill="5" visible="no" active="yes"/>
-<layer number="33" name="tFinish" color="6" fill="3" visible="no" active="yes"/>
-<layer number="34" name="bFinish" color="6" fill="6" visible="no" active="yes"/>
-<layer number="35" name="tGlue" color="7" fill="4" visible="no" active="yes"/>
-<layer number="36" name="bGlue" color="7" fill="5" visible="no" active="yes"/>
-<layer number="37" name="tTest" color="7" fill="1" visible="no" active="yes"/>
-<layer number="38" name="bTest" color="7" fill="1" visible="no" active="yes"/>
-<layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="yes"/>
-<layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="yes"/>
-<layer number="41" name="tRestrict" color="4" fill="10" visible="no" active="yes"/>
-<layer number="42" name="bRestrict" color="1" fill="10" visible="no" active="yes"/>
-<layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="yes"/>
-<layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
+<layer number="25" name="tNames" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="27" name="tValues" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="28" name="bValues" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="29" name="tStop" color="7" fill="3" visible="yes" active="yes"/>
+<layer number="30" name="bStop" color="7" fill="6" visible="yes" active="yes"/>
+<layer number="31" name="tCream" color="7" fill="4" visible="yes" active="yes"/>
+<layer number="32" name="bCream" color="7" fill="5" visible="yes" active="yes"/>
+<layer number="33" name="tFinish" color="6" fill="3" visible="yes" active="yes"/>
+<layer number="34" name="bFinish" color="6" fill="6" visible="yes" active="yes"/>
+<layer number="35" name="tGlue" color="7" fill="4" visible="yes" active="yes"/>
+<layer number="36" name="bGlue" color="7" fill="5" visible="yes" active="yes"/>
+<layer number="37" name="tTest" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="38" name="bTest" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="39" name="tKeepout" color="4" fill="11" visible="yes" active="yes"/>
+<layer number="40" name="bKeepout" color="1" fill="11" visible="yes" active="yes"/>
+<layer number="41" name="tRestrict" color="4" fill="10" visible="yes" active="yes"/>
+<layer number="42" name="bRestrict" color="1" fill="10" visible="yes" active="yes"/>
+<layer number="43" name="vRestrict" color="2" fill="10" visible="yes" active="yes"/>
+<layer number="44" name="Drills" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="46" name="Milling" color="3" fill="1" visible="no" active="yes"/>
-<layer number="47" name="Measures" color="7" fill="1" visible="no" active="yes"/>
-<layer number="48" name="Document" color="7" fill="1" visible="no" active="yes"/>
+<layer number="46" name="Milling" color="3" fill="1" visible="yes" active="yes"/>
+<layer number="47" name="Measures" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="48" name="Document" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="49" name="Reference" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="50" name="dxf" color="7" fill="1" visible="no" active="yes"/>
+<layer number="50" name="dxf" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="51" name="tDocu" color="6" fill="1" visible="yes" active="yes"/>
-<layer number="52" name="bDocu" color="7" fill="1" visible="no" active="yes"/>
+<layer number="52" name="bDocu" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="2" name="Route2" color="63" fill="3" visible="no" active="no"/>
 <layer number="15" name="Route15" color="23" fill="6" visible="no" active="no"/>
 <layer number="91" name="Nets" color="2" fill="1" visible="no" active="no"/>
@@ -5676,9 +5676,6 @@ These are the free and generally easy to produce 2-layer PCB design rules. You c
 <attribute name="NAME" x="6.223" y="25.4" size="0.6096" layer="25" font="vector" ratio="20" rot="R270" align="bottom-center"/>
 <attribute name="VALUE" x="3.937" y="25.4" size="0.6096" layer="27" font="vector" ratio="20" rot="R270" align="top-center"/>
 </element>
-<element name="E1" library="SparkFun-RF" package="SMA-EDGE" value="SMA" x="47.117" y="20.955" smashed="yes" rot="MR90">
-<attribute name="PROD_ID" value="CONN-08289" x="47.117" y="20.955" size="1.778" layer="28" font="vector" ratio="15" rot="MR90" display="off"/>
-</element>
 <element name="U$1" library="output" package="SERIAL0" value="" x="32.385" y="26.797" smashed="yes"/>
 <element name="U$4" library="output" package="TELEMETRY1" value="" x="39.116" y="26.797" smashed="yes"/>
 <element name="U$5" library="output" package="RADIO2" value="" x="33.147" y="25.4" smashed="yes"/>
@@ -5801,6 +5798,9 @@ These are the free and generally easy to produce 2-layer PCB design rules. You c
 <element name="U$15" library="output" package="T2" value="" x="6.223" y="6.985" smashed="yes" rot="R90"/>
 <element name="U$16" library="output" package="C0" value="" x="6.223" y="8.255" smashed="yes" rot="R90"/>
 <element name="U$17" library="output" package="R1" value="" x="6.223" y="9.525" smashed="yes" rot="R90"/>
+<element name="E2" library="SparkFun-RF" package="SMA-EDGE" value="RP-SMA" x="47.371" y="20.955" smashed="yes" rot="MR90">
+<attribute name="PROD_ID" value="CONN-00827" x="47.371" y="20.955" size="1.778" layer="28" font="vector" ratio="15" rot="MR90" display="off"/>
+</element>
 </elements>
 <signals>
 <signal name="GND">
@@ -5837,10 +5837,6 @@ These are the free and generally easy to produce 2-layer PCB design rules. You c
 <contactref element="J3" pad="GND2"/>
 <contactref element="R7" pad="1"/>
 <contactref element="R8" pad="1"/>
-<contactref element="E1" pad="GND@1"/>
-<contactref element="E1" pad="GND@2"/>
-<contactref element="E1" pad="GND@3"/>
-<contactref element="E1" pad="GND@0"/>
 <contactref element="J2" pad="1"/>
 <contactref element="R1" pad="1"/>
 <contactref element="R9" pad="1"/>
@@ -5903,6 +5899,10 @@ These are the free and generally easy to produce 2-layer PCB design rules. You c
 <via x="28.321" y="24.511" extent="1-16" drill="0.3048"/>
 <via x="4.953" y="27.178" extent="1-16" drill="0.3048"/>
 <via x="5.08" y="23.876" extent="1-16" drill="0.3048"/>
+<contactref element="E2" pad="GND@3"/>
+<contactref element="E2" pad="GND@2"/>
+<contactref element="E2" pad="GND@0"/>
+<contactref element="E2" pad="GND@1"/>
 </signal>
 <signal name="3.3V" class="1">
 <contactref element="U3" pad="5"/>
@@ -5987,12 +5987,12 @@ These are the free and generally easy to produce 2-layer PCB design rules. You c
 </signal>
 <signal name="LORA_ANT">
 <contactref element="U4" pad="19"/>
-<contactref element="E1" pad="SIG"/>
 <contactref element="D6" pad="2"/>
-<wire x1="44.443" y1="20.97" x2="42.46" y2="20.97" width="0.739140625" layer="16"/>
-<wire x1="44.45" y1="20.963" x2="47.109" y2="20.963" width="0.739140625" layer="16"/>
-<wire x1="47.109" y1="20.963" x2="47.117" y2="20.955" width="0.739140625" layer="16"/>
-<wire x1="44.45" y1="20.963" x2="44.443" y2="20.97" width="0.739140625" layer="16"/>
+<contactref element="E2" pad="SIG"/>
+<wire x1="42.46" y1="20.97" x2="44.443" y2="20.97" width="0.739140625" layer="16"/>
+<wire x1="44.443" y1="20.97" x2="44.45" y2="20.963" width="0.739140625" layer="16"/>
+<wire x1="44.45" y1="20.963" x2="47.363" y2="20.963" width="0.739140625" layer="16"/>
+<wire x1="47.363" y1="20.963" x2="47.371" y2="20.955" width="0.739140625" layer="16"/>
 </signal>
 <signal name="RTS-O">
 <contactref element="J2" pad="2"/>
@@ -6554,6 +6554,11 @@ These are the free and generally easy to produce 2-layer PCB design rules. You c
 <approved hash="19,1,cc849146f3f959cf"/>
 <approved hash="19,1,e862d30a02b8b6ad"/>
 <approved hash="19,1,90ccb68f688bc620"/>
+<approved hash="4,1,4d7d354bca5ebc48"/>
+<approved hash="4,1,65ef1c7df004867e"/>
+<approved hash="4,16,7afa02d8fe9d8bd3"/>
+<approved hash="4,16,4d7d354bca5ebc48"/>
+<approved hash="4,16,65ef1c7df004867e"/>
 </errors>
 </board>
 </drawing>
