@@ -207,8 +207,8 @@
 1oz Copper
 HASL RoHS Finish</text>
 <text x="122.99" y="-9.26" size="1.778" layer="51" ratio="15">N. Seidle</text>
-<dimension x1="0" y1="0" x2="59" y2="0" x3="29.5" y3="-7" textsize="1.778" textratio="15" layer="47" dtype="horizontal"/>
-<dimension x1="0" y1="0" x2="0" y2="34" x3="-4" y3="17" textsize="1.778" textratio="15" layer="47" dtype="vertical"/>
+<dimension x1="0" y1="0" x2="49.53" y2="-1.27" x3="24.765" y3="-7" textsize="1.778" textratio="15" layer="47" dtype="horizontal"/>
+<dimension x1="0" y1="0" x2="0" y2="27.94" x3="-4" y3="13.97" textsize="1.778" textratio="15" layer="47" dtype="vertical"/>
 <text x="30" y="-9" size="1.778" layer="47" font="vector" ratio="15" align="center">Dimensions in mm</text>
 <wire x1="1.27" y1="27.94" x2="49.53" y2="27.94" width="0.127" layer="20"/>
 <wire x1="1.27" y1="1.905" x2="0" y2="1.905" width="0.127" layer="20"/>
@@ -4737,7 +4737,7 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <rectangle x1="10.33" y1="-2.38" x2="13.73" y2="-0.18" layer="31" rot="R180"/>
 <rectangle x1="10.33" y1="-4.92" x2="13.73" y2="-2.72" layer="31" rot="R180"/>
 </package>
-<package name="SMA-EDGE">
+<package name="RP-SMA-EDGE">
 <description>&lt;b&gt;SMA Antenna Connector&lt;/b&gt;&lt;p&gt;
 This is a footprint for an edge mount RF antenna. Works pretty well with SMA type connectors but may also work with other edge mount RF connectors. Keep in mind, these edge mount connectors assume you are using a 0.062" (1.6mm) PCB thickness.</description>
 <smd name="GND@0" x="-2.54" y="0" dx="1.5" dy="4" layer="1" cream="no"/>
@@ -5798,7 +5798,7 @@ These are the free and generally easy to produce 2-layer PCB design rules. You c
 <element name="U$15" library="output" package="T2" value="" x="6.223" y="6.985" smashed="yes" rot="R90"/>
 <element name="U$16" library="output" package="C0" value="" x="6.223" y="8.255" smashed="yes" rot="R90"/>
 <element name="U$17" library="output" package="R1" value="" x="6.223" y="9.525" smashed="yes" rot="R90"/>
-<element name="E2" library="SparkFun-RF" package="SMA-EDGE" value="RP-SMA" x="47.371" y="20.955" smashed="yes" rot="MR90">
+<element name="E2" library="SparkFun-RF" package="RP-SMA-EDGE" value="RP-SMA" x="47.371" y="20.955" smashed="yes" rot="MR90">
 <attribute name="PROD_ID" value="CONN-00827" x="47.371" y="20.955" size="1.778" layer="28" font="vector" ratio="15" rot="MR90" display="off"/>
 </element>
 </elements>
