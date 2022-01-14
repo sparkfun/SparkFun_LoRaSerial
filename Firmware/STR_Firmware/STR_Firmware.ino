@@ -114,7 +114,7 @@ long stopTime = 0;
 void setup()
 {
   //eepromErase();
-  Serial.begin(5760);
+  Serial.begin(57600);
     
   loadSettings(); //Load settings from EEPROM
 

@@ -65,7 +65,6 @@ void beginLoRa()
 
   configureRadio(); //Apply current settings
 
-
   //Return to receiving
   radio.startReceive();
   radioState = RADIO_RECEIVING;
