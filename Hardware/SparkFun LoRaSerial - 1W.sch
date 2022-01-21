@@ -23332,6 +23332,30 @@ http://www.kemet.com/Lists/ProductCatalog/Attachments/254/KEM_T2005_T491.pdf</de
 </technology>
 </technologies>
 </device>
+<device name="-0603-25V-10%-X7R-WE" package="0603">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="PROD_ID" value="CAP-16503" constant="no"/>
+<attribute name="VALUE" value="0.1uF" constant="no"/>
+</technology>
+</technologies>
+</device>
+<device name="-0402T-16V-10%-X7R-WE" package="0402-TIGHT">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="PROD_ID" value="CAP-16507" constant="no"/>
+<attribute name="VALUE" value="0.1uF" constant="no"/>
+</technology>
+</technologies>
+</device>
 </devices>
 </deviceset>
 <deviceset name="1.0UF" prefix="C">
@@ -23421,6 +23445,18 @@ http://www.kemet.com/Lists/ProductCatalog/Attachments/254/KEM_T2005_T491.pdf</de
 <technologies>
 <technology name="">
 <attribute name="PROD_ID" value="CAP-12417" constant="no"/>
+<attribute name="VALUE" value="1.0uF" constant="no"/>
+</technology>
+</technologies>
+</device>
+<device name="-0603-16V-10%-X7R-WE" package="0603">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="PROD_ID" value="CAP-16504" constant="no"/>
 <attribute name="VALUE" value="1.0uF" constant="no"/>
 </technology>
 </technologies>
@@ -27289,6 +27325,18 @@ We've spent an enormous amount of time creating and checking these footprints an
 </technology>
 </technologies>
 </device>
+<device name="-0603-WE" package="LED-0603">
+<connects>
+<connect gate="G$1" pin="A" pad="A"/>
+<connect gate="G$1" pin="C" pad="C"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="PROD_ID" value="DIO-16512" constant="no"/>
+<attribute name="VALUE" value="Green" constant="no"/>
+</technology>
+</technologies>
+</device>
 </devices>
 </deviceset>
 <deviceset name="LED-YELLOW" prefix="D" uservalue="yes">
@@ -27360,6 +27408,18 @@ Used in manufacturing several products at SparkFun.
 </technology>
 </technologies>
 </device>
+<device name="-0603-WE" package="LED-0603">
+<connects>
+<connect gate="G$1" pin="A" pad="A"/>
+<connect gate="G$1" pin="C" pad="C"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="PROD_ID" value="DIO-16514" constant="no"/>
+<attribute name="VALUE" value="Yellow" constant="no"/>
+</technology>
+</technologies>
+</device>
 </devices>
 </deviceset>
 <deviceset name="LED-BLUE" prefix="D" uservalue="yes">
@@ -27412,6 +27472,18 @@ Used in manufacturing several products at SparkFun.
 <technologies>
 <technology name="">
 <attribute name="PROD_ID" value="DIO-09911" constant="no"/>
+</technology>
+</technologies>
+</device>
+<device name="-0603-WE" package="LED-0603">
+<connects>
+<connect gate="G$1" pin="A" pad="A"/>
+<connect gate="G$1" pin="C" pad="C"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="PROD_ID" value="DIO-16513" constant="no"/>
+<attribute name="VALUE" value="Blue" constant="no"/>
 </technology>
 </technologies>
 </device>
@@ -27480,6 +27552,18 @@ Used in manufacturing several products at SparkFun.
 <technologies>
 <technology name="">
 <attribute name="PROD_ID" value="DIO-09912" constant="no"/>
+</technology>
+</technologies>
+</device>
+<device name="-0603-WE" package="LED-0603">
+<connects>
+<connect gate="G$1" pin="A" pad="A"/>
+<connect gate="G$1" pin="C" pad="C"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="PROD_ID" value="DIO-16511" constant="no"/>
+<attribute name="VALUE" value="Red" constant="no"/>
 </technology>
 </technologies>
 </device>
@@ -28984,6 +29068,8 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <part name="SUPPLY9" library="SparkFun-PowerSymbols" deviceset="3.3V" device=""/>
 <part name="JP9" library="SparkFun-Jumpers" deviceset="JUMPER-SMT_3_2-NC_TRACE" device="_SILK" package3d_urn="urn:adsk.eagle:package:39289/1" value="JUMPER-SMT_3_2-NC_TRACE_SILK"/>
 <part name="E2" library="SparkFun-RF" deviceset="ANTENNA-SMA-GROUNDED" device="EDGE_RPSMA" value="RP-SMA"/>
+<part name="S1" library="SparkFun-Switches" deviceset="MOMENTARY-SWITCH-SPST" device="-SMD-RIGHT-ANGLE" value="Reset"/>
+<part name="GND9" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -29019,16 +29105,16 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <text x="182.88" y="157.48" size="0.762" layer="97">https://chemandy.com/calculators/coplanar-waveguide-with-ground-calculator.htm</text>
 <text x="182.88" y="175.26" size="1.524" layer="97" ratio="15">Microstrip Calculation:</text>
 <text x="63.5" y="63.5" size="2.54" layer="94" rot="MR180" align="center">USB</text>
-<text x="112.522" y="166.878" size="1.016" layer="97" align="top-left">PB22/23 are TXD/RXD to the EDBG</text>
-<text x="112.522" y="171.958" size="1.016" layer="97" align="top-left">PB10/11 are MOSI/SCK to SPI header.</text>
-<text x="112.268" y="218.44" size="1.016" layer="97" align="center-left">PA12 is SPI MISO (on SPI header).</text>
-<text x="112.268" y="215.9" size="1.016" layer="97" align="center-left">PA13 is DGI GPIO0 (goes to EDBG).</text>
-<text x="42.418" y="193.04" size="1.016" layer="97" align="center-right">PA5 is A4</text>
-<text x="42.418" y="185.42" size="1.016" layer="97" align="center-right">PB2 is A5</text>
 <text x="73.66" y="264.16" size="2.54" layer="94" font="vector" align="center">ATSAMD21G</text>
 <text x="254.254" y="63.246" size="2.54" layer="94" font="vector" align="center">Qwiic</text>
 <text x="332.74" y="200.66" size="2.54" layer="94" align="center">Cortex Debug/Program Connector</text>
 <text x="325.12" y="254" size="1.778" layer="97" align="center">I2C Pull Ups</text>
+<text x="81.28" y="289.56" size="1.27" layer="91">Do we need to move the TX/RX LEDs from the USB so they work during external radio connection?</text>
+<text x="81.28" y="284.48" size="1.27" layer="91">Add train button</text>
+<text x="81.28" y="287.02" size="1.27" layer="91">Add PTH holes for GPIO</text>
+<text x="118.11" y="182.88" size="0.762" layer="97" align="center">Bootloader TX LED</text>
+<text x="36.83" y="182.88" size="0.762" layer="97" align="center">Bootloader RX LED</text>
+<text x="81.28" y="281.94" size="1.27" layer="91">Add CTS RTS connections to GPIOs</text>
 </plain>
 <instances>
 <instance part="FID1" gate="G$1" x="424.18" y="43.18" smashed="yes"/>
@@ -29036,8 +29122,8 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <instance part="FID3" gate="G$1" x="426.72" y="43.18" smashed="yes"/>
 <instance part="FID4" gate="G$1" x="426.72" y="40.64" smashed="yes"/>
 <instance part="LOGO5" gate="G$1" x="337.82" y="45.72" smashed="yes"/>
-<instance part="GND32" gate="1" x="162.56" y="215.9" smashed="yes" rot="MR0">
-<attribute name="VALUE" x="162.56" y="215.646" size="1.778" layer="96" rot="MR0" align="top-center"/>
+<instance part="GND32" gate="1" x="162.56" y="218.44" smashed="yes" rot="MR0">
+<attribute name="VALUE" x="162.56" y="218.186" size="1.778" layer="96" rot="MR0" align="top-center"/>
 </instance>
 <instance part="GND50" gate="1" x="170.18" y="205.74" smashed="yes" rot="MR0">
 <attribute name="VALUE" x="170.18" y="205.486" size="1.778" layer="96" rot="MR0" align="top-center"/>
@@ -29370,6 +29456,13 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <attribute name="NAME" x="162.052" y="226.06" size="1.778" layer="95" font="vector" rot="MR0"/>
 <attribute name="VALUE" x="162.052" y="223.774" size="1.778" layer="96" font="vector" rot="MR0"/>
 </instance>
+<instance part="S1" gate="G$1" x="50.8" y="119.38" smashed="yes" rot="R90">
+<attribute name="NAME" x="49.276" y="119.38" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
+<attribute name="VALUE" x="51.308" y="119.38" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
+</instance>
+<instance part="GND9" gate="1" x="50.8" y="109.22" smashed="yes">
+<attribute name="VALUE" x="50.8" y="108.966" size="1.778" layer="96" align="top-center"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -29382,7 +29475,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 </segment>
 <segment>
 <pinref part="GND32" gate="1" pin="GND"/>
-<wire x1="162.56" y1="223.52" x2="162.56" y2="218.44" width="0.1524" layer="91"/>
+<wire x1="162.56" y1="223.52" x2="162.56" y2="220.98" width="0.1524" layer="91"/>
 <pinref part="E2" gate="G$1" pin="GND"/>
 </segment>
 <segment>
@@ -29540,6 +29633,11 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <wire x1="314.96" y1="177.8" x2="314.96" y2="175.26" width="0.1524" layer="91"/>
 <pinref part="GND11" gate="1" pin="GND"/>
 </segment>
+<segment>
+<pinref part="S1" gate="G$1" pin="1"/>
+<pinref part="GND9" gate="1" pin="GND"/>
+<wire x1="50.8" y1="111.76" x2="50.8" y2="114.3" width="0.1524" layer="91"/>
+</segment>
 </net>
 <net name="3.3V" class="1">
 <segment>
@@ -29654,7 +29752,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <pinref part="E2" gate="G$1" pin="SIGNAL"/>
 </segment>
 </net>
-<net name="SPI_SCK" class="0">
+<net name="D13/SPI_SCK" class="0">
 <segment>
 <wire x1="218.44" y1="220.98" x2="220.98" y2="220.98" width="0.1524" layer="91"/>
 <label x="220.98" y="220.98" size="1.27" layer="95" xref="yes"/>
@@ -29666,7 +29764,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <label x="114.3" y="205.74" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
-<net name="SPI_PICO" class="0">
+<net name="D11/SPI_PICO" class="0">
 <segment>
 <wire x1="218.44" y1="226.06" x2="220.98" y2="226.06" width="0.1524" layer="91"/>
 <label x="220.98" y="226.06" size="1.27" layer="95" xref="yes"/>
@@ -29678,7 +29776,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <label x="114.3" y="208.28" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
-<net name="SPI_POCI" class="0">
+<net name="D12/SPI_POCI" class="0">
 <segment>
 <wire x1="218.44" y1="223.52" x2="220.98" y2="223.52" width="0.1524" layer="91"/>
 <label x="220.98" y="223.52" size="1.27" layer="95" xref="yes"/>
@@ -29836,7 +29934,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <label x="40.64" y="198.12" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="BOARD_ID" class="0">
+<net name="A2/BOARD_ID" class="0">
 <segment>
 <pinref part="R2" gate="G$1" pin="1"/>
 <pinref part="R4" gate="G$1" pin="2"/>
@@ -30061,11 +30159,16 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <label x="114.3" y="228.6" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
-<net name="A3" class="0">
+<net name="A3/TRAIN" class="0">
 <segment>
 <pinref part="U2" gate="G$1" pin="PA04(AIN4/REFB/SER0:0/TC0:0)"/>
 <wire x1="43.18" y1="195.58" x2="40.64" y2="195.58" width="0.1524" layer="91"/>
 <label x="40.64" y="195.58" size="1.27" layer="95" rot="R180" xref="yes"/>
+</segment>
+<segment>
+<pinref part="S1" gate="G$1" pin="2"/>
+<wire x1="50.8" y1="124.46" x2="50.8" y2="127" width="0.1524" layer="91"/>
+<label x="50.8" y="127" size="1.27" layer="95" rot="R90" xref="yes"/>
 </segment>
 </net>
 <net name="A1" class="0">
@@ -30151,11 +30254,6 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 </net>
 <net name="RX_LED" class="0">
 <segment>
-<pinref part="U2" gate="G$1" pin="PB03(AIN11/SER5:1)"/>
-<wire x1="43.18" y1="182.88" x2="40.64" y2="182.88" width="0.1524" layer="91"/>
-<label x="40.64" y="182.88" size="1.27" layer="95" rot="R180" xref="yes"/>
-</segment>
-<segment>
 <pinref part="D3" gate="G$1" pin="C"/>
 <wire x1="109.22" y1="106.68" x2="111.76" y2="106.68" width="0.1524" layer="91"/>
 <wire x1="109.22" y1="109.22" x2="109.22" y2="106.68" width="0.1524" layer="91"/>
@@ -30163,11 +30261,6 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 </segment>
 </net>
 <net name="TX_LED" class="0">
-<segment>
-<pinref part="U2" gate="G$1" pin="PA27"/>
-<wire x1="111.76" y1="182.88" x2="114.3" y2="182.88" width="0.1524" layer="91"/>
-<label x="114.3" y="182.88" size="1.27" layer="95" xref="yes"/>
-</segment>
 <segment>
 <pinref part="D2" gate="G$1" pin="C"/>
 <wire x1="93.98" y1="109.22" x2="93.98" y2="106.68" width="0.1524" layer="91"/>
@@ -30189,6 +30282,34 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <wire x1="320.04" y1="236.22" x2="317.5" y2="236.22" width="0.1524" layer="91"/>
 <wire x1="317.5" y1="236.22" x2="317.5" y2="233.68" width="0.1524" layer="91"/>
 <pinref part="JP9" gate="G$1" pin="3"/>
+</segment>
+</net>
+<net name="A5" class="0">
+<segment>
+<pinref part="U2" gate="G$1" pin="PB02(AIN10/SER5:0)"/>
+<wire x1="43.18" y1="185.42" x2="40.64" y2="185.42" width="0.1524" layer="91"/>
+<label x="40.64" y="185.42" size="1.27" layer="95" rot="R180" xref="yes"/>
+</segment>
+</net>
+<net name="A4" class="0">
+<segment>
+<pinref part="U2" gate="G$1" pin="PA05(AIN5/SER0:1/TC0:1)"/>
+<wire x1="43.18" y1="193.04" x2="40.64" y2="193.04" width="0.1524" layer="91"/>
+<label x="40.64" y="193.04" size="1.27" layer="95" rot="R180" xref="yes"/>
+</segment>
+</net>
+<net name="D30" class="0">
+<segment>
+<pinref part="U2" gate="G$1" pin="PB22(SER5:2+)"/>
+<wire x1="111.76" y1="165.1" x2="114.3" y2="165.1" width="0.1524" layer="91"/>
+<label x="114.3" y="165.1" size="1.27" layer="95" xref="yes"/>
+</segment>
+</net>
+<net name="D31" class="0">
+<segment>
+<pinref part="U2" gate="G$1" pin="PB23(SER5:3+)"/>
+<wire x1="111.76" y1="162.56" x2="114.3" y2="162.56" width="0.1524" layer="91"/>
+<label x="114.3" y="162.56" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 </nets>
