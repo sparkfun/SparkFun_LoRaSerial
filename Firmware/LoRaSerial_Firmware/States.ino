@@ -1,4 +1,4 @@
-void updateSystemState()
+void updateRadioState()
 {
   switch (radioState)
   {
@@ -21,13 +21,13 @@ void updateSystemState()
         {
           if (receiveInProcess() == false)
           {
-            STR_DEBUG_PRINTLN("Noise triggered hop");
+            LRS_DEBUG_PRINTLN("Noise triggered hop");
             returnToReceiving(); //Reset our channel to 0
           }
         }
 
         //Check to see if we need to send a ping
-        else if ( (millis() - packetTimestamp) > (heartbeatTimeout + random(0, 1000)) //Avoid pinging each other at same time
+        else if ( (millis() - packetTimestamp) > (settings.heartbeatTimeout + random(0, 1000)) //Avoid pinging each other at same time
                   || sentFirstPing == false) //Immediately send pings at POR
         {
           sentFirstPing = true;
@@ -38,7 +38,7 @@ void updateSystemState()
             changeState(RADIO_NO_LINK_TRANSMITTING);
           }
           else
-            STR_DEBUG_PRINTLN("NO_LINK_RECEIVING_STANDBY: RX In Progress");
+            LRS_DEBUG_PRINTLN("NO_LINK_RECEIVING_STANDBY: RX In Progress");
         }
       }
       break;
@@ -86,7 +86,7 @@ void updateSystemState()
         {
           if (receiveInProcess() == false)
           {
-            STR_DEBUG_PRINTLN("Noise triggered hop");
+            LRS_DEBUG_PRINTLN("Noise triggered hop");
             returnToReceiving(); //Reset our channel to 0
           }
         }
@@ -162,12 +162,12 @@ void updateSystemState()
         {
           if (receiveInProcess() == false)
           {
-            STR_DEBUG_PRINTLN("Noise triggered hop");
+            LRS_DEBUG_PRINTLN("Noise triggered hop");
             returnToReceiving(); //Reset our channel to 0
           }
         }
 
-        else if ((millis() - packetTimestamp) > (heartbeatTimeout + random(0, 1000))) //Avoid pinging each other at same time
+        else if ((millis() - packetTimestamp) > (settings.heartbeatTimeout + random(0, 1000))) //Avoid pinging each other at same time
         {
           if (receiveInProcess() == false)
           {
@@ -175,7 +175,7 @@ void updateSystemState()
             changeState(RADIO_TRANSMITTING);
           }
           else
-            STR_DEBUG_PRINTLN("RECEIVING_STANDBY: RX In Progress");
+            LRS_DEBUG_PRINTLN("RECEIVING_STANDBY: RX In Progress");
         }
 
         else //Process waiting serial
@@ -234,7 +234,7 @@ void updateSystemState()
         {
           if (receiveInProcess() == false)
           {
-            STR_DEBUG_PRINTLN("Noise triggered hop");
+            LRS_DEBUG_PRINTLN("Noise triggered hop");
             returnToReceiving(); //Reset our channel to 0
           }
         }
@@ -244,7 +244,7 @@ void updateSystemState()
         {
           if (packetSent > maxResends)
           {
-            STR_DEBUG_PRINTLN(F("Packet Lost"));
+            LRS_DEBUG_PRINTLN(F("Packet Lost"));
             packetsLost++;
             totalPacketsLost++;
             returnToReceiving();
@@ -254,13 +254,13 @@ void updateSystemState()
           {
             if (receiveInProcess() == false)
             {
-              STR_DEBUG_PRINTLN(F("Packet Resend"));
+              LRS_DEBUG_PRINTLN(F("Packet Resend"));
               packetsResent++;
               sendResendPacket();
               changeState(RADIO_TRANSMITTING);
             }
             else
-              STR_DEBUG_PRINTLN("ACK_WAIT: RX In Progress");
+              LRS_DEBUG_PRINTLN("ACK_WAIT: RX In Progress");
           }
         }
       }
@@ -316,14 +316,6 @@ void updateSystemState()
       }
       break;
   }
-}
-
-//Returns true if CTS is asserted (high = host says it's ok to send data)
-bool isCTS()
-{
-  if (pin_cts == 255) return (true); //CTS not implmented on this board
-  if (digitalRead(pin_cts) == HIGH) return (true);
-  return (false);
 }
 
 //Change states and print the new state

@@ -3,18 +3,18 @@
   SparkFun Electronics
   Nathan Seidle
 
-  This firmware runs the core of the SparkFun STR Serial Telemetry Radio product.
-  Primarily designed to run on an ATmega328 with the ebyte 1W LoRa Radio based on the SX1726.
+  This firmware runs the core of the SparkFun LoRaSerial Radio product.
+  Primarily designed to run on a ATSAMD21G18A with the ebyte 1W LoRa Radio based on the SX1276.
 
   This radio is designed to operate at the physical layer of LoRa sending data directly to an end point
   as opposed to something like LoRaWAN that operates on the data and network layers. For this reason
-  the STR is not intended to operate on LoRaWAN.
+  LoRaSerial is not intended to operate on LoRaWAN.
 
-  The command structure is based on the SiK Arudpilot radio.
+  The command structure is based on the SiK Ardupilot radio.
 
-  We implement a very rough Listen-Before-Talk: If a packet is currently being received, don't transmit.
+  For a graphical view of the system state machine see:
 
-  Other processors supported:
+  Processors supported:
     ESP32
     SAMD21
 
@@ -22,8 +22,9 @@
     Interrupt capable pins for DIO0/1
     Processor reset
     EEPROM read/write/commit
+    ~10k RAM for serial RX/TX and radio buffers
 
-  Compiled with Arduino v1.8.13
+  Compiled with Arduino v1.8.15
 
   TODO:
     (done) Allow escape chars within first 2 POR seconds
@@ -44,37 +45,37 @@
     Change channels[] to malloc or other (not hard coded)
     Add processor guard to limit Uno to 16 channels (float array is a ram sink)
 
-    pAdd min/max radio frequency at commands
-    move keepAlive time to settings. Good for distance testing.
-    Add ATSx option for enable/disable flow control
-    Settings: Limit frame size to 256 - 2 (for trailer and control)
+    (done) Add min/max radio frequency at commands
+    (done) move heartBeatTimeout to settings. Good for distance testing.
+    (done) Add ATSx option for enable/disable flow control
+    (done) Settings: Limit frame size to 256 - 2 (for trailer and control)
 
-    Consider malloc the outgoingPacket and incomingPacket sizes due to settings.framesize
     (done) Add more state checking RADIOLIB_ERR_TX_TIMEOUT when we send packets out radio sendDataPacket et al
-    Move radiolib to static arrays to see real memory footprint
     (done) Fix ack timeout. Should be packetAirTime + controlPacketAirTime, not 2* packetAirTime
     Put all the platform specific functions into a header or guarded area (reset, eeprom?, etc)
     Add data size to all SAMD boards
     (done) If hopping has begun but we don't receive another dio1ISR within hop time, return to receiving
     (done) Print data to both USB and Serial1
     Read data from both USB And Serial1
+
+    Uno:
+    Consider malloc the outgoingPacket and incomingPacket sizes due to settings.framesize
+    Move radiolib to static arrays to see real memory footprint
 */
-
-
 
 const int FIRMWARE_VERSION_MAJOR = 1;
 const int FIRMWARE_VERSION_MINOR = 0;
 
 #define ENABLE_DEVELOPER //Uncomment this line to enable special developer modes
 
-//Define the STR board identifier:
-//  This is an int which is unique to this variant of the STR hardware which allows us
-//  to make sure that the settings in EEPROM are correct for this version of the STR
+//Define the LoRaSerial board identifier:
+//  This is an int which is unique to this variant of the LoRaSerial hardware which allows us
+//  to make sure that the settings in EEPROM are correct for this version of the LoRaSerial
 //  (sizeOfSettings is not necessarily unique and we want to avoid problems when swapping from one variant to another)
 //  It is the sum of:
 //    the major firmware version * 0x10
 //    the minor firmware version
-#define STR_IDENTIFIER (FIRMWARE_VERSION_MAJOR * 0x10 + FIRMWARE_VERSION_MINOR)
+#define LRS_IDENTIFIER (FIRMWARE_VERSION_MAJOR * 0x10 + FIRMWARE_VERSION_MINOR)
 
 #include "settings.h"
 #include "build.h"
@@ -114,8 +115,8 @@ uint8_t pin_trigger = 255;
 #include <RadioLib.h> //Click here to get the library: http://librarymanager/All#RadioLib v5.1.0
 SX1276 radio = NULL; //We can't instantiate here because we don't yet know what pin numbers to use
 
-float channels[16];
-uint8_t currentChannel = 0; //Increments with each hop. Needed to avoid zeroing of getFHSSChannel() after each transaction.
+float *channels;
+uint8_t currentChannel = 0; //Increments with each hop
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - Serial
@@ -159,7 +160,6 @@ uint8_t lastPacket[MAX_PACKET_SIZE]; //Contains the last data received. Used for
 uint8_t lastPacketSize = 0; //Tracks the last packet size we received
 
 #define MAX_LOST_PACKET_BEFORE_LINKLOST 2
-unsigned long heartbeatTimeout = 5000; //ms before sending ping to see if link is active TODO - move to settings
 bool sentFirstPing = false; //Force a ping to link at POR
 
 volatile bool transactionComplete = false; //Used in dio0ISR
@@ -167,20 +167,18 @@ volatile bool timeToHop = true; //Used in dio1ISR
 bool expectingAck = false; //Used by various send packet functions
 
 int hopsCompleted = 0;
-
-long startTime = 0; //Used for air time of TX frames
-long stopTime = 0;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-void(* Reset_AVR) (void) = 0; //Way of resetting the ATmega
-
+long startTime = 0; //Used for air time of TX frames
+long stopTime = 0;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 void setup()
 {
-  //eepromErase();
+  eepromErase();
+  
   Serial.begin(57600);
 
 #if defined(ENABLE_DEVELOPER)
@@ -203,15 +201,15 @@ void setup()
 
   beginLoRa(); //Start radio
 
-  Serial.println(F("STR"));
-  Serial1.println(F("STR"));
+  Serial.println(F("LRS"));
+  Serial1.println(F("LRS"));
 
   settings.debug = false;
 }
 
 void loop()
 {
-  updateSerial(); //Receive anything coming in and store into buffer
+  updateSerial(); //Store incoming and print outgoing
 
-  updateSystemState(); //Send/receive packets as needed
+  updateRadioState(); //Ping/ack/send packets as needed
 }

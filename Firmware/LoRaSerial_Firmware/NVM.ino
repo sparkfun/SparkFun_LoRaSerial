@@ -21,7 +21,7 @@ void loadSettings()
   //Check that the strIdentifier is correct
   int tempIdentifier = 0;
   EEPROM.get(sizeof(int), tempIdentifier); //Load the identifier from the EEPROM location after sizeOfSettings (int)
-  if (tempIdentifier != STR_IDENTIFIER)
+  if (tempIdentifier != LRS_IDENTIFIER)
   {
     //Serial.print(F("Settings are not valid for this variant of STR "));
     //Serial.print((String)platformPrefix);

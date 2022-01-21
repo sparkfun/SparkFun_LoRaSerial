@@ -1,3 +1,8 @@
+//To add a new command:
+//Add the response to a query: ATS13?
+//Add the data entry and validity check: ATS13=
+//Add the setting to displayParameters
+
 //Respond to AT commands
 void commandMode()
 {
@@ -47,8 +52,8 @@ void commandMode()
             case ('Z'): //Reboots the radio
               reportOK(); //Does SiK reply with OK before reboot or not?
               Serial.flush();
-#if defined(ARDUINO_AVR_UNO)
-              Reset_AVR();
+#if defined(ARDUINO_ARCH_SAMD)
+              NVIC_SystemReset();
 #elif defined(ARDUINO_ARCH_ESP32)
               ESP.restart();
 #endif
@@ -158,13 +163,25 @@ void commandMode()
                     Serial.println(settings.airSpeed);
                     break;
                   case ('0'): //ATS10?
-                    Serial.println(settings.serialTimeoutBeforeSendingFrame_ms);
+                    Serial.println(settings.radioPreambleLength);
                     break;
                   case ('1'): //ATS11?
-                    Serial.println(settings.debug);
+                    Serial.println(settings.frameSize);
                     break;
                   case ('2'): //ATS12?
+                    Serial.println(settings.serialTimeoutBeforeSendingFrame_ms);
+                    break;
+                  case ('3'): //ATS13?
+                    Serial.println(settings.debug);
+                    break;
+                  case ('4'): //ATS14?
                     Serial.println(settings.echo);
+                    break;
+                  case ('5'): //ATS15?
+                    Serial.println(settings.heartbeatTimeout);
+                    break;
+                  case ('6'): //ATS16?
+                    Serial.println(settings.flowControl);
                     break;
                   default:
                     reportERROR();
@@ -176,25 +193,25 @@ void commandMode()
               Serial.println(settings.radioBroadcastPower_dbm);
               break;
             case ('3'): //ATS3?
-              //Serial.println(settings.radioFrequency);
+              Serial.println(settings.frequencyMin);
               break;
             case ('4'): //ATS4?
-              Serial.println(settings.radioBandwidth);
+              Serial.println(settings.frequencyMax);
               break;
             case ('5'): //ATS5?
-              Serial.println(settings.radioSpreadFactor);
+              Serial.println(settings.numberOfChannels);
               break;
             case ('6'): //ATS6?
-              Serial.println(settings.radioCodingRate);
+              Serial.println(settings.radioBandwidth);
               break;
             case ('7'): //ATS7?
-              Serial.println(settings.radioSyncWord);
+              Serial.println(settings.radioSpreadFactor);
               break;
             case ('8'): //ATS8?
-              Serial.println(settings.radioPreambleLength);
+              Serial.println(settings.radioCodingRate);
               break;
             case ('9'): //ATS9?
-              Serial.println(settings.frameSize);
+              Serial.println(settings.radioSyncWord);
               break;
             default:
               reportERROR();
@@ -257,7 +274,7 @@ void commandMode()
                         || settingValue == 38400
                        )
                     {
-                      if(settings.airSpeed == 0 && settingValue != 0) Serial.println(F("Warning: AirSpeed override of bandwidth, spread factor, and coding rate"));
+                      if (settings.airSpeed == 0 && settingValue != 0) Serial.println(F("Warning: AirSpeed override of bandwidth, spread factor, and coding rate"));
                       settings.airSpeed = settingValue;
                       configureRadio(); //Update spread, bandwidth, and coding as needed
                       reportOK();
@@ -266,6 +283,24 @@ void commandMode()
                       reportERROR();
                     break;
                   case ('0'): //ATS10=
+                    if (settingValue >= 6 && settingValue <= 65535)
+                    {
+                      settings.radioPreambleLength = settingValue;
+                      reportOK();
+                    }
+                    else
+                      reportERROR();
+                    break;
+                  case ('1'): //ATS11=
+                    if (settingValue >= 16 && settingValue <= (256 - 2)) //NetID+Control trailer is 2 bytes
+                    {
+                      settings.frameSize = settingValue;
+                      reportOK();
+                    }
+                    else
+                      reportERROR();
+                    break;
+                  case ('2'): //ATS12=
                     if (settingValue >= 10 && settingValue <= 2000)
                     {
                       settings.serialTimeoutBeforeSendingFrame_ms = settingValue;
@@ -274,7 +309,7 @@ void commandMode()
                     else
                       reportERROR();
                     break;
-                  case ('1'): //ATS11=
+                  case ('3'): //ATS13=
                     if (settingValue >= 0 && settingValue <= 1)
                     {
                       settings.debug = settingValue;
@@ -283,7 +318,7 @@ void commandMode()
                     else
                       reportERROR();
                     break;
-                  case ('2'): //ATS12=
+                  case ('4'): //ATS14=
                     if (settingValue >= 0 && settingValue <= 1)
                     {
                       settings.echo = settingValue;
@@ -292,7 +327,23 @@ void commandMode()
                     else
                       reportERROR();
                     break;
-                  case ('3'): //ATS13=
+                  case ('5'): //ATS15=
+                    if (settingValue >= 250 && settingValue <= 65535)
+                    {
+                      settings.heartbeatTimeout = settingValue;
+                      reportOK();
+                    }
+                    else
+                      reportERROR();
+                    break;
+                  case ('6'): //ATS16=
+                    if (settingValue >= 0 && settingValue <= 1)
+                    {
+                      settings.flowControl = settingValue;
+                      reportOK();
+                    }
+                    else
+                      reportERROR();
                     break;
                   default:
                     reportERROR();
@@ -310,15 +361,33 @@ void commandMode()
                 reportERROR();
               break;
             case ('3'): //ATS3=
-//              if (doubleSettingValue >= 137.0 && doubleSettingValue <= 1020.0)
-//              {
-//                settings.radioFrequency = doubleSettingValue;
-//                reportOK();
-//              }
-//              else
-//                reportERROR();
+              if (doubleSettingValue >= 902.0 && doubleSettingValue <= settings.frequencyMax)
+              {
+                settings.frequencyMin = doubleSettingValue;
+                reportOK();
+              }
+              else
+                reportERROR();
               break;
             case ('4'): //ATS4=
+              if (doubleSettingValue >= settings.frequencyMin && doubleSettingValue <= 928.0)
+              {
+                settings.frequencyMax = doubleSettingValue;
+                reportOK();
+              }
+              else
+                reportERROR();
+              break;
+            case ('5'): //ATS5=
+              if (settingValue >= 1 && settingValue <= 50)
+              {
+                settings.numberOfChannels = settingValue;
+                reportOK();
+              }
+              else
+                reportERROR();
+              break;
+            case ('6'): //ATS6=
               if (settings.airSpeed != 0)
               {
                 Serial.println(F("AirSpeed is overriding"));
@@ -345,7 +414,7 @@ void commandMode()
                   reportERROR();
               }
               break;
-            case ('5'): //ATS5=
+            case ('7'): //ATS7=
               if (settingValue >= 6 && settingValue <= 12)
               {
                 settings.radioSpreadFactor = settingValue;
@@ -354,7 +423,7 @@ void commandMode()
               else
                 reportERROR();
               break;
-            case ('6'): //ATS6=
+            case ('8'): //ATS8=
               if (settingValue >= 5 && settingValue <= 8)
               {
                 settings.radioCodingRate = settingValue;
@@ -363,28 +432,10 @@ void commandMode()
               else
                 reportERROR();
               break;
-            case ('7'): //ATS7=
+            case ('9'): //ATS9=
               if (settingValue >= 0 && settingValue <= 255)
               {
                 settings.radioSyncWord = settingValue;
-                reportOK();
-              }
-              else
-                reportERROR();
-              break;
-            case ('8'): //ATS8=
-              if (settingValue >= 6 && settingValue <= 65535)
-              {
-                settings.radioPreambleLength = settingValue;
-                reportOK();
-              }
-              else
-                reportERROR();
-              break;
-            case ('9'): //ATS9=
-              if (settingValue >= 16 && settingValue <= 255)
-              {
-                settings.frameSize = settingValue;
                 reportOK();
               }
               else
@@ -501,34 +552,46 @@ void displayParameters()
         Serial.print(F("TxPower"));
         break;
       case (3):
-        Serial.print(F("Frequency"));
+        Serial.print(F("FrequencyMin"));
         break;
       case (4):
-        Serial.print(F("Bandwidth"));
+        Serial.print(F("FrequencyMax"));
         break;
       case (5):
-        Serial.print(F("SpreadFactor"));
+        Serial.print(F("NumberOfChannels"));
         break;
       case (6):
-        Serial.print(F("CodingRate"));
+        Serial.print(F("Bandwidth"));
         break;
       case (7):
-        Serial.print(F("SyncWord"));
+        Serial.print(F("SpreadFactor"));
         break;
       case (8):
-        Serial.print(F("PreambleLength"));
+        Serial.print(F("CodingRate"));
         break;
       case (9):
-        Serial.print(F("FrameSize"));
+        Serial.print(F("SyncWord"));
         break;
       case (10):
-        Serial.print(F("FrameTimeout"));
+        Serial.print(F("PreambleLength"));
         break;
       case (11):
-        Serial.print(F("Debug"));
+        Serial.print(F("FrameSize"));
         break;
       case (12):
+        Serial.print(F("FrameTimeout"));
+        break;
+      case (13):
+        Serial.print(F("Debug"));
+        break;
+      case (14):
         Serial.print(F("Echo"));
+        break;
+      case (15):
+        Serial.print(F("HeartBeatTimeout"));
+        break;
+      case (16):
+        Serial.print(F("FlowControl"));
         break;
       default:
         Serial.print(F("Unknown"));
@@ -550,34 +613,46 @@ void displayParameters()
         Serial.print(settings.radioBroadcastPower_dbm);
         break;
       case (3):
-        //Serial.print(settings.radioFrequency, 1);
+        Serial.print(settings.frequencyMin, 3);
         break;
       case (4):
-        Serial.print(settings.radioBandwidth);
+        Serial.print(settings.frequencyMax, 3);
         break;
       case (5):
-        Serial.print(settings.radioSpreadFactor);
+        Serial.print(settings.numberOfChannels);
         break;
       case (6):
-        Serial.print(settings.radioCodingRate);
+        Serial.print(settings.radioBandwidth);
         break;
       case (7):
-        Serial.print(settings.radioSyncWord);
+        Serial.print(settings.radioSpreadFactor);
         break;
       case (8):
-        Serial.print(settings.radioPreambleLength);
+        Serial.print(settings.radioCodingRate);
         break;
       case (9):
-        Serial.print(settings.frameSize);
+        Serial.print(settings.radioSyncWord);
         break;
       case (10):
-        Serial.print(settings.serialTimeoutBeforeSendingFrame_ms);
+        Serial.print(settings.radioPreambleLength);
         break;
       case (11):
-        Serial.print(settings.debug);
+        Serial.print(settings.frameSize);
         break;
       case (12):
+        Serial.print(settings.serialTimeoutBeforeSendingFrame_ms);
+        break;
+      case (13):
+        Serial.print(settings.debug);
+        break;
+      case (14):
         Serial.print(settings.echo);
+        break;
+      case (15):
+        Serial.print(settings.heartbeatTimeout);
+        break;
+      case (16):
+        Serial.print(settings.flowControl);
         break;
       default:
         Serial.print(F("0"));

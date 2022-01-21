@@ -10,21 +10,21 @@ PacketType identifyPacketType()
   radio.readData(incomingBuffer, MAX_PACKET_SIZE);
   uint8_t receivedBytes = radio.getPacketLength();
 
-  STR_DEBUG_PRINT(F("Received bytes: "));
-  STR_DEBUG_PRINTLN(receivedBytes);
+  LRS_DEBUG_PRINT(F("Received bytes: "));
+  LRS_DEBUG_PRINTLN(receivedBytes);
 
-  STR_DEBUG_PRINT(F("ProcessPacket NetID: 0x"));
-  if (incomingBuffer[receivedBytes - 2] < 0x10) STR_DEBUG_PRINT(F("0"));
-  STR_DEBUG_PRINT(incomingBuffer[receivedBytes - 2], HEX);
+  LRS_DEBUG_PRINT(F("ProcessPacket NetID: 0x"));
+  if (incomingBuffer[receivedBytes - 2] < 0x10) LRS_DEBUG_PRINT(F("0"));
+  LRS_DEBUG_PRINT(incomingBuffer[receivedBytes - 2], HEX);
 
-  STR_DEBUG_PRINT(F(" Control: 0x"));
-  if (incomingBuffer[receivedBytes - 1] < 0x10) STR_DEBUG_PRINT(F("0"));
-  STR_DEBUG_PRINT(incomingBuffer[receivedBytes - 1], HEX);
-  STR_DEBUG_PRINTLN();
+  LRS_DEBUG_PRINT(F(" Control: 0x"));
+  if (incomingBuffer[receivedBytes - 1] < 0x10) LRS_DEBUG_PRINT(F("0"));
+  LRS_DEBUG_PRINT(incomingBuffer[receivedBytes - 1], HEX);
+  LRS_DEBUG_PRINTLN();
 
   if (receivedBytes < 2)
   {
-    STR_DEBUG_PRINTLN(F("Bad packet"));
+    LRS_DEBUG_PRINTLN(F("Bad packet"));
     return (PROCESS_BAD_PACKET);
   }
 
@@ -34,14 +34,14 @@ PacketType identifyPacketType()
 
   if (receivedNetID != settings.netID)
   {
-    STR_DEBUG_PRINT(F("NetID mismatch: "));
-    STR_DEBUG_PRINTLN(receivedNetID);
+    LRS_DEBUG_PRINT(F("NetID mismatch: "));
+    LRS_DEBUG_PRINTLN(receivedNetID);
     return (PROCESS_NETID_MISMATCH);
   }
 
   if (receiveTrailer.ack == 1)
   {
-    STR_DEBUG_PRINTLN(F("RX: Ack packet"));
+    LRS_DEBUG_PRINTLN(F("RX: Ack packet"));
     return (PROCESS_ACK_PACKET);
   }
 
@@ -54,7 +54,7 @@ PacketType identifyPacketType()
       //Check packet contents
       if (memcmp(lastPacket, incomingBuffer, lastPacketSize) == 0)
       {
-        STR_DEBUG_PRINTLN(F("Duplicate received. Acking again."));
+        LRS_DEBUG_PRINTLN(F("Duplicate received. Acking again."));
         return (PROCESS_DUPLICATE_PACKET); //It's a duplicate. Ack then ignore
       }
     }
@@ -220,7 +220,7 @@ void configureRadio()
       Serial.println(F("Radio init failed. Check settings."));
     }
   }
-  STR_DEBUG_PRINTLN(F("Radio online"));
+  LRS_DEBUG_PRINTLN(F("Radio online"));
 }
 
 
@@ -241,14 +241,14 @@ void returnToReceiving()
     Serial.println(state);
     while (true);
   }
-  
+
   digitalWrite(pin_trigger, HIGH);
 }
 
 //Create short packet of 2 control bytes - query remote radio for proof of life (ack)
 void sendPingPacket()
 {
-  STR_DEBUG_PRINT(F("TX: Ping "));
+  LRS_DEBUG_PRINT(F("TX: Ping "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
   outgoingPacket[0] = settings.netID;
@@ -262,7 +262,7 @@ void sendPingPacket()
 //Create short packet of 2 control bytes - do not expect ack
 void sendAckPacket()
 {
-  STR_DEBUG_PRINT(F("TX: Ack "));
+  LRS_DEBUG_PRINT(F("TX: Ack "));
   responseTrailer.ack = 1; //This is an ACK to a previous reception
   responseTrailer.resend = 0; //This is not a resend
   outgoingPacket[0] = settings.netID;
@@ -276,7 +276,7 @@ void sendAckPacket()
 //Create packet of current data + control bytes - expect ACK from recipient
 void sendDataPacket()
 {
-  STR_DEBUG_PRINT(F("TX: Data "));
+  LRS_DEBUG_PRINT(F("TX: Data "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
   outgoingPacket[packetSize] = settings.netID;
@@ -290,7 +290,7 @@ void sendDataPacket()
 //Create packet of current data + control bytes - expect ACK from recipient
 void sendResendPacket()
 {
-  STR_DEBUG_PRINT(F("TX: Resend "));
+  LRS_DEBUG_PRINT(F("TX: Resend "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 1; //This is a resend
   outgoingPacket[packetSize] = settings.netID;
@@ -307,7 +307,7 @@ void sendPacket()
   digitalWrite(pin_act, HIGH);
 
   currentChannel = 0; //Return home before every transmission
-  STR_DEBUG_PRINTLN(channels[currentChannel], 3);
+  LRS_DEBUG_PRINTLN(channels[currentChannel], 3);
   radio.setFrequency(channels[currentChannel]);
   radio.clearFHSSInt();
   int state = radio.startTransmit(outgoingPacket, packetSize);
@@ -319,14 +319,14 @@ void sendPacket()
 
     packetSent++;
 
-    STR_DEBUG_PRINT(F("PacketAirTime: "));
-    STR_DEBUG_PRINTLN(packetAirTime);
-    STR_DEBUG_PRINT(F("responseDelay: "));
-    STR_DEBUG_PRINTLN(responseDelay, 3);
+    LRS_DEBUG_PRINT(F("PacketAirTime: "));
+    LRS_DEBUG_PRINTLN(packetAirTime);
+    LRS_DEBUG_PRINT(F("responseDelay: "));
+    LRS_DEBUG_PRINTLN(responseDelay, 3);
   }
   else
   {
-    STR_DEBUG_PRINTLN(F("Error: TX"));
+    LRS_DEBUG_PRINTLN(F("Error: TX"));
   }
 
   packetTimestamp = millis(); //Move timestamp even if error
@@ -383,6 +383,9 @@ bool myRandBit;
 //Generate unique hop table based on radio settings
 void generateHopTable()
 {
+  if (channels != NULL) free(channels);
+  channels = (float *)malloc(settings.numberOfChannels * sizeof(float));
+
   float channelSpacing = (settings.frequencyMax - settings.frequencyMin) / (float)(settings.numberOfChannels + 2);
   //  Serial.print("Channel Spacing: ");
   //  Serial.println(channelSpacing, 3);
@@ -461,10 +464,10 @@ void hopChannel()
   currentChannel++;
   currentChannel %= settings.numberOfChannels;
 
-  //  STR_DEBUG_PRINT("HopChannel: currentChannel: ");
-  //  STR_DEBUG_PRINT(currentChannel);
-  //  STR_DEBUG_PRINT(" radioChannel: ");
-  //  STR_DEBUG_PRINTLN(radio.getFHSSChannel());
+  //  LRS_DEBUG_PRINT("HopChannel: currentChannel: ");
+  //  LRS_DEBUG_PRINT(currentChannel);
+  //  LRS_DEBUG_PRINT(" radioChannel: ");
+  //  LRS_DEBUG_PRINTLN(radio.getFHSSChannel());
 
   radio.setFrequency(channels[currentChannel]);
   hopsCompleted++;
@@ -479,11 +482,11 @@ void hopChannel()
 bool receiveInProcess()
 {
   uint8_t radioStatus = radio.getModemStatus();
-  if(radioStatus & 0b1011)
+  if (radioStatus & 0b1011)
   {
     //Serial.print("stat: 0x");
     //Serial.println(radioStatus, HEX);
-    return(true);
+    return (true);
   }
-  return(false);
+  return (false);
 }

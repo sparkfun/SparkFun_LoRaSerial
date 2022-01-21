@@ -50,12 +50,12 @@ void updateSerial()
     if (availableRXBytes() == sizeof(serialReceiveBuffer) - 1)
     {
       //Buffer full! Don't read bytes.
-      if (pin_rts != 255)
+      if (pin_rts != 255 && settings.flowControl == true)
         digitalWrite(pin_rts, LOW); //Don't give me more
     }
     else
     {
-      if (pin_rts != 255)
+      if (pin_rts != 255 && settings.flowControl == true)
         digitalWrite(pin_rts, HIGH); //Ok to send more
 
       byte incoming = Serial.read();
@@ -100,20 +100,29 @@ void updateSerial()
   } //End Serial.available()
 }
 
+//Returns true if CTS is asserted (high = host says it's ok to send data)
+bool isCTS()
+{
+  if (pin_cts == 255) return (true); //CTS not implmented on this board
+  if (settings.flowControl == false) return (true); //CTS turned off
+  if (digitalRead(pin_cts) == HIGH) return (true);
+  return (false);
+}
+
 //Push any new serial to radio if frame size or timeout is hit
 void processWaitingSerial()
 {
   //Push any available data out
   if (availableRXBytes() >= settings.frameSize)
   {
-    STR_DEBUG_PRINTLN(F("Sending max frame"));
+    LRS_DEBUG_PRINTLN(F("Sending max frame"));
     sendToRadio();
   }
 
   //Check if we should send out a partial frame
   else if (availableRXBytes() > 0 && (millis() - lastByteReceived_ms) >= settings.serialTimeoutBeforeSendingFrame_ms)
   {
-    STR_DEBUG_PRINTLN(F("Sending partial frame"));
+    LRS_DEBUG_PRINTLN(F("Sending partial frame"));
     sendToRadio();
   }
 }
