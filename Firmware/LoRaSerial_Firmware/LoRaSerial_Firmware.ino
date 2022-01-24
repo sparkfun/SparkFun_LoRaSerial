@@ -15,14 +15,14 @@
   For a graphical view of the system state machine see:
 
   Processors supported:
-    ESP32
     SAMD21
+    ESP32
 
   For other processors the following unique features must be considered:
     Interrupt capable pins for DIO0/1
     Processor reset
     EEPROM read/write/commit
-    ~10k RAM for serial RX/TX and radio buffers
+    ~14k RAM for serial RX/TX and radio buffers
 
   Compiled with Arduino v1.8.15
 
@@ -33,32 +33,49 @@
     (done) Add ability to query module for max bytes per second with current settings
     (done) Add Link and Activity LEDs
     (done) Add AirSpeed setting that automatically sets the spread, bandwidth, etc
-    Implement low power sleep during receiving mode
-    Implement radio power down mode
-    Remote commands RTIx
-    Add \r requirement to enter command mode
-    Add I2C/Qwiic interface
-    (done) Implement check radio status flags before talk
-    Add broadcast. Don't set setting.netID to 255 (as we need it for channel array generation)
-      Base should set netID to 255. Rovers should accept netID 255 without pause.
-    Put responseDelay divisor into settings
-    Change channels[] to malloc or other (not hard coded)
-    Add processor guard to limit Uno to 16 channels (float array is a ram sink)
-
+    (done) Change channels[] to malloc or other (not hard coded)
     (done) Add min/max radio frequency at commands
     (done) move heartBeatTimeout to settings. Good for distance testing.
     (done) Add ATSx option for enable/disable flow control
     (done) Settings: Limit frame size to 256 - 2 (for trailer and control)
-
     (done) Add more state checking RADIOLIB_ERR_TX_TIMEOUT when we send packets out radio sendDataPacket et al
     (done) Fix ack timeout. Should be packetAirTime + controlPacketAirTime, not 2* packetAirTime
-    Put all the platform specific functions into a header or guarded area (reset, eeprom?, etc)
-    Add data size to all SAMD boards
+    (done) Implement check radio status flags before talk
     (done) If hopping has begun but we don't receive another dio1ISR within hop time, return to receiving
     (done) Print data to both USB and Serial1
+
+    Implement low power sleep during receiving mode - ArduinoLowPower
+    Implement radio power down mode
+    Remote commands RTIx
+    Add \r requirement to enter command mode
+    Add I2C/Qwiic interface
+    Add broadcast. Don't set setting.netID to 255 (as we need it for channel array generation)
+      Base should set netID to 255. Rovers should accept netID 255 without pause.
+    Put responseDelay divisor into settings
+    Put all the platform specific functions into a header or guarded area (reset, eeprom?, etc)
+    Add data size to all SAMD boards
     Read data from both USB And Serial1
 
+    Add Broadcast boolean to settings
+    Add NetID to commands and register table
+    Verify ESP32 EEPROM writing
+    Turn off local echo
+    Implement spread factor 6, pre-known packet sized transactions
+
+    Verify that TX/RX of 2k bytes matches airspeed calculations. Set trigger at each data packet send. 
+    28800 air time: controlAirTime of 3ms (including fudge) reported by unit does not match spreadsheet of 4.128ms.
+    Do you want a hopPeriod override so we can turn it off? Probably not.
+    Search TODO
+    Twinkle LEDs at poweron
+    Adjust link frequency based on frequency error report
+      float freqError = radio.getFrequencyError();
+      currentFreq -= (freqError / 1000000.0);
+    What would a debug RSSI + SNR + freqError (+ if invalid data received) dashboard look like with 500ms heartbeats?
+
+    
+
     Uno:
+    Add processor guard to limit Uno to 16 channels (float array is a ram sink)
     Consider malloc the outgoingPacket and incomingPacket sizes due to settings.framesize
     Move radiolib to static arrays to see real memory footprint
 */
@@ -76,6 +93,8 @@ const int FIRMWARE_VERSION_MINOR = 0;
 //    the major firmware version * 0x10
 //    the minor firmware version
 #define LRS_IDENTIFIER (FIRMWARE_VERSION_MAJOR * 0x10 + FIRMWARE_VERSION_MINOR)
+
+#define MAX_PACKET_SIZE 255
 
 #include "settings.h"
 #include "build.h"
@@ -102,6 +121,7 @@ uint8_t pin_trigger = 255;
 #if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_ARCH_ESP32)
 
 #include <EEPROM.h>
+#define EEPROM_SIZE 1024 //ESP32 emulates EEPROM in non-volatile storage (external flash IC). Max is 508k.
 
 #elif defined(ARDUINO_ARCH_SAMD)
 
@@ -144,7 +164,6 @@ const long minEscapeTime_ms = 2000; //Serial traffic must stop this amount befor
 
 //Global variables - Radio
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-#define MAX_PACKET_SIZE 256
 uint8_t outgoingPacket[MAX_PACKET_SIZE]; //Contains the current data in route to receiver
 uint8_t packetSize = 0; //Tracks how much data + control trailer
 uint16_t packetAirTime = 0; //Recalc'd with each new packet transmission
@@ -177,7 +196,7 @@ long stopTime = 0;
 
 void setup()
 {
-  eepromErase();
+  //eepromErase();
   
   Serial.begin(57600);
 
@@ -193,18 +212,24 @@ void setup()
   loadSettings(); //Load settings from EEPROM
 
   Serial.begin(settings.serialSpeed);
+#if defined(ARDUINO_ARCH_SAMD)
   Serial1.begin(settings.serialSpeed);
+#endif
 
   beginBoard(); //Determine what hardware platform we are running on
+
+  //settings.debug = true;
 
   generateHopTable();
 
   beginLoRa(); //Start radio
 
   Serial.println(F("LRS"));
+#if defined(ARDUINO_ARCH_SAMD)
   Serial1.println(F("LRS"));
+#endif
 
-  settings.debug = false;
+  //settings.debug = false;
 }
 
 void loop()

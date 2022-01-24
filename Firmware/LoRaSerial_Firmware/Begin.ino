@@ -39,6 +39,12 @@ void beginBoard()
   pin_cts = 255;
   pin_rts = 255;
 
+  pin_trigger = 13;
+
+  //Debug
+  pinMode(pin_trigger, OUTPUT);
+  digitalWrite(pin_trigger, HIGH);
+
   strcpy(platformPrefix, "ESP32 100mW");
 
 #elif defined(ARDUINO_ARCH_SAMD)
@@ -55,7 +61,7 @@ void beginBoard()
   pin_link = 8;
 
   pin_trigger = A2;
-
+                                   
   //Flow control
   pinMode(pin_rts, OUTPUT);
   digitalWrite(pin_rts, HIGH);

@@ -24,12 +24,15 @@ void updateSerial()
     {
       if (isCTS())
       {
-        digitalWrite(pin_trigger, LOW);
         //Print data to both ports
         for (int x = 0 ; x < availableTXBytes() ; x++)
         {
           Serial.write(serialTransmitBuffer[txTail]);
+          Serial.flush(); //Prevent serial hardware from blocking more than this one write
+#if defined(ARDUINO_ARCH_SAMD)
           Serial1.write(serialTransmitBuffer[txTail]);
+          Serial1.flush(); //Prevent serial hardware from blocking more than this one write
+#endif
           txTail++;
           txTail %= sizeof(serialTransmitBuffer);
 
@@ -39,7 +42,6 @@ void updateSerial()
 
           if (isCTS() == false) break;
         }
-        digitalWrite(pin_trigger, HIGH);
       }
     }
   }
@@ -91,8 +93,8 @@ void updateSerial()
         escapeCharsReceived = 0; //Update timeout check for escape char and partial frame
       }
 
-      //if (settings.echo == true)
-      Serial.write(incoming);
+      if (settings.echo == true)
+        Serial.write(incoming);
 
       serialReceiveBuffer[rxHead++] = incoming; //Push char to holding buffer
       rxHead %= sizeof(serialReceiveBuffer);
@@ -109,26 +111,30 @@ bool isCTS()
   return (false);
 }
 
-//Push any new serial to radio if frame size or timeout is hit
-void processWaitingSerial()
+//If we have data to send, get the packet ready
+//Return true if new data is ready to be sent
+bool processWaitingSerial()
 {
   //Push any available data out
   if (availableRXBytes() >= settings.frameSize)
   {
     LRS_DEBUG_PRINTLN(F("Sending max frame"));
-    sendToRadio();
+    readyOutgoingPacket();
+    return (true);
   }
 
   //Check if we should send out a partial frame
   else if (availableRXBytes() > 0 && (millis() - lastByteReceived_ms) >= settings.serialTimeoutBeforeSendingFrame_ms)
   {
     LRS_DEBUG_PRINTLN(F("Sending partial frame"));
-    sendToRadio();
+    readyOutgoingPacket();
+    return (true);
   }
+  return (false);
 }
 
 //Send a portion of the serialReceiveBuffer to outgoingPacket
-void sendToRadio()
+void readyOutgoingPacket()
 {
   uint16_t bytesToSend = availableRXBytes();
   if (bytesToSend > settings.frameSize) bytesToSend = settings.frameSize;
@@ -143,6 +149,5 @@ void sendToRadio()
     tempTail %= sizeof(serialReceiveBuffer);
   }
 
-  startTime = millis();
   rxTail = tempTail; //TODO - We move the tail no matter if sendDataPacket was successful or errored out
 }

@@ -2,6 +2,7 @@
 //Add the response to a query: ATS13?
 //Add the data entry and validity check: ATS13=
 //Add the setting to displayParameters
+//Increase displayParameters loop value
 
 //Respond to AT commands
 void commandMode()
@@ -46,6 +47,7 @@ void commandMode()
               break;
             case ('O'): //Exit command mode
               configureRadio(); //Apply any new settings
+              generateHopTable(); //Generate freq with new settings
               reportOK();
               return;
               break;
@@ -261,9 +263,9 @@ void commandMode()
                 {
                   case ('='): //ATS1=
                     if (settingValue == 0
-                        || settingValue == 90
+                        || settingValue == 40
                         || settingValue == 150
-                        || settingValue == 300
+                        || settingValue == 400
                         || settingValue == 1200
                         || settingValue == 2400
                         || settingValue == 4800
@@ -533,7 +535,7 @@ byte readLine(char* readBuffer, byte bufferLength)
 //Show current settings in user friendly way
 void displayParameters()
 {
-  for (uint8_t x = 0 ; x <= 12 ; x++)
+  for (uint8_t x = 0 ; x <= 16 ; x++)
   {
     Serial.print(F("S"));
     Serial.print(x);

@@ -1,5 +1,9 @@
 void loadSettings()
 {
+#if defined(ARDUINO_ARCH_ESP32)
+  EEPROM.begin(EEPROM_SIZE);
+#endif
+
   //Check to see if EEPROM is blank
   uint32_t testRead = 0;
   if (EEPROM.get(0, testRead) == 0xFFFFFFFF)

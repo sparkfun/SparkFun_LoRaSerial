@@ -4,8 +4,6 @@ void updateRadioState()
   {
     case RADIO_NO_LINK_RECEIVING_STANDBY:
       {
-        digitalWrite(pin_trigger, LOW);
-        digitalWrite(pin_trigger, HIGH);
         if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
         {
           transactionComplete = false; //Reset ISR flag
@@ -36,6 +34,9 @@ void updateRadioState()
             sendPingPacket();
             transactionComplete = false; //Reset ISR flag
             changeState(RADIO_NO_LINK_TRANSMITTING);
+                digitalWrite(pin_trigger, LOW);
+                delayMicroseconds(500);
+                digitalWrite(pin_trigger, HIGH);
           }
           else
             LRS_DEBUG_PRINTLN("NO_LINK_RECEIVING_STANDBY: RX In Progress");
@@ -93,6 +94,9 @@ void updateRadioState()
 
         else if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response
         {
+                digitalWrite(pin_trigger, LOW);
+                delayMicroseconds(700);
+                digitalWrite(pin_trigger, HIGH);
           returnToReceiving();
           changeState(RADIO_NO_LINK_RECEIVING_STANDBY); //Give up. No ACK recevied.
         }
@@ -183,11 +187,16 @@ void updateRadioState()
           //If the radio is available, send any data in the serial buffer over the radio
           if (receiveInProcess() == false)
           {
-            if (availableRXBytes())
+            if (availableRXBytes()) //If we have bytes
             {
-              processWaitingSerial();
-              sendDataPacket();
-              changeState(RADIO_TRANSMITTING);
+              if (processWaitingSerial() == true) //If we've hit a frame size or frame-timed-out
+              {
+                digitalWrite(pin_trigger, LOW);
+                delayMicroseconds(500);
+                digitalWrite(pin_trigger, HIGH);
+                sendDataPacket();
+                changeState(RADIO_TRANSMITTING);
+              }
             }
           }
         } //End processWaitingSerial
@@ -208,6 +217,9 @@ void updateRadioState()
           }
           else
           {
+            digitalWrite(pin_trigger, LOW);
+            delayMicroseconds(500);
+            digitalWrite(pin_trigger, HIGH);
             returnToReceiving();
             changeState(RADIO_RECEIVING_STANDBY);
           }
@@ -255,6 +267,10 @@ void updateRadioState()
             if (receiveInProcess() == false)
             {
               LRS_DEBUG_PRINTLN(F("Packet Resend"));
+              //              Serial.println("\n$");
+              digitalWrite(pin_trigger, LOW);
+              delayMicroseconds(800);
+              digitalWrite(pin_trigger, HIGH);
               packetsResent++;
               sendResendPacket();
               changeState(RADIO_TRANSMITTING);
@@ -297,7 +313,7 @@ void updateRadioState()
         else if (packetType == PROCESS_DATA_PACKET)
         {
           //Move this packet into the tx buffer
-          //We cannot directly print here because it is blocking
+          //We cannot directly print here because Serial.print is blocking
           for (int x = 0 ; x < lastPacketSize ; x++)
           {
             serialTransmitBuffer[txHead++] = lastPacket[x];

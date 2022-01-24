@@ -72,7 +72,7 @@ PacketType identifyPacketType()
   receivedBytes -= 2; //Remove control bytes
 
   //Update lastPacket details with current packet
-  memcpy(&lastPacket, incomingBuffer, receivedBytes);
+  memcpy(lastPacket, incomingBuffer, receivedBytes);
   lastPacketSize = receivedBytes;
 
   return (PROCESS_DATA_PACKET);
@@ -92,20 +92,20 @@ void configureRadio()
       case (0):
         //Custom settings - use settings without modification
         break;
-      case (90):
-        settings.radioSpreadFactor = 12;
-        settings.radioBandwidth = 62.5;
-        settings.radioCodingRate = 8;
-        break;
-      case (150):
+      case (40):
         settings.radioSpreadFactor = 11;
         settings.radioBandwidth = 62.5;
         settings.radioCodingRate = 8;
         break;
-      case (300):
+      case (150):
         settings.radioSpreadFactor = 10;
         settings.radioBandwidth = 62.5;
-        settings.radioCodingRate = 7;
+        settings.radioCodingRate = 8;
+        break;
+      case (400):
+        settings.radioSpreadFactor = 10;
+        settings.radioBandwidth = 125;
+        settings.radioCodingRate = 8;
         break;
       case (1200):
         settings.radioSpreadFactor = 9;
@@ -184,13 +184,16 @@ void configureRadio()
   // HoppingPeriod = Tsym * FreqHoppingPeriod
   // Given defaults of spreadfactor = 9, bandwidth = 125, it follows Tsym = 4.10ms
   // HoppingPeriod = 4.10 * x = Yms. Can be as high as 400ms to be within regulatory limits
-  uint16_t hoppingPeriod = (uint8_t)(400.0 / calcSymbolTime()); //Limit FHSS dwell time to 400ms max. / automatically floors number
+  uint16_t hoppingPeriod = 400.0 / calcSymbolTime(); //Limit FHSS dwell time to 400ms max. / automatically floors number
   if (hoppingPeriod > 255) hoppingPeriod = 255; //Limit to 8 bits
-  radio.setFHSSHoppingPeriod(hoppingPeriod);
+  //radio.setFHSSHoppingPeriod(hoppingPeriod);
+  radio.setFHSSHoppingPeriod(0);
 
   controlPacketAirTime = calcAirTime(2); //Used for response timeout during RADIO_ACK_WAIT
-  uint16_t responseDelay = controlPacketAirTime / 8;//16; //Give the receiver a bit of wiggle time to respond
+  uint16_t responseDelay = controlPacketAirTime / settings.responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
   controlPacketAirTime += responseDelay;
+
+  controlPacketAirTime += 10;
 
   if (settings.debug == true)
   {
@@ -206,6 +209,8 @@ void configureRadio()
     Serial.println(settings.radioSyncWord);
     Serial.print(F("radioPreambleLength: "));
     Serial.println(settings.radioPreambleLength);
+    Serial.print(F("calcSymbolTime: "));
+    Serial.println(calcSymbolTime());
     Serial.print(F("HoppingPeriod: "));
     Serial.println(hoppingPeriod);
     Serial.print(F("controlPacketAirTime: "));
@@ -226,8 +231,6 @@ void configureRadio()
 
 void returnToReceiving()
 {
-  digitalWrite(pin_trigger, LOW);
-
   digitalWrite(pin_act, LOW);
   currentChannel = 0; //Return home before receiving
   radio.setFrequency(channels[currentChannel]);
@@ -237,12 +240,9 @@ void returnToReceiving()
 
   int state = radio.startReceive();
   if (state != RADIOLIB_ERR_NONE) {
-    Serial.print(F("Receive failed: "));
-    Serial.println(state);
-    while (true);
+    LRS_DEBUG_PRINT(F("Receive failed: "));
+    LRS_DEBUG_PRINTLN(state);
   }
-
-  digitalWrite(pin_trigger, HIGH);
 }
 
 //Create short packet of 2 control bytes - query remote radio for proof of life (ack)
@@ -293,8 +293,8 @@ void sendResendPacket()
   LRS_DEBUG_PRINT(F("TX: Resend "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 1; //This is a resend
-  outgoingPacket[packetSize] = settings.netID;
-  memcpy(&outgoingPacket[packetSize + 1], &responseTrailer, 1);
+  //outgoingPacket[packetSize] = settings.netID;
+  //memcpy(&outgoingPacket[packetSize + 1], &responseTrailer, 1);
   //packetSize += 2; //Don't adjust the packet size
   //packetSent = 0; //Don't reset
   expectingAck = true; //We expect destination to ack
@@ -314,7 +314,7 @@ void sendPacket()
   if (state == RADIOLIB_ERR_NONE)
   {
     packetAirTime = calcAirTime(packetSize); //Calculate packet air size while we're transmitting in the background
-    uint16_t responseDelay = packetAirTime / 8;//16; //Give the receiver a bit of wiggle time to respond
+    uint16_t responseDelay = packetAirTime / settings.responseDelayDivisor;//16; //Give the receiver a bit of wiggle time to respond
     packetAirTime += responseDelay;
 
     packetSent++;
@@ -358,7 +358,7 @@ uint16_t calcAirTime(uint8_t bytesToSend)
   float tPayload = payloadBytes * tSym;
   float tPacket = tPreamble + tPayload;
 
-  return ((uint16_t)tPacket);
+  return ((uint16_t)ceil(tPacket));
 }
 
 //Given spread factor and bandwidth, return symbol time
@@ -482,11 +482,8 @@ void hopChannel()
 bool receiveInProcess()
 {
   uint8_t radioStatus = radio.getModemStatus();
-  if (radioStatus & 0b1011)
-  {
-    //Serial.print("stat: 0x");
-    //Serial.println(radioStatus, HEX);
-    return (true);
-  }
+  if (radioStatus & 0b1 == 0) return (false); //If bit 0 is cleared, no link
+  if (radioStatus & 0b11 == 0) return (false); //If bit 1 is cleared, no link
+  if (radioStatus & 0b1011) return (true); //If all bits are set, we have link
   return (false);
 }
