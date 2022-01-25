@@ -326,6 +326,18 @@ void updateRadioState()
         }
         else if (packetType == PROCESS_DATA_PACKET)
         {
+          if (settings.displayPacketQuality == true)
+          {
+            Serial.println();
+            Serial.print(F("R:"));
+            Serial.print(radio.getRSSI());
+            Serial.print(F("\tS:"));
+            Serial.print(radio.getSNR());
+            Serial.print(F("\tfE:"));
+            Serial.print(radio.getFrequencyError());
+            Serial.println();
+          }
+
           //Move this packet into the tx buffer
           //We cannot directly print here because Serial.print is blocking
           for (int x = 0 ; x < lastPacketSize ; x++)
