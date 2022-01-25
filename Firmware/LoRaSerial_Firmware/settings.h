@@ -43,7 +43,7 @@ typedef struct struct_settings {
 
   uint8_t netID = 192; //Both radios must share a network ID
   uint32_t serialSpeed = 57600; //Default to 57600bps to match RTK Surveyor default firmware
-  uint32_t airSpeed = 28800; //4800; //Default to ~523 bytes per second to support RTCM. Overrides spread, bandwidth, and coding
+  uint32_t airSpeed = 4800; //Default to ~523 bytes per second to support RTCM. Overrides spread, bandwidth, and coding
   uint16_t radioBroadcastPower_dbm = 20; //Max software setting is 20 but radios with built-in PA will get 30dBm(1W) with rx/tx_en pins
   float frequencyMin = 902.0; //MHz
   float frequencyMax = 928.0; //MHz
@@ -57,9 +57,11 @@ typedef struct struct_settings {
   uint16_t serialTimeoutBeforeSendingFrame_ms = 50; //Send partial buffer if time expires
   bool debug = false; //Print basic events: ie, radio state changes
   bool echo = false; //Print locally inputted serial
-  uint16_t heartbeatTimeout = 5000; //ms before sending ping to see if link is active
+  uint16_t heartbeatTimeout = 500;//5000; //ms before sending ping to see if link is active
   bool flowControl = false; //Enable the use of CTS/RTS flow control signals
   uint8_t responseDelayDivisor = 4; //Add on to max response time after packet has been sent. Factor of 2. 8 is ok. 4 is good. A smaller number increases the delay.
+  bool displayPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
+  bool autoTuneFrequency = true; //Based on the last packets frequency error, adjust our next transaction frequency
   
 } Settings;
 Settings settings;

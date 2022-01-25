@@ -11,8 +11,8 @@ void beginBoard()
   pin_rst = A2;
   pin_cts = 9;
   pin_rts = 10;
-  pin_act = 6;
-  pin_link = 4;
+  pin_activityLED = 6;
+  pin_linkLED = 4;
 
   //Flow control
   pinMode(pin_rts, OUTPUT);
@@ -20,11 +20,11 @@ void beginBoard()
 
   pinMode(pin_cts, INPUT_PULLUP);
 
-  pinMode(pin_act, OUTPUT);
-  digitalWrite(pin_act, LOW);
+  pinMode(pin_activityLED, OUTPUT);
+  digitalWrite(pin_activityLED, LOW);
 
-  pinMode(pin_link, OUTPUT);
-  digitalWrite(pin_link, LOW);
+  pinMode(pin_linkLED, OUTPUT);
+  digitalWrite(pin_linkLED, LOW);
 
   strcpy(platformPrefix, "ATMEGA328 1W");
 
@@ -57,11 +57,13 @@ void beginBoard()
   pin_rst = 6;
   pin_cts = 255; //TODO
   pin_rts = 255;
-  pin_act = 9;
-  pin_link = 8;
+  pin_activityLED = 9;
+  pin_linkLED = 8;
+  pin_txLED = 255; //TODO
+  pin_rxLED = 255;
 
   pin_trigger = A2;
-                                   
+
   //Flow control
   pinMode(pin_rts, OUTPUT);
   digitalWrite(pin_rts, HIGH);
@@ -69,11 +71,11 @@ void beginBoard()
   pinMode(pin_cts, INPUT_PULLUP);
 
   //LEDs
-  pinMode(pin_act, OUTPUT);
-  digitalWrite(pin_act, LOW);
+  pinMode(pin_activityLED, OUTPUT);
+  digitalWrite(pin_activityLED, LOW);
 
-  pinMode(pin_link, OUTPUT);
-  digitalWrite(pin_link, LOW);
+  pinMode(pin_linkLED, OUTPUT);
+  digitalWrite(pin_linkLED, LOW);
 
   //Debug
   pinMode(pin_trigger, OUTPUT);
@@ -81,6 +83,22 @@ void beginBoard()
 
   strcpy(platformPrefix, "SAMD21 1W");
 #endif
+
+  //Dashbord Blink LEDs
+  for (int x = 0 ; x < 2 ; x++)
+  {
+    digitalWrite(pin_activityLED, HIGH);
+    digitalWrite(pin_linkLED, HIGH);
+    digitalWrite(pin_txLED, HIGH);
+    digitalWrite(pin_rxLED, HIGH);
+    delay(100);
+
+    digitalWrite(pin_activityLED, LOW);
+    digitalWrite(pin_linkLED, LOW);
+    digitalWrite(pin_txLED, LOW);
+    digitalWrite(pin_rxLED, LOW);
+    delay(100);
+  }
 }
 
 void beginLoRa()
@@ -92,7 +110,7 @@ void beginLoRa()
   {
     Serial.print(F("Radio init failed with code: "));
     Serial.println(state);
-    while(1); //Hard freeze
+    while (1); //Hard freeze
   }
 
   configureRadio(); //Apply current settings

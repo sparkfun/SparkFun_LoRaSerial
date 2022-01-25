@@ -62,17 +62,10 @@
     Turn off local echo
     Implement spread factor 6, pre-known packet sized transactions
 
-    Verify that TX/RX of 2k bytes matches airspeed calculations. Set trigger at each data packet send. 
-    28800 air time: controlAirTime of 3ms (including fudge) reported by unit does not match spreadsheet of 4.128ms.
-    Do you want a hopPeriod override so we can turn it off? Probably not.
+    Verify that TX/RX of 2k bytes matches airspeed calculations. Set trigger at each data packet send.
     Search TODO
     Twinkle LEDs at poweron
     Adjust link frequency based on frequency error report
-      float freqError = radio.getFrequencyError();
-      currentFreq -= (freqError / 1000000.0);
-    What would a debug RSSI + SNR + freqError (+ if invalid data received) dashboard look like with 500ms heartbeats?
-
-    
 
     Uno:
     Add processor guard to limit Uno to 16 channels (float array is a ram sink)
@@ -110,8 +103,10 @@ uint8_t pin_dio0 = 255;
 uint8_t pin_dio1 = 255;
 uint8_t pin_rts = 255;
 uint8_t pin_cts = 255;
-uint8_t pin_link = 255;
-uint8_t pin_act = 255;
+uint8_t pin_linkLED = 255;
+uint8_t pin_activityLED = 255;
+uint8_t pin_txLED = 255;
+uint8_t pin_rxLED = 255;
 
 uint8_t pin_trigger = 255;
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -186,6 +181,9 @@ volatile bool timeToHop = true; //Used in dio1ISR
 bool expectingAck = false; //Used by various send packet functions
 
 int hopsCompleted = 0;
+
+float frequencyCorrection = 0; //Adjust receive freq based on the last packet received freqError
+
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables
@@ -197,7 +195,7 @@ long stopTime = 0;
 void setup()
 {
   //eepromErase();
-  
+
   Serial.begin(57600);
 
 #if defined(ENABLE_DEVELOPER)
@@ -230,6 +228,8 @@ void setup()
 #endif
 
   //settings.debug = false;
+  settings.displayPacketQuality = true;
+  settings.autoTuneFrequency = true;
 }
 
 void loop()

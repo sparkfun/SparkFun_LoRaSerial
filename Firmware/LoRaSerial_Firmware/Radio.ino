@@ -231,9 +231,14 @@ void configureRadio()
 
 void returnToReceiving()
 {
-  digitalWrite(pin_act, LOW);
+  digitalWrite(pin_activityLED, LOW);
   currentChannel = 0; //Return home before receiving
-  radio.setFrequency(channels[currentChannel]);
+
+  if (settings.autoTuneFrequency == true)
+    radio.setFrequency(channels[currentChannel] - frequencyCorrection);
+  else
+    radio.setFrequency(channels[currentChannel]);
+
   radio.clearFHSSInt();
   hopsCompleted = 0; //Reset to detect in progress reception
   timeToHop = false;
@@ -304,11 +309,11 @@ void sendResendPacket()
 //Push the outgoing packet to the air
 void sendPacket()
 {
-  digitalWrite(pin_act, HIGH);
+  digitalWrite(pin_activityLED, HIGH);
 
   currentChannel = 0; //Return home before every transmission
+  radio.setFrequency(channels[currentChannel]); //Do not adjust frequency on TX, only RX.
   LRS_DEBUG_PRINTLN(channels[currentChannel], 3);
-  radio.setFrequency(channels[currentChannel]);
   radio.clearFHSSInt();
   int state = radio.startTransmit(outgoingPacket, packetSize);
   if (state == RADIOLIB_ERR_NONE)
@@ -469,7 +474,16 @@ void hopChannel()
   //  LRS_DEBUG_PRINT(" radioChannel: ");
   //  LRS_DEBUG_PRINTLN(radio.getFHSSChannel());
 
-  radio.setFrequency(channels[currentChannel]);
+  if (settings.autoTuneFrequency == true)
+  {
+    if (radioState == RADIO_RECEIVING_STANDBY || radioState == RADIO_ACK_WAIT) //Only adjust frequency on RX. Not TX.
+      radio.setFrequency(channels[currentChannel] - frequencyCorrection);
+    else
+      radio.setFrequency(channels[currentChannel]);
+  }
+  else
+    radio.setFrequency(channels[currentChannel]);
+
   hopsCompleted++;
   radio.clearFHSSInt();
   timeToHop = false;

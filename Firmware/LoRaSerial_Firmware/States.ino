@@ -34,9 +34,9 @@ void updateRadioState()
             sendPingPacket();
             transactionComplete = false; //Reset ISR flag
             changeState(RADIO_NO_LINK_TRANSMITTING);
-                digitalWrite(pin_trigger, LOW);
-                delayMicroseconds(500);
-                digitalWrite(pin_trigger, HIGH);
+            digitalWrite(pin_trigger, LOW);
+            delayMicroseconds(500);
+            digitalWrite(pin_trigger, HIGH);
           }
           else
             LRS_DEBUG_PRINTLN("NO_LINK_RECEIVING_STANDBY: RX In Progress");
@@ -54,7 +54,7 @@ void updateRadioState()
           {
             //Yay! Return to normal communication
             packetsLost = 0; //Reset, used for linkLost testing
-            digitalWrite(pin_link, HIGH);
+            digitalWrite(pin_linkLED, HIGH);
             returnToReceiving();
             changeState(RADIO_RECEIVING_STANDBY);
           }
@@ -94,9 +94,9 @@ void updateRadioState()
 
         else if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response
         {
-                digitalWrite(pin_trigger, LOW);
-                delayMicroseconds(700);
-                digitalWrite(pin_trigger, HIGH);
+          digitalWrite(pin_trigger, LOW);
+          delayMicroseconds(700);
+          digitalWrite(pin_trigger, HIGH);
           returnToReceiving();
           changeState(RADIO_NO_LINK_RECEIVING_STANDBY); //Give up. No ACK recevied.
         }
@@ -116,7 +116,7 @@ void updateRadioState()
         {
           //Yay! Return to normal communication
           packetsLost = 0; //Reset, used for linkLost testing
-          digitalWrite(pin_link, HIGH);
+          digitalWrite(pin_linkLED, HIGH);
           returnToReceiving();
           changeState(RADIO_RECEIVING_STANDBY);
         }
@@ -139,7 +139,7 @@ void updateRadioState()
       {
         if (linkLost())
         {
-          digitalWrite(pin_link, LOW);
+          digitalWrite(pin_linkLED, LOW);
 
           //Return to home channel and begin linking process
           currentChannel = 0;
@@ -294,19 +294,33 @@ void updateRadioState()
         //This packet is an ack. Are we expecting one?
         else if (packetType == PROCESS_ACK_PACKET)
         {
+          if (settings.displayPacketQuality == true)
+          {
+            Serial.println();
+            Serial.print(F("R:"));
+            Serial.print(radio.getRSSI());
+            Serial.print(F("\tS:"));
+            Serial.print(radio.getSNR());
+            Serial.print(F("\tfE:"));
+            Serial.print(radio.getFrequencyError());
+            Serial.println();
+          }
           packetsLost = 0; //Reset, used for linkLost testing
+          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           returnToReceiving();
           changeState(RADIO_RECEIVING_STANDBY);
         }
         else if (packetType == PROCESS_DUPLICATE_PACKET)
         {
           packetsLost = 0; //Reset, used for linkLost testing
+          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           sendAckPacket(); //It's a duplicate. Ack then ignore
           changeState(RADIO_TRANSMITTING);
         }
         else if (packetType == PROCESS_CONTROL_PACKET)
         {
           packetsLost = 0; //Reset, used for linkLost testing
+          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           sendAckPacket(); //Someone is pinging us
           changeState(RADIO_TRANSMITTING);
         }
@@ -321,6 +335,7 @@ void updateRadioState()
           }
 
           packetsLost = 0; //Reset, used for linkLost testing
+          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           sendAckPacket(); //Transmit ACK
           changeState(RADIO_TRANSMITTING);
         }
