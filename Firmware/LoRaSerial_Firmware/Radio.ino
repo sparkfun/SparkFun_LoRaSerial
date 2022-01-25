@@ -32,6 +32,16 @@ PacketType identifyPacketType()
   uint8_t receivedNetID = incomingBuffer[receivedBytes - 2];
   memcpy(&receiveTrailer, &incomingBuffer[receivedBytes - 1], 1);
 
+  receivedBytes -= 2; //Remove control bytes
+
+  //SF6 requires an implicit header which means there is no dataLength in the header
+  //Instead, we manually store it 3 bytes from the end (before NetID)
+  if (settings.radioSpreadFactor == 6)
+  {
+    receivedBytes -= 1; //Remove dataLen byte from end of data
+    receivedBytes = incomingBuffer[receivedBytes]; //Obtain actual packet data length
+  }
+
   if (receivedNetID != settings.netID)
   {
     LRS_DEBUG_PRINT(F("NetID mismatch: "));
@@ -65,11 +75,9 @@ PacketType identifyPacketType()
     }
   }
 
-  //We have empty control packet, used for scanning
-  if (receivedBytes == 2)
+  //We have empty data packet, this is a control packet used for ACK/scanning
+  if (receivedBytes == 0)
     return (PROCESS_CONTROL_PACKET);
-
-  receivedBytes -= 2; //Remove control bytes
 
   //Update lastPacket details with current packet
   memcpy(lastPacket, incomingBuffer, receivedBytes);
@@ -256,8 +264,6 @@ void sendPingPacket()
   LRS_DEBUG_PRINT(F("TX: Ping "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
-  outgoingPacket[0] = settings.netID;
-  memcpy(&outgoingPacket[1], &responseTrailer, 1);
   packetSize = 2;
   packetSent = 0; //Reset the number of times we've sent this packet
   expectingAck = true; //We expect destination to ack
@@ -270,8 +276,6 @@ void sendAckPacket()
   LRS_DEBUG_PRINT(F("TX: Ack "));
   responseTrailer.ack = 1; //This is an ACK to a previous reception
   responseTrailer.resend = 0; //This is not a resend
-  outgoingPacket[0] = settings.netID;
-  memcpy(&outgoingPacket[1], &responseTrailer, 1);
   packetSize = 2;
   packetSent = 0; //Reset the number of times we've sent this packet
   expectingAck = false; //We do not expect destination to ack
@@ -284,8 +288,6 @@ void sendDataPacket()
   LRS_DEBUG_PRINT(F("TX: Data "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
-  outgoingPacket[packetSize] = settings.netID;
-  memcpy(&outgoingPacket[packetSize + 1], &responseTrailer, 1);
   packetSize += 2;
   packetSent = 0; //Reset the number of times we've sent this packet
   expectingAck = true; //We expect destination to ack
@@ -298,8 +300,6 @@ void sendResendPacket()
   LRS_DEBUG_PRINT(F("TX: Resend "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 1; //This is a resend
-  //outgoingPacket[packetSize] = settings.netID;
-  //memcpy(&outgoingPacket[packetSize + 1], &responseTrailer, 1);
   //packetSize += 2; //Don't adjust the packet size
   //packetSent = 0; //Don't reset
   expectingAck = true; //We expect destination to ack
@@ -309,6 +309,17 @@ void sendResendPacket()
 //Push the outgoing packet to the air
 void sendPacket()
 {
+  //SF6 requires an implicit header which means there is no dataLength in the header
+  if (settings.radioSpreadFactor == 6)
+  {
+    outgoingPacket[255 - 3] = packetSize; //manually store actual data length 3 bytes from the end (before NetID)
+    packetSize = 255; //Artifically set the packet size to 255 bytes
+  }
+
+  //Attach netID and control byte to end of packet
+  outgoingPacket[packetSize - 2] = settings.netID;
+  memcpy(&outgoingPacket[packetSize - 1], &responseTrailer, 1);
+
   digitalWrite(pin_activityLED, HIGH);
 
   currentChannel = 0; //Return home before every transmission
