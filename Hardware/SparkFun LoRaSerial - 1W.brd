@@ -40,10 +40,10 @@
 <layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="yes"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="46" name="Milling" color="3" fill="1" visible="no" active="yes"/>
+<layer number="46" name="Milling" color="3" fill="1" visible="yes" active="yes"/>
 <layer number="47" name="Measures" color="7" fill="1" visible="no" active="yes"/>
 <layer number="48" name="Document" color="7" fill="1" visible="no" active="yes"/>
-<layer number="49" name="Reference" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="49" name="Reference" color="7" fill="1" visible="no" active="yes"/>
 <layer number="50" name="dxf" color="7" fill="1" visible="no" active="yes"/>
 <layer number="51" name="tDocu" color="6" fill="1" visible="yes" active="yes"/>
 <layer number="52" name="bDocu" color="7" fill="1" visible="no" active="yes"/>
@@ -217,6 +217,8 @@ HASL RoHS Finish</text>
 <wire x1="49.53" y1="8.89" x2="50.8" y2="8.89" width="0.127" layer="20"/>
 <wire x1="50.8" y1="8.89" x2="50.8" y2="1.27" width="0.127" layer="20"/>
 <wire x1="50.8" y1="1.27" x2="49.53" y2="1.27" width="0.127" layer="20"/>
+<text x="0.635" y="19.685" size="0.762" layer="46" font="vector" ratio="15" rot="R90" align="center">Route Out</text>
+<text x="50.165" y="18.923" size="0.762" layer="46" font="vector" ratio="15" rot="R90" align="center">Route Out</text>
 </plain>
 <libraries>
 <library name="SparkFun-Aesthetics">
