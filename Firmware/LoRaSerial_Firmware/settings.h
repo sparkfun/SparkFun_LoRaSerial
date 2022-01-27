@@ -57,11 +57,12 @@ typedef struct struct_settings {
   uint16_t serialTimeoutBeforeSendingFrame_ms = 50; //Send partial buffer if time expires
   bool debug = false; //Print basic events: ie, radio state changes
   bool echo = false; //Print locally inputted serial
-  uint16_t heartbeatTimeout = 500;//5000; //ms before sending ping to see if link is active
+  uint16_t heartbeatTimeout = 5000; //ms before sending ping to see if link is active
   bool flowControl = false; //Enable the use of CTS/RTS flow control signals
   uint8_t responseDelayDivisor = 4; //Add on to max response time after packet has been sent. Factor of 2. 8 is ok. 4 is good. A smaller number increases the delay.
   bool displayPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
   bool autoTuneFrequency = true; //Based on the last packets frequency error, adjust our next transaction frequency
+  bool frequencyHop = true; //Hop between frequencies to avoid dwelling on any one channel for too long
   
 } Settings;
 Settings settings;

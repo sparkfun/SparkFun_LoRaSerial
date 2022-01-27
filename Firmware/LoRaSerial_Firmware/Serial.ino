@@ -139,6 +139,12 @@ void readyOutgoingPacket()
   uint16_t bytesToSend = availableRXBytes();
   if (bytesToSend > settings.frameSize) bytesToSend = settings.frameSize;
 
+  //SF6 requires an implicit header which means there is no dataLength in the header
+  if (settings.radioSpreadFactor == 6)
+  {
+    if (bytesToSend > 255 - 3) bytesToSend = 255 - 3; //We are going to transmit 255 bytes no matter what
+  }
+
   packetSize = bytesToSend;
 
   //Move this portion of the circular buffer into the outgoingPacket
@@ -150,4 +156,5 @@ void readyOutgoingPacket()
   }
 
   rxTail = tempTail; //TODO - We move the tail no matter if sendDataPacket was successful or errored out
+
 }

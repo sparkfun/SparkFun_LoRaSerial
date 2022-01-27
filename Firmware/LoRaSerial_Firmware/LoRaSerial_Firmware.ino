@@ -10,7 +10,16 @@
   as opposed to something like LoRaWAN that operates on the data and network layers. For this reason
   LoRaSerial is not intended to operate on LoRaWAN.
 
-  The command structure is based on the SiK Ardupilot radio.
+  The system requests an ACK for certain packet types. 
+  
+  Each packet contains data plus a NetID (byte) and Control byte. 
+  For transmissions at SpreadFactor 6 the packet length is set to 250 bytes and an additional byte is 
+  transmitted before NetID that repsents the actual data length within the packet.
+
+  The max packet size for the SX127x is 255 bytes. With the NetID and control bytes removed, we have
+  253 bytes available for data (252 when spread factor is 6).
+
+  The AT command structure is based on the SiK Ardupilot radio.
 
   For a graphical view of the system state machine see:
 
@@ -20,7 +29,7 @@
 
   For other processors the following unique features must be considered:
     Interrupt capable pins for DIO0/1
-    Processor reset
+    Processor reset (command ATZ)
     EEPROM read/write/commit
     ~14k RAM for serial RX/TX and radio buffers
 
@@ -43,6 +52,8 @@
     (done) Implement check radio status flags before talk
     (done) If hopping has begun but we don't receive another dio1ISR within hop time, return to receiving
     (done) Print data to both USB and Serial1
+    (done) Twinkle LEDs at poweron
+    (done) Adjust link frequency based on frequency error report
 
     Implement low power sleep during receiving mode - ArduinoLowPower
     Implement radio power down mode
@@ -59,13 +70,11 @@
     Add Broadcast boolean to settings
     Add NetID to commands and register table
     Verify ESP32 EEPROM writing
-    Turn off local echo
     Implement spread factor 6, pre-known packet sized transactions
+    Implement train feature
 
     Verify that TX/RX of 2k bytes matches airspeed calculations. Set trigger at each data packet send.
     Search TODO
-    Twinkle LEDs at poweron
-    Adjust link frequency based on frequency error report
 
     Uno:
     Add processor guard to limit Uno to 16 channels (float array is a ram sink)
@@ -87,7 +96,7 @@ const int FIRMWARE_VERSION_MINOR = 0;
 //    the minor firmware version
 #define LRS_IDENTIFIER (FIRMWARE_VERSION_MAJOR * 0x10 + FIRMWARE_VERSION_MINOR)
 
-#define MAX_PACKET_SIZE 255
+#define MAX_PACKET_SIZE 255 //Limited by SX127x
 
 #include "settings.h"
 #include "build.h"
@@ -217,6 +226,11 @@ void setup()
   beginBoard(); //Determine what hardware platform we are running on
 
   //settings.debug = true;
+  settings.radioBandwidth = 500;
+  settings.radioSpreadFactor = 6;
+  settings.radioCodingRate = 6;
+  settings.airSpeed = 28800;
+  settings.frequencyHop = true;
 
   generateHopTable();
 
@@ -228,8 +242,10 @@ void setup()
 #endif
 
   //settings.debug = false;
-  settings.displayPacketQuality = true;
-  settings.autoTuneFrequency = true;
+  settings.displayPacketQuality = false;
+  settings.autoTuneFrequency = false;
+  settings.debug = true;
+  settings.heartbeatTimeout = 2000;
 }
 
 void loop()

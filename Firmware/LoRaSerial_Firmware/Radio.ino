@@ -32,15 +32,21 @@ PacketType identifyPacketType()
   uint8_t receivedNetID = incomingBuffer[receivedBytes - 2];
   memcpy(&receiveTrailer, &incomingBuffer[receivedBytes - 1], 1);
 
-  receivedBytes -= 2; //Remove control bytes
-
   //SF6 requires an implicit header which means there is no dataLength in the header
   //Instead, we manually store it 3 bytes from the end (before NetID)
   if (settings.radioSpreadFactor == 6)
   {
-    receivedBytes -= 1; //Remove dataLen byte from end of data
-    receivedBytes = incomingBuffer[receivedBytes]; //Obtain actual packet data length
+    //We've either received a control packet (2 bytes) or a data packet
+    if (receivedBytes > 2)
+    {
+      receivedBytes = incomingBuffer[receivedBytes - 3]; //Obtain actual packet data length
+      receivedBytes -= 1; //Remove the manual packetSize byte from consideration
+    }
+    LRS_DEBUG_PRINT(F("SF6 Received bytes: "));
+    LRS_DEBUG_PRINTLN(receivedBytes);
   }
+
+  receivedBytes -= 2; //Remove control bytes
 
   if (receivedNetID != settings.netID)
   {
@@ -75,14 +81,18 @@ PacketType identifyPacketType()
     }
   }
 
-  //We have empty data packet, this is a control packet used for ACK/scanning
+  //We have empty data packet, this is a control packet used for pinging/scanning
   if (receivedBytes == 0)
+  {
+    LRS_DEBUG_PRINTLN(F("RX: Ping packet"));
     return (PROCESS_CONTROL_PACKET);
+  }
 
   //Update lastPacket details with current packet
   memcpy(lastPacket, incomingBuffer, receivedBytes);
   lastPacketSize = receivedBytes;
 
+  LRS_DEBUG_PRINTLN(F("RX: Data packet"));
   return (PROCESS_DATA_PACKET);
 }
 
@@ -183,6 +193,18 @@ void configureRadio()
   if (radio.setPreambleLength(settings.radioPreambleLength) == RADIOLIB_ERR_INVALID_PREAMBLE_LENGTH)
     success = false;
 
+  //SF6 requires an implicit header. We will transmit 255 bytes for most packets and 2 bytes for ACK packets.
+  if (settings.radioSpreadFactor == 6)
+  {
+    if (radio.implicitHeader(255) != RADIOLIB_ERR_NONE)
+      success = false;
+  }
+  else
+  {
+    if (radio.explicitHeader() != RADIOLIB_ERR_NONE)
+      success = false;
+  }
+
   radio.setDio0Action(dio0ISR); //Called when transmission is finished
   radio.setDio1Action(dio1ISR); //Called after a transmission has started, so we can move to next freq
 
@@ -193,9 +215,10 @@ void configureRadio()
   // Given defaults of spreadfactor = 9, bandwidth = 125, it follows Tsym = 4.10ms
   // HoppingPeriod = 4.10 * x = Yms. Can be as high as 400ms to be within regulatory limits
   uint16_t hoppingPeriod = 400.0 / calcSymbolTime(); //Limit FHSS dwell time to 400ms max. / automatically floors number
-  if (hoppingPeriod > 255) hoppingPeriod = 255; //Limit to 8 bits
-  //radio.setFHSSHoppingPeriod(hoppingPeriod);
-  radio.setFHSSHoppingPeriod(0);
+  if (hoppingPeriod > 254) hoppingPeriod = 254; //Limit to 8 bits. SF6 does not work with period of 255.
+  if (settings.frequencyHop == false) hoppingPeriod = 0; //Disable
+  if (radio.setFHSSHoppingPeriod(hoppingPeriod) != RADIOLIB_ERR_NONE)
+    success = false;
 
   controlPacketAirTime = calcAirTime(2); //Used for response timeout during RADIO_ACK_WAIT
   uint16_t responseDelay = controlPacketAirTime / settings.responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
@@ -236,7 +259,6 @@ void configureRadio()
   LRS_DEBUG_PRINTLN(F("Radio online"));
 }
 
-
 void returnToReceiving()
 {
   digitalWrite(pin_activityLED, LOW);
@@ -251,7 +273,27 @@ void returnToReceiving()
   hopsCompleted = 0; //Reset to detect in progress reception
   timeToHop = false;
 
-  int state = radio.startReceive();
+  int state;
+  if (settings.radioSpreadFactor > 6)
+  {
+    state = radio.startReceive();
+  }
+  else
+  {
+    if (radioState == RADIO_NO_LINK_RECEIVING_STANDBY
+        || radioState == RADIO_NO_LINK_TRANSMITTING
+        || radioState == RADIO_NO_LINK_ACK_WAIT
+        || radioState == RADIO_NO_LINK_RECEIVED_PACKET)
+      state = radio.startReceive(2); //NO_LINK is 2 byte transactions only
+    else if (radioState == RADIO_RECEIVING_STANDBY)
+      state = radio.startReceive(255); //Expect a full data packet
+    else if (radioState == RADIO_ACK_WAIT)
+      state = radio.startReceive(2); //Expect a control packet
+    else if (radioState == RADIO_TRANSMITTING
+             || radioState == RADIO_RECEIVED_PACKET)
+      Serial.println("Should not be here");
+  }
+
   if (state != RADIOLIB_ERR_NONE) {
     LRS_DEBUG_PRINT(F("Receive failed: "));
     LRS_DEBUG_PRINTLN(state);
@@ -266,6 +308,18 @@ void sendPingPacket()
   responseTrailer.resend = 0; //This is not a resend
   packetSize = 2;
   packetSent = 0; //Reset the number of times we've sent this packet
+
+    //SF6 requires an implicit header which means there is no dataLength in the header
+  //Because we cannot predict when a ping packet will be received, the receiver will always
+  //expecting 255 bytes. Pings must be increased to 255 bytes. ACKs are still 2 bytes.
+  if (settings.radioSpreadFactor == 6)
+  {
+    //Manually store actual data length 3 bytes from the end (before NetID)
+    //Manual packet size is whatever has been processed + 1 for the manual packetSize byte
+    outgoingPacket[255 - 3] = packetSize + 1;
+    packetSize = 253; //We're now going to transmit 255 bytes
+  }
+
   expectingAck = true; //We expect destination to ack
   sendPacket();
 }
@@ -288,6 +342,16 @@ void sendDataPacket()
   LRS_DEBUG_PRINT(F("TX: Data "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
+
+  //SF6 requires an implicit header which means there is no dataLength in the header
+  if (settings.radioSpreadFactor == 6)
+  {
+    //Manually store actual data length 3 bytes from the end (before NetID)
+    //Manual packet size is whatever has been processed + 1 for the manual packetSize byte
+    outgoingPacket[255 - 3] = packetSize + 1;
+    packetSize = 255; //We're now going to transmit 255 bytes
+  }
+
   packetSize += 2;
   packetSent = 0; //Reset the number of times we've sent this packet
   expectingAck = true; //We expect destination to ack
@@ -309,13 +373,6 @@ void sendResendPacket()
 //Push the outgoing packet to the air
 void sendPacket()
 {
-  //SF6 requires an implicit header which means there is no dataLength in the header
-  if (settings.radioSpreadFactor == 6)
-  {
-    outgoingPacket[255 - 3] = packetSize; //manually store actual data length 3 bytes from the end (before NetID)
-    packetSize = 255; //Artifically set the packet size to 255 bytes
-  }
-
   //Attach netID and control byte to end of packet
   outgoingPacket[packetSize - 2] = settings.netID;
   memcpy(&outgoingPacket[packetSize - 1], &responseTrailer, 1);
@@ -330,7 +387,7 @@ void sendPacket()
   if (state == RADIOLIB_ERR_NONE)
   {
     packetAirTime = calcAirTime(packetSize); //Calculate packet air size while we're transmitting in the background
-    uint16_t responseDelay = packetAirTime / settings.responseDelayDivisor;//16; //Give the receiver a bit of wiggle time to respond
+    uint16_t responseDelay = packetAirTime / settings.responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
     packetAirTime += responseDelay;
 
     packetSent++;
@@ -507,8 +564,6 @@ void hopChannel()
 bool receiveInProcess()
 {
   uint8_t radioStatus = radio.getModemStatus();
-  if (radioStatus & 0b1 == 0) return (false); //If bit 0 is cleared, no link
-  if (radioStatus & 0b11 == 0) return (false); //If bit 1 is cleared, no link
-  if (radioStatus & 0b1011) return (true); //If all bits are set, we have link
-  return (false);
+  if ((radioStatus & 0b1) == 0) return (false); //If bit 0 is cleared, there is no receive in progress
+  return (true); //If bit 0 is set, forget the other bits, there is a receive in progress
 }
