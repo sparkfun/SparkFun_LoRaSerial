@@ -65,7 +65,6 @@ void updateRadioState()
           }
           else
           {
-            expectingAck = false;
             changeState(RADIO_NO_LINK_ACK_WAIT);
             returnToReceiving();
           }
@@ -189,6 +188,9 @@ void updateRadioState()
         {
           if (receiveInProcess() == false)
           {
+          digitalWrite(pin_trigger, LOW);
+          delayMicroseconds(4500);
+          digitalWrite(pin_trigger, HIGH);
             sendPingPacket();
             changeState(RADIO_TRANSMITTING);
           }
@@ -225,7 +227,6 @@ void updateRadioState()
 
           if (expectingAck == true)
           {
-            expectingAck = false;
             changeState(RADIO_ACK_WAIT);
             returnToReceiving();
           }

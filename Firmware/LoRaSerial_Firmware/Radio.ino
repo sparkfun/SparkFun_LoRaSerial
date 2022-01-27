@@ -280,18 +280,23 @@ void returnToReceiving()
   }
   else
   {
-    if (radioState == RADIO_NO_LINK_RECEIVING_STANDBY
-        || radioState == RADIO_NO_LINK_TRANSMITTING
-        || radioState == RADIO_NO_LINK_ACK_WAIT
-        || radioState == RADIO_NO_LINK_RECEIVED_PACKET)
-      state = radio.startReceive(2); //NO_LINK is 2 byte transactions only
-    else if (radioState == RADIO_RECEIVING_STANDBY)
-      state = radio.startReceive(255); //Expect a full data packet
-    else if (radioState == RADIO_ACK_WAIT)
+    if (expectingAck)
+    {
+      radio.implicitHeader(2);
       state = radio.startReceive(2); //Expect a control packet
-    else if (radioState == RADIO_TRANSMITTING
-             || radioState == RADIO_RECEIVED_PACKET)
-      Serial.println("Should not be here");
+      digitalWrite(pin_trigger, LOW);
+      delayMicroseconds(50);
+      digitalWrite(pin_trigger, HIGH);
+      expectingAck = false; //Do not return to this receiving configuration if something goes wrong
+    }
+    else
+    {
+      radio.implicitHeader(255);
+      state = radio.startReceive(255); //Expect a full data packet
+      digitalWrite(pin_trigger, LOW);
+      delayMicroseconds(250);
+      digitalWrite(pin_trigger, HIGH);
+    }
   }
 
   if (state != RADIOLIB_ERR_NONE) {
@@ -309,7 +314,7 @@ void sendPingPacket()
   packetSize = 2;
   packetSent = 0; //Reset the number of times we've sent this packet
 
-    //SF6 requires an implicit header which means there is no dataLength in the header
+  //SF6 requires an implicit header which means there is no dataLength in the header
   //Because we cannot predict when a ping packet will be received, the receiver will always
   //expecting 255 bytes. Pings must be increased to 255 bytes. ACKs are still 2 bytes.
   if (settings.radioSpreadFactor == 6)
@@ -317,7 +322,7 @@ void sendPingPacket()
     //Manually store actual data length 3 bytes from the end (before NetID)
     //Manual packet size is whatever has been processed + 1 for the manual packetSize byte
     outgoingPacket[255 - 3] = packetSize + 1;
-    packetSize = 253; //We're now going to transmit 255 bytes
+    packetSize = 255; //We're now going to transmit 255 bytes
   }
 
   expectingAck = true; //We expect destination to ack
@@ -349,7 +354,7 @@ void sendDataPacket()
     //Manually store actual data length 3 bytes from the end (before NetID)
     //Manual packet size is whatever has been processed + 1 for the manual packetSize byte
     outgoingPacket[255 - 3] = packetSize + 1;
-    packetSize = 255; //We're now going to transmit 255 bytes
+    packetSize = 253; //We're now going to transmit 255 bytes
   }
 
   packetSize += 2;
