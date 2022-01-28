@@ -225,11 +225,6 @@ void setup()
 
   beginBoard(); //Determine what hardware platform we are running on
 
-  settings.displayPacketQuality = false;
-  settings.frequencyHop = true;
-  settings.autoTuneFrequency = true;
-  settings.heartbeatTimeout = 2000;
-
   generateHopTable();
 
   beginLoRa(); //Start radio

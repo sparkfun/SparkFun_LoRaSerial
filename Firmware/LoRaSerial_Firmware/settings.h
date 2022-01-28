@@ -12,7 +12,7 @@ typedef enum
 RadioStates radioState = RADIO_RECEIVING_STANDBY;
 
 //Possible types of packets received
-typedef enum 
+typedef enum
 {
   PROCESS_BAD_PACKET = 0,
   PROCESS_NETID_MISMATCH,
@@ -24,11 +24,10 @@ typedef enum
 
 struct ControlTrailer
 {
-  uint8_t remoteAT : 1;
   uint8_t resend : 1;
   uint8_t ack : 1;
-  uint8_t tx : 1;
-  uint8_t filler : 4;
+  uint8_t remoteAT : 1;
+  uint8_t filler : 5;
 };
 struct ControlTrailer receiveTrailer;
 struct ControlTrailer responseTrailer;
@@ -40,6 +39,7 @@ typedef struct struct_settings {
 
   uint8_t escapeCharacter = '+';
   uint8_t maxEscapeCharacters = 3; //Number of characters needed to enter command mode
+  uint8_t responseDelayDivisor = 4; //Add on to max response time after packet has been sent. Factor of 2. 8 is ok. 4 is good. A smaller number increases the delay.
 
   uint8_t netID = 192; //Both radios must share a network ID
   uint32_t serialSpeed = 57600; //Default to 57600bps to match RTK Surveyor default firmware
@@ -51,7 +51,7 @@ typedef struct struct_settings {
   float radioBandwidth = 500.0; //kHz 125/250/500 generally. We need 500kHz for higher data.
   uint8_t radioSpreadFactor = 9; //6 to 12. Use higher factor for longer range.
   uint8_t radioCodingRate = 6; //5 to 8. 6 was chosen to allow higher spread factor. Higher coding rates ensure less packets dropped.
-  uint8_t radioSyncWord = 18; //18=0x12 is default for custom/private networks. Different sync words does *not* guarantee a remote radio will not get packet.
+  uint8_t radioSyncWord = 18; //18 = 0x12 is default for custom/private networks. Different sync words does *not* guarantee a remote radio will not get packet.
   uint8_t radioPreambleLength = 8; //Number of symbols. Different lengths does *not* guarantee a remote radio privacy. 8 to 11 works. 8 to 15 drops some. 8 to 20 is silent.
   uint8_t frameSize = MAX_PACKET_SIZE - 2; //Send batches of bytes through LoRa link, max (255 - control trailer) = 253.
   uint16_t serialTimeoutBeforeSendingFrame_ms = 50; //Send partial buffer if time expires
@@ -59,11 +59,10 @@ typedef struct struct_settings {
   bool echo = false; //Print locally inputted serial
   uint16_t heartbeatTimeout = 5000; //ms before sending ping to see if link is active
   bool flowControl = false; //Enable the use of CTS/RTS flow control signals
-  uint8_t responseDelayDivisor = 4; //Add on to max response time after packet has been sent. Factor of 2. 8 is ok. 4 is good. A smaller number increases the delay.
-  bool displayPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
-  bool autoTuneFrequency = true; //Based on the last packets frequency error, adjust our next transaction frequency
   bool frequencyHop = true; //Hop between frequencies to avoid dwelling on any one channel for too long
-  
+  bool autoTuneFrequency = true; //Based on the last packets frequency error, adjust our next transaction frequency
+  bool displayPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
+
 } Settings;
 Settings settings;
 

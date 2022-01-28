@@ -120,8 +120,8 @@ void commandMode()
                   reportOK();
                 }
                 break;
-              case ('T'): //AT&T -
-                Serial.println(F("AT&T"));
+              case ('T'): //AT&T - Disable debugging report
+                settings.displayPacketQuality = false;
                 reportOK();
                 break;
               default:
@@ -131,15 +131,10 @@ void commandMode()
           }
           else
           {
-            //RSSI and TDM
-            if (strcmp_P(commandBuffer, PSTR("AT&T=RSSI")) == 0)
+            //RSSI
+            if (strcmp_P(commandBuffer, PSTR("AT&T=RSSI")) == 0) //Enable debugging report
             {
-              Serial.println(F("RSSI Debug"));
-              reportOK();
-            }
-            else if (strcmp_P(commandBuffer, PSTR("AT&T=TDM")) == 0)
-            {
-              Serial.println(F("TDM Debug"));
+              settings.displayPacketQuality = true;
               reportOK();
             }
             else
@@ -184,6 +179,15 @@ void commandMode()
                     break;
                   case ('6'): //ATS16?
                     Serial.println(settings.flowControl);
+                    break;
+                  case ('7'): //ATS17?
+                    Serial.println(settings.frequencyHop);
+                    break;
+                  case ('8'): //ATS18?
+                    Serial.println(settings.autoTuneFrequency);
+                    break;
+                  case ('9'): //ATS19?
+                    Serial.println(settings.displayPacketQuality);
                     break;
                   default:
                     reportERROR();
@@ -342,6 +346,33 @@ void commandMode()
                     if (settingValue >= 0 && settingValue <= 1)
                     {
                       settings.flowControl = settingValue;
+                      reportOK();
+                    }
+                    else
+                      reportERROR();
+                    break;
+                  case ('7'): //ATS17=
+                    if (settingValue >= 0 && settingValue <= 1)
+                    {
+                      settings.frequencyHop = settingValue;
+                      reportOK();
+                    }
+                    else
+                      reportERROR();
+                    break;
+                  case ('8'): //ATS18=
+                    if (settingValue >= 0 && settingValue <= 1)
+                    {
+                      settings.autoTuneFrequency = settingValue;
+                      reportOK();
+                    }
+                    else
+                      reportERROR();
+                    break;
+                  case ('9'): //ATS19=
+                    if (settingValue >= 0 && settingValue <= 1)
+                    {
+                      settings.displayPacketQuality = settingValue;
                       reportOK();
                     }
                     else
@@ -535,7 +566,7 @@ byte readLine(char* readBuffer, byte bufferLength)
 //Show current settings in user friendly way
 void displayParameters()
 {
-  for (uint8_t x = 0 ; x <= 16 ; x++)
+  for (uint8_t x = 0 ; x <= 19 ; x++)
   {
     Serial.print(F("S"));
     Serial.print(x);
@@ -594,6 +625,15 @@ void displayParameters()
         break;
       case (16):
         Serial.print(F("FlowControl"));
+        break;
+      case (17):
+        Serial.print(F("FrequencyHop"));
+        break;
+      case (18):
+        Serial.print(F("AutoTune"));
+        break;
+      case (19):
+        Serial.print(F("DisplayPacketQuality"));
         break;
       default:
         Serial.print(F("Unknown"));
@@ -655,6 +695,15 @@ void displayParameters()
         break;
       case (16):
         Serial.print(settings.flowControl);
+        break;
+      case (17):
+        Serial.print(settings.frequencyHop);
+        break;
+      case (18):
+        Serial.print(settings.autoTuneFrequency);
+        break;
+      case (19):
+        Serial.print(settings.displayPacketQuality);
         break;
       default:
         Serial.print(F("0"));
