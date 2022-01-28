@@ -233,7 +233,6 @@ void setup()
 #if defined(ARDUINO_ARCH_SAMD)
   Serial1.println(F("LRS"));
 #endif
-
 }
 
 void loop()

@@ -471,13 +471,9 @@ void generateHopTable()
   channels = (float *)malloc(settings.numberOfChannels * sizeof(float));
 
   float channelSpacing = (settings.frequencyMax - settings.frequencyMin) / (float)(settings.numberOfChannels + 2);
-  //  Serial.print("Channel Spacing: ");
-  //  Serial.println(channelSpacing, 3);
 
   //Keep away from edge of available spectrum
   float operatingMinFreq = settings.frequencyMin + (float)(channelSpacing / 2);
-  //  Serial.print("operatingMinFreq: ");
-  //  Serial.println(operatingMinFreq, 3);
 
   //Pre populate channel list
   for (int x = 0 ; x < settings.numberOfChannels ; x++)
@@ -485,10 +481,10 @@ void generateHopTable()
 
   //Feed random number generator with our specific platform settings
   //Use settings that must be identical to have a functioning link.
-  //For example, we do not use CodingRate because two radios can communicate with different values
-  myRandSeed = settings.netID + settings.airSpeed + (uint16_t)settings.radioBandwidth + settings.radioSpreadFactor;
-  //  Serial.print("myRandSeed: ");
-  //  Serial.println(myRandSeed);
+  //For example, we do not use coding rate because two radios can communicate with different coding rate values
+  myRandSeed = settings.netID + settings.airSpeed + settings.numberOfChannels
+               + (uint16_t)settings.frequencyMin + (uint16_t)settings.frequencyMax
+               + (uint16_t)settings.radioBandwidth + settings.radioSpreadFactor + settings.frequencyHop;
 
   //'Randomly' shuffle list based on our specific seed
   shuffle(channels, settings.numberOfChannels);
@@ -503,9 +499,6 @@ void generateHopTable()
       Serial.print(channels[x], 3);
       Serial.println();
     }
-
-    //Serial.print("size of channel table: ");
-    //Serial.println(sizeof(channels));
   }
 }
 
