@@ -19,8 +19,7 @@ void updateRadioState()
         {
           if (receiveInProcess() == false)
           {
-            LRS_DEBUG_PRINTLN("Noise triggered hop");
-            returnToReceiving(); //Reset our channel to 0
+            returnToReceiving(); //Noise triggered hop. Reset our channel to 0
             changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
           }
         }
@@ -31,12 +30,7 @@ void updateRadioState()
         {
           if (receiveInProcess() == false)
           {
-            if (settings.debug == true)
-            {
-              digitalWrite(pin_trigger, LOW);
-              delayMicroseconds(500);
-              digitalWrite(pin_trigger, HIGH);
-            }
+            triggerEvent(TRIGGER_NOLINK_SEND_PING);
             sentFirstPing = true;
             sendPingPacket();
             transactionComplete = false; //Reset ISR flag
@@ -56,12 +50,7 @@ void updateRadioState()
 
           if (expectingAck == false)
           {
-            if (settings.debug == true)
-            {
-              digitalWrite(pin_trigger, LOW);
-              delayMicroseconds(1000);
-              digitalWrite(pin_trigger, HIGH);
-            }
+            triggerEvent(TRIGGER_NOLINK_SEND_ACK_PACKET);
             //We're done transmitting our ack packet
             //Yay! Return to normal communication
             packetsLost = 0; //Reset, used for linkLost testing
@@ -85,7 +74,6 @@ void updateRadioState()
         if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
         {
           randomSeed(radio.randomByte()); //Reseed the random delay between heartbeats
-
           transactionComplete = false; //Reset ISR flag
           changeState(RADIO_NO_LINK_RECEIVED_PACKET);
         }
@@ -99,15 +87,8 @@ void updateRadioState()
         {
           if (receiveInProcess() == false)
           {
-            if (settings.debug == true)
-            {
-
-              digitalWrite(pin_trigger, LOW);
-              delayMicroseconds(1500);
-              digitalWrite(pin_trigger, HIGH);
-            }
-            LRS_DEBUG_PRINTLN("Noise triggered hop");
-            returnToReceiving(); //Reset our channel to 0
+            triggerEvent(TRIGGER_NOLINK_NOISE_TRIGGERED_HOP);
+            returnToReceiving(); //Noise triggered hop. Reset our channel to 0
             changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
           }
         }
@@ -115,13 +96,7 @@ void updateRadioState()
         else if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response
         {
           //Give up. No ACK recevied.
-          if (settings.debug == true)
-          {
-
-            digitalWrite(pin_trigger, LOW);
-            delayMicroseconds(2000);
-            digitalWrite(pin_trigger, HIGH);
-          }
+          triggerEvent(TRIGGER_NOLINK_NO_ACK_GIVEUP);
           returnToReceiving();
           changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
         }
@@ -152,13 +127,7 @@ void updateRadioState()
         }
         else if (packetType == PROCESS_CONTROL_PACKET)
         {
-          if (settings.debug == true)
-          {
-
-            digitalWrite(pin_trigger, LOW);
-            delayMicroseconds(2500);
-            digitalWrite(pin_trigger, HIGH);
-          }
+          triggerEvent(TRIGGER_NOLINK_IDENT_PACKET);
           sendAckPacket(); //Someone is pinging us
           changeState(RADIO_NO_LINK_TRANSMITTING);
         }
@@ -185,6 +154,7 @@ void updateRadioState()
 
         else if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
         {
+          triggerEvent(TRIGGER_LINK_PACKET_RECEIVED);
           transactionComplete = false; //Reset ISR flag
           changeState(RADIO_RECEIVED_PACKET);
         }
@@ -198,7 +168,7 @@ void updateRadioState()
         {
           if (receiveInProcess() == false)
           {
-            LRS_DEBUG_PRINTLN("Noise triggered hop");
+            triggerEvent(TRIGGER_LINK_NOISE_TRIGGERED_HOP);
             returnToReceiving(); //Reset our channel to 0
             changeState(RADIO_RECEIVING_STANDBY);
           }
@@ -208,12 +178,7 @@ void updateRadioState()
         {
           if (receiveInProcess() == false)
           {
-            if (settings.debug == true)
-            {
-              digitalWrite(pin_trigger, LOW);
-              delayMicroseconds(4500);
-              digitalWrite(pin_trigger, HIGH);
-            }
+            triggerEvent(TRIGGER_LINK_SEND_PING);
             sendPingPacket();
             changeState(RADIO_TRANSMITTING);
           }
@@ -230,16 +195,7 @@ void updateRadioState()
             {
               if (processWaitingSerial() == true) //If we've hit a frame size or frame-timed-out
               {
-                //Trigger for transmission timing
-                digitalWrite(pin_trigger, LOW);
-                delayMicroseconds(25);
-                digitalWrite(pin_trigger, HIGH);
-                if (settings.debug == true)
-                {
-                  digitalWrite(pin_trigger, LOW);
-                  delayMicroseconds(3000);
-                  digitalWrite(pin_trigger, HIGH);
-                }
+                triggerEvent(TRIGGER_LINK_DATA_PACKET);
                 sendDataPacket();
                 changeState(RADIO_TRANSMITTING);
               }
@@ -262,12 +218,7 @@ void updateRadioState()
           }
           else
           {
-            if (settings.debug == true)
-            {
-              digitalWrite(pin_trigger, LOW);
-              delayMicroseconds(3500);
-              digitalWrite(pin_trigger, HIGH);
-            }
+            triggerEvent(TRIGGER_LINK_SENT_ACK_PACKET);
             returnToReceiving();
             changeState(RADIO_RECEIVING_STANDBY);
           }
@@ -294,31 +245,9 @@ void updateRadioState()
         {
           if (receiveInProcess() == false)
           {
-            //The processor can get to a receiveInProgress = false before the radio triggers the receiveComplete ISR
-            //If we are using FHSS then check channel freq. If radio has jumped back to channel 0 then we know a transaction is complete.
-            if (settings.frequencyHop == true)
-            {
-              if (radio.getFHSSChannel() != 0)
-              {
-                digitalWrite(pin_trigger, LOW);
-                delayMicroseconds(75);
-                digitalWrite(pin_trigger, HIGH);
-                LRS_DEBUG_PRINTLN("Noise triggered hop");
-                returnToReceiving(); //Reset our channel to 0
-                changeState(RADIO_RECEIVING_STANDBY);
-              }
-            }
-            else
-            {
-              //If we're not using FHSS, use small delay.
-              delay(5); //Small wait before checking RX complete ISR again
-              if (transactionComplete == false)
-              {
-                LRS_DEBUG_PRINTLN("Noise triggered hop");
-                returnToReceiving(); //Reset our channel to 0
-                changeState(RADIO_RECEIVING_STANDBY);
-              }
-            }
+            triggerEvent(TRIGGER_LINK_NOISE_TRIGGERED_HOP_ACK_WAIT);
+            returnToReceiving(); //Noise triggered hop. Return to receiving.
+            changeState(RADIO_RECEIVING_STANDBY);
           } //End receive in progress
         } //End noise triggered hop testing
 
@@ -337,13 +266,7 @@ void updateRadioState()
           {
             if (receiveInProcess() == false)
             {
-              LRS_DEBUG_PRINTLN(F("Packet Resend"));
-              if (settings.debug == true)
-              {
-                digitalWrite(pin_trigger, LOW);
-                delayMicroseconds(4000);
-                digitalWrite(pin_trigger, HIGH);
-              }
+              triggerEvent(TRIGGER_LINK_PACKET_RESEND);
               packetsResent++;
               sendResendPacket();
               changeState(RADIO_TRANSMITTING);
@@ -367,10 +290,7 @@ void updateRadioState()
         //This packet is an ack. Are we expecting one?
         else if (packetType == PROCESS_ACK_PACKET)
         {
-          //Trigger for transmission timing
-          digitalWrite(pin_trigger, LOW);
-          delayMicroseconds(5);
-          digitalWrite(pin_trigger, HIGH);
+          triggerEvent(TRIGGER_ACK_PROCESSED); //Trigger for transmission timing
 
           if (settings.displayPacketQuality == true)
           {

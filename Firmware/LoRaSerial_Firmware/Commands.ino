@@ -713,3 +713,17 @@ void displayParameters()
     Serial.println();
   }
 }
+
+//Toggle a pin. Used for logic analyzer debugging.
+void triggerEvent(uint16_t triggerWidth)
+{
+  if (pin_trigger != 255)
+  {
+    if (settings.debug == true)
+    {
+      digitalWrite(pin_trigger, LOW);
+      delayMicroseconds(triggerWidth * 10);
+      digitalWrite(pin_trigger, HIGH);
+    }
+  }
+}
