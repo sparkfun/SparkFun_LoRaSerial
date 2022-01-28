@@ -214,8 +214,8 @@ void configureRadio()
   // HoppingPeriod = Tsym * FreqHoppingPeriod
   // Given defaults of spreadfactor = 9, bandwidth = 125, it follows Tsym = 4.10ms
   // HoppingPeriod = 4.10 * x = Yms. Can be as high as 400ms to be within regulatory limits
-  uint16_t hoppingPeriod = 400.0 / calcSymbolTime(); //Limit FHSS dwell time to 400ms max. / automatically floors number
-  if (hoppingPeriod > 254) hoppingPeriod = 254; //Limit to 8 bits. SF6 does not work with period of 255.
+  uint16_t hoppingPeriod = settings.maxDwellTime / calcSymbolTime(); //Limit FHSS dwell time to 400ms max. / automatically floors number
+  if (hoppingPeriod > 255) hoppingPeriod = 255; //Limit to 8 bits.
   if (settings.frequencyHop == false) hoppingPeriod = 0; //Disable
   if (radio.setFHSSHoppingPeriod(hoppingPeriod) != RADIOLIB_ERR_NONE)
     success = false;
@@ -223,8 +223,6 @@ void configureRadio()
   controlPacketAirTime = calcAirTime(2); //Used for response timeout during RADIO_ACK_WAIT
   uint16_t responseDelay = controlPacketAirTime / settings.responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
   controlPacketAirTime += responseDelay;
-
-  controlPacketAirTime += 10;
 
   if (settings.debug == true)
   {
@@ -568,6 +566,32 @@ void hopChannel()
 bool receiveInProcess()
 {
   uint8_t radioStatus = radio.getModemStatus();
-  if ((radioStatus & 0b1) == 0) return (false); //If bit 0 is cleared, there is no receive in progress
-  return (true); //If bit 0 is set, forget the other bits, there is a receive in progress
+  if ((radioStatus & 0b1) == 1) return (true); //If bit 0 is set, forget the other bits, there is a receive in progress
+  return (false); //No receive in process
+
+  //If bit 0 is cleared, there is likely no receive in progress, but we need to confirm it
+  //The radio will clear this bit before the radio triggers the receiveComplete ISR so we often have a race condition.
+
+  //If we are using FHSS then check channel freq. This is reset to 0 upon receive completion.
+  //If radio has jumped back to channel 0 then we can confirm a transaction is complete.
+  if (settings.frequencyHop == true)
+  {
+    if (radio.getFHSSChannel() == 0)
+      return (false); //Receive not in process
+
+    if (transactionComplete == false)
+      return (true); //Receive still in process
+  }
+  else
+  {
+    //If we're not using FHSS, use small delay.
+    delay(5); //Small wait before checking RX complete ISR again
+    if (transactionComplete == false)
+      return (true); //Receive still in process
+  }
+
+  return (false); //No receive in process
+
+  //if ((radioStatus & 0b1) == 0) return (false); //If bit 0 is cleared, there is no receive in progress
+  //return (true); //If bit 0 is set, forget the other bits, there is a receive in progress
 }

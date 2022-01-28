@@ -722,7 +722,7 @@ void triggerEvent(uint16_t triggerWidth)
     if (settings.debug == true)
     {
       digitalWrite(pin_trigger, LOW);
-      delayMicroseconds(triggerWidth * 10);
+      delayMicroseconds(triggerWidth);
       digitalWrite(pin_trigger, HIGH);
     }
   }

@@ -15,14 +15,14 @@ void updateRadioState()
 
         //If we have started hopping, and the radio no longer is receiving a packet, then the packet was corrupt.
         //Return to receiving
-        else if (hopsCompleted > 0)
-        {
-          if (receiveInProcess() == false)
-          {
-            returnToReceiving(); //Noise triggered hop. Reset our channel to 0
-            changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-          }
-        }
+//        else if (hopsCompleted > 0)
+//        {
+//          if (receiveInProcess() == false)
+//          {
+//            returnToReceiving(); //Noise triggered hop. Reset our channel to 0
+//            changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
+//          }
+//        }
 
         //Check to see if we need to send a ping
         else if ( (millis() - packetTimestamp) > (settings.heartbeatTimeout + random(0, 1000)) //Avoid pinging each other at same time
@@ -83,15 +83,15 @@ void updateRadioState()
 
         //If we have started hopping, and the radio no longer is receiving a packet, then the packet was corrupt.
         //Return to receiving
-        else if (hopsCompleted > 0)
-        {
-          if (receiveInProcess() == false)
-          {
-            triggerEvent(TRIGGER_NOLINK_NOISE_TRIGGERED_HOP);
-            returnToReceiving(); //Noise triggered hop. Reset our channel to 0
-            changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-          }
-        }
+//        else if (hopsCompleted > 0)
+//        {
+//          if (receiveInProcess() == false)
+//          {
+//            triggerEvent(TRIGGER_NOLINK_NOISE_TRIGGERED_HOP);
+//            returnToReceiving(); //Noise triggered hop. Reset our channel to 0
+//            changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
+//          }
+//        }
 
         else if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response
         {
@@ -164,15 +164,15 @@ void updateRadioState()
 
         //If we have started hopping, and the radio no longer is receiving a packet, then the packet was corrupt.
         //Return to receiving
-        else if (hopsCompleted > 0)
-        {
-          if (receiveInProcess() == false)
-          {
-            triggerEvent(TRIGGER_LINK_NOISE_TRIGGERED_HOP);
-            returnToReceiving(); //Reset our channel to 0
-            changeState(RADIO_RECEIVING_STANDBY);
-          }
-        }
+//        else if (hopsCompleted > 0)
+//        {
+//          if (receiveInProcess() == false)
+//          {
+//            triggerEvent(TRIGGER_LINK_NOISE_TRIGGERED_HOP);
+//            returnToReceiving(); //Reset our channel to 0
+//            changeState(RADIO_RECEIVING_STANDBY);
+//          }
+//        }
 
         else if ((millis() - packetTimestamp) > (settings.heartbeatTimeout + random(0, 1000))) //Avoid pinging each other at same time
         {
@@ -241,15 +241,15 @@ void updateRadioState()
 
         //If we have started hopping, and the radio no longer is receiving a packet, then the packet was corrupt.
         //Return to receiving
-        else if (hopsCompleted > 0)
-        {
-          if (receiveInProcess() == false)
-          {
-            triggerEvent(TRIGGER_LINK_NOISE_TRIGGERED_HOP_ACK_WAIT);
-            returnToReceiving(); //Noise triggered hop. Return to receiving.
-            changeState(RADIO_RECEIVING_STANDBY);
-          } //End receive in progress
-        } //End noise triggered hop testing
+//        else if (hopsCompleted > 0)
+//        {
+//          if (receiveInProcess() == false)
+//          {
+//            triggerEvent(TRIGGER_LINK_NOISE_TRIGGERED_HOP_ACK_WAIT);
+//            returnToReceiving(); //Noise triggered hop. Return to receiving.
+//            changeState(RADIO_RECEIVING_STANDBY);
+//          } //End receive in progress
+//        } //End noise triggered hop testing
 
         //Check to see if we need to retransmit
         if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response

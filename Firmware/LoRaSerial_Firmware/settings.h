@@ -24,25 +24,25 @@ typedef enum
 
 enum
 {
-  TRIGGER_ACK_PROCESSED = 1,
-  TRIGGER_DATA_SEND = 2,
-  TRIGGER_RTR_2BYTE = 3,
-  TRIGGER_RTR_255BYTE = 4,
+  TRIGGER_ACK_PROCESSED = 25,
+  TRIGGER_DATA_SEND = 50,
+  TRIGGER_RTR_2BYTE = 75,
+  TRIGGER_RTR_255BYTE = 100,
 
-  TRIGGER_LINK_SEND_PING = 5,
-  TRIGGER_LINK_SENT_ACK_PACKET = 6,
-  TRIGGER_LINK_NOISE_TRIGGERED_HOP = 7,
-  TRIGGER_LINK_NOISE_TRIGGERED_HOP_ACK_WAIT = 8,
-  TRIGGER_LINK_NO_ACK_GIVEUP = 9,
-  TRIGGER_LINK_PACKET_RESEND = 10,
-  TRIGGER_LINK_DATA_PACKET = 11,
-  TRIGGER_LINK_PACKET_RECEIVED = 12,
+  TRIGGER_LINK_SEND_PING = 125,
+  TRIGGER_LINK_SENT_ACK_PACKET = 150,
+  TRIGGER_LINK_NOISE_TRIGGERED_HOP = 175,
+  TRIGGER_LINK_NOISE_TRIGGERED_HOP_ACK_WAIT = 200,
+  TRIGGER_LINK_NO_ACK_GIVEUP = 225,
+  TRIGGER_LINK_PACKET_RESEND = 250,
+  TRIGGER_LINK_DATA_PACKET = 275,
+  TRIGGER_LINK_PACKET_RECEIVED = 300,
 
-  TRIGGER_NOLINK_SEND_PING = 13,
-  TRIGGER_NOLINK_SEND_ACK_PACKET = 14,
-  TRIGGER_NOLINK_NOISE_TRIGGERED_HOP = 15,
-  TRIGGER_NOLINK_NO_ACK_GIVEUP = 16,
-  TRIGGER_NOLINK_IDENT_PACKET = 17,
+  TRIGGER_NOLINK_SEND_PING = 325,
+  TRIGGER_NOLINK_SEND_ACK_PACKET = 350,
+  TRIGGER_NOLINK_NOISE_TRIGGERED_HOP = 375,
+  TRIGGER_NOLINK_NO_ACK_GIVEUP = 400,
+  TRIGGER_NOLINK_IDENT_PACKET = 425,
 };
 
 struct ControlTrailer
@@ -85,6 +85,7 @@ typedef struct struct_settings {
   bool frequencyHop = true; //Hop between frequencies to avoid dwelling on any one channel for too long
   bool autoTuneFrequency = true; //Based on the last packets frequency error, adjust our next transaction frequency
   bool displayPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
+  uint16_t maxDwellTime = 400; //Max number of ms before hopping (if enabled). Useful for configuring radio to be within regulator limits (FCC = 400ms max)
 
 } Settings;
 Settings settings;

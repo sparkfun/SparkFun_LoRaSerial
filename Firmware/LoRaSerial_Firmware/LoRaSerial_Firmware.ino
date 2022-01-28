@@ -23,6 +23,9 @@
 
   For a graphical view of the system state machine see:
 
+  Build notes:
+    RadioLib should have RADIOLIB_FIX_ERRATA_SX127X turned on (uncommented)
+
   Processors supported:
     SAMD21
     ESP32
@@ -225,6 +228,9 @@ void setup()
 
   beginBoard(); //Determine what hardware platform we are running on
 
+  settings.airSpeed = 28800;
+  settings.maxDwellTime = 400;
+  
   generateHopTable();
 
   beginLoRa(); //Start radio
@@ -234,7 +240,9 @@ void setup()
   Serial1.println(F("LRS"));
 #endif
 
-  settings.debug = true;
+  //settings.debug = true;
+  //settings.heartbeatTimeout = 2000;
+  settings.displayPacketQuality = true;
 }
 
 void loop()
