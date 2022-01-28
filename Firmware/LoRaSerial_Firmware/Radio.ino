@@ -284,18 +284,24 @@ void returnToReceiving()
     {
       radio.implicitHeader(2);
       state = radio.startReceive(2); //Expect a control packet
-      digitalWrite(pin_trigger, LOW);
-      delayMicroseconds(50);
-      digitalWrite(pin_trigger, HIGH);
+      if (settings.debug == true)
+      {
+        digitalWrite(pin_trigger, LOW);
+        delayMicroseconds(50);
+        digitalWrite(pin_trigger, HIGH);
+      }
       expectingAck = false; //Do not return to this receiving configuration if something goes wrong
     }
     else
     {
       radio.implicitHeader(255);
       state = radio.startReceive(255); //Expect a full data packet
-      digitalWrite(pin_trigger, LOW);
-      delayMicroseconds(250);
-      digitalWrite(pin_trigger, HIGH);
+      if (settings.debug == true)
+      {
+        digitalWrite(pin_trigger, LOW);
+        delayMicroseconds(250);
+        digitalWrite(pin_trigger, HIGH);
+      }
     }
   }
 
@@ -347,6 +353,8 @@ void sendDataPacket()
   LRS_DEBUG_PRINT(F("TX: Data "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
+  packetSize += 2; //Make room for control bytes
+  packetSent = 0; //Reset the number of times we've sent this packet
 
   //SF6 requires an implicit header which means there is no dataLength in the header
   if (settings.radioSpreadFactor == 6)
@@ -354,11 +362,9 @@ void sendDataPacket()
     //Manually store actual data length 3 bytes from the end (before NetID)
     //Manual packet size is whatever has been processed + 1 for the manual packetSize byte
     outgoingPacket[255 - 3] = packetSize + 1;
-    packetSize = 253; //We're now going to transmit 255 bytes
+    packetSize = 255; //We're now going to transmit 255 bytes
   }
 
-  packetSize += 2;
-  packetSent = 0; //Reset the number of times we've sent this packet
   expectingAck = true; //We expect destination to ack
   sendPacket();
 }

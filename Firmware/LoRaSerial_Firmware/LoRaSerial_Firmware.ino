@@ -225,12 +225,10 @@ void setup()
 
   beginBoard(); //Determine what hardware platform we are running on
 
-  //settings.debug = true;
-  settings.radioBandwidth = 500;
-  settings.radioSpreadFactor = 6;
-  settings.radioCodingRate = 6;
-  settings.airSpeed = 28800;
+  settings.displayPacketQuality = false;
   settings.frequencyHop = true;
+  settings.autoTuneFrequency = true;
+  settings.heartbeatTimeout = 2000;
 
   generateHopTable();
 
@@ -241,11 +239,6 @@ void setup()
   Serial1.println(F("LRS"));
 #endif
 
-  //settings.debug = false;
-  settings.displayPacketQuality = false;
-  settings.autoTuneFrequency = false;
-  settings.debug = true;
-  settings.heartbeatTimeout = 2000;
 }
 
 void loop()
