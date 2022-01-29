@@ -57,26 +57,27 @@
     (done) Print data to both USB and Serial1
     (done) Twinkle LEDs at poweron
     (done) Adjust link frequency based on frequency error report
+    (done) Implement spread factor 6, pre-known packet sized transactions
+    (done) Put responseDelay divisor into settings
+    (done) Verify that TX/RX of 2k bytes matches airspeed calculations. Set trigger at each data packet send.
 
     Implement low power sleep during receiving mode - ArduinoLowPower
     Implement radio power down mode
     Remote commands RTIx
     Add \r requirement to enter command mode
     Add I2C/Qwiic interface
+    
     Add broadcast. Don't set setting.netID to 255 (as we need it for channel array generation)
       Base should set netID to 255. Rovers should accept netID 255 without pause.
-    Put responseDelay divisor into settings
+    Add PointToPoint boolean to settings and commands
+    Add NetID to commands and register table
+
     Put all the platform specific functions into a header or guarded area (reset, eeprom?, etc)
     Add data size to all SAMD boards
     Read data from both USB And Serial1
 
-    Add Broadcast boolean to settings
-    Add NetID to commands and register table
-    Verify ESP32 EEPROM writing
-    Implement spread factor 6, pre-known packet sized transactions
     Implement train feature
 
-    Verify that TX/RX of 2k bytes matches airspeed calculations. Set trigger at each data packet send.
     Search TODO
 
     Uno:
@@ -230,6 +231,7 @@ void setup()
 
   settings.airSpeed = 28800;
   settings.maxDwellTime = 400;
+  settings.pointToPoint = false;
   
   generateHopTable();
 
@@ -240,7 +242,7 @@ void setup()
   Serial1.println(F("LRS"));
 #endif
 
-  //settings.debug = true;
+  settings.debug = true;
   //settings.heartbeatTimeout = 2000;
   settings.displayPacketQuality = true;
 }

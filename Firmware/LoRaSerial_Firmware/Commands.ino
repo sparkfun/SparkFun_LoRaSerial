@@ -46,8 +46,8 @@ void commandMode()
               Serial.println();
               break;
             case ('O'): //Exit command mode
-              configureRadio(); //Apply any new settings
               generateHopTable(); //Generate freq with new settings
+              configureRadio(); //Apply any new settings
               reportOK();
               return;
               break;

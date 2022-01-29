@@ -48,7 +48,7 @@ PacketType identifyPacketType()
 
   receivedBytes -= 2; //Remove control bytes
 
-  if (receivedNetID != settings.netID)
+  if (receivedNetID != settings.netID && settings.pointToPoint == true)
   {
     LRS_DEBUG_PRINT(F("NetID mismatch: "));
     LRS_DEBUG_PRINTLN(receivedNetID);
@@ -220,7 +220,7 @@ void configureRadio()
   if (radio.setFHSSHoppingPeriod(hoppingPeriod) != RADIOLIB_ERR_NONE)
     success = false;
 
-  controlPacketAirTime = calcAirTime(2); //Used for response timeout during RADIO_ACK_WAIT
+  controlPacketAirTime = calcAirTime(2); //Used for response timeout during RADIO_LINKED_ACK_WAIT
   uint16_t responseDelay = controlPacketAirTime / settings.responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
   controlPacketAirTime += responseDelay;
 
@@ -278,28 +278,18 @@ void returnToReceiving()
   }
   else
   {
-    if (expectingAck)
+    if (expectingAck && settings.pointToPoint == true)
     {
       radio.implicitHeader(2);
       state = radio.startReceive(2); //Expect a control packet
-      if (settings.debug == true)
-      {
-        digitalWrite(pin_trigger, LOW);
-        delayMicroseconds(50);
-        digitalWrite(pin_trigger, HIGH);
-      }
+      triggerEvent(TRIGGER_RTR_2BYTE);
       expectingAck = false; //Do not return to this receiving configuration if something goes wrong
     }
     else
     {
       radio.implicitHeader(255);
       state = radio.startReceive(255); //Expect a full data packet
-      if (settings.debug == true)
-      {
-        digitalWrite(pin_trigger, LOW);
-        delayMicroseconds(250);
-        digitalWrite(pin_trigger, HIGH);
-      }
+      triggerEvent(TRIGGER_RTR_255BYTE);
     }
   }
 
@@ -546,7 +536,8 @@ void hopChannel()
 
   if (settings.autoTuneFrequency == true)
   {
-    if (radioState == RADIO_RECEIVING_STANDBY || radioState == RADIO_ACK_WAIT) //Only adjust frequency on RX. Not TX.
+    if (radioState == RADIO_LINKED_RECEIVING_STANDBY || radioState == RADIO_LINKED_ACK_WAIT
+    || radioState == RADIO_BROADCASTING_RECEIVING_STANDBY) //Only adjust frequency on RX. Not TX.
       radio.setFrequency(channels[currentChannel] - frequencyCorrection);
     else
       radio.setFrequency(channels[currentChannel]);

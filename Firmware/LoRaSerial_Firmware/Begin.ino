@@ -118,7 +118,9 @@ void beginLoRa()
   returnToReceiving();
   int seed = radio.randomByte();
   randomSeed(seed);
-  LRS_DEBUG_PRINT("Ping timeout seed: ");
-  LRS_DEBUG_PRINTLN(seed);
-  changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
+
+  if(settings.pointToPoint == true)
+    changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
+  else
+    changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
 }

@@ -13,17 +13,6 @@ void updateRadioState()
         else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
           hopChannel();
 
-        //If we have started hopping, and the radio no longer is receiving a packet, then the packet was corrupt.
-        //Return to receiving
-//        else if (hopsCompleted > 0)
-//        {
-//          if (receiveInProcess() == false)
-//          {
-//            returnToReceiving(); //Noise triggered hop. Reset our channel to 0
-//            changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-//          }
-//        }
-
         //Check to see if we need to send a ping
         else if ( (millis() - packetTimestamp) > (settings.heartbeatTimeout + random(0, 1000)) //Avoid pinging each other at same time
                   || sentFirstPing == false) //Immediately send pings at POR
@@ -56,7 +45,7 @@ void updateRadioState()
             packetsLost = 0; //Reset, used for linkLost testing
             digitalWrite(pin_linkLED, HIGH);
             returnToReceiving();
-            changeState(RADIO_RECEIVING_STANDBY);
+            changeState(RADIO_LINKED_RECEIVING_STANDBY);
           }
           else
           {
@@ -80,18 +69,6 @@ void updateRadioState()
 
         else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
           hopChannel();
-
-        //If we have started hopping, and the radio no longer is receiving a packet, then the packet was corrupt.
-        //Return to receiving
-//        else if (hopsCompleted > 0)
-//        {
-//          if (receiveInProcess() == false)
-//          {
-//            triggerEvent(TRIGGER_NOLINK_NOISE_TRIGGERED_HOP);
-//            returnToReceiving(); //Noise triggered hop. Reset our channel to 0
-//            changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-//          }
-//        }
 
         else if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response
         {
@@ -118,7 +95,7 @@ void updateRadioState()
           packetsLost = 0; //Reset, used for linkLost testing
           digitalWrite(pin_linkLED, HIGH);
           returnToReceiving();
-          changeState(RADIO_RECEIVING_STANDBY);
+          changeState(RADIO_LINKED_RECEIVING_STANDBY);
         }
         else if (packetType == PROCESS_DUPLICATE_PACKET)
         {
@@ -136,7 +113,7 @@ void updateRadioState()
       }
       break;
 
-    case RADIO_RECEIVING_STANDBY:
+    case RADIO_LINKED_RECEIVING_STANDBY:
       {
         if (linkLost())
         {
@@ -156,7 +133,7 @@ void updateRadioState()
         {
           triggerEvent(TRIGGER_LINK_PACKET_RECEIVED);
           transactionComplete = false; //Reset ISR flag
-          changeState(RADIO_RECEIVED_PACKET);
+          changeState(RADIO_LINKED_RECEIVED_PACKET);
         }
 
         else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
@@ -164,15 +141,15 @@ void updateRadioState()
 
         //If we have started hopping, and the radio no longer is receiving a packet, then the packet was corrupt.
         //Return to receiving
-//        else if (hopsCompleted > 0)
-//        {
-//          if (receiveInProcess() == false)
-//          {
-//            triggerEvent(TRIGGER_LINK_NOISE_TRIGGERED_HOP);
-//            returnToReceiving(); //Reset our channel to 0
-//            changeState(RADIO_RECEIVING_STANDBY);
-//          }
-//        }
+        //        else if (hopsCompleted > 0)
+        //        {
+        //          if (receiveInProcess() == false)
+        //          {
+        //            triggerEvent(TRIGGER_LINK_NOISE_TRIGGERED_HOP);
+        //            returnToReceiving(); //Reset our channel to 0
+        //            changeState(RADIO_LINKED_RECEIVING_STANDBY);
+        //          }
+        //        }
 
         else if ((millis() - packetTimestamp) > (settings.heartbeatTimeout + random(0, 1000))) //Avoid pinging each other at same time
         {
@@ -180,7 +157,7 @@ void updateRadioState()
           {
             triggerEvent(TRIGGER_LINK_SEND_PING);
             sendPingPacket();
-            changeState(RADIO_TRANSMITTING);
+            changeState(RADIO_LINKED_TRANSMITTING);
           }
           else
             LRS_DEBUG_PRINTLN("RECEIVING_STANDBY: RX In Progress");
@@ -197,7 +174,7 @@ void updateRadioState()
               {
                 triggerEvent(TRIGGER_LINK_DATA_PACKET);
                 sendDataPacket();
-                changeState(RADIO_TRANSMITTING);
+                changeState(RADIO_LINKED_TRANSMITTING);
               }
             }
           }
@@ -205,7 +182,7 @@ void updateRadioState()
       }
       break;
 
-    case RADIO_TRANSMITTING:
+    case RADIO_LINKED_TRANSMITTING:
       {
         if (transactionComplete == true) //If dio0ISR has fired, we are done transmitting
         {
@@ -214,13 +191,13 @@ void updateRadioState()
           if (expectingAck == true)
           {
             returnToReceiving();
-            changeState(RADIO_ACK_WAIT);
+            changeState(RADIO_LINKED_ACK_WAIT);
           }
           else
           {
             triggerEvent(TRIGGER_LINK_SENT_ACK_PACKET);
             returnToReceiving();
-            changeState(RADIO_RECEIVING_STANDBY);
+            changeState(RADIO_LINKED_RECEIVING_STANDBY);
           }
         }
         else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
@@ -228,12 +205,12 @@ void updateRadioState()
       }
       break;
 
-    case RADIO_ACK_WAIT:
+    case RADIO_LINKED_ACK_WAIT:
       {
         if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
         {
           transactionComplete = false; //Reset ISR flag
-          changeState(RADIO_RECEIVED_PACKET);
+          changeState(RADIO_LINKED_RECEIVED_PACKET);
         }
 
         else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
@@ -241,15 +218,15 @@ void updateRadioState()
 
         //If we have started hopping, and the radio no longer is receiving a packet, then the packet was corrupt.
         //Return to receiving
-//        else if (hopsCompleted > 0)
-//        {
-//          if (receiveInProcess() == false)
-//          {
-//            triggerEvent(TRIGGER_LINK_NOISE_TRIGGERED_HOP_ACK_WAIT);
-//            returnToReceiving(); //Noise triggered hop. Return to receiving.
-//            changeState(RADIO_RECEIVING_STANDBY);
-//          } //End receive in progress
-//        } //End noise triggered hop testing
+        //        else if (hopsCompleted > 0)
+        //        {
+        //          if (receiveInProcess() == false)
+        //          {
+        //            triggerEvent(TRIGGER_LINK_NOISE_TRIGGERED_HOP_ACK_WAIT);
+        //            returnToReceiving(); //Noise triggered hop. Return to receiving.
+        //            changeState(RADIO_LINKED_RECEIVING_STANDBY);
+        //          } //End receive in progress
+        //        } //End noise triggered hop testing
 
         //Check to see if we need to retransmit
         if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response
@@ -260,7 +237,7 @@ void updateRadioState()
             packetsLost++;
             totalPacketsLost++;
             returnToReceiving();
-            changeState(RADIO_RECEIVING_STANDBY);
+            changeState(RADIO_LINKED_RECEIVING_STANDBY);
           }
           else
           {
@@ -269,7 +246,7 @@ void updateRadioState()
               triggerEvent(TRIGGER_LINK_PACKET_RESEND);
               packetsResent++;
               sendResendPacket();
-              changeState(RADIO_TRANSMITTING);
+              changeState(RADIO_LINKED_TRANSMITTING);
             }
             else
               LRS_DEBUG_PRINTLN("ACK_WAIT: RX In Progress");
@@ -278,14 +255,14 @@ void updateRadioState()
       }
       break;
 
-    case RADIO_RECEIVED_PACKET:
+    case RADIO_LINKED_RECEIVED_PACKET:
       {
         PacketType packetType = identifyPacketType(); //Look at the packet we just received
 
         if (packetType == PROCESS_BAD_PACKET || packetType == PROCESS_NETID_MISMATCH)
         {
           returnToReceiving();
-          changeState(RADIO_RECEIVING_STANDBY);
+          changeState(RADIO_LINKED_RECEIVING_STANDBY);
         }
         //This packet is an ack. Are we expecting one?
         else if (packetType == PROCESS_ACK_PACKET)
@@ -306,21 +283,21 @@ void updateRadioState()
           packetsLost = 0; //Reset, used for linkLost testing
           frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           returnToReceiving();
-          changeState(RADIO_RECEIVING_STANDBY);
+          changeState(RADIO_LINKED_RECEIVING_STANDBY);
         }
         else if (packetType == PROCESS_DUPLICATE_PACKET)
         {
           packetsLost = 0; //Reset, used for linkLost testing
           frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           sendAckPacket(); //It's a duplicate. Ack then ignore
-          changeState(RADIO_TRANSMITTING);
+          changeState(RADIO_LINKED_TRANSMITTING);
         }
         else if (packetType == PROCESS_CONTROL_PACKET)
         {
           packetsLost = 0; //Reset, used for linkLost testing
           frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           sendAckPacket(); //Someone is pinging us
-          changeState(RADIO_TRANSMITTING);
+          changeState(RADIO_LINKED_TRANSMITTING);
         }
         else if (packetType == PROCESS_DATA_PACKET)
         {
@@ -347,10 +324,104 @@ void updateRadioState()
           packetsLost = 0; //Reset, used for linkLost testing
           frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           sendAckPacket(); //Transmit ACK
-          changeState(RADIO_TRANSMITTING);
+          changeState(RADIO_LINKED_TRANSMITTING);
         }
       }
       break;
+
+    case RADIO_BROADCASTING_RECEIVING_STANDBY:
+      {
+        if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
+        {
+          transactionComplete = false; //Reset ISR flag
+          changeState(RADIO_BROADCASTING_RECEIVED_PACKET);
+        }
+
+        else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
+          hopChannel();
+
+        else //Process waiting serial
+        {
+          //If the radio is available, send any data in the serial buffer over the radio
+          if (receiveInProcess() == false)
+          {
+            if (availableRXBytes()) //If we have bytes
+            {
+              if (processWaitingSerial() == true) //If we've hit a frame size or frame-timed-out
+              {
+                sendDataPacket();
+                changeState(RADIO_BROADCASTING_TRANSMITTING);
+              }
+            }
+          }
+        } //End processWaitingSerial
+      }
+      break;
+
+    case RADIO_BROADCASTING_TRANSMITTING:
+      {
+        if (transactionComplete == true) //If dio0ISR has fired, we are done transmitting
+        {
+          transactionComplete = false; //Reset ISR flag
+          changeState(RADIO_BROADCASTING_RECEIVING_STANDBY); //No ack response when in broadcasting mode
+        }
+
+        else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
+          hopChannel();
+      }
+      break;
+
+    case RADIO_BROADCASTING_RECEIVED_PACKET:
+      {
+        PacketType packetType = identifyPacketType(); //Look at the packet we just received
+
+        if (packetType == PROCESS_BAD_PACKET || packetType == PROCESS_NETID_MISMATCH)
+        {
+          returnToReceiving();
+          changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
+        }
+        else if (packetType == PROCESS_ACK_PACKET)
+        {
+          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+          returnToReceiving();
+          changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
+        }
+        else if (packetType == PROCESS_DUPLICATE_PACKET || packetType == PROCESS_CONTROL_PACKET)
+        {
+          //We should not be receiving control packets, but if we do, just ignore
+          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+          returnToReceiving(); //No response when in broadcasting mode
+          changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
+        }
+        else if (packetType == PROCESS_DATA_PACKET)
+        {
+          if (settings.displayPacketQuality == true)
+          {
+            Serial.println();
+            Serial.print(F("R:"));
+            Serial.print(radio.getRSSI());
+            Serial.print(F("\tS:"));
+            Serial.print(radio.getSNR());
+            Serial.print(F("\tfE:"));
+            Serial.print(radio.getFrequencyError());
+            Serial.println();
+          }
+
+          //Move this packet into the tx buffer
+          //We cannot directly print here because Serial.print is blocking
+          for (int x = 0 ; x < lastPacketSize ; x++)
+          {
+            serialTransmitBuffer[txHead++] = lastPacket[x];
+            txHead %= sizeof(serialTransmitBuffer);
+          }
+
+          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+          returnToReceiving(); //No response when in broadcasting mode
+          changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
+        }
+      }
+      break;
+
     default:
       {
         Serial.println(F("Unknown state"));
@@ -383,20 +454,33 @@ void changeState(RadioStates newState)
       Serial.print(F("State: [No Link] Ack Wait"));
       break;
 
-    case (RADIO_RECEIVING_STANDBY):
+    case (RADIO_LINKED_RECEIVING_STANDBY):
       Serial.print(F("State: Receiving Standby "));
       Serial.print(channels[currentChannel]);
       break;
-    case (RADIO_RECEIVED_PACKET):
+    case (RADIO_LINKED_RECEIVED_PACKET):
       Serial.print(F("State: Received Packet "));
       Serial.print(channels[currentChannel]);
       break;
-    case (RADIO_TRANSMITTING):
+    case (RADIO_LINKED_TRANSMITTING):
       Serial.print(F("State: Transmitting "));
       Serial.print(channels[currentChannel]);
       break;
-    case (RADIO_ACK_WAIT):
+    case (RADIO_LINKED_ACK_WAIT):
       Serial.print(F("State: Ack Wait "));
+      Serial.print(channels[currentChannel]);
+      break;
+
+    case (RADIO_BROADCASTING_RECEIVING_STANDBY):
+      Serial.print(F("State: B-Receiving Standby "));
+      Serial.print(channels[currentChannel]);
+      break;
+    case (RADIO_BROADCASTING_RECEIVED_PACKET):
+      Serial.print(F("State: B-Received Packet "));
+      Serial.print(channels[currentChannel]);
+      break;
+    case (RADIO_BROADCASTING_TRANSMITTING):
+      Serial.print(F("State: B-Transmitting "));
       Serial.print(channels[currentChannel]);
       break;
 

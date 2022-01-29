@@ -4,12 +4,15 @@ typedef enum
   RADIO_NO_LINK_TRANSMITTING,
   RADIO_NO_LINK_ACK_WAIT,
   RADIO_NO_LINK_RECEIVED_PACKET,
-  RADIO_RECEIVING_STANDBY,
-  RADIO_TRANSMITTING,
-  RADIO_ACK_WAIT,
-  RADIO_RECEIVED_PACKET,
+  RADIO_LINKED_RECEIVING_STANDBY,
+  RADIO_LINKED_TRANSMITTING,
+  RADIO_LINKED_ACK_WAIT,
+  RADIO_LINKED_RECEIVED_PACKET,
+  RADIO_BROADCASTING_RECEIVING_STANDBY,
+  RADIO_BROADCASTING_TRANSMITTING,
+  RADIO_BROADCASTING_RECEIVED_PACKET,
 } RadioStates;
-RadioStates radioState = RADIO_RECEIVING_STANDBY;
+RadioStates radioState = RADIO_NO_LINK_RECEIVING_STANDBY;
 
 //Possible types of packets received
 typedef enum
@@ -64,9 +67,9 @@ typedef struct struct_settings {
   uint8_t maxEscapeCharacters = 3; //Number of characters needed to enter command mode
   uint8_t responseDelayDivisor = 4; //Add on to max response time after packet has been sent. Factor of 2. 8 is ok. 4 is good. A smaller number increases the delay.
 
-  uint8_t netID = 192; //Both radios must share a network ID
   uint32_t serialSpeed = 57600; //Default to 57600bps to match RTK Surveyor default firmware
   uint32_t airSpeed = 4800; //Default to ~523 bytes per second to support RTCM. Overrides spread, bandwidth, and coding
+  uint8_t netID = 192; //Both radios must share a network ID
   uint16_t radioBroadcastPower_dbm = 20; //Max software setting is 20 but radios with built-in PA will get 30dBm(1W) with rx/tx_en pins
   float frequencyMin = 902.0; //MHz
   float frequencyMax = 928.0; //MHz
@@ -86,6 +89,7 @@ typedef struct struct_settings {
   bool autoTuneFrequency = true; //Based on the last packets frequency error, adjust our next transaction frequency
   bool displayPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
   uint16_t maxDwellTime = 400; //Max number of ms before hopping (if enabled). Useful for configuring radio to be within regulator limits (FCC = 400ms max)
+  bool pointToPoint = true; //Receiving unit will check netID and ACK. If set to false, receiving unit doesn't check netID or ACK.
 
 } Settings;
 Settings settings;
