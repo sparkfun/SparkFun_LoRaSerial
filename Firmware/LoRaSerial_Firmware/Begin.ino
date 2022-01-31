@@ -48,7 +48,6 @@ void beginBoard()
   strcpy(platformPrefix, "ESP32 100mW");
 
 #elif defined(ARDUINO_ARCH_SAMD)
-  //Proto hardware TODO
   pin_cs = 5;
   pin_dio0 = 7; //aka A0
   pin_dio1 = 10; //aka A1
@@ -113,11 +112,11 @@ void beginLoRa()
     while (1); //Hard freeze
   }
 
+  randomSeed(radio.randomByte()); //Puts radio into standy-by state
+
   configureRadio(); //Apply current settings
 
   returnToReceiving();
-  int seed = radio.randomByte();
-  randomSeed(seed);
 
   if(settings.pointToPoint == true)
     changeState(RADIO_NO_LINK_RECEIVING_STANDBY);

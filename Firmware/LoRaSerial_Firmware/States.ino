@@ -62,7 +62,6 @@ void updateRadioState()
       {
         if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
         {
-          randomSeed(radio.randomByte()); //Reseed the random delay between heartbeats
           transactionComplete = false; //Reset ISR flag
           changeState(RADIO_NO_LINK_RECEIVED_PACKET);
         }
@@ -73,6 +72,7 @@ void updateRadioState()
         else if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response
         {
           //Give up. No ACK recevied.
+          randomSeed(radio.randomByte()); //Reseed the random delay between heartbeats
           triggerEvent(TRIGGER_NOLINK_NO_ACK_GIVEUP);
           returnToReceiving();
           changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
@@ -139,22 +139,11 @@ void updateRadioState()
         else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
           hopChannel();
 
-        //If we have started hopping, and the radio no longer is receiving a packet, then the packet was corrupt.
-        //Return to receiving
-        //        else if (hopsCompleted > 0)
-        //        {
-        //          if (receiveInProcess() == false)
-        //          {
-        //            triggerEvent(TRIGGER_LINK_NOISE_TRIGGERED_HOP);
-        //            returnToReceiving(); //Reset our channel to 0
-        //            changeState(RADIO_LINKED_RECEIVING_STANDBY);
-        //          }
-        //        }
-
         else if ((millis() - packetTimestamp) > (settings.heartbeatTimeout + random(0, 1000))) //Avoid pinging each other at same time
         {
           if (receiveInProcess() == false)
           {
+            randomSeed(radio.randomByte()); //Takes 10ms. Reseed the random delay between heartbeats
             triggerEvent(TRIGGER_LINK_SEND_PING);
             sendPingPacket();
             changeState(RADIO_LINKED_TRANSMITTING);
@@ -216,22 +205,10 @@ void updateRadioState()
         else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
           hopChannel();
 
-        //If we have started hopping, and the radio no longer is receiving a packet, then the packet was corrupt.
-        //Return to receiving
-        //        else if (hopsCompleted > 0)
-        //        {
-        //          if (receiveInProcess() == false)
-        //          {
-        //            triggerEvent(TRIGGER_LINK_NOISE_TRIGGERED_HOP_ACK_WAIT);
-        //            returnToReceiving(); //Noise triggered hop. Return to receiving.
-        //            changeState(RADIO_LINKED_RECEIVING_STANDBY);
-        //          } //End receive in progress
-        //        } //End noise triggered hop testing
-
         //Check to see if we need to retransmit
         if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response
         {
-          if (packetSent > maxResends)
+          if (packetSent > settings.maxResends)
           {
             LRS_DEBUG_PRINTLN(F("Packet Lost"));
             packetsLost++;
@@ -333,6 +310,7 @@ void updateRadioState()
       {
         if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
         {
+          triggerEvent(TRIGGER_BROADCAST_PACKET_RECEIVED);
           transactionComplete = false; //Reset ISR flag
           changeState(RADIO_BROADCASTING_RECEIVED_PACKET);
         }
@@ -349,6 +327,7 @@ void updateRadioState()
             {
               if (processWaitingSerial() == true) //If we've hit a frame size or frame-timed-out
               {
+                triggerEvent(TRIGGER_BROADCAST_DATA_PACKET);
                 sendDataPacket();
                 changeState(RADIO_BROADCASTING_TRANSMITTING);
               }

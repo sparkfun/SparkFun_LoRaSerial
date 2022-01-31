@@ -394,7 +394,7 @@ void sendPacket()
     LRS_DEBUG_PRINT(F("PacketAirTime: "));
     LRS_DEBUG_PRINTLN(packetAirTime);
     LRS_DEBUG_PRINT(F("responseDelay: "));
-    LRS_DEBUG_PRINTLN(responseDelay, 3);
+    LRS_DEBUG_PRINTLN(responseDelay);
   }
   else
   {

@@ -46,6 +46,9 @@ enum
   TRIGGER_NOLINK_NOISE_TRIGGERED_HOP = 375,
   TRIGGER_NOLINK_NO_ACK_GIVEUP = 400,
   TRIGGER_NOLINK_IDENT_PACKET = 425,
+
+  TRIGGER_BROADCAST_DATA_PACKET = 450,
+  TRIGGER_BROADCAST_PACKET_RECEIVED = 475,
 };
 
 struct ControlTrailer
@@ -90,6 +93,8 @@ typedef struct struct_settings {
   bool displayPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
   uint16_t maxDwellTime = 400; //Max number of ms before hopping (if enabled). Useful for configuring radio to be within regulator limits (FCC = 400ms max)
   bool pointToPoint = true; //Receiving unit will check netID and ACK. If set to false, receiving unit doesn't check netID or ACK.
+  uint8_t maxResends = 2; //Attempt resends up to this number.
+
 
 } Settings;
 Settings settings;

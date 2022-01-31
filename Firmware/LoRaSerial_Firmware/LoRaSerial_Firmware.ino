@@ -10,10 +10,10 @@
   as opposed to something like LoRaWAN that operates on the data and network layers. For this reason
   LoRaSerial is not intended to operate on LoRaWAN.
 
-  The system requests an ACK for certain packet types. 
-  
-  Each packet contains data plus a NetID (byte) and Control byte. 
-  For transmissions at SpreadFactor 6 the packet length is set to 250 bytes and an additional byte is 
+  The system requests an ACK for certain packet types.
+
+  Each packet contains data plus a NetID (byte) and Control byte.
+  For transmissions at SpreadFactor 6 the packet length is set to 250 bytes and an additional byte is
   transmitted before NetID that repsents the actual data length within the packet.
 
   The max packet size for the SX127x is 255 bytes. With the NetID and control bytes removed, we have
@@ -66,19 +66,17 @@
     Remote commands RTIx
     Add \r requirement to enter command mode
     Add I2C/Qwiic interface
-    
-    Add broadcast. Don't set setting.netID to 255 (as we need it for channel array generation)
-      Base should set netID to 255. Rovers should accept netID 255 without pause.
-    Add PointToPoint boolean to settings and commands
-    Add NetID to commands and register table
 
+    (done) Add PointToPoint boolean to settings and commands. Don't set setting.netID to 255 (as we need it for channel array generation).
+    Add NetID to commands and register table
+    Pulse LED if in pointToPoint mode
+
+    Remove channelNumber. Use fhssChannel
     Put all the platform specific functions into a header or guarded area (reset, eeprom?, etc)
     Add data size to all SAMD boards
     Read data from both USB And Serial1
 
     Implement train feature
-
-    Search TODO
 
     Uno:
     Add processor guard to limit Uno to 16 channels (float array is a ram sink)
@@ -181,7 +179,6 @@ unsigned long packetTimestamp = 0;
 uint16_t packetsLost = 0; //Used to determine if radio link is down
 uint16_t packetsResent = 0; //Keep metrics of link quality
 uint16_t totalPacketsLost = 0; //Keep metrics of link quality
-uint8_t maxResends = 2; //Attempt resends up to this number. TODO - move to settings.
 
 uint8_t lastPacket[MAX_PACKET_SIZE]; //Contains the last data received. Used for duplicate testing.
 uint8_t lastPacketSize = 0; //Tracks the last packet size we received
@@ -229,10 +226,16 @@ void setup()
 
   beginBoard(); //Determine what hardware platform we are running on
 
-  settings.airSpeed = 28800;
+  settings.airSpeed = 4800;
   settings.maxDwellTime = 400;
+  settings.frequencyHop = true;
+  settings.debug = false;
+  //settings.heartbeatTimeout = 2000;
+  settings.displayPacketQuality = false;
+  settings.autoTuneFrequency = true;
+
   settings.pointToPoint = false;
-  
+
   generateHopTable();
 
   beginLoRa(); //Start radio
@@ -241,10 +244,6 @@ void setup()
 #if defined(ARDUINO_ARCH_SAMD)
   Serial1.println(F("LRS"));
 #endif
-
-  settings.debug = true;
-  //settings.heartbeatTimeout = 2000;
-  settings.displayPacketQuality = true;
 }
 
 void loop()
