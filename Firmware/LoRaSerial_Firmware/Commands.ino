@@ -274,7 +274,6 @@ void commandMode()
                         || settingValue == 2400
                         || settingValue == 4800
                         || settingValue == 9600
-                        || settingValue == 14400
                         || settingValue == 19200
                         || settingValue == 28800
                         || settingValue == 38400

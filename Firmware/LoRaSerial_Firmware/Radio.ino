@@ -10,6 +10,9 @@ PacketType identifyPacketType()
   radio.readData(incomingBuffer, MAX_PACKET_SIZE);
   uint8_t receivedBytes = radio.getPacketLength();
 
+  if(settings.useEncryption == true)
+    decryptBuffer(incomingBuffer, receivedBytes);
+
   LRS_DEBUG_PRINT(F("Received bytes: "));
   LRS_DEBUG_PRINTLN(receivedBytes);
 
@@ -375,6 +378,9 @@ void sendPacket()
   outgoingPacket[packetSize - 2] = settings.netID;
   memcpy(&outgoingPacket[packetSize - 1], &responseTrailer, 1);
 
+  if(settings.useEncryption == true)
+    encryptBuffer(outgoingPacket, packetSize);
+  
   digitalWrite(pin_activityLED, HIGH);
 
   radio.setFrequency(channels[radio.getFHSSChannel()]); //Return home before every transmission
@@ -475,6 +481,11 @@ void generateHopTable()
   //'Randomly' shuffle list based on our specific seed
   shuffle(channels, settings.numberOfChannels);
 
+
+  //Initialize Values for AES using settings seed
+  for (int x = 0 ; x < 12 ; x++)
+    AESiv[x] = myRand();
+
   if (settings.debug == true)
   {
     Serial.println(F("Channel table:"));
@@ -485,6 +496,15 @@ void generateHopTable()
       Serial.print(channels[x], 3);
       Serial.println();
     }
+    
+    Serial.print(F("AES IV:"));
+    for (uint8_t i = 0 ; i < 12 ; i++)
+    {
+      Serial.print(" 0x");
+      if (AESiv[i] < 0x10) Serial.print("0");
+      Serial.print(AESiv[i], HEX);
+    }
+    Serial.println();
   }
 }
 
@@ -527,7 +547,7 @@ void hopChannel()
   if (settings.autoTuneFrequency == true)
   {
     if (radioState == RADIO_LINKED_RECEIVING_STANDBY || radioState == RADIO_LINKED_ACK_WAIT
-    || radioState == RADIO_BROADCASTING_RECEIVING_STANDBY) //Only adjust frequency on RX. Not TX.
+        || radioState == RADIO_BROADCASTING_RECEIVING_STANDBY) //Only adjust frequency on RX. Not TX.
       radio.setFrequency(channels[radio.getFHSSChannel()] - frequencyCorrection);
     else
       radio.setFrequency(channels[radio.getFHSSChannel()]);

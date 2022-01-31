@@ -94,7 +94,8 @@ typedef struct struct_settings {
   uint16_t maxDwellTime = 400; //Max number of ms before hopping (if enabled). Useful for configuring radio to be within regulator limits (FCC = 400ms max)
   bool pointToPoint = true; //Receiving unit will check netID and ACK. If set to false, receiving unit doesn't check netID or ACK.
   uint8_t maxResends = 2; //Attempt resends up to this number.
-
+  bool useEncryption = true; //AES encrypt each packet
+  uint8_t encryptionKey[16] = { 0x37, 0x78, 0x21, 0x41, 0xA6, 0x65, 0x73, 0x4E,0x44, 0x75, 0x67, 0x2A, 0xE6, 0x30, 0x83, 0x08 };
 
 } Settings;
 Settings settings;

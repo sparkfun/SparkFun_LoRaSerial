@@ -123,3 +123,21 @@ void beginLoRa()
   else
     changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
 }
+
+//Encrypt a given array in place
+void encryptBuffer(uint8_t *bufferToEncrypt, uint8_t arraySize)
+{
+  gcm.setKey(settings.encryptionKey, gcm.keySize());
+  gcm.setIV(AESiv, sizeof(AESiv));
+
+  gcm.encrypt(bufferToEncrypt, bufferToEncrypt, arraySize);
+}
+
+//Decrypt a given array in place
+void decryptBuffer(uint8_t *bufferToDecrypt, uint8_t arraySize)
+{
+  gcm.setKey(settings.encryptionKey, gcm.keySize());
+  gcm.setIV(AESiv, sizeof(AESiv));
+
+  gcm.decrypt(bufferToDecrypt, bufferToDecrypt, arraySize);
+}

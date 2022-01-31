@@ -60,6 +60,8 @@
     (done) Implement spread factor 6, pre-known packet sized transactions
     (done) Put responseDelay divisor into settings
     (done) Verify that TX/RX of 2k bytes matches airspeed calculations. Set trigger at each data packet send.
+    (done) Implement AES-128-GCM encryption
+    (done) Add PointToPoint boolean to settings and commands. Don't set setting.netID to 255 (as we need it for channel array generation).
 
     Implement low power sleep during receiving mode - ArduinoLowPower
     Implement radio power down mode
@@ -67,16 +69,18 @@
     Add \r requirement to enter command mode
     Add I2C/Qwiic interface
 
-    (done) Add PointToPoint boolean to settings and commands. Don't set setting.netID to 255 (as we need it for channel array generation).
     Add NetID to commands and register table
     Pulse LED if in pointToPoint mode
+    Add AES encryption and key to commands and register table
 
-    Remove channelNumber. Use fhssChannel
     Put all the platform specific functions into a header or guarded area (reset, eeprom?, etc)
     Add data size to all SAMD boards
     Read data from both USB And Serial1
 
-    Implement train feature
+    Implement train feature: Jump to X freq. Send ping. If not ack, "hereFirst = true". If hereFirst, generate random seed based
+      on randomByte. Generate NetID. If encryption, generate AES key (16 bytes). 
+      4 seconds: train using current airSpeed settings, but new NetID and AES key
+      10 seconds: reset all settings, train using default airSpeed settings.
 
     Uno:
     Add processor guard to limit Uno to 16 channels (float array is a ram sink)
@@ -143,6 +147,16 @@ SX1276 radio = NULL; //We can't instantiate here because we don't yet know what 
 
 float *channels;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+//Encryption
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#include <Crypto.h> //From: https://github.com/rweather/arduinolibs
+#include <AES.h>
+#include <GCM.h>
+GCM <AES128> gcm;
+
+uint8_t AESiv[12] = {0}; //Set during hop table generation
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Global variables - Serial
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -228,7 +242,7 @@ void setup()
   settings.airSpeed = 4800;
   settings.maxDwellTime = 400;
   settings.frequencyHop = true;
-  settings.debug = false;
+  settings.debug = true;
   //settings.heartbeatTimeout = 2000;
   settings.displayPacketQuality = false;
   settings.autoTuneFrequency = true;
