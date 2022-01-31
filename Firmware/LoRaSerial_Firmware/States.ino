@@ -120,8 +120,7 @@ void updateRadioState()
           digitalWrite(pin_linkLED, LOW);
 
           //Return to home channel and begin linking process
-          currentChannel = 0;
-          radio.setFrequency(channels[currentChannel]);
+          radio.setFrequency(channels[radio.getFHSSChannel()]);
           radio.clearFHSSInt();
           timeToHop = false;
 
@@ -435,32 +434,32 @@ void changeState(RadioStates newState)
 
     case (RADIO_LINKED_RECEIVING_STANDBY):
       Serial.print(F("State: Receiving Standby "));
-      Serial.print(channels[currentChannel]);
+      Serial.print(channels[radio.getFHSSChannel()]);
       break;
     case (RADIO_LINKED_RECEIVED_PACKET):
       Serial.print(F("State: Received Packet "));
-      Serial.print(channels[currentChannel]);
+      Serial.print(channels[radio.getFHSSChannel()]);
       break;
     case (RADIO_LINKED_TRANSMITTING):
       Serial.print(F("State: Transmitting "));
-      Serial.print(channels[currentChannel]);
+      Serial.print(channels[radio.getFHSSChannel()]);
       break;
     case (RADIO_LINKED_ACK_WAIT):
       Serial.print(F("State: Ack Wait "));
-      Serial.print(channels[currentChannel]);
+      Serial.print(channels[radio.getFHSSChannel()]);
       break;
 
     case (RADIO_BROADCASTING_RECEIVING_STANDBY):
       Serial.print(F("State: B-Receiving Standby "));
-      Serial.print(channels[currentChannel]);
+      Serial.print(channels[radio.getFHSSChannel()]);
       break;
     case (RADIO_BROADCASTING_RECEIVED_PACKET):
       Serial.print(F("State: B-Received Packet "));
-      Serial.print(channels[currentChannel]);
+      Serial.print(channels[radio.getFHSSChannel()]);
       break;
     case (RADIO_BROADCASTING_TRANSMITTING):
       Serial.print(F("State: B-Transmitting "));
-      Serial.print(channels[currentChannel]);
+      Serial.print(channels[radio.getFHSSChannel()]);
       break;
 
     default:

@@ -260,12 +260,11 @@ void configureRadio()
 void returnToReceiving()
 {
   digitalWrite(pin_activityLED, LOW);
-  currentChannel = 0; //Return home before receiving
 
   if (settings.autoTuneFrequency == true)
-    radio.setFrequency(channels[currentChannel] - frequencyCorrection);
+    radio.setFrequency(channels[radio.getFHSSChannel()] - frequencyCorrection);
   else
-    radio.setFrequency(channels[currentChannel]);
+    radio.setFrequency(channels[radio.getFHSSChannel()]);
 
   radio.clearFHSSInt();
   hopsCompleted = 0; //Reset to detect in progress reception
@@ -378,9 +377,8 @@ void sendPacket()
 
   digitalWrite(pin_activityLED, HIGH);
 
-  currentChannel = 0; //Return home before every transmission
-  radio.setFrequency(channels[currentChannel]); //Do not adjust frequency on TX, only RX.
-  LRS_DEBUG_PRINTLN(channels[currentChannel], 3);
+  radio.setFrequency(channels[radio.getFHSSChannel()]); //Return home before every transmission
+  LRS_DEBUG_PRINTLN(channels[radio.getFHSSChannel()], 3);
   radio.clearFHSSInt();
   int state = radio.startTransmit(outgoingPacket, packetSize);
   if (state == RADIOLIB_ERR_NONE)
@@ -526,24 +524,16 @@ bool linkLost()
 //at the beginning and during of a transmission or reception
 void hopChannel()
 {
-  currentChannel++;
-  currentChannel %= settings.numberOfChannels;
-
-  //  LRS_DEBUG_PRINT("HopChannel: currentChannel: ");
-  //  LRS_DEBUG_PRINT(currentChannel);
-  //  LRS_DEBUG_PRINT(" radioChannel: ");
-  //  LRS_DEBUG_PRINTLN(radio.getFHSSChannel());
-
   if (settings.autoTuneFrequency == true)
   {
     if (radioState == RADIO_LINKED_RECEIVING_STANDBY || radioState == RADIO_LINKED_ACK_WAIT
     || radioState == RADIO_BROADCASTING_RECEIVING_STANDBY) //Only adjust frequency on RX. Not TX.
-      radio.setFrequency(channels[currentChannel] - frequencyCorrection);
+      radio.setFrequency(channels[radio.getFHSSChannel()] - frequencyCorrection);
     else
-      radio.setFrequency(channels[currentChannel]);
+      radio.setFrequency(channels[radio.getFHSSChannel()]);
   }
   else
-    radio.setFrequency(channels[currentChannel]);
+    radio.setFrequency(channels[radio.getFHSSChannel()]);
 
   hopsCompleted++;
   radio.clearFHSSInt();

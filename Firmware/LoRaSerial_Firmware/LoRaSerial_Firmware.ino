@@ -21,7 +21,7 @@
 
   The AT command structure is based on the SiK Ardupilot radio.
 
-  For a graphical view of the system state machine see:
+  For a graphical view of the system state machine see: https://lucid.app/lucidchart/7293b4a6-690a-493e-a3f6-92bf47025fb1/edit?invitationId=inv_9476a070-5ba9-40e6-b89f-9c0d22af9855
 
   Build notes:
     RadioLib should have RADIOLIB_FIX_ERRATA_SX127X turned on (uncommented)
@@ -142,7 +142,6 @@ uint8_t pin_trigger = 255;
 SX1276 radio = NULL; //We can't instantiate here because we don't yet know what pin numbers to use
 
 float *channels;
-uint8_t currentChannel = 0; //Increments with each hop
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - Serial
@@ -234,7 +233,7 @@ void setup()
   settings.displayPacketQuality = false;
   settings.autoTuneFrequency = true;
 
-  settings.pointToPoint = false;
+  settings.pointToPoint = true;
 
   generateHopTable();
 
