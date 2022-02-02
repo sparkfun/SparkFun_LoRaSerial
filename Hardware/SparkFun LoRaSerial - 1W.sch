@@ -29946,7 +29946,6 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <part name="SUPPLY16" library="SparkFun-PowerSymbols" deviceset="V_USB" device=""/>
 <part name="SUPPLY17" library="SparkFun-PowerSymbols" deviceset="V_USB" device=""/>
 <part name="SUPPLY4" library="SparkFun-PowerSymbols" deviceset="5V" device=""/>
-<part name="J2" library="SparkFun-Connectors" deviceset="CONN_06" device="JST-SMD-LOCKING"/>
 <part name="F1" library="SparkFun-Fuses" deviceset="PPTC" device="_6V500MA" value="6V 0.5A"/>
 <part name="D4" library="SparkFun-LED" deviceset="LED-BLUE" device="0603" value="BLUE"/>
 <part name="D5" library="SparkFun-LED" deviceset="LED-RED" device="0603" value="RED"/>
@@ -29993,6 +29992,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <part name="GND12" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
 <part name="GND13" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
 <part name="J6" library="SparkFun-Connectors" deviceset="CONN_02" device="1X02_NO_SILK"/>
+<part name="J5" library="SparkFun-Connectors" deviceset="CONN_06" device="JST-SMD-LOCKING"/>
 </parts>
 <sheets>
 <sheet>
@@ -30229,10 +30229,6 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <instance part="SUPPLY4" gate="G$1" x="231.14" y="45.72" smashed="yes" rot="MR0">
 <attribute name="VALUE" x="231.14" y="48.514" size="1.778" layer="96" rot="MR0" align="bottom-center"/>
 </instance>
-<instance part="J2" gate="G$1" x="223.52" y="35.56" smashed="yes">
-<attribute name="VALUE" x="218.44" y="25.654" size="1.778" layer="96" font="vector"/>
-<attribute name="NAME" x="218.44" y="46.228" size="1.778" layer="95" font="vector"/>
-</instance>
 <instance part="F1" gate="F1" x="88.9" y="43.18" smashed="yes">
 <attribute name="NAME" x="90.17" y="48.768" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="90.424" y="46.228" size="1.778" layer="96" font="vector" rot="R180" align="top-center"/>
@@ -30391,6 +30387,10 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <attribute name="VALUE" x="269.24" y="30.734" size="1.778" layer="96" font="vector"/>
 <attribute name="NAME" x="269.24" y="41.148" size="1.778" layer="95" font="vector"/>
 </instance>
+<instance part="J5" gate="G$1" x="223.52" y="38.1" smashed="yes" rot="MR180">
+<attribute name="VALUE" x="218.44" y="48.006" size="1.778" layer="96" font="vector" rot="MR180"/>
+<attribute name="NAME" x="218.44" y="27.432" size="1.778" layer="95" font="vector" rot="MR180"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -30483,7 +30483,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <wire x1="228.6" y1="30.48" x2="231.14" y2="30.48" width="0.1524" layer="91"/>
 <wire x1="231.14" y1="30.48" x2="231.14" y2="27.94" width="0.1524" layer="91"/>
 <pinref part="GND4" gate="1" pin="GND"/>
-<pinref part="J2" gate="G$1" pin="1"/>
+<pinref part="J5" gate="G$1" pin="6"/>
 </segment>
 <segment>
 <pinref part="R1" gate="G$1" pin="1"/>
@@ -30749,7 +30749,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <wire x1="228.6" y1="43.18" x2="231.14" y2="43.18" width="0.1524" layer="91"/>
 <wire x1="231.14" y1="43.18" x2="231.14" y2="45.72" width="0.1524" layer="91"/>
 <pinref part="SUPPLY4" gate="G$1" pin="5V"/>
-<pinref part="J2" gate="G$1" pin="6"/>
+<pinref part="J5" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="D5/LORA_!CS!" class="0">
@@ -30867,7 +30867,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <segment>
 <wire x1="228.6" y1="40.64" x2="231.14" y2="40.64" width="0.1524" layer="91"/>
 <label x="231.14" y="40.64" size="1.27" layer="95" rot="MR180" xref="yes"/>
-<pinref part="J2" gate="G$1" pin="5"/>
+<pinref part="J5" gate="G$1" pin="2"/>
 </segment>
 <segment>
 <pinref part="U2" gate="G$1" pin="PA11(AIN19/SER0:3+)"/>
@@ -30879,7 +30879,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <segment>
 <wire x1="228.6" y1="38.1" x2="231.14" y2="38.1" width="0.1524" layer="91"/>
 <label x="231.14" y="38.1" size="1.27" layer="95" rot="MR180" xref="yes"/>
-<pinref part="J2" gate="G$1" pin="4"/>
+<pinref part="J5" gate="G$1" pin="3"/>
 </segment>
 <segment>
 <pinref part="U2" gate="G$1" pin="PA10(AIN18/SER0:2+)"/>
@@ -31189,9 +31189,9 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <label x="320.04" y="172.72" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="J2" gate="G$1" pin="3"/>
 <label x="231.14" y="35.56" size="1.27" layer="95" xref="yes"/>
 <wire x1="228.6" y1="35.56" x2="231.14" y2="35.56" width="0.1524" layer="91"/>
+<pinref part="J5" gate="G$1" pin="4"/>
 </segment>
 </net>
 <net name="D31/TX_LED" class="0">
@@ -31220,9 +31220,9 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <label x="320.04" y="223.52" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="J2" gate="G$1" pin="2"/>
 <wire x1="228.6" y1="33.02" x2="231.14" y2="33.02" width="0.1524" layer="91"/>
 <label x="231.14" y="33.02" size="1.27" layer="95" xref="yes"/>
+<pinref part="J5" gate="G$1" pin="5"/>
 </segment>
 </net>
 <net name="D23" class="0">
