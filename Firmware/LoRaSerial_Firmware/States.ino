@@ -342,6 +342,7 @@ void updateRadioState()
         {
           transactionComplete = false; //Reset ISR flag
           changeState(RADIO_BROADCASTING_RECEIVING_STANDBY); //No ack response when in broadcasting mode
+          digitalWrite(pin_activityLED, HIGH);
         }
 
         else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency

@@ -73,10 +73,16 @@ typedef struct struct_settings {
   uint32_t serialSpeed = 57600; //Default to 57600bps to match RTK Surveyor default firmware
   uint32_t airSpeed = 4800; //Default to ~523 bytes per second to support RTCM. Overrides spread, bandwidth, and coding
   uint8_t netID = 192; //Both radios must share a network ID
+  bool pointToPoint = true; //Receiving unit will check netID and ACK. If set to false, receiving unit doesn't check netID or ACK.
+  bool encryptData = true; //AES encrypt each packet
+  uint8_t encryptionKey[16] = { 0x37, 0x78, 0x21, 0x41, 0xA6, 0x65, 0x73, 0x4E,0x44, 0x75, 0x67, 0x2A, 0xE6, 0x30, 0x83, 0x08 };
+  bool dataScrambling = true; //Use IBM Data Whitening to reduce DC bias
   uint16_t radioBroadcastPower_dbm = 20; //Max software setting is 20 but radios with built-in PA will get 30dBm(1W) with rx/tx_en pins
   float frequencyMin = 902.0; //MHz
   float frequencyMax = 928.0; //MHz
   uint8_t numberOfChannels = 50; //Divide the min/max freq band into this number of channels and hop between.
+  bool frequencyHop = true; //Hop between frequencies to avoid dwelling on any one channel for too long
+  uint16_t maxDwellTime = 400; //Max number of ms before hopping (if enabled). Useful for configuring radio to be within regulator limits (FCC = 400ms max)
   float radioBandwidth = 500.0; //kHz 125/250/500 generally. We need 500kHz for higher data.
   uint8_t radioSpreadFactor = 9; //6 to 12. Use higher factor for longer range.
   uint8_t radioCodingRate = 6; //5 to 8. 6 was chosen to allow higher spread factor. Higher coding rates ensure less packets dropped.
@@ -88,15 +94,9 @@ typedef struct struct_settings {
   bool echo = false; //Print locally inputted serial
   uint16_t heartbeatTimeout = 5000; //ms before sending ping to see if link is active
   bool flowControl = false; //Enable the use of CTS/RTS flow control signals
-  bool frequencyHop = true; //Hop between frequencies to avoid dwelling on any one channel for too long
   bool autoTuneFrequency = true; //Based on the last packets frequency error, adjust our next transaction frequency
   bool displayPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
-  uint16_t maxDwellTime = 400; //Max number of ms before hopping (if enabled). Useful for configuring radio to be within regulator limits (FCC = 400ms max)
-  bool pointToPoint = true; //Receiving unit will check netID and ACK. If set to false, receiving unit doesn't check netID or ACK.
   uint8_t maxResends = 2; //Attempt resends up to this number.
-  bool useEncryption = true; //AES encrypt each packet
-  uint8_t encryptionKey[16] = { 0x37, 0x78, 0x21, 0x41, 0xA6, 0x65, 0x73, 0x4E,0x44, 0x75, 0x67, 0x2A, 0xE6, 0x30, 0x83, 0x08 };
-  bool dataScrambling = true; //Use IBM Data Whitening to reduce DC bias
 
 } Settings;
 Settings settings;

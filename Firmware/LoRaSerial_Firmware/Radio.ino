@@ -13,7 +13,7 @@ PacketType identifyPacketType()
   if (settings.dataScrambling == true)
     radioComputeWhitening(incomingBuffer, receivedBytes);
 
-  if (settings.useEncryption == true)
+  if (settings.encryptData == true)
     decryptBuffer(incomingBuffer, receivedBytes);
 
   LRS_DEBUG_PRINT(F("Received bytes: "));
@@ -381,7 +381,7 @@ void sendPacket()
   outgoingPacket[packetSize - 2] = settings.netID;
   memcpy(&outgoingPacket[packetSize - 1], &responseTrailer, 1);
 
-  if (settings.useEncryption == true)
+  if (settings.encryptData == true)
     encryptBuffer(outgoingPacket, packetSize);
 
   if (settings.dataScrambling == true)
