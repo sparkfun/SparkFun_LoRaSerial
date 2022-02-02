@@ -10,7 +10,10 @@ PacketType identifyPacketType()
   radio.readData(incomingBuffer, MAX_PACKET_SIZE);
   uint8_t receivedBytes = radio.getPacketLength();
 
-  if(settings.useEncryption == true)
+  if (settings.dataScrambling == true)
+    radioComputeWhitening(incomingBuffer, receivedBytes);
+
+  if (settings.useEncryption == true)
     decryptBuffer(incomingBuffer, receivedBytes);
 
   LRS_DEBUG_PRINT(F("Received bytes: "));
@@ -378,9 +381,12 @@ void sendPacket()
   outgoingPacket[packetSize - 2] = settings.netID;
   memcpy(&outgoingPacket[packetSize - 1], &responseTrailer, 1);
 
-  if(settings.useEncryption == true)
+  if (settings.useEncryption == true)
     encryptBuffer(outgoingPacket, packetSize);
-  
+
+  if (settings.dataScrambling == true)
+    radioComputeWhitening(outgoingPacket, packetSize);
+
   digitalWrite(pin_activityLED, HIGH);
 
   radio.setFrequency(channels[radio.getFHSSChannel()]); //Return home before every transmission
@@ -496,7 +502,7 @@ void generateHopTable()
       Serial.print(channels[x], 3);
       Serial.println();
     }
-    
+
     Serial.print(F("AES IV:"));
     for (uint8_t i = 0 ; i < 12 ; i++)
     {

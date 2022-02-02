@@ -118,7 +118,7 @@ void beginLoRa()
 
   returnToReceiving();
 
-  if(settings.pointToPoint == true)
+  if (settings.pointToPoint == true)
     changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
   else
     changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
@@ -140,4 +140,26 @@ void decryptBuffer(uint8_t *bufferToDecrypt, uint8_t arraySize)
   gcm.setIV(AESiv, sizeof(AESiv));
 
   gcm.decrypt(bufferToDecrypt, bufferToDecrypt, arraySize);
+}
+
+
+//IBM Whitening process from Semtech "Software Whitening and CRC on SX12xx Devices" app note
+//Removes DC Bias from data with long strings of 1s or 0s
+void radioComputeWhitening(uint8_t *buffer, uint16_t bufferSize)
+{
+  uint8_t WhiteningKeyMSB = 0x01;
+  uint8_t WhiteningKeyLSB = 0xFF;
+  uint8_t WhiteningKeyMSBPrevious = 0;
+
+  for (uint16_t j = 0 ; j < bufferSize ; j++)
+  {
+    buffer[j] ^= WhiteningKeyLSB;
+
+    for (uint8_t i = 0 ; i < 8 ; i++)
+    {
+      WhiteningKeyMSBPrevious = WhiteningKeyMSB;
+      WhiteningKeyMSB = (WhiteningKeyLSB & 0x01) ^ ((WhiteningKeyLSB >> 5) & 0x01);
+      WhiteningKeyLSB = ((WhiteningKeyLSB >> 1 ) & 0xFF) | ((WhiteningKeyMSBPrevious << 7) & 0x80);
+    }
+  }
 }

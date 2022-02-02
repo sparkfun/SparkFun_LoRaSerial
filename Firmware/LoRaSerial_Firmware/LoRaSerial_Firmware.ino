@@ -246,6 +246,8 @@ void setup()
   //settings.heartbeatTimeout = 2000;
   settings.displayPacketQuality = false;
   settings.autoTuneFrequency = true;
+  settings.useEncryption = true;
+  settings.dataScrambling = true;
 
   settings.pointToPoint = true;
 
