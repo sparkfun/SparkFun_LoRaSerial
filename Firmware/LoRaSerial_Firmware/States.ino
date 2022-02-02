@@ -333,6 +333,18 @@ void updateRadioState()
             }
           }
         } //End processWaitingSerial
+
+        //Blink Link LED if we've had successful data received or transmitted
+        if (millis() - lastPacketReceived < 5000 || millis() - packetTimestamp < 5000)
+        {
+          if (millis() - lastLinkBlink > 500) //Blink at 2Hz
+          {
+            lastLinkBlink = millis();
+            digitalWrite(pin_linkLED, !digitalRead(pin_linkLED)); //Toggle LED
+          }
+        }
+        else
+          digitalWrite(pin_linkLED, LOW); //No link
       }
       break;
 
@@ -342,7 +354,7 @@ void updateRadioState()
         {
           transactionComplete = false; //Reset ISR flag
           changeState(RADIO_BROADCASTING_RECEIVING_STANDBY); //No ack response when in broadcasting mode
-          digitalWrite(pin_activityLED, HIGH);
+          digitalWrite(pin_activityLED, LOW);
         }
 
         else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
@@ -397,6 +409,8 @@ void updateRadioState()
           frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           returnToReceiving(); //No response when in broadcasting mode
           changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
+
+          lastPacketReceived = millis(); //Update timestamp for Link LED
         }
       }
       break;

@@ -48,13 +48,15 @@ void commandMode()
             case ('O'): //Exit command mode
               generateHopTable(); //Generate freq with new settings
               configureRadio(); //Apply any new settings
-              reportOK();
 
+              digitalWrite(pin_linkLED, LOW);
+              digitalWrite(pin_activityLED, LOW);
               if (settings.pointToPoint == true)
                 changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
               else
                 changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
 
+              reportOK();
               return;
               break;
             case ('Z'): //Reboots the radio
@@ -641,10 +643,7 @@ byte readLine(char* readBuffer, byte bufferLength)
     while (!Serial.available());
     byte c = Serial.read();
 
-    //toggleLED(stat1);
-
-    // Only echo back if this is enabled
-    if (settings.echo == true)
+//    if (settings.echo == true)
       Serial.write(c);
 
     if (c == '\r') {
@@ -848,19 +847,5 @@ void displayParameters()
     }
 
     Serial.println();
-  }
-}
-
-//Toggle a pin. Used for logic analyzer debugging.
-void triggerEvent(uint16_t triggerWidth)
-{
-  if (pin_trigger != 255)
-  {
-    if (settings.debug == true)
-    {
-      digitalWrite(pin_trigger, LOW);
-      delayMicroseconds(triggerWidth);
-      digitalWrite(pin_trigger, HIGH);
-    }
   }
 }
