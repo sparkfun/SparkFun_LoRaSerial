@@ -96,6 +96,18 @@ void commandMode()
             case ('5'): //ATI5 - Show max possible bytes per second
               Serial.println(calcMaxThroughput());
               break;
+            case ('6'): //ATI6 - Display AES key
+              for (uint8_t i = 0 ; i < 16 ; i++)
+              {
+                if (settings.encryptionKey[i] < 0x10) Serial.print("0");
+                Serial.print(settings.encryptionKey[i], HEX);
+                Serial.print(" ");
+              }
+              Serial.println();
+              break;
+            case ('7'): //ATI7 - Show current FHSS channel
+              Serial.println(radio.getFHSSChannel());
+              break;
             default:
               reportERROR();
               break;
@@ -643,8 +655,8 @@ byte readLine(char* readBuffer, byte bufferLength)
     while (!Serial.available());
     byte c = Serial.read();
 
-//    if (settings.echo == true)
-      Serial.write(c);
+    //    if (settings.echo == true)
+    Serial.write(c);
 
     if (c == '\r') {
       Serial.println();

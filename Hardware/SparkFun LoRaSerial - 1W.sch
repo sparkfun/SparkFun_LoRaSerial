@@ -30039,6 +30039,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <text x="396.24" y="134.62" size="2.54" layer="94" font="vector" align="center">I²C Pull Ups</text>
 <wire x1="0" y1="76.2" x2="147.32" y2="76.2" width="0.2032" layer="97" style="longdash"/>
 <wire x1="360.68" y1="76.2" x2="360.68" y2="149.86" width="0.2032" layer="97" style="longdash"/>
+<text x="200.66" y="302.26" size="1.27" layer="91">Make Radio connector compatible with 5V signals</text>
 </plain>
 <instances>
 <instance part="FID1" gate="G$1" x="424.18" y="43.18" smashed="yes"/>
