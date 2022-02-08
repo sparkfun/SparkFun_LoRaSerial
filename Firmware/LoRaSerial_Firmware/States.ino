@@ -353,6 +353,7 @@ void updateRadioState()
         if (transactionComplete == true) //If dio0ISR has fired, we are done transmitting
         {
           transactionComplete = false; //Reset ISR flag
+          returnToReceiving();
           changeState(RADIO_BROADCASTING_RECEIVING_STANDBY); //No ack response when in broadcasting mode
           digitalWrite(pin_activityLED, LOW);
         }

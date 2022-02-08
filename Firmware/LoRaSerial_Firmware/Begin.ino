@@ -104,7 +104,10 @@ void beginLoRa()
 {
   radio = new Module(pin_cs, pin_dio0, pin_rst, pin_dio1);
 
-  int state = radio.begin(channels[0]);
+  float centerFreq = (settings.frequencyMax - settings.frequencyMin) / 2;
+  centerFreq += settings.frequencyMin;
+
+  int state = radio.begin(centerFreq); //Doesn't matter what freq we start at
   if (state != RADIOLIB_ERR_NONE)
   {
     Serial.print(F("Radio init failed with code: "));
@@ -112,7 +115,15 @@ void beginLoRa()
     while (1); //Hard freeze
   }
 
-  randomSeed(radio.randomByte()); //Puts radio into standy-by state
+  uint8_t radioSeed = radio.randomByte(); //Puts radio into standy-by state
+  randomSeed(radioSeed); 
+  if(settings.debug == true)
+  {
+    Serial.print("RadioSeed: ");
+    Serial.println(radioSeed);
+  }
+
+  generateHopTable(); //Generate frequency table based on randomByte
 
   configureRadio(); //Apply current settings
 

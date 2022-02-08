@@ -203,6 +203,8 @@ uint16_t totalPacketsLost = 0; //Keep metrics of link quality
 
 uint8_t lastPacket[MAX_PACKET_SIZE]; //Contains the last data received. Used for duplicate testing.
 uint8_t lastPacketSize = 0; //Tracks the last packet size we received
+unsigned long lastPacketReceived = 0; //Controls link LED in broadcast mode
+unsigned long lastLinkBlink = 0; //Controls link LED in broadcast mode
 
 #define MAX_LOST_PACKET_BEFORE_LINKLOST 2
 bool sentFirstPing = false; //Force a ping to link at POR
