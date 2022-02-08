@@ -123,3 +123,10 @@ void beginLoRa()
   else
     changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
 }
+
+void beginWDT()
+{
+#if defined(ARDUINO_ARCH_SAMD)
+  myWatchDog.setup(WDT_HARDCYCLE250m);  // Initialize WDT with 250ms timeout
+#endif  
+}

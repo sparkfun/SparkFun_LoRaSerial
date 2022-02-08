@@ -158,6 +158,14 @@ GCM <AES128> gcm;
 uint8_t AESiv[12] = {0}; //Set during hop table generation
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+//Watchdog
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+#if defined(ARDUINO_ARCH_SAMD)
+#include <WDTZero.h> //https://github.com/javos65/WDTZero
+WDTZero myWatchDog;
+#endif
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 //Global variables - Serial
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 //Buffer to store bytes incoming from serial before broadcasting over LoRa
@@ -255,6 +263,8 @@ void setup()
 
   beginLoRa(); //Start radio
 
+  beginWDT(); //Start watchdog timer
+
   Serial.println(F("LRS"));
 #if defined(ARDUINO_ARCH_SAMD)
   Serial1.println(F("LRS"));
@@ -263,6 +273,8 @@ void setup()
 
 void loop()
 {
+  myWatchDog.clear(); //Pet the dog
+
   updateSerial(); //Store incoming and print outgoing
 
   updateRadioState(); //Ping/ack/send packets as needed
