@@ -471,7 +471,7 @@ void generateHopTable()
   float channelSpacing = (settings.frequencyMax - settings.frequencyMin) / (float)(settings.numberOfChannels + 2);
 
   //Keep away from edge of available spectrum
-  float operatingMinFreq = settings.frequencyMin + (float)(channelSpacing / 2);
+  float operatingMinFreq = settings.frequencyMin + (channelSpacing / 2);
 
   //Pre populate channel list
   for (int x = 0 ; x < settings.numberOfChannels ; x++)
@@ -487,9 +487,8 @@ void generateHopTable()
   //'Randomly' shuffle list based on our specific seed
   shuffle(channels, settings.numberOfChannels);
 
-
-  //Initialize Values for AES using settings seed
-  for (int x = 0 ; x < 12 ; x++)
+  //Set new initial values for AES using settings based random seed
+  for (uint8_t x = 0 ; x < 12 ; x++)
     AESiv[x] = myRand();
 
   if (settings.debug == true)
