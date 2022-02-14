@@ -54,6 +54,8 @@ void eepromErase()
 {
   for (uint16_t i = 0 ; i < EEPROM.length() ; i++)
   {
+    petWDT();
+
     EEPROM.write(i, 0);
 
 #if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_SAMD)

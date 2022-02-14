@@ -41,6 +41,8 @@ void updateSerial()
           if (timeToHop == true) break;
 
           if (isCTS() == false) break;
+
+          petWDT();
         }
       }
     }
@@ -49,6 +51,8 @@ void updateSerial()
   //Look for local incoming serial
   while (Serial.available())
   {
+    petWDT();
+
     if (availableRXBytes() == sizeof(serialReceiveBuffer) - 1)
     {
       //Buffer full! Don't read bytes.
@@ -156,5 +160,4 @@ void readyOutgoingPacket()
   }
 
   rxTail = tempTail; //TODO - We move the tail no matter if sendDataPacket was successful or errored out
-
 }

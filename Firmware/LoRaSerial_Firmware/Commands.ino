@@ -652,7 +652,12 @@ byte readLine(char* readBuffer, byte bufferLength)
   byte readLength = 0;
   while (readLength < bufferLength - 1)
   {
-    while (!Serial.available());
+    while (!Serial.available())
+    {
+      petWDT();
+      delay(10);      
+    }
+    
     byte c = Serial.read();
 
     //    if (settings.echo == true)

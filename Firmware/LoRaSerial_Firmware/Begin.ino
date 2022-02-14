@@ -35,7 +35,7 @@ void beginBoard()
   pin_dio1 = 25; //aka A1
   pin_txen = 255; //Not used
   pin_rxen = 255;
-  pin_rst = 255;
+  pin_rst = 32;
   pin_cts = 255;
   pin_rts = 255;
 
@@ -112,12 +112,16 @@ void beginLoRa()
   {
     Serial.print(F("Radio init failed with code: "));
     Serial.println(state);
-    while (1); //Hard freeze
+    while (1)
+    {
+      petWDT();
+      delay(100);
+    }
   }
 
   uint8_t radioSeed = radio.randomByte(); //Puts radio into standy-by state
-  randomSeed(radioSeed); 
-  if(settings.debug == true)
+  randomSeed(radioSeed);
+  if (settings.debug == true)
   {
     Serial.print("RadioSeed: ");
     Serial.println(radioSeed);
@@ -139,5 +143,15 @@ void beginWDT()
 {
 #if defined(ARDUINO_ARCH_SAMD)
   myWatchDog.setup(WDT_HARDCYCLE250m);  // Initialize WDT with 250ms timeout
-#endif  
+#endif
+}
+
+void petWDT()
+{
+#if defined(ARDUINO_ARCH_SAMD)
+  myWatchDog.clear(); //Pet the dog
+#elif defined(ARDUINO_ARCH_ESP32)
+  delay(1);
+#endif
+
 }
