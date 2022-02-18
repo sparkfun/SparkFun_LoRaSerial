@@ -275,7 +275,7 @@ void setup()
 
 void loop()
 {
-  myWatchDog.clear(); //Pet the dog
+  petWDT();
 
   updateSerial(); //Store incoming and print outgoing
 
