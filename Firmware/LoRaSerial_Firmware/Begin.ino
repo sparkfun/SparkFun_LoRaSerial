@@ -143,13 +143,20 @@ void beginWDT()
 {
 #if defined(ARDUINO_ARCH_SAMD)
   myWatchDog.setup(WDT_HARDCYCLE250m);  // Initialize WDT with 250ms timeout
+  petTimeoutHalf = 250 / 2;
 #endif
 }
 
 void petWDT()
 {
 #if defined(ARDUINO_ARCH_SAMD)
-  myWatchDog.clear(); //Pet the dog
+  //Petting the dog takes a really long time on the SAMD21, 4-5ms to complete
+  //so we don't always clear it, only after we've passed the half way point
+  if (millis() - lastPet > petTimeoutHalf)
+  {
+    lastPet = millis();
+    myWatchDog.clear();
+  }
 #elif defined(ARDUINO_ARCH_ESP32)
   delay(1);
 #endif
