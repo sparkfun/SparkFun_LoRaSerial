@@ -416,6 +416,41 @@ void updateRadioState()
       }
       break;
 
+    case RADIO_TRAINING_TRANSMITTING:
+      {
+        //Transmit with .train = 1 to see if anyone else is sitting on the training channel
+
+      }
+      break;
+    case RADIO_TRAINING_ACK_WAIT:
+      {
+        //If we receive an ACK, absorb training data
+
+        //If timeout, create new link data
+
+        //Seed random number based on RF noise. We use Arduino random() because platform specific generation does not matter
+        randomSeed(radio.randomByte());
+
+        //Generate new NetID
+        uint8_t newNetID = random(0, 256); //Inclusive, exclusive
+
+        //Generate new AES Key. User may not be using AES but we still need both radios to have the same key in case they do enable AES.
+        uint8_t newEncryptionKey[16];
+        for (int x = 0 ; x < 16 ; x++)
+          newEncryptionKey[x] = random(0, 256); //Inclusive, exclusive
+
+        //Avoid NetID checking
+        settings.pointToPoint = false;
+
+        changeState(RADIO_TRAINING_RECIEVE_HERE_FIRST);
+      }
+      break;
+    case RADIO_TRAINING_RECIEVE_HERE_FIRST:
+      {
+        //Wait for ping. Once received, transmit training data
+      }
+      break;
+
     default:
       {
         Serial.println(F("Unknown state"));
@@ -476,6 +511,16 @@ void changeState(RadioStates newState)
     case (RADIO_BROADCASTING_TRANSMITTING):
       Serial.print(F("State: B-Transmitting "));
       Serial.print(channels[radio.getFHSSChannel()]);
+      break;
+
+    case (RADIO_TRAINING_TRANSMITTING):
+      Serial.print(F("State: [Training] TX"));
+      break;
+    case (RADIO_TRAINING_ACK_WAIT):
+      Serial.print(F("State: [Training] Ack Wait"));
+      break;
+    case (RADIO_TRAINING_RECIEVE_HERE_FIRST):
+      Serial.print(F("State: [Training] RX Here First"));
       break;
 
     default:
