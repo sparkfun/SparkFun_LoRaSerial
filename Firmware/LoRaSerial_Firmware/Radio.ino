@@ -484,6 +484,8 @@ void generateHopTable()
                + (uint16_t)settings.frequencyMin + (uint16_t)settings.frequencyMax
                + (uint16_t)settings.radioBandwidth + settings.radioSpreadFactor + settings.frequencyHop;
 
+               //TODO add pointToPoint, encryptData, encryptionKey, dataScrambling, maxDwellTime,
+
   //'Randomly' shuffle list based on our specific seed
   shuffle(channels, settings.numberOfChannels);
 
@@ -600,4 +602,33 @@ bool receiveInProcess()
 
   //if ((radioStatus & 0b1) == 0) return (false); //If bit 0 is cleared, there is no receive in progress
   //return (true); //If bit 0 is set, forget the other bits, there is a receive in progress
+}
+
+//Go to a known freq and share settings
+//We assume the user needs to maintain their settings (airSpeed, numberOfChannels, freq min/max, bandwidth/spread/hop)
+//but need to be on a different netID/AES key.
+void beginTraining()
+{
+  Serial.println("beginTraining");
+
+  float channelSpacing = (settings.frequencyMax - settings.frequencyMin) / (float)(settings.numberOfChannels + 2);
+
+  //Move to frequency that is not part of the hop table
+  //In normal operation we move 1/2 a channel away from min. In training, we move a full channel away + firmware version
+  float trainFrequency = settings.frequencyMin + (channelSpacing * ((FIRMWARE_VERSION_MAJOR * 10 + FIRMWARE_VERSION_MINOR) % settings.numberOfChannels));
+
+  Serial.print("trainFrequency: ");
+  Serial.println(trainFrequency);
+
+  changeState(RADIO_TRAINING_TRANSMITTING);
+}
+
+//Apply default settings before beginning training
+void beginDefaultTraining()
+{
+  Serial.println("beginDefaultTraining");
+
+  //Apply defaults
+
+  beginTraining();
 }
