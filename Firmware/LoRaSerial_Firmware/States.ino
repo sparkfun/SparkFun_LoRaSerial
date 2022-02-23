@@ -120,10 +120,6 @@ void updateRadioState()
           digitalWrite(pin_linkLED, LOW);
 
           //Return to home channel and begin linking process
-          radio.setFrequency(channels[radio.getFHSSChannel()]);
-          radio.clearFHSSInt();
-          timeToHop = false;
-
           returnToReceiving();
           changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
         }

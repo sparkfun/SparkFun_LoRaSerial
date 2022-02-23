@@ -389,6 +389,10 @@ void sendPacket()
       radioComputeWhitening(outgoingPacket, packetSize);
   }
 
+  //If we are trainsmitting at high data rates the receiver is often not ready for new data. Pause for a few ms (measured with logic analyzer).
+  if(settings.airSpeed == 28800 || settings.airSpeed == 38400)
+    delay(2);
+
   digitalWrite(pin_activityLED, HIGH);
 
   radio.setFrequency(channels[radio.getFHSSChannel()]); //Return home before every transmission
@@ -396,8 +400,8 @@ void sendPacket()
   int state = radio.startTransmit(outgoingPacket, packetSize);
   if (state == RADIOLIB_ERR_NONE)
   {
-    if(timeToHop) hopChannel();
-    
+    if (timeToHop) hopChannel();
+
     packetAirTime = calcAirTime(packetSize); //Calculate packet air size while we're transmitting in the background
     uint16_t responseDelay = packetAirTime / settings.responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
     packetAirTime += responseDelay;
@@ -409,7 +413,7 @@ void sendPacket()
     LRS_DEBUG_PRINT(F("responseDelay: "));
     LRS_DEBUG_PRINTLN(responseDelay);
 
-    if(timeToHop) hopChannel();
+    if (timeToHop) hopChannel();
   }
   else
   {

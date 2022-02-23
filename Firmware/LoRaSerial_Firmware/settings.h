@@ -84,7 +84,7 @@ typedef struct struct_settings {
   bool pointToPoint = true; //Receiving unit will check netID and ACK. If set to false, receiving unit doesn't check netID or ACK.
   bool encryptData = true; //AES encrypt each packet
   uint8_t encryptionKey[16] = { 0x37, 0x78, 0x21, 0x41, 0xA6, 0x65, 0x73, 0x4E,0x44, 0x75, 0x67, 0x2A, 0xE6, 0x30, 0x83, 0x08 };
-  bool dataScrambling = true; //Use IBM Data Whitening to reduce DC bias
+  bool dataScrambling = false; //Use IBM Data Whitening to reduce DC bias
   uint16_t radioBroadcastPower_dbm = 20; //Max software setting is 20 but radios with built-in PA will get 30dBm(1W) with rx/tx_en pins
   float frequencyMin = 902.0; //MHz
   float frequencyMax = 928.0; //MHz
@@ -102,7 +102,7 @@ typedef struct struct_settings {
   bool echo = false; //Print locally inputted serial
   uint16_t heartbeatTimeout = 5000; //ms before sending ping to see if link is active
   bool flowControl = false; //Enable the use of CTS/RTS flow control signals
-  bool autoTuneFrequency = true; //Based on the last packets frequency error, adjust our next transaction frequency
+  bool autoTuneFrequency = false; //Based on the last packets frequency error, adjust our next transaction frequency
   bool displayPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
   uint8_t maxResends = 2; //Attempt resends up to this number.
 
