@@ -16,7 +16,7 @@ PacketType identifyPacketType()
   if (settings.encryptData == true)
     decryptBuffer(incomingBuffer, receivedBytes);
 
-  LRS_DEBUG_PRINT(F("Received bytes: "));
+  LRS_DEBUG_PRINT(F("\n\rReceived bytes: "));
   LRS_DEBUG_PRINTLN(receivedBytes);
 
   LRS_DEBUG_PRINT(F("ProcessPacket NetID: 0x"));
@@ -381,11 +381,15 @@ void sendPacket()
   outgoingPacket[packetSize - 2] = settings.netID;
   memcpy(&outgoingPacket[packetSize - 1], &responseTrailer, 1);
 
-  if (settings.encryptData == true)
-    encryptBuffer(outgoingPacket, packetSize);
+  //Apply AES and whitening only to new packets, not resends
+  if (responseTrailer.resend == 0)
+  {
+    if (settings.encryptData == true)
+      encryptBuffer(outgoingPacket, packetSize);
 
-  if (settings.dataScrambling == true)
-    radioComputeWhitening(outgoingPacket, packetSize);
+    if (settings.dataScrambling == true)
+      radioComputeWhitening(outgoingPacket, packetSize);
+  }
 
   digitalWrite(pin_activityLED, HIGH);
 
