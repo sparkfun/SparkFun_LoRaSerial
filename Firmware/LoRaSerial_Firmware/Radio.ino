@@ -272,8 +272,6 @@ void returnToReceiving()
   else
     radio.setFrequency(channels[radio.getFHSSChannel()]);
 
-  radio.clearFHSSInt();
-  hopsCompleted = 0; //Reset to detect in progress reception
   timeToHop = false;
 
   int state;
@@ -395,10 +393,11 @@ void sendPacket()
 
   radio.setFrequency(channels[radio.getFHSSChannel()]); //Return home before every transmission
   LRS_DEBUG_PRINTLN(channels[radio.getFHSSChannel()], 3);
-  radio.clearFHSSInt();
   int state = radio.startTransmit(outgoingPacket, packetSize);
   if (state == RADIOLIB_ERR_NONE)
   {
+    if(timeToHop) hopChannel();
+    
     packetAirTime = calcAirTime(packetSize); //Calculate packet air size while we're transmitting in the background
     uint16_t responseDelay = packetAirTime / settings.responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
     packetAirTime += responseDelay;
@@ -409,6 +408,8 @@ void sendPacket()
     LRS_DEBUG_PRINTLN(packetAirTime);
     LRS_DEBUG_PRINT(F("responseDelay: "));
     LRS_DEBUG_PRINTLN(responseDelay);
+
+    if(timeToHop) hopChannel();
   }
   else
   {
@@ -488,7 +489,7 @@ void generateHopTable()
                + (uint16_t)settings.frequencyMin + (uint16_t)settings.frequencyMax
                + (uint16_t)settings.radioBandwidth + settings.radioSpreadFactor + settings.frequencyHop;
 
-               //TODO add pointToPoint, encryptData, encryptionKey, dataScrambling, maxDwellTime,
+  //TODO add pointToPoint, encryptData, encryptionKey, dataScrambling, maxDwellTime,
 
   //'Randomly' shuffle list based on our specific seed
   shuffle(channels, settings.numberOfChannels);
@@ -555,6 +556,9 @@ bool linkLost()
 //at the beginning and during of a transmission or reception
 void hopChannel()
 {
+  radio.clearFHSSInt();
+  timeToHop = false;
+
   if (settings.autoTuneFrequency == true)
   {
     if (radioState == RADIO_LINKED_RECEIVING_STANDBY || radioState == RADIO_LINKED_ACK_WAIT
@@ -565,10 +569,6 @@ void hopChannel()
   }
   else
     radio.setFrequency(channels[radio.getFHSSChannel()]);
-
-  hopsCompleted++;
-  radio.clearFHSSInt();
-  timeToHop = false;
 }
 
 //Returns true if the radio indicates we have an ongoing reception

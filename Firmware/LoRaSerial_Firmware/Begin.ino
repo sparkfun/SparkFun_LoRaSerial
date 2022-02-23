@@ -144,21 +144,26 @@ void beginWDT()
 #if defined(ARDUINO_ARCH_SAMD)
   myWatchDog.setup(WDT_HARDCYCLE250m);  // Initialize WDT with 250ms timeout
   petTimeoutHalf = 250 / 2;
+#elif defined(ARDUINO_ARCH_ESP32)
+  petTimeoutHalf = 1000 / 2;
 #endif
 }
 
 void petWDT()
 {
-#if defined(ARDUINO_ARCH_SAMD)
   //Petting the dog takes a really long time on the SAMD21, 4-5ms to complete
   //so we don't always clear it, only after we've passed the half way point
+  //Similarly for ESP32, we don't want to delay 1ms every loop of Serial.available()
   if (millis() - lastPet > petTimeoutHalf)
   {
     lastPet = millis();
+
+#if defined(ARDUINO_ARCH_SAMD)
     myWatchDog.clear();
-  }
 #elif defined(ARDUINO_ARCH_ESP32)
-  delay(1);
+    delay(1);
 #endif
+
+  }
 
 }

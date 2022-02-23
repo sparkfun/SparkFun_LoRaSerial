@@ -187,6 +187,9 @@ char platformPrefix[15]; //Used for printing platform specific device name
 uint8_t escapeCharsReceived = 0; //Used to enter command mode
 unsigned long lastEscapeReceived_ms = 0; //Tracks end of serial traffic
 const long minEscapeTime_ms = 2000; //Serial traffic must stop this amount before an escape char is recognized
+
+uint16_t petTimeoutHalf = 0; //Half the amount of time before WDT. Helps reduce amount of time spent petting.
+unsigned long lastPet = 0; //Remebers time of last WDT pet.
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - Radio
@@ -212,8 +215,6 @@ bool sentFirstPing = false; //Force a ping to link at POR
 volatile bool transactionComplete = false; //Used in dio0ISR
 volatile bool timeToHop = true; //Used in dio1ISR
 bool expectingAck = false; //Used by various send packet functions
-
-int hopsCompleted = 0;
 
 float frequencyCorrection = 0; //Adjust receive freq based on the last packet received freqError
 

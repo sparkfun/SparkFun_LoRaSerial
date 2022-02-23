@@ -27,31 +27,43 @@ void updateSerial()
         //Print data to both ports
         for (int x = 0 ; x < availableTXBytes() ; x++)
         {
-          Serial.write(serialTransmitBuffer[txTail]);
-          Serial.flush(); //Prevent serial hardware from blocking more than this one write
-#if defined(ARDUINO_ARCH_SAMD)
-          Serial1.write(serialTransmitBuffer[txTail]);
-          Serial1.flush(); //Prevent serial hardware from blocking more than this one write
-#endif
-          txTail++;
-          txTail %= sizeof(serialTransmitBuffer);
-
           //Take a break if there are ISRs to attend to
+          petWDT();
           if (transactionComplete == true) break;
-          if (timeToHop == true) break;
-
+          if (timeToHop == true) hopChannel();
           if (isCTS() == false) break;
 
-          petWDT();
+          //          int bytesToSend = availableTXBytes();
+          //
+          //          if (txTail + bytesToSend > sizeof(serialTransmitBuffer))
+          //            bytesToSend = sizeof(serialTransmitBuffer) - txTail;
+          //
+          //          //TODO this may introduce delays when we should be checking ISRs
+          //          Serial.write(&serialTransmitBuffer[txTail], bytesToSend);
+          //          txTail += bytesToSend;
+          //          txTail %= sizeof(serialTransmitBuffer);
+
+          Serial.write(serialTransmitBuffer[txTail]);
+          Serial.flush(); //Prevent serial hardware from blocking more than this one write
+
+          //#if defined(ARDUINO_ARCH_SAMD)
+          //          Serial1.write(serialTransmitBuffer[txTail]);
+          //          Serial1.flush(); //Prevent serial hardware from blocking more than this one write
+          //#endif
+
+          txTail++;
+          txTail %= sizeof(serialTransmitBuffer);
         }
       }
     }
   }
 
   //Look for local incoming serial
-  while (Serial.available())
+  while (Serial.available() && transactionComplete == false)
   {
+    //Take a break if there are ISRs to attend to
     petWDT();
+    if (timeToHop == true) hopChannel();
 
     //Handle RTS
     if (availableRXBytes() == sizeof(serialReceiveBuffer) - 1)
