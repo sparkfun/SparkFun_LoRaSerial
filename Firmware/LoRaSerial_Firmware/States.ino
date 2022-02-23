@@ -225,7 +225,10 @@ void updateRadioState()
               changeState(RADIO_LINKED_TRANSMITTING);
             }
             else
+            {
               LRS_DEBUG_PRINTLN("ACK_WAIT: RX In Progress");
+              triggerEvent(TRIGGER_RX_IN_PROGRESS);
+            }
           }
         }
       }
@@ -237,6 +240,7 @@ void updateRadioState()
 
         if (packetType == PROCESS_BAD_PACKET || packetType == PROCESS_NETID_MISMATCH)
         {
+          triggerEvent(TRIGGER_LINK_BAD_PACKET);
           returnToReceiving();
           changeState(RADIO_LINKED_RECEIVING_STANDBY);
         }
@@ -263,6 +267,7 @@ void updateRadioState()
         }
         else if (packetType == PROCESS_DUPLICATE_PACKET)
         {
+          triggerEvent(TRIGGER_LINK_DUPLICATE_PACKET);
           packetsLost = 0; //Reset, used for linkLost testing
           frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           sendAckPacket(); //It's a duplicate. Ack then ignore
@@ -270,6 +275,7 @@ void updateRadioState()
         }
         else if (packetType == PROCESS_CONTROL_PACKET)
         {
+          triggerEvent(TRIGGER_LINK_CONTROL_PACKET);
           packetsLost = 0; //Reset, used for linkLost testing
           frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           sendAckPacket(); //Someone is pinging us
@@ -464,7 +470,7 @@ void changeState(RadioStates newState)
 {
   radioState = newState;
 
-  if (settings.debug == false)
+  //if (settings.debug == false)
     return;
 
   //Debug print
