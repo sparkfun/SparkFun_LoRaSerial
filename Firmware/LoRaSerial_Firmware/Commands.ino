@@ -212,6 +212,7 @@ void commandMode()
                 }
               }
               break;
+              
             case ('2'): //ATS2? and ATS2*?
               {
                 switch (commandBuffer[4])
@@ -243,6 +244,7 @@ void commandMode()
                     break;
                 }
               }
+              break;
 
             case ('3'): //ATS3?
               Serial.println(settings.pointToPoint);
@@ -524,6 +526,7 @@ void commandMode()
                     break;
                 }
               }
+              break;
 
             case ('3'): //ATS3=
               if (settingValue >= 0 && settingValue <= 1)
