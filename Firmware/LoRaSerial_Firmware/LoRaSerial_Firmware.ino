@@ -37,55 +37,6 @@
     ~14k RAM for serial RX/TX and radio buffers
 
   Compiled with Arduino v1.8.15
-
-  TODO:
-    (done) Allow escape chars within first 2 POR seconds
-    (done) Support RTS (output, low = don't give me more) and CTS (input, low = I can't send to host)
-    (done) Add echo at setting
-    (done) Add ability to query module for max bytes per second with current settings
-    (done) Add Link and Activity LEDs
-    (done) Add AirSpeed setting that automatically sets the spread, bandwidth, etc
-    (done) Change channels[] to malloc or other (not hard coded)
-    (done) Add min/max radio frequency at commands
-    (done) move heartBeatTimeout to settings. Good for distance testing.
-    (done) Add ATSx option for enable/disable flow control
-    (done) Settings: Limit frame size to 256 - 2 (for trailer and control)
-    (done) Add more state checking RADIOLIB_ERR_TX_TIMEOUT when we send packets out radio sendDataPacket et al
-    (done) Fix ack timeout. Should be packetAirTime + controlPacketAirTime, not 2* packetAirTime
-    (done) Implement check radio status flags before talk
-    (done) If hopping has begun but we don't receive another dio1ISR within hop time, return to receiving
-    (done) Print data to both USB and Serial1
-    (done) Twinkle LEDs at poweron
-    (done) Adjust link frequency based on frequency error report
-    (done) Implement spread factor 6, pre-known packet sized transactions
-    (done) Put responseDelay divisor into settings
-    (done) Verify that TX/RX of 2k bytes matches airspeed calculations. Set trigger at each data packet send.
-    (done) Implement AES-128-GCM encryption
-    (done) Add PointToPoint boolean to settings and commands. Don't set setting.netID to 255 (as we need it for channel array generation).
-
-    Implement low power sleep during receiving mode - ArduinoLowPower
-    Implement radio power down mode
-    Remote commands RTIx
-    Add \r requirement to enter command mode
-    Add I2C/Qwiic interface
-
-    Add NetID to commands and register table
-    Pulse LED if in pointToPoint mode
-    Add AES encryption and key to commands and register table
-
-    Put all the platform specific functions into a header or guarded area (reset, eeprom?, etc)
-    Add data size to all SAMD boards
-    Read data from both USB And Serial1
-
-    Implement train feature: Jump to X freq. Send ping. If not ack, "hereFirst = true". If hereFirst, generate random seed based
-      on randomByte. Generate NetID. If encryption, generate AES key (16 bytes). 
-      4 seconds: train using current airSpeed settings, but new NetID and AES key
-      10 seconds: reset all settings, train using default airSpeed settings.
-
-    Uno:
-    Add processor guard to limit Uno to 16 channels (float array is a ram sink)
-    Consider malloc the outgoingPacket and incomingPacket sizes due to settings.framesize
-    Move radiolib to static arrays to see real memory footprint
 */
 
 const int FIRMWARE_VERSION_MAJOR = 1;
@@ -237,7 +188,7 @@ void setup()
 #if defined(ARDUINO_ARCH_ESP32)
   delay(500);
 #elif defined(ARDUINO_ARCH_SAMD)
-  while (!Serial);
+  //while (!Serial);
 #endif
 #endif
 
@@ -250,19 +201,16 @@ void setup()
 
   beginBoard(); //Determine what hardware platform we are running on
 
-  settings.airSpeed = 4800;
-  settings.maxDwellTime = 400;
-  settings.frequencyHop = true;
-  settings.debug = true;
-  //settings.heartbeatTimeout = 2000;
-  settings.displayPacketQuality = false;
-  settings.autoTuneFrequency = true;
-  settings.useEncryption = true;
-  settings.dataScrambling = true;
-
-  settings.pointToPoint = true;
-
-  generateHopTable();
+  //settings.airSpeed = 19200;
+  //  settings.maxDwellTime = 400;
+  //  settings.frequencyHop = true;
+  //settings.debug = true; //Enable trigger pin events
+  //  //settings.heartbeatTimeout = 2000;
+  //  settings.displayPacketQuality = false;
+  //settings.autoTuneFrequency = false;
+  //settings.encryptData = false; //No ecrypt, no scramble works
+  //settings.dataScrambling = false; //Encrypt, no scramble works
+  //settings.pointToPoint = false; //Encrypt, scramble works
 
   beginLoRa(); //Start radio
 
