@@ -8,9 +8,13 @@
 void commandMode()
 {
   char commandBuffer[30];
-  Serial.println(F("\r\nOK"));
+
+  systemPrintln(F("\r\nOK"));
 
   while (Serial.available()) Serial.read();
+#if defined(ARDUINO_ARCH_SAMD)
+  while (Serial1.available()) Serial1.read();
+#endif
 
   while (true)
   {
@@ -37,13 +41,13 @@ void commandMode()
             case ('I'):
               //Shows the radio version
               reportOK();
-              Serial.print(F("SparkFun STR "));
-              Serial.print(platformPrefix);
-              Serial.print(F(" v"));
-              Serial.print(FIRMWARE_VERSION_MAJOR);
-              Serial.print(F("."));
-              Serial.print(FIRMWARE_VERSION_MINOR);
-              Serial.println();
+              systemPrint(F("SparkFun STR "));
+              systemPrint(platformPrefix);
+              systemPrint(F(" v"));
+              systemPrint(FIRMWARE_VERSION_MAJOR);
+              systemPrint(F("."));
+              systemPrint(FIRMWARE_VERSION_MINOR);
+              systemPrintln();
               break;
             case ('O'): //Exit command mode
               generateHopTable(); //Generate freq with new settings
@@ -71,7 +75,7 @@ void commandMode()
               break;
             case ('Z'): //Reboots the radio
               reportOK();
-              Serial.flush();
+              systemFlush();
               systemReset();
               break;
             default:
@@ -89,34 +93,34 @@ void commandMode()
               displayParameters();
               break;
             case ('1'): //ATI1 - Show board variant
-              Serial.print(F("SparkFun STR "));
-              Serial.println(platformPrefix);
+              systemPrint(F("SparkFun STR "));
+              systemPrintln(platformPrefix);
               break;
             case ('2'): //ATI2 - Show firmware version
-              Serial.print(FIRMWARE_VERSION_MAJOR);
-              Serial.print(F("."));
-              Serial.println(FIRMWARE_VERSION_MINOR);
+              systemPrint(FIRMWARE_VERSION_MAJOR);
+              systemPrint(F("."));
+              systemPrintln(FIRMWARE_VERSION_MINOR);
               break;
             case ('3'): //ATI3 - Display latest RSSI
-              Serial.println(radio.getRSSI());
+              systemPrintln(radio.getRSSI());
               break;
             case ('4'): //ATI4 - Get random byte from RSSI
-              Serial.println(radio.randomByte());
+              systemPrintln(radio.randomByte());
               break;
             case ('5'): //ATI5 - Show max possible bytes per second
-              Serial.println(calcMaxThroughput());
+              systemPrintln(calcMaxThroughput());
               break;
             case ('6'): //ATI6 - Display AES key
               for (uint8_t i = 0 ; i < 16 ; i++)
               {
-                if (settings.encryptionKey[i] < 0x10) Serial.print("0");
-                Serial.print(settings.encryptionKey[i], HEX);
-                Serial.print(" ");
+                if (settings.encryptionKey[i] < 0x10) systemPrint("0");
+                systemPrint(settings.encryptionKey[i], HEX);
+                systemPrint(" ");
               }
-              Serial.println();
+              systemPrintln();
               break;
             case ('7'): //ATI7 - Show current FHSS channel
-              Serial.println(radio.getFHSSChannel());
+              systemPrintln(radio.getFHSSChannel());
               break;
             default:
               reportERROR();
@@ -172,44 +176,44 @@ void commandMode()
           switch (commandBuffer[3])
           {
             case ('0'): //ATS0?
-              Serial.println(settings.serialSpeed);
+              systemPrintln(settings.serialSpeed);
               break;
             case ('1'): //ATS1? and ATS1*?
               {
                 switch (commandBuffer[4])
                 {
                   case ('?'): //ATS1?
-                    Serial.println(settings.airSpeed);
+                    systemPrintln(settings.airSpeed);
                     break;
                   case ('0'): //ATS10?
-                    Serial.println(settings.frequencyHop);
+                    systemPrintln(settings.frequencyHop);
                     break;
                   case ('1'): //ATS11?
-                    Serial.println(settings.maxDwellTime);
+                    systemPrintln(settings.maxDwellTime);
                     break;
                   case ('2'): //ATS12?
-                    Serial.println(settings.radioBandwidth);
+                    systemPrintln(settings.radioBandwidth);
                     break;
                   case ('3'): //ATS13?
-                    Serial.println(settings.radioSpreadFactor);
+                    systemPrintln(settings.radioSpreadFactor);
                     break;
                   case ('4'): //ATS14?
-                    Serial.println(settings.radioCodingRate);
+                    systemPrintln(settings.radioCodingRate);
                     break;
                   case ('5'): //ATS15?
-                    Serial.println(settings.radioSyncWord);
+                    systemPrintln(settings.radioSyncWord);
                     break;
                   case ('6'): //ATS16?
-                    Serial.println(settings.radioPreambleLength);
+                    systemPrintln(settings.radioPreambleLength);
                     break;
                   case ('7'): //ATS17?
-                    Serial.println(settings.frameSize);
+                    systemPrintln(settings.frameSize);
                     break;
                   case ('8'): //ATS18?
-                    Serial.println(settings.serialTimeoutBeforeSendingFrame_ms);
+                    systemPrintln(settings.serialTimeoutBeforeSendingFrame_ms);
                     break;
                   case ('9'): //ATS19?
-                    Serial.println(settings.debug);
+                    systemPrintln(settings.debug);
                     break;
 
                   default:
@@ -218,31 +222,31 @@ void commandMode()
                 }
               }
               break;
-              
+
             case ('2'): //ATS2? and ATS2*?
               {
                 switch (commandBuffer[4])
                 {
                   case ('?'): //ATS2?
-                    Serial.println(settings.netID);
+                    systemPrintln(settings.netID);
                     break;
                   case ('0'): //ATS20?
-                    Serial.println(settings.echo);
+                    systemPrintln(settings.echo);
                     break;
                   case ('1'): //ATS21?
-                    Serial.println(settings.heartbeatTimeout);
+                    systemPrintln(settings.heartbeatTimeout);
                     break;
                   case ('2'): //ATS22?
-                    Serial.println(settings.flowControl);
+                    systemPrintln(settings.flowControl);
                     break;
                   case ('3'): //ATS23?
-                    Serial.println(settings.autoTuneFrequency);
+                    systemPrintln(settings.autoTuneFrequency);
                     break;
                   case ('4'): //ATS24?
-                    Serial.println(settings.displayPacketQuality);
+                    systemPrintln(settings.displayPacketQuality);
                     break;
                   case ('5'): //ATS25?
-                    Serial.println(settings.maxResends);
+                    systemPrintln(settings.maxResends);
                     break;
 
                   default:
@@ -253,25 +257,25 @@ void commandMode()
               break;
 
             case ('3'): //ATS3?
-              Serial.println(settings.pointToPoint);
+              systemPrintln(settings.pointToPoint);
               break;
             case ('4'): //ATS4?
-              Serial.println(settings.encryptData);
+              systemPrintln(settings.encryptData);
               break;
             case ('5'): //ATS5?
-              Serial.println(settings.dataScrambling);
+              systemPrintln(settings.dataScrambling);
               break;
             case ('6'): //ATS6?
-              Serial.println(settings.radioBroadcastPower_dbm);
+              systemPrintln(settings.radioBroadcastPower_dbm);
               break;
             case ('7'): //ATS7?
-              Serial.println(settings.frequencyMin);
+              systemPrintln(settings.frequencyMin);
               break;
             case ('8'): //ATS8?
-              Serial.println(settings.frequencyMax);
+              systemPrintln(settings.frequencyMax);
               break;
             case ('9'): //ATS9?
-              Serial.println(settings.numberOfChannels);
+              systemPrintln(settings.numberOfChannels);
               break;
 
             default:
@@ -334,7 +338,7 @@ void commandMode()
                         || settingValue == 38400
                        )
                     {
-                      if (settings.airSpeed == 0 && settingValue != 0) Serial.println(F("Warning: AirSpeed override of bandwidth, spread factor, and coding rate"));
+                      if (settings.airSpeed == 0 && settingValue != 0) systemPrintln(F("Warning: AirSpeed override of bandwidth, spread factor, and coding rate"));
                       settings.airSpeed = settingValue;
                       configureRadio(); //Update spread, bandwidth, and coding as needed
                       reportOK();
@@ -363,7 +367,7 @@ void commandMode()
                   case ('2'): //ATS12=
                     if (settings.airSpeed != 0)
                     {
-                      Serial.println(F("AirSpeed is overriding"));
+                      systemPrintln(F("AirSpeed is overriding"));
                       reportERROR();
                     }
                     else
@@ -627,12 +631,12 @@ void commandMode()
 
 void reportOK()
 {
-  Serial.println(F("OK"));
+  systemPrintln(F("OK"));
 }
 
 void reportERROR()
 {
-  Serial.println(F("ERROR"));
+  systemPrintln(F("ERROR"));
 }
 
 //Check if AT appears in the correct position
@@ -661,19 +665,21 @@ byte readLine(char* readBuffer, byte bufferLength)
   byte readLength = 0;
   while (readLength < bufferLength - 1)
   {
+#if defined(ARDUINO_ARCH_SAMD)
+    while (!Serial.available() && !Serial1.available())
+#else
     while (!Serial.available())
+#endif
     {
       petWDT();
-      delay(10);      
+      delay(10);
     }
-    
-    byte c = Serial.read();
 
-    //    if (settings.echo == true)
-    Serial.write(c);
+    byte c = systemRead();
+    systemWrite(c);
 
     if (c == '\r') {
-      Serial.println();
+      systemPrintln();
       readBuffer[readLength] = '\0';
       break;
     }
@@ -694,184 +700,184 @@ void displayParameters()
 {
   for (uint8_t x = 0 ; x <= 25 ; x++)
   {
-    Serial.print(F("S"));
-    Serial.print(x);
-    Serial.print(F(":"));
+    systemPrint(F("S"));
+    systemPrint(x);
+    systemPrint(F(":"));
 
     //Name
     switch (x)
     {
       case (0):
-        Serial.print(F("SerialSpeed"));
+        systemPrint(F("SerialSpeed"));
         break;
       case (1):
-        Serial.print(F("AirSpeed"));
+        systemPrint(F("AirSpeed"));
         break;
       case (2):
-        Serial.print(F("netID"));
+        systemPrint(F("netID"));
         break;
       case (3):
-        Serial.print(F("PointToPoint"));
+        systemPrint(F("PointToPoint"));
         break;
       case (4):
-        Serial.print(F("EncryptData"));
+        systemPrint(F("EncryptData"));
         break;
       case (5):
-        Serial.print(F("DataScrambling"));
+        systemPrint(F("DataScrambling"));
         break;
       case (6):
-        Serial.print(F("TxPower"));
+        systemPrint(F("TxPower"));
         break;
       case (7):
-        Serial.print(F("FrequencyMin"));
+        systemPrint(F("FrequencyMin"));
         break;
       case (8):
-        Serial.print(F("FrequencyMax"));
+        systemPrint(F("FrequencyMax"));
         break;
       case (9):
-        Serial.print(F("NumberOfChannels"));
+        systemPrint(F("NumberOfChannels"));
         break;
       case (10):
-        Serial.print(F("FrequencyHop"));
+        systemPrint(F("FrequencyHop"));
         break;
       case (11):
-        Serial.print(F("MaxDwellTime"));
+        systemPrint(F("MaxDwellTime"));
         break;
       case (12):
-        Serial.print(F("Bandwidth"));
+        systemPrint(F("Bandwidth"));
         break;
       case (13):
-        Serial.print(F("SpreadFactor"));
+        systemPrint(F("SpreadFactor"));
         break;
       case (14):
-        Serial.print(F("CodingRate"));
+        systemPrint(F("CodingRate"));
         break;
       case (15):
-        Serial.print(F("SyncWord"));
+        systemPrint(F("SyncWord"));
         break;
       case (16):
-        Serial.print(F("PreambleLength"));
+        systemPrint(F("PreambleLength"));
         break;
       case (17):
-        Serial.print(F("FrameSize"));
+        systemPrint(F("FrameSize"));
         break;
       case (18):
-        Serial.print(F("FrameTimeout"));
+        systemPrint(F("FrameTimeout"));
         break;
       case (19):
-        Serial.print(F("Debug"));
+        systemPrint(F("Debug"));
         break;
       case (20):
-        Serial.print(F("Echo"));
+        systemPrint(F("Echo"));
         break;
       case (21):
-        Serial.print(F("HeartBeatTimeout"));
+        systemPrint(F("HeartBeatTimeout"));
         break;
       case (22):
-        Serial.print(F("FlowControl"));
+        systemPrint(F("FlowControl"));
         break;
       case (23):
-        Serial.print(F("AutoTune"));
+        systemPrint(F("AutoTune"));
         break;
       case (24):
-        Serial.print(F("DisplayPacketQuality"));
+        systemPrint(F("DisplayPacketQuality"));
         break;
       case (25):
-        Serial.print(F("MaxResends"));
+        systemPrint(F("MaxResends"));
         break;
       default:
-        Serial.print(F("Unknown"));
+        systemPrint(F("Unknown"));
         break;
     }
 
-    Serial.print(F("="));
+    systemPrint(F("="));
 
     //Value
     switch (x)
     {
       case (0):
-        Serial.print(settings.serialSpeed);
+        systemPrint(settings.serialSpeed);
         break;
       case (1):
-        Serial.print(settings.airSpeed);
+        systemPrint(settings.airSpeed);
         break;
       case (2):
-        Serial.print(settings.netID);
+        systemPrint(settings.netID);
         break;
       case (3):
-        Serial.print(settings.pointToPoint);
+        systemPrint(settings.pointToPoint);
         break;
       case (4):
-        Serial.print(settings.encryptData);
+        systemPrint(settings.encryptData);
         break;
       case (5):
-        Serial.print(settings.dataScrambling);
+        systemPrint(settings.dataScrambling);
         break;
       case (6):
-        Serial.print(settings.radioBroadcastPower_dbm);
+        systemPrint(settings.radioBroadcastPower_dbm);
         break;
       case (7):
-        Serial.print(settings.frequencyMin, 3);
+        systemPrint(settings.frequencyMin, 3);
         break;
       case (8):
-        Serial.print(settings.frequencyMax, 3);
+        systemPrint(settings.frequencyMax, 3);
         break;
       case (9):
-        Serial.print(settings.numberOfChannels);
+        systemPrint(settings.numberOfChannels);
         break;
       case (10):
-        Serial.print(settings.frequencyHop);
+        systemPrint(settings.frequencyHop);
         break;
       case (11):
-        Serial.print(settings.maxDwellTime);
+        systemPrint(settings.maxDwellTime);
         break;
       case (12):
-        Serial.print(settings.radioBandwidth, 2);
+        systemPrint(settings.radioBandwidth, 2);
         break;
       case (13):
-        Serial.print(settings.radioSpreadFactor);
+        systemPrint(settings.radioSpreadFactor);
         break;
       case (14):
-        Serial.print(settings.radioCodingRate);
+        systemPrint(settings.radioCodingRate);
         break;
       case (15):
-        Serial.print(settings.radioSyncWord);
+        systemPrint(settings.radioSyncWord);
         break;
       case (16):
-        Serial.print(settings.radioPreambleLength);
+        systemPrint(settings.radioPreambleLength);
         break;
       case (17):
-        Serial.print(settings.frameSize);
+        systemPrint(settings.frameSize);
         break;
       case (18):
-        Serial.print(settings.serialTimeoutBeforeSendingFrame_ms);
+        systemPrint(settings.serialTimeoutBeforeSendingFrame_ms);
         break;
       case (19):
-        Serial.print(settings.debug);
+        systemPrint(settings.debug);
         break;
       case (20):
-        Serial.print(settings.echo);
+        systemPrint(settings.echo);
         break;
       case (21):
-        Serial.print(settings.heartbeatTimeout);
+        systemPrint(settings.heartbeatTimeout);
         break;
       case (22):
-        Serial.print(settings.flowControl);
+        systemPrint(settings.flowControl);
         break;
       case (23):
-        Serial.print(settings.autoTuneFrequency);
+        systemPrint(settings.autoTuneFrequency);
         break;
       case (24):
-        Serial.print(settings.displayPacketQuality);
+        systemPrint(settings.displayPacketQuality);
         break;
       case (25):
-        Serial.print(settings.maxResends);
+        systemPrint(settings.maxResends);
         break;
       default:
-        Serial.print(F("0"));
+        systemPrint(F("0"));
         break;
     }
 
-    Serial.println();
+    systemPrintln();
   }
 }

@@ -184,8 +184,8 @@ void configureRadio()
       default:
         if (settings.debug == true)
         {
-          Serial.print(F("Unknown airSpeed: "));
-          Serial.println(settings.airSpeed);
+          systemPrint(F("Unknown airSpeed: "));
+          systemPrintln(settings.airSpeed);
         }
         break;
     }
@@ -247,24 +247,24 @@ void configureRadio()
 
   if (settings.debug == true)
   {
-    Serial.print(F("Freq: "));
-    Serial.println(channels[0]);
-    Serial.print(F("radioBandwidth: "));
-    Serial.println(settings.radioBandwidth);
-    Serial.print(F("radioSpreadFactor: "));
-    Serial.println(settings.radioSpreadFactor);
-    Serial.print(F("radioCodingRate: "));
-    Serial.println(settings.radioCodingRate);
-    Serial.print(F("radioSyncWord: "));
-    Serial.println(settings.radioSyncWord);
-    Serial.print(F("radioPreambleLength: "));
-    Serial.println(settings.radioPreambleLength);
-    Serial.print(F("calcSymbolTime: "));
-    Serial.println(calcSymbolTime());
-    Serial.print(F("HoppingPeriod: "));
-    Serial.println(hoppingPeriod);
-    Serial.print(F("controlPacketAirTime: "));
-    Serial.println(controlPacketAirTime);
+    systemPrint(F("Freq: "));
+    systemPrintln(channels[0]);
+    systemPrint(F("radioBandwidth: "));
+    systemPrintln(settings.radioBandwidth);
+    systemPrint(F("radioSpreadFactor: "));
+    systemPrintln(settings.radioSpreadFactor);
+    systemPrint(F("radioCodingRate: "));
+    systemPrintln(settings.radioCodingRate);
+    systemPrint(F("radioSyncWord: "));
+    systemPrintln(settings.radioSyncWord);
+    systemPrint(F("radioPreambleLength: "));
+    systemPrintln(settings.radioPreambleLength);
+    systemPrint(F("calcSymbolTime: "));
+    systemPrintln(calcSymbolTime());
+    systemPrint(F("HoppingPeriod: "));
+    systemPrintln(hoppingPeriod);
+    systemPrint(F("controlPacketAirTime: "));
+    systemPrintln(controlPacketAirTime);
   }
 
   if (success == false)
@@ -272,7 +272,7 @@ void configureRadio()
     reportERROR();
     if (settings.debug == true)
     {
-      Serial.println(F("Radio init failed. Check settings."));
+      systemPrintln(F("Radio init failed. Check settings."));
     }
   }
   LRS_DEBUG_PRINTLN(F("Radio online"));
@@ -551,7 +551,7 @@ void generateHopTable()
   //Use settings that must be identical to have a functioning link.
   //For example, we do not use coding rate because two radios can communicate with different coding rate values
   myRandSeed = settings.airSpeed + settings.netID + settings.pointToPoint + settings.encryptData
-               + settings.dataScrambling 
+               + settings.dataScrambling
                + (uint16_t)settings.frequencyMin + (uint16_t)settings.frequencyMax
                + settings.numberOfChannels + settings.frequencyHop + settings.maxDwellTime
                + (uint16_t)settings.radioBandwidth + settings.radioSpreadFactor;
@@ -571,26 +571,26 @@ void generateHopTable()
 
   if (settings.debug == true)
   {
-    Serial.print(F("channelSpacing: "));
-    Serial.println(channelSpacing, 3);
+    systemPrint(F("channelSpacing: "));
+    systemPrintln(channelSpacing, 3);
 
-    Serial.println(F("Channel table:"));
+    systemPrintln(F("Channel table:"));
     for (int x = 0 ; x < settings.numberOfChannels ; x++)
     {
-      Serial.print(x);
-      Serial.print(F(": "));
-      Serial.print(channels[x], 3);
-      Serial.println();
+      systemPrint(x);
+      systemPrint(F(": "));
+      systemPrint(channels[x], 3);
+      systemPrintln();
     }
 
-    Serial.print(F("AES IV:"));
+    systemPrint(F("AES IV:"));
     for (uint8_t i = 0 ; i < 12 ; i++)
     {
-      Serial.print(" 0x");
-      if (AESiv[i] < 0x10) Serial.print("0");
-      Serial.print(AESiv[i], HEX);
+      systemPrint(" 0x");
+      if (AESiv[i] < 0x10) systemPrint("0");
+      systemPrint(AESiv[i], HEX);
     }
-    Serial.println();
+    systemPrintln();
   }
 }
 
@@ -684,8 +684,6 @@ bool receiveInProcess()
 
 void beginTraining()
 {
-  Serial.println("beginTraining");
-
   originalSettings = settings; //Make copy of current settings
 
   moveToTrainingFreq();
@@ -693,8 +691,6 @@ void beginTraining()
 
 void beginDefaultTraining()
 {
-  Serial.println("beginDefaultTraining");
-
   Settings defaultSettings;
   originalSettings = defaultSettings; //Upon completion we will return to default settings
 
@@ -719,17 +715,17 @@ void endTraining(bool newTrainingAvailable)
 
       if (settings.debug == true)
       {
-        Serial.print("New Key: ");
+        systemPrint("New Key: ");
         for (uint8_t i = 0 ; i < 16 ; i++)
         {
-          if (settings.encryptionKey[i] < 0x10) Serial.print("0");
-          Serial.print(settings.encryptionKey[i], HEX);
-          Serial.print(" ");
+          if (settings.encryptionKey[i] < 0x10) systemPrint("0");
+          systemPrint(settings.encryptionKey[i], HEX);
+          systemPrint(" ");
         }
-        Serial.println();
+        systemPrintln();
 
-        Serial.print("New ID: ");
-        Serial.println(settings.netID);
+        systemPrint("New ID: ");
+        systemPrintln(settings.netID);
       }
     }
     else
@@ -758,6 +754,8 @@ void endTraining(bool newTrainingAvailable)
     changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
   else
     changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
+
+  systemPrintln("LINK TRAINED");
 }
 
 //Change to known training frequency based on available freq and current major firmware version
@@ -783,9 +781,6 @@ void moveToTrainingFreq()
   //In normal operation we move 1/2 a channel away from min. In training, we move a full channel away + major firmware version.
   float channelSpacing = (settings.frequencyMax - settings.frequencyMin) / (float)(settings.numberOfChannels + 2);
   float trainFrequency = settings.frequencyMin + (channelSpacing * (FIRMWARE_VERSION_MAJOR % settings.numberOfChannels));
-
-  Serial.print("trainFrequency: ");
-  Serial.println(trainFrequency);
 
   channels[0] = trainFrequency; //Inject this frequency into the channel table
 
@@ -819,16 +814,16 @@ void generateTrainingSettings()
 
   if (settings.debug == true)
   {
-    Serial.print(F("trainNetID: "));
-    Serial.println(trainNetID);
+    systemPrint(F("trainNetID: "));
+    systemPrintln(trainNetID);
 
-    Serial.print(F("trainEncryptionKey:"));
+    systemPrint(F("trainEncryptionKey:"));
     for (uint8_t i = 0 ; i < 16 ; i++)
     {
-      Serial.print(" 0x");
-      if (trainEncryptionKey[i] < 0x10) Serial.print("0");
-      Serial.print(trainEncryptionKey[i], HEX);
+      systemPrint(" 0x");
+      if (trainEncryptionKey[i] < 0x10) systemPrint("0");
+      systemPrint(trainEncryptionKey[i], HEX);
     }
-    Serial.println();
+    systemPrintln();
   }
 }

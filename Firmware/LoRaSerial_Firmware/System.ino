@@ -1,3 +1,84 @@
+//Helper functions to print to all available ports
+template <typename T>
+T systemPrint(T value)
+{
+  Serial.print(value);
+
+#if defined(ARDUINO_ARCH_SAMD)
+  Serial1.print(value);
+#endif
+}
+
+template <typename T>
+T systemPrintln(T value)
+{
+  systemPrint(value);
+
+  Serial.println();
+#if defined(ARDUINO_ARCH_SAMD)
+  Serial1.println();
+#endif
+}
+
+void systemPrint(float value, uint8_t decimals)
+{
+  Serial.print(value, decimals);
+
+#if defined(ARDUINO_ARCH_SAMD)
+  Serial1.print(value, decimals);
+#endif
+}
+
+void systemPrintln(float value, uint8_t decimals)
+{
+  systemPrint(value, decimals);
+
+  Serial.println();
+#if defined(ARDUINO_ARCH_SAMD)
+  Serial1.println();
+#endif
+}
+
+void systemPrintln()
+{
+  Serial.println();
+
+#if defined(ARDUINO_ARCH_SAMD)
+  Serial1.println();
+#endif
+}
+
+void systemWrite(uint8_t value)
+{
+  Serial.write(value);
+
+#if defined(ARDUINO_ARCH_SAMD)
+  Serial1.write(value);
+#endif
+}
+
+void systemFlush()
+{
+  Serial.flush();
+
+#if defined(ARDUINO_ARCH_SAMD)
+  Serial1.flush();
+#endif
+}
+
+uint8_t systemRead()
+{
+  byte incoming;
+#if defined(ARDUINO_ARCH_SAMD)
+  if (Serial.available())
+    incoming = Serial.read();
+  else if (Serial1.available())
+    incoming = Serial1.read();
+#else
+  incoming = Serial.read();
+#endif
+}
+
 //Check the train button and change state accordingly
 void updateButton()
 {

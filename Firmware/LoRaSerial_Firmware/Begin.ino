@@ -112,8 +112,8 @@ void beginLoRa()
   int state = radio.begin(centerFreq); //Doesn't matter what freq we start at
   if (state != RADIOLIB_ERR_NONE)
   {
-    Serial.print(F("Radio init failed with code: "));
-    Serial.println(state);
+    systemPrint(F("Radio init failed with code: "));
+    systemPrintln(state);
     while (1)
     {
       petWDT();
@@ -125,8 +125,8 @@ void beginLoRa()
   randomSeed(radioSeed);
   if (settings.debug == true)
   {
-    Serial.print("RadioSeed: ");
-    Serial.println(radioSeed);
+    systemPrint("RadioSeed: ");
+    systemPrintln(radioSeed);
   }
 
   generateHopTable(); //Generate frequency table based on randomByte
@@ -157,6 +157,23 @@ void beginWDT()
   petTimeoutHalf = 250 / 2;
 #elif defined(ARDUINO_ARCH_ESP32)
   petTimeoutHalf = 1000 / 2;
+#endif
+}
+
+void beginSerial(uint16_t serialSpeed)
+{
+  Serial.begin(settings.serialSpeed);
+#if defined(ARDUINO_ARCH_SAMD)
+  Serial1.begin(settings.serialSpeed);
+#endif
+
+#if defined(ENABLE_DEVELOPER)
+  //Wait for serial to come online for debug printing
+#if defined(ARDUINO_ARCH_ESP32)
+  delay(500);
+#elif defined(ARDUINO_ARCH_SAMD)
+  while (!Serial);
+#endif
 #endif
 }
 

@@ -247,14 +247,14 @@ void updateRadioState()
 
           if (settings.displayPacketQuality == true)
           {
-            Serial.println();
-            Serial.print(F("R:"));
-            Serial.print(radio.getRSSI());
-            Serial.print(F("\tS:"));
-            Serial.print(radio.getSNR());
-            Serial.print(F("\tfE:"));
-            Serial.print(radio.getFrequencyError());
-            Serial.println();
+            systemPrintln();
+            systemPrint(F("R:"));
+            systemPrint(radio.getRSSI());
+            systemPrint(F("\tS:"));
+            systemPrint(radio.getSNR());
+            systemPrint(F("\tfE:"));
+            systemPrint(radio.getFrequencyError());
+            systemPrintln();
           }
           packetsLost = 0; //Reset, used for linkLost testing
           frequencyCorrection += radio.getFrequencyError() / 1000000.0;
@@ -281,14 +281,14 @@ void updateRadioState()
         {
           if (settings.displayPacketQuality == true)
           {
-            Serial.println();
-            Serial.print(F("R:"));
-            Serial.print(radio.getRSSI());
-            Serial.print(F("\tS:"));
-            Serial.print(radio.getSNR());
-            Serial.print(F("\tfE:"));
-            Serial.print(radio.getFrequencyError());
-            Serial.println();
+            systemPrintln();
+            systemPrint(F("R:"));
+            systemPrint(radio.getRSSI());
+            systemPrint(F("\tS:"));
+            systemPrint(radio.getSNR());
+            systemPrint(F("\tfE:"));
+            systemPrint(radio.getFrequencyError());
+            systemPrintln();
           }
 
           //Move this packet into the tx buffer
@@ -391,14 +391,14 @@ void updateRadioState()
         {
           if (settings.displayPacketQuality == true)
           {
-            Serial.println();
-            Serial.print(F("R:"));
-            Serial.print(radio.getRSSI());
-            Serial.print(F("\tS:"));
-            Serial.print(radio.getSNR());
-            Serial.print(F("\tfE:"));
-            Serial.print(radio.getFrequencyError());
-            Serial.println();
+            systemPrintln();
+            systemPrint(F("R:"));
+            systemPrint(radio.getRSSI());
+            systemPrint(F("\tS:"));
+            systemPrint(radio.getSNR());
+            systemPrint(F("\tfE:"));
+            systemPrint(radio.getFrequencyError());
+            systemPrintln();
           }
 
           //Move this packet into the tx buffer
@@ -509,7 +509,7 @@ void updateRadioState()
 
     default:
       {
-        Serial.println(F("Unknown state"));
+        systemPrintln(F("Unknown state"));
       }
       break;
   }
@@ -527,65 +527,65 @@ void changeState(RadioStates newState)
   switch (radioState)
   {
     case (RADIO_NO_LINK_RECEIVING_STANDBY):
-      Serial.print(F("State: [No Link] Receiving Standby"));
+      systemPrint(F("State: [No Link] Receiving Standby"));
       break;
     case (RADIO_NO_LINK_RECEIVED_PACKET):
-      Serial.print(F("State: [No Link] Received Packet"));
+      systemPrint(F("State: [No Link] Received Packet"));
       break;
     case (RADIO_NO_LINK_TRANSMITTING):
-      Serial.print(F("State: [No Link] Transmitting"));
+      systemPrint(F("State: [No Link] Transmitting"));
       break;
     case (RADIO_NO_LINK_ACK_WAIT):
-      Serial.print(F("State: [No Link] Ack Wait"));
+      systemPrint(F("State: [No Link] Ack Wait"));
       break;
 
     case (RADIO_LINKED_RECEIVING_STANDBY):
-      Serial.print(F("State: Receiving Standby "));
-      Serial.print(channels[radio.getFHSSChannel()]);
+      systemPrint(F("State: Receiving Standby "));
+      systemPrint(channels[radio.getFHSSChannel()]);
       break;
     case (RADIO_LINKED_RECEIVED_PACKET):
-      Serial.print(F("State: Received Packet "));
-      Serial.print(channels[radio.getFHSSChannel()]);
+      systemPrint(F("State: Received Packet "));
+      systemPrint(channels[radio.getFHSSChannel()]);
       break;
     case (RADIO_LINKED_TRANSMITTING):
-      Serial.print(F("State: Transmitting "));
-      Serial.print(channels[radio.getFHSSChannel()]);
+      systemPrint(F("State: Transmitting "));
+      systemPrint(channels[radio.getFHSSChannel()]);
       break;
     case (RADIO_LINKED_ACK_WAIT):
-      Serial.print(F("State: Ack Wait "));
-      Serial.print(channels[radio.getFHSSChannel()]);
+      systemPrint(F("State: Ack Wait "));
+      systemPrint(channels[radio.getFHSSChannel()]);
       break;
 
     case (RADIO_BROADCASTING_RECEIVING_STANDBY):
-      Serial.print(F("State: B-Receiving Standby "));
-      Serial.print(channels[radio.getFHSSChannel()]);
+      systemPrint(F("State: B-Receiving Standby "));
+      systemPrint(channels[radio.getFHSSChannel()]);
       break;
     case (RADIO_BROADCASTING_RECEIVED_PACKET):
-      Serial.print(F("State: B-Received Packet "));
-      Serial.print(channels[radio.getFHSSChannel()]);
+      systemPrint(F("State: B-Received Packet "));
+      systemPrint(channels[radio.getFHSSChannel()]);
       break;
     case (RADIO_BROADCASTING_TRANSMITTING):
-      Serial.print(F("State: B-Transmitting "));
-      Serial.print(channels[radio.getFHSSChannel()]);
+      systemPrint(F("State: B-Transmitting "));
+      systemPrint(channels[radio.getFHSSChannel()]);
       break;
 
     case (RADIO_TRAINING_TRANSMITTING):
-      Serial.print(F("State: [Training] TX"));
+      systemPrint(F("State: [Training] TX"));
       break;
     case (RADIO_TRAINING_ACK_WAIT):
-      Serial.print(F("State: [Training] Ack Wait"));
+      systemPrint(F("State: [Training] Ack Wait"));
       break;
     case (RADIO_TRAINING_RECEIVING_HERE_FIRST):
-      Serial.print(F("State: [Training] RX Here First"));
+      systemPrint(F("State: [Training] RX Here First"));
       break;
     case (RADIO_TRAINING_RECEIVED_PACKET):
-      Serial.print(F("State: [Training] RX Packet"));
+      systemPrint(F("State: [Training] RX Packet"));
       break;
 
     default:
-      Serial.print(F("Change State Unknown: "));
-      Serial.print(radioState);
+      systemPrint(F("Change State Unknown: "));
+      systemPrint(radioState);
       break;
   }
-  Serial.println();
+  systemPrintln();
 }

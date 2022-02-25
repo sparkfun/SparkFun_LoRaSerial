@@ -43,13 +43,8 @@ void updateSerial()
           //          txTail += bytesToSend;
           //          txTail %= sizeof(serialTransmitBuffer);
 
-          Serial.write(serialTransmitBuffer[txTail]);
-          Serial.flush(); //Prevent serial hardware from blocking more than this one write
-
-          //#if defined(ARDUINO_ARCH_SAMD)
-          //          Serial1.write(serialTransmitBuffer[txTail]);
-          //          Serial1.flush(); //Prevent serial hardware from blocking more than this one write
-          //#endif
+          systemWrite(serialTransmitBuffer[txTail]);
+          systemFlush(); //Prevent serial hardware from blocking more than this one write
 
           txTail++;
           txTail %= sizeof(serialTransmitBuffer);
@@ -59,7 +54,11 @@ void updateSerial()
   }
 
   //Look for local incoming serial
+#if defined(ARDUINO_ARCH_SAMD)
+  while ((Serial.available() || Serial1.available()) && transactionComplete == false)
+#else
   while (Serial.available() && transactionComplete == false)
+#endif
   {
     //Take a break if there are ISRs to attend to
     petWDT();
@@ -78,7 +77,7 @@ void updateSerial()
         digitalWrite(pin_rts, HIGH); //Ok to send more
     }
 
-    byte incoming = Serial.read();
+    byte incoming = systemRead();
 
     if (incoming == settings.escapeCharacter)
     {
@@ -90,7 +89,7 @@ void updateSerial()
         if (escapeCharsReceived == settings.maxEscapeCharacters)
         {
           if (settings.echo == true)
-            Serial.write(incoming);
+            systemWrite(incoming);
 
           commandMode();
 
@@ -112,7 +111,7 @@ void updateSerial()
     }
 
     if (settings.echo == true)
-      Serial.write(incoming);
+      systemWrite(incoming);
 
     //We must always read in characters to avoid causing the host computer blocking USB from sending more
     //If the buffer is full, we will overwrite oldest data first

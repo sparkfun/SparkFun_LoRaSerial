@@ -195,23 +195,11 @@ long stopTime = 0;
 
 void setup()
 {
-  Serial.begin(57600); //Default for debug messages before board begins
-
-#if defined(ENABLE_DEVELOPER)
-  //Wait for serial to come online for debug printing
-#if defined(ARDUINO_ARCH_ESP32)
-  delay(500);
-#elif defined(ARDUINO_ARCH_SAMD)
-  //while (!Serial);
-#endif
-#endif
+  beginSerial(57600); //Default for debug messages before board begins
 
   loadSettings(); //Load settings from EEPROM
 
-  Serial.begin(settings.serialSpeed);
-#if defined(ARDUINO_ARCH_SAMD)
-  Serial1.begin(settings.serialSpeed);
-#endif
+  beginSerial(settings.serialSpeed);
 
   beginBoard(); //Determine what hardware platform we are running on
 
@@ -224,10 +212,7 @@ void setup()
 
   beginWDT(); //Start watchdog timer
 
-  Serial.println(F("LRS"));
-#if defined(ARDUINO_ARCH_SAMD)
-  Serial1.println(F("LRS"));
-#endif
+  systemPrintln(F("LRS"));
 }
 
 void loop()
