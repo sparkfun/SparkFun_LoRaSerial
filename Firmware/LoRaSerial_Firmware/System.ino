@@ -1,6 +1,5 @@
 //Helper functions to print to all available ports
-template <typename T>
-T systemPrint(T value)
+void systemPrint(const char* value)
 {
   Serial.print(value);
 
@@ -9,8 +8,45 @@ T systemPrint(T value)
 #endif
 }
 
-template <typename T>
-T systemPrintln(T value)
+void systemPrintln(const char* value)
+{
+  systemPrint(value);
+
+  Serial.println();
+#if defined(ARDUINO_ARCH_SAMD)
+  Serial1.println();
+#endif
+}
+
+void systemPrint(const __FlashStringHelper* value)
+{
+  Serial.print(value);
+
+#if defined(ARDUINO_ARCH_SAMD)
+  Serial1.print(value);
+#endif
+}
+
+void systemPrintln(const __FlashStringHelper* value)
+{
+  systemPrint(value);
+
+  Serial.println();
+#if defined(ARDUINO_ARCH_SAMD)
+  Serial1.println();
+#endif
+}
+
+void systemPrint(int value)
+{
+  Serial.print(value);
+
+#if defined(ARDUINO_ARCH_SAMD)
+  Serial1.print(value);
+#endif
+}
+
+void systemPrintln(int value)
 {
   systemPrint(value);
 
@@ -77,6 +113,7 @@ uint8_t systemRead()
 #else
   incoming = Serial.read();
 #endif
+  return(incoming);
 }
 
 //Check the train button and change state accordingly
