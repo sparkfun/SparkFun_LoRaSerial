@@ -59,6 +59,16 @@ void commandMode()
               reportOK();
               return;
               break;
+            case ('T'): //Enter training mode
+              reportOK();
+              beginTraining();
+              return;
+              break;
+            case ('F'): //Enter training mode and return to factory defaults
+              reportOK();
+              beginDefaultTraining();
+              return;
+              break;
             case ('Z'): //Reboots the radio
               reportOK();
               Serial.flush();
@@ -136,10 +146,6 @@ void commandMode()
                   reportOK();
                 }
                 break;
-              case ('T'): //AT&T - Disable debugging report
-                settings.displayPacketQuality = false;
-                reportOK();
-                break;
               default:
                 reportERROR();
                 break;
@@ -148,7 +154,7 @@ void commandMode()
           else
           {
             //RSSI
-            if (strcmp_P(commandBuffer, PSTR("AT&T=RSSI")) == 0) //Enable debugging report
+            if (strcmp_P(commandBuffer, PSTR("AT&T=RSSI")) == 0) //Enable packet quality reporting
             {
               settings.displayPacketQuality = true;
               reportOK();

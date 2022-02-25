@@ -31,6 +31,15 @@ typedef enum
   PROCESS_TRAINING_DATA_PACKET,
 } PacketType;
 
+//Train button states
+typedef enum
+{
+  TRAIN_NO_PRESS = 0,
+  TRAIN_PRESSED_4S,
+  TRAIN_PRESSED_10S,
+} TrainStates;
+TrainStates trainState = TRAIN_NO_PRESS;
+
 enum
 {
   TRIGGER_ACK_PROCESSED = 25,

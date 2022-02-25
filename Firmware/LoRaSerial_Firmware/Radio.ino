@@ -550,11 +550,17 @@ void generateHopTable()
   //Feed random number generator with our specific platform settings
   //Use settings that must be identical to have a functioning link.
   //For example, we do not use coding rate because two radios can communicate with different coding rate values
-  myRandSeed = settings.netID + settings.airSpeed + settings.numberOfChannels
+  myRandSeed = settings.airSpeed + settings.netID + settings.pointToPoint + settings.encryptData
+               + settings.dataScrambling 
                + (uint16_t)settings.frequencyMin + (uint16_t)settings.frequencyMax
-               + (uint16_t)settings.radioBandwidth + settings.radioSpreadFactor + settings.frequencyHop;
+               + settings.numberOfChannels + settings.frequencyHop + settings.maxDwellTime
+               + (uint16_t)settings.radioBandwidth + settings.radioSpreadFactor;
 
-  //TODO add pointToPoint, encryptData, encryptionKey, dataScrambling, maxDwellTime,
+  if (settings.encryptData == true)
+  {
+    for (int x = 0 ; x < sizeof(settings.encryptionKey) ; x++)
+      myRandSeed += settings.encryptionKey[x];
+  }
 
   //'Randomly' shuffle list based on our specific seed
   shuffle(channels, settings.numberOfChannels);

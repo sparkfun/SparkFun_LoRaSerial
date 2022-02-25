@@ -73,6 +73,7 @@ uint8_t pin_linkLED = 255;
 uint8_t pin_activityLED = 255;
 uint8_t pin_txLED = 255;
 uint8_t pin_rxLED = 255;
+uint8_t pin_setupButton = 255;
 
 uint8_t pin_trigger = 255;
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -115,6 +116,15 @@ uint8_t AESiv[12] = {0}; //Set during hop table generation
 #include <WDTZero.h> //https://github.com/javos65/WDTZero
 WDTZero myWatchDog;
 #endif
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+//Buttons - Interrupt driven and debounce
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+#include <JC_Button.h> // http://librarymanager/All#JC_Button
+Button *trainBtn = NULL; //We can't instantiate the button here because we don't yet know what pin number to use
+
+const int trainButtonTime = 4000; //ms press and hold before entering training
+const int trainWithDefaultsButtonTime = 10000; //ms press and hold before entering training
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - Serial
@@ -169,6 +179,8 @@ bool expectingAck = false; //Used by various send packet functions
 
 float frequencyCorrection = 0; //Adjust receive freq based on the last packet received freqError
 
+unsigned long lastTrainBlink = 0; //Controls LED during training
+
 Settings originalSettings; //Create a duplicate of settings during training so that we can resort as needed
 uint8_t trainNetID; //New netID passed during training
 uint8_t trainEncryptionKey[16]; //New AES key passed during training
@@ -183,9 +195,7 @@ long stopTime = 0;
 
 void setup()
 {
-  //eepromErase();
-
-  Serial.begin(57600);
+  Serial.begin(57600); //Default for debug messages before board begins
 
 #if defined(ENABLE_DEVELOPER)
   //Wait for serial to come online for debug printing
@@ -206,17 +216,11 @@ void setup()
   beginBoard(); //Determine what hardware platform we are running on
 
   //settings.airSpeed = 19200;
-  //  settings.maxDwellTime = 400;
-  //  settings.frequencyHop = true;
   //settings.debug = true; //Enable trigger pin events
-  //  //settings.heartbeatTimeout = 2000;
-  //  settings.displayPacketQuality = false;
-  //settings.autoTuneFrequency = false;
-  //settings.encryptData = false; //No ecrypt, no scramble works
-  //settings.dataScrambling = false; //Encrypt, no scramble works
-  //settings.pointToPoint = false; //Encrypt, scramble works
 
   beginLoRa(); //Start radio
+
+  beginButton(); //Start watching the train button
 
   beginWDT(); //Start watchdog timer
 
@@ -230,21 +234,9 @@ void loop()
 {
   petWDT();
 
-  //updateSerial(); //Store incoming and print outgoing
+  updateButton();
 
-  if (Serial.available())
-  {
-    byte incoming = Serial.read();
-
-    if (incoming == 't')
-    {
-      beginTraining();
-    }
-    else if (incoming == 'r')
-    {
-      beginDefaultTraining();
-    }
-  }
+  updateSerial(); //Store incoming and print outgoing
 
   updateRadioState(); //Ping/ack/send packets as needed
 }

@@ -1,3 +1,56 @@
+//Check the train button and change state accordingly
+void updateButton()
+{
+  if (trainBtn != NULL)
+  {
+    trainBtn->read();
+
+    if (trainState == TRAIN_NO_PRESS && trainBtn->pressedFor(trainButtonTime))
+    {
+      trainState = TRAIN_PRESSED_4S;
+      lastTrainBlink = millis();
+    }
+    else if (trainState == TRAIN_PRESSED_4S && trainBtn->wasReleased())
+    {
+      digitalWrite(pin_linkLED, LOW);
+
+      beginTraining();
+
+      trainState = TRAIN_NO_PRESS;
+    }
+    else if (trainState == TRAIN_PRESSED_4S && trainBtn->pressedFor(trainWithDefaultsButtonTime))
+    {
+      trainState = TRAIN_PRESSED_10S;
+    }
+    else if (trainState == TRAIN_PRESSED_10S && trainBtn->wasReleased())
+    {
+      digitalWrite(pin_linkLED, LOW);
+
+      beginDefaultTraining();
+
+      trainState = TRAIN_NO_PRESS;
+    }
+
+    //Blink LEDs according to our state while we wait for user to release button
+    if (trainState == TRAIN_PRESSED_4S)
+    {
+      if (millis() - lastTrainBlink > 500) //Slow blink
+      {
+        lastTrainBlink = millis();
+        digitalWrite(pin_linkLED, !digitalRead(pin_linkLED));
+      }
+    }
+    else if (trainState == TRAIN_PRESSED_10S)
+    {
+      if (millis() - lastTrainBlink > 100) //Fast blink
+      {
+        lastTrainBlink = millis();
+        digitalWrite(pin_linkLED, !digitalRead(pin_linkLED));
+      }
+    }
+  }
+}
+
 //Platform specific reset commands
 void systemReset()
 {

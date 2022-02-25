@@ -41,6 +41,8 @@ void beginBoard()
 
   pin_trigger = 13;
 
+  pin_setupButton = 0;
+
   //Debug
   pinMode(pin_trigger, OUTPUT);
   digitalWrite(pin_trigger, HIGH);
@@ -137,6 +139,15 @@ void beginLoRa()
     changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
   else
     changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
+}
+
+void beginButton()
+{
+  if (pin_setupButton != 255)
+  {
+    trainBtn = new Button(pin_setupButton); //Create the button
+    trainBtn->begin();
+  }
 }
 
 void beginWDT()
