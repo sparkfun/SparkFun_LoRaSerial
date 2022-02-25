@@ -420,36 +420,90 @@ void updateRadioState()
 
     case RADIO_TRAINING_TRANSMITTING:
       {
-        //Transmit with .train = 1 to see if anyone else is sitting on the training channel
-
+        if (transactionComplete == true) //If dio0ISR has fired, we are done transmitting
+        {
+          transactionComplete = false; //Reset ISR flag
+          returnToReceiving();
+          changeState(RADIO_TRAINING_ACK_WAIT);
+          digitalWrite(pin_activityLED, LOW);
+        }
       }
       break;
     case RADIO_TRAINING_ACK_WAIT:
       {
         //If we receive an ACK, absorb training data
+        if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
+        {
+          transactionComplete = false; //Reset ISR flag
+          changeState(RADIO_TRAINING_RECEIVED_PACKET);
+        }
 
-        //If timeout, create new link data
-
-        //Seed random number based on RF noise. We use Arduino random() because platform specific generation does not matter
-        randomSeed(radio.randomByte());
-
-        //Generate new NetID
-        uint8_t newNetID = random(0, 256); //Inclusive, exclusive
-
-        //Generate new AES Key. User may not be using AES but we still need both radios to have the same key in case they do enable AES.
-        uint8_t newEncryptionKey[16];
-        for (int x = 0 ; x < 16 ; x++)
-          newEncryptionKey[x] = random(0, 256); //Inclusive, exclusive
-
-        //Avoid NetID checking
-        settings.pointToPoint = false;
-
-        changeState(RADIO_TRAINING_RECIEVE_HERE_FIRST);
+        //If timeout, create new link data and return to receive, and wait for training ping from remote
+        if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response
+        {
+          triggerEvent(TRIGGER_TRAINING_NO_ACK);
+          generateTrainingSettings();
+          returnToReceiving();
+          changeState(RADIO_TRAINING_RECEIVING_HERE_FIRST);
+        }
       }
       break;
-    case RADIO_TRAINING_RECIEVE_HERE_FIRST:
+    case RADIO_TRAINING_RECEIVING_HERE_FIRST:
       {
         //Wait for ping. Once received, transmit training data
+        if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
+        {
+          transactionComplete = false; //Reset ISR flag
+          changeState(RADIO_TRAINING_RECEIVED_PACKET);
+        }
+      }
+      break;
+
+    case RADIO_TRAINING_RECEIVED_PACKET:
+      {
+        PacketType packetType = identifyPacketType(); //Look at the packet we just received
+
+        //During training, only training packets are valid
+        if (packetType == PROCESS_BAD_PACKET
+            || packetType == PROCESS_NETID_MISMATCH
+            || packetType == PROCESS_ACK_PACKET
+            || packetType == PROCESS_CONTROL_PACKET
+            || packetType == PROCESS_DATA_PACKET
+           )
+        {
+          triggerEvent(TRIGGER_TRAINING_BAD_PACKET);
+          returnToReceiving();
+          changeState(RADIO_TRAINING_RECEIVING_HERE_FIRST);
+        }
+
+        else if (packetType == PROCESS_TRAINING_CONTROL_PACKET)
+        {
+          triggerEvent(TRIGGER_TRAINING_CONTROL_PACKET);
+          packetsLost = 0; //Reset, used for linkLost testing
+          sendTrainingDataPacket(); //Someone is pinging us, send training data back
+
+          //Wait for transmission to complete before ending training
+          while (transactionComplete == false) //If dio0ISR has fired, a packet has arrived
+          {
+            if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response
+            {
+              LRS_DEBUG_PRINTLN("Timeout");
+              break;
+            }
+          }
+          LRS_DEBUG_PRINTLN("Ending Training");
+
+          endTraining(false); //We do not have data to apply to settings
+        }
+
+        else if (packetType == PROCESS_TRAINING_DATA_PACKET)
+        {
+          //The waiting node has responded with a data packet
+          //Absorb training data and then return to normal operation
+          triggerEvent(TRIGGER_TRAINING_DATA_PACKET);
+          packetsLost = 0; //Reset, used for linkLost testing
+          endTraining(true); //Apply data from packet to settings
+        }
       }
       break;
 
@@ -466,7 +520,7 @@ void changeState(RadioStates newState)
 {
   radioState = newState;
 
-  //if (settings.debug == false)
+  if (settings.debug == false)
     return;
 
   //Debug print
@@ -521,8 +575,11 @@ void changeState(RadioStates newState)
     case (RADIO_TRAINING_ACK_WAIT):
       Serial.print(F("State: [Training] Ack Wait"));
       break;
-    case (RADIO_TRAINING_RECIEVE_HERE_FIRST):
+    case (RADIO_TRAINING_RECEIVING_HERE_FIRST):
       Serial.print(F("State: [Training] RX Here First"));
+      break;
+    case (RADIO_TRAINING_RECEIVED_PACKET):
+      Serial.print(F("State: [Training] RX Packet"));
       break;
 
     default:

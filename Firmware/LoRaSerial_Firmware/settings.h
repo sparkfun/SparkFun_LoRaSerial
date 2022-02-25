@@ -11,9 +11,10 @@ typedef enum
   RADIO_BROADCASTING_RECEIVING_STANDBY,
   RADIO_BROADCASTING_TRANSMITTING,
   RADIO_BROADCASTING_RECEIVED_PACKET,
+  RADIO_TRAINING_RECEIVING_HERE_FIRST,
   RADIO_TRAINING_TRANSMITTING,
   RADIO_TRAINING_ACK_WAIT,
-  RADIO_TRAINING_RECIEVE_HERE_FIRST,
+  RADIO_TRAINING_RECEIVED_PACKET,
 } RadioStates;
 RadioStates radioState = RADIO_NO_LINK_RECEIVING_STANDBY;
 
@@ -26,6 +27,8 @@ typedef enum
   PROCESS_DUPLICATE_PACKET,
   PROCESS_CONTROL_PACKET,
   PROCESS_DATA_PACKET,
+  PROCESS_TRAINING_CONTROL_PACKET,
+  PROCESS_TRAINING_DATA_PACKET,
 } PacketType;
 
 enum
@@ -57,6 +60,11 @@ enum
   TRIGGER_LINK_BAD_PACKET = 525,
   TRIGGER_LINK_DUPLICATE_PACKET = 550,
   TRIGGER_LINK_CONTROL_PACKET = 575,
+
+  TRIGGER_TRAINING_BAD_PACKET = 600,
+  TRIGGER_TRAINING_CONTROL_PACKET = 625,
+  TRIGGER_TRAINING_DATA_PACKET = 650,
+  TRIGGER_TRAINING_NO_ACK = 675,
 };
 
 struct ControlTrailer
@@ -64,7 +72,8 @@ struct ControlTrailer
   uint8_t resend : 1;
   uint8_t ack : 1;
   uint8_t remoteAT : 1;
-  uint8_t filler : 5;
+  uint8_t train : 1;
+  uint8_t filler : 4;
 };
 struct ControlTrailer receiveTrailer;
 struct ControlTrailer responseTrailer;
@@ -98,7 +107,7 @@ typedef struct struct_settings {
   uint8_t radioPreambleLength = 8; //Number of symbols. Different lengths does *not* guarantee a remote radio privacy. 8 to 11 works. 8 to 15 drops some. 8 to 20 is silent.
   uint8_t frameSize = MAX_PACKET_SIZE - 2; //Send batches of bytes through LoRa link, max (255 - control trailer) = 253.
   uint16_t serialTimeoutBeforeSendingFrame_ms = 50; //Send partial buffer if time expires
-  bool debug = false; //Print basic events: ie, radio state changes
+  bool debug = true; //Print basic events: ie, radio state changes
   bool echo = false; //Print locally inputted serial
   uint16_t heartbeatTimeout = 5000; //ms before sending ping to see if link is active
   bool flowControl = false; //Enable the use of CTS/RTS flow control signals

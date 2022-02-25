@@ -169,6 +169,10 @@ bool expectingAck = false; //Used by various send packet functions
 
 float frequencyCorrection = 0; //Adjust receive freq based on the last packet received freqError
 
+Settings originalSettings; //Create a duplicate of settings during training so that we can resort as needed
+uint8_t trainNetID; //New netID passed during training
+uint8_t trainEncryptionKey[16]; //New AES key passed during training
+
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables
@@ -226,7 +230,21 @@ void loop()
 {
   petWDT();
 
-  updateSerial(); //Store incoming and print outgoing
+  //updateSerial(); //Store incoming and print outgoing
+
+  if (Serial.available())
+  {
+    byte incoming = Serial.read();
+
+    if (incoming == 't')
+    {
+      beginTraining();
+    }
+    else if (incoming == 'r')
+    {
+      beginDefaultTraining();
+    }
+  }
 
   updateRadioState(); //Ping/ack/send packets as needed
 }

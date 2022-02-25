@@ -90,13 +90,28 @@ PacketType identifyPacketType()
   //We have empty data packet, this is a control packet used for pinging/scanning
   if (receivedBytes == 0)
   {
-    LRS_DEBUG_PRINTLN(F("RX: Ping packet"));
+    //If this packet is marked as training data, someone is sending training ping
+    if (receiveTrailer.train == 1)
+    {
+      LRS_DEBUG_PRINTLN(F("Training: Control Packet"));
+      return (PROCESS_TRAINING_CONTROL_PACKET);
+    }
+
+    LRS_DEBUG_PRINTLN(F("RX: Control Packet"));
     return (PROCESS_CONTROL_PACKET);
   }
 
   //Update lastPacket details with current packet
   memcpy(lastPacket, incomingBuffer, receivedBytes);
   lastPacketSize = receivedBytes;
+
+  //If this packet is marked as training data,
+  //payload contains new AES key and netID which will be processed externally
+  if (receiveTrailer.train == 1)
+  {
+    LRS_DEBUG_PRINTLN(F("Training: Data packet"));
+    return (PROCESS_TRAINING_DATA_PACKET);
+  }
 
   LRS_DEBUG_PRINTLN(F("RX: Data packet"));
   return (PROCESS_DATA_PACKET);
@@ -308,6 +323,7 @@ void sendPingPacket()
   LRS_DEBUG_PRINT(F("TX: Ping "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
+  responseTrailer.train = 0; //This is not a training packet
   packetSize = 2;
   packetSent = 0; //Reset the number of times we've sent this packet
 
@@ -326,12 +342,52 @@ void sendPingPacket()
   sendPacket();
 }
 
+//Create short packet of 2 control bytes with train = 1
+void sendTrainingPingPacket()
+{
+  LRS_DEBUG_PRINT(F("TX: Training Ping "));
+  responseTrailer.ack = 0; //This is not an ACK to a previous transmission
+  responseTrailer.resend = 0; //This is not a resend
+  responseTrailer.train = 1; //This is a training packet
+  packetSize = 2;
+  packetSent = 0; //Reset the number of times we've sent this packet
+
+  //SF6 is not used during training
+
+  expectingAck = true; //We expect destination to ack
+  sendPacket();
+}
+
+//Create packet of AES + netID with training = 1
+void sendTrainingDataPacket()
+{
+  LRS_DEBUG_PRINTLN(F("TX: Training Data"));
+  responseTrailer.ack = 0; //This is not an ACK to a previous transmission
+  responseTrailer.resend = 0; //This is not a resend
+  responseTrailer.train = 1; //This is training packet
+
+  packetSize = sizeof(trainEncryptionKey) + sizeof(trainNetID);
+
+  for (uint8_t x = 0 ; x < sizeof(trainEncryptionKey) ; x++)
+    outgoingPacket[x] = trainEncryptionKey[x];
+  outgoingPacket[packetSize - 1] = trainNetID;
+
+  packetSize += 2;
+  packetSent = 0; //Reset the number of times we've sent this packet
+
+  //During training we do not use spread factor 6
+
+  expectingAck = false; //We do not expect destination to ack
+  sendPacket();
+}
+
 //Create short packet of 2 control bytes - do not expect ack
 void sendAckPacket()
 {
   LRS_DEBUG_PRINT(F("TX: Ack "));
   responseTrailer.ack = 1; //This is an ACK to a previous reception
   responseTrailer.resend = 0; //This is not a resend
+  responseTrailer.train = 0; //This is not a training packet
   packetSize = 2;
   packetSent = 0; //Reset the number of times we've sent this packet
   expectingAck = false; //We do not expect destination to ack
@@ -344,6 +400,7 @@ void sendDataPacket()
   LRS_DEBUG_PRINT(F("TX: Data "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
+  responseTrailer.train = 0; //This is not a training packet
   packetSize += 2; //Make room for control bytes
   packetSent = 0; //Reset the number of times we've sent this packet
 
@@ -366,6 +423,7 @@ void sendResendPacket()
   LRS_DEBUG_PRINT(F("TX: Resend "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 1; //This is a resend
+  responseTrailer.train = 0; //This is not a training packet
   //packetSize += 2; //Don't adjust the packet size
   //packetSent = 0; //Don't reset
   expectingAck = true; //We expect destination to ack
@@ -390,13 +448,16 @@ void sendPacket()
   }
 
   //If we are trainsmitting at high data rates the receiver is often not ready for new data. Pause for a few ms (measured with logic analyzer).
-  if(settings.airSpeed == 28800 || settings.airSpeed == 38400)
+  if (settings.airSpeed == 28800 || settings.airSpeed == 38400)
     delay(2);
 
   digitalWrite(pin_activityLED, HIGH);
 
   radio.setFrequency(channels[radio.getFHSSChannel()]); //Return home before every transmission
+
+  LRS_DEBUG_PRINT("Transmitting @ ");
   LRS_DEBUG_PRINTLN(channels[radio.getFHSSChannel()], 3);
+
   int state = radio.startTransmit(outgoingPacket, packetSize);
   if (state == RADIOLIB_ERR_NONE)
   {
@@ -504,6 +565,9 @@ void generateHopTable()
 
   if (settings.debug == true)
   {
+    Serial.print(F("channelSpacing: "));
+    Serial.println(channelSpacing, 3);
+
     Serial.println(F("Channel table:"));
     for (int x = 0 ; x < settings.numberOfChannels ; x++)
     {
@@ -612,31 +676,153 @@ bool receiveInProcess()
   //return (true); //If bit 0 is set, forget the other bits, there is a receive in progress
 }
 
-//Go to a known freq and share settings
-//We assume the user needs to maintain their settings (airSpeed, numberOfChannels, freq min/max, bandwidth/spread/hop)
-//but need to be on a different netID/AES key.
 void beginTraining()
 {
   Serial.println("beginTraining");
 
-  float channelSpacing = (settings.frequencyMax - settings.frequencyMin) / (float)(settings.numberOfChannels + 2);
+  originalSettings = settings; //Make copy of current settings
 
-  //Move to frequency that is not part of the hop table
-  //In normal operation we move 1/2 a channel away from min. In training, we move a full channel away + firmware version
-  float trainFrequency = settings.frequencyMin + (channelSpacing * ((FIRMWARE_VERSION_MAJOR * 10 + FIRMWARE_VERSION_MINOR) % settings.numberOfChannels));
-
-  Serial.print("trainFrequency: ");
-  Serial.println(trainFrequency);
-
-  changeState(RADIO_TRAINING_TRANSMITTING);
+  moveToTrainingFreq();
 }
 
-//Apply default settings before beginning training
 void beginDefaultTraining()
 {
   Serial.println("beginDefaultTraining");
 
-  //Apply defaults
+  Settings defaultSettings;
+  originalSettings = defaultSettings; //Upon completion we will return to default settings
 
-  beginTraining();
+  moveToTrainingFreq();
+}
+
+//Upon successful exchange of keys, go back to original settings
+void endTraining(bool newTrainingAvailable)
+{
+  settings = originalSettings; //Return to original radio settings
+
+  //Apply new netID and AES if available
+  if (newTrainingAvailable)
+  {
+    if (lastPacketSize == sizeof(settings.encryptionKey) + 1) //Error check, should be AES key + NetID
+    {
+      //Move training data into settings
+      for (int x = 0 ; x < sizeof(settings.encryptionKey); x++)
+        settings.encryptionKey[x] = lastPacket[x];
+
+      settings.netID = lastPacket[lastPacketSize - 1]; //Last spot in array is netID
+
+      if (settings.debug == true)
+      {
+        Serial.print("New Key: ");
+        for (uint8_t i = 0 ; i < 16 ; i++)
+        {
+          if (settings.encryptionKey[i] < 0x10) Serial.print("0");
+          Serial.print(settings.encryptionKey[i], HEX);
+          Serial.print(" ");
+        }
+        Serial.println();
+
+        Serial.print("New ID: ");
+        Serial.println(settings.netID);
+      }
+    }
+    else
+    {
+      //If the packet was marked as training but was not valid training data, then give up. Return to normal radio mode with pre-existing settings.
+    }
+  }
+  else
+  {
+    //We transmitted the training data, move the local training data into settings
+    for (int x = 0 ; x < sizeof(settings.encryptionKey); x++)
+      settings.encryptionKey[x] = trainEncryptionKey[x];
+
+    settings.netID = trainNetID; //Last spot in array is netID
+  }
+
+  recordSystemSettings();
+
+  generateHopTable(); //Generate frequency table based on current settings
+
+  configureRadio(); //Setup radio with settings
+
+  returnToReceiving();
+
+  if (settings.pointToPoint == true)
+    changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
+  else
+    changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
+}
+
+//Change to known training frequency based on available freq and current major firmware version
+//This will allow different minor versions to continue to train to each other
+//Send special packet with train = 1, then wait for response
+void moveToTrainingFreq()
+{
+  //During training use default radio settings. This ensures both radios are at known good settings.
+  Settings defaultSettings;
+  settings = defaultSettings; //Move to default settings
+
+  //Disable hopping
+  settings.frequencyHop = false;
+
+  //Disable NetID checking
+  settings.pointToPoint = false;
+
+  generateHopTable(); //Generate frequency table based on current settings
+
+  configureRadio(); //Setup radio with settings
+
+  //Move to frequency that is not part of the hop table
+  //In normal operation we move 1/2 a channel away from min. In training, we move a full channel away + major firmware version.
+  float channelSpacing = (settings.frequencyMax - settings.frequencyMin) / (float)(settings.numberOfChannels + 2);
+  float trainFrequency = settings.frequencyMin + (channelSpacing * (FIRMWARE_VERSION_MAJOR % settings.numberOfChannels));
+
+  Serial.print("trainFrequency: ");
+  Serial.println(trainFrequency);
+
+  channels[0] = trainFrequency; //Inject this frequency into the channel table
+
+  //Transmit general ping packet to see if anyone else is sitting on the training channel
+  sendTrainingPingPacket();
+
+  //Recalculate packetAirTime because we need to wait not for a 2-byte response, but a 19 byte response
+  packetAirTime = calcAirTime(sizeof(trainEncryptionKey) + sizeof(trainNetID) + 2);
+
+  changeState(RADIO_TRAINING_TRANSMITTING);
+}
+
+//Generate new netID/AES key to share
+//We assume the user needs to maintain their settings (airSpeed, numberOfChannels, freq min/max, bandwidth/spread/hop)
+//but need to be on a different netID/AES key.
+void generateTrainingSettings()
+{
+  LRS_DEBUG_PRINTLN("Generate New Training Settings");
+
+  //Seed random number based on RF noise. We use Arduino random() because platform specific generation does not matter
+  randomSeed(radio.randomByte());
+
+  //Generate new NetID
+  trainNetID = random(0, 256); //Inclusive, exclusive
+
+  //Generate new AES Key. User may not be using AES but we still need both radios to have the same key in case they do enable AES.
+  for (int x = 0 ; x < 16 ; x++)
+    trainEncryptionKey[x] = random(0, 256); //Inclusive, exclusive
+
+  //We do not generate new AES Initial Values here. Those are generated during generateHopTable() based on the unit's settings.
+
+  if (settings.debug == true)
+  {
+    Serial.print(F("trainNetID: "));
+    Serial.println(trainNetID);
+
+    Serial.print(F("trainEncryptionKey:"));
+    for (uint8_t i = 0 ; i < 16 ; i++)
+    {
+      Serial.print(" 0x");
+      if (trainEncryptionKey[i] < 0x10) Serial.print("0");
+      Serial.print(trainEncryptionKey[i], HEX);
+    }
+    Serial.println();
+  }
 }
