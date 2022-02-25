@@ -30391,11 +30391,11 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <text x="187.96" y="127" size="1.778" layer="97" font="vector" align="center">VCC: 3.3-5.5V
 &gt;= 5V Ensures Max Output Power</text>
 <text x="45.72" y="175.26" size="1.27" layer="97">Board thickness: 1.6mm</text>
-<text x="45.72" y="170.18" size="1.27" layer="97">Er: 4.5</text>
+<text x="45.72" y="170.18" size="1.27" layer="97">Er: 4.6 - JLC7628</text>
 <text x="45.72" y="177.8" size="1.27" layer="97">Copper Thickness (1oz): 1.4mil/0.035mm</text>
-<text x="45.72" y="165.1" size="1.27" layer="97">RF Trace Width: 29.1mil/0.74mm</text>
-<text x="45.72" y="167.64" size="1.27" layer="97">Polygon Isolation: 4mil/0.1016mm</text>
-<text x="45.72" y="172.72" size="1.27" layer="97">Dielectric thickness: 1.53mm</text>
+<text x="45.72" y="165.1" size="1.27" layer="97">RF Trace Width: 14.2mil/0.36mm</text>
+<text x="45.72" y="167.64" size="1.27" layer="97">Polygon Isolation: 10mil/0.254mm</text>
+<text x="45.72" y="172.72" size="1.27" layer="97">Dielectric thickness (layer 1 to 2): 0.2mm</text>
 <text x="45.72" y="162.56" size="0.762" layer="97">https://chemandy.com/calculators/coplanar-waveguide-with-ground-calculator.htm</text>
 <text x="45.72" y="180.34" size="1.524" layer="97" ratio="15">Waveguide Calculation:</text>
 <text x="83.82" y="63.5" size="2.54" layer="94" rot="MR180" align="center">USB</text>
