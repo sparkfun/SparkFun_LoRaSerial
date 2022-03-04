@@ -131,7 +131,7 @@ void beginLoRa()
 
   generateHopTable(); //Generate frequency table based on randomByte
 
-  configureRadio(); //Apply current settings
+  configureRadio(); //Generate freq table, setup radio, go to receiving, change state to standby
 
   returnToReceiving();
 

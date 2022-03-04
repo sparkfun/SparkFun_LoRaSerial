@@ -4,598 +4,524 @@
 //Add the setting to displayParameters
 //Increase displayParameters loop value
 
-//Respond to AT commands
-void commandMode()
+//Check to see if a valid command has been received
+void checkCommand()
 {
-  char commandBuffer[30];
+  systemPrintln();
 
-  systemPrintln(F("\r\nOK"));
+  if (commandLength < 2) //Too short
+    reportERROR();
 
-  while (Serial.available()) Serial.read();
-#if defined(ARDUINO_ARCH_SAMD)
-  while (Serial1.available()) Serial1.read();
-#endif
+  //Check for 'AT'
+  else if (isATcommand(commandBuffer) == false)
+    reportERROR();
 
-  while (true)
+  //'AT'
+  else if (commandLength == 2)
+    reportOK();
+
+  //ATI, ATO, ATZ commands
+  else if (commandLength == 3)
   {
-    uint8_t commandLength = readLine(commandBuffer, sizeof(commandBuffer));
-    if (commandLength >= 2)
+    switch (commandBuffer[2])
     {
-      for (uint8_t x = 0 ; x < commandLength ; x++)
-        commandBuffer[x] = toupper(commandBuffer[x]);
-
-      //Check if it's AT or RT
-      if (isATcommand(commandBuffer))
-      {
-        //AT command
-        if (commandLength == 2)
+      case ('I'):
+        //Shows the radio version
+        reportOK();
+        systemPrint(F("SparkFun STR "));
+        systemPrint(platformPrefix);
+        systemPrint(F(" v"));
+        systemPrint(FIRMWARE_VERSION_MAJOR);
+        systemPrint(F("."));
+        systemPrint(FIRMWARE_VERSION_MINOR);
+        systemPrintln();
+        break;
+      case ('O'): //Exit command mode
+        //If linked, send new settings to remote unit
+        if (isLinked() == true)
         {
+          //Todo check to see if there are new settings to transmit or not
+          settingsDelivered = 0;
+          sendCommandDataPacket(); //Send updated settings to remote
+          changeState(RADIO_LINKED_COMMAND_TRANSMITTING);
+        }
+        else
+        {
+          //If not linked, apply settings and return
+          generateHopTable(); //Generate freq with new settings
+          configureRadio(); //Apply any new settings
+
+          digitalWrite(pin_linkLED, LOW);
+          digitalWrite(pin_activityLED, LOW);
+          if (settings.pointToPoint == true)
+            changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
+          else
+            changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
+
+          serialState = RADIO_SERIAL_PASSTHROUGH;
+
           reportOK();
         }
+        break;
+      case ('T'): //Enter training mode
+        reportOK();
+        beginTraining();
+        break;
+      case ('F'): //Enter training mode and return to factory defaults
+        reportOK();
+        beginDefaultTraining();
+        break;
+      case ('Z'): //Reboots the radio
+        reportOK();
+        systemFlush();
+        systemReset();
+        break;
+      default:
+        reportERROR();
+        break;
+    }
+  }
 
-        //ATI, ATO, ATZ commands
-        else if (commandLength == 3)
+  //ATIx commands
+  else if (commandBuffer[2] == 'I' && commandLength == 4)
+  {
+    switch (commandBuffer[3])
+    {
+      case ('0'): //ATI0 - Show user settable parameters
+        displayParameters('S');
+        break;
+      case ('1'): //ATI1 - Show board variant
+        systemPrint(F("SparkFun STR "));
+        systemPrintln(platformPrefix);
+        break;
+      case ('2'): //ATI2 - Show firmware version
+        systemPrint(FIRMWARE_VERSION_MAJOR);
+        systemPrint(F("."));
+        systemPrintln(FIRMWARE_VERSION_MINOR);
+        break;
+      case ('3'): //ATI3 - Display latest RSSI
+        systemPrintln(radio.getRSSI());
+        break;
+      case ('4'): //ATI4 - Get random byte from RSSI
+        systemPrintln(radio.randomByte());
+        break;
+      case ('5'): //ATI5 - Show max possible bytes per second
+        systemPrintln(calcMaxThroughput());
+        break;
+      case ('6'): //ATI6 - Display AES key
+        for (uint8_t i = 0 ; i < 16 ; i++)
         {
-          switch (commandBuffer[2])
+          if (settings.encryptionKey[i] < 0x10) systemPrint("0");
+          systemPrint(settings.encryptionKey[i], HEX);
+          systemPrint(" ");
+        }
+        systemPrintln();
+        break;
+      case ('7'): //ATI7 - Show current FHSS channel
+        systemPrintln(radio.getFHSSChannel());
+        break;
+      case ('8'): //ATI8 - Show all remote user settable parameters
+        if (isLinked() == true)
+          displayParameters('R');
+        else
+          reportERROR();
+        break;
+      default:
+        reportERROR();
+        break;
+    }
+  }
+
+  //AT&x commands
+  else if (commandBuffer[2] == '&')
+  {
+    //&W, &F, &T, and &T=RSSI/TDM
+    if (commandLength == 4)
+    {
+      switch (commandBuffer[3])
+      {
+        case ('W'): //AT&W - Write parameters to the flash memory
           {
-            case ('I'):
-              //Shows the radio version
-              reportOK();
-              systemPrint(F("SparkFun STR "));
-              systemPrint(platformPrefix);
-              systemPrint(F(" v"));
-              systemPrint(FIRMWARE_VERSION_MAJOR);
-              systemPrint(F("."));
-              systemPrint(FIRMWARE_VERSION_MINOR);
-              systemPrintln();
-              break;
-            case ('O'): //Exit command mode
-              generateHopTable(); //Generate freq with new settings
-              configureRadio(); //Apply any new settings
+            recordSystemSettings();
+            reportOK();
+          }
+          break;
+        case ('F'): //AT&F - Restore default parameters
+          {
+            Settings defaultSettings; //Create new settings that will have all default values
+            settings = defaultSettings; //Overwrite all current settings with defaults
+            recordSystemSettings();
+            reportOK();
+          }
+          break;
+        default:
+          reportERROR();
+          break;
+      }
+    }
+    else
+    {
+      //RSSI
+      if (strcmp_P(commandBuffer, PSTR("AT&T=RSSI")) == 0) //Enable packet quality reporting
+      {
+        settings.displayPacketQuality = true;
+        reportOK();
+      }
+      else
+      {
+        reportERROR();
+      }
+    }
+  }
 
-              digitalWrite(pin_linkLED, LOW);
-              digitalWrite(pin_activityLED, LOW);
-              if (settings.pointToPoint == true)
-                changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-              else
-                changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
+  //ATSn? and ATRn?
+  else if ((commandBuffer[2] == 'S' || commandBuffer[2] == 'R') && (commandBuffer[4] == '?' || commandBuffer[5] == '?'))
+  {
+    if (commandBuffer[2] == 'R' && isLinked() == false)
+    {
+      reportERROR();
+      return;
+    }
 
-              reportOK();
-              return;
+    switch (commandBuffer[3])
+    {
+      case ('0'): //ATS0?
+        if (commandBuffer[2] == 'S') systemPrintln(settings.serialSpeed);
+        if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.serialSpeed);
+        break;
+      case ('1'): //ATS1? and ATS1*?
+        {
+          switch (commandBuffer[4])
+          {
+            case ('?'): //ATS1?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.airSpeed);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.airSpeed);
               break;
-            case ('T'): //Enter training mode
-              reportOK();
-              beginTraining();
-              return;
+            case ('0'): //ATS10?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.frequencyHop);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.frequencyHop);
               break;
-            case ('F'): //Enter training mode and return to factory defaults
-              reportOK();
-              beginDefaultTraining();
-              return;
+            case ('1'): //ATS11?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.maxDwellTime);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.maxDwellTime);
               break;
-            case ('Z'): //Reboots the radio
-              reportOK();
-              systemFlush();
-              systemReset();
+            case ('2'): //ATS12?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.radioBandwidth);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.radioBandwidth);
               break;
+            case ('3'): //ATS13?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.radioSpreadFactor);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.radioSpreadFactor);
+              break;
+            case ('4'): //ATS14?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.radioCodingRate);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.radioCodingRate);
+              break;
+            case ('5'): //ATS15?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.radioSyncWord);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.radioSyncWord);
+              break;
+            case ('6'): //ATS16?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.radioPreambleLength);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.radioPreambleLength);
+              break;
+            case ('7'): //ATS17?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.frameSize);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.frameSize);
+              break;
+            case ('8'): //ATS18?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.serialTimeoutBeforeSendingFrame_ms);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.serialTimeoutBeforeSendingFrame_ms);
+              break;
+            case ('9'): //ATS19?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.debug);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.debug);
+              break;
+
             default:
               reportERROR();
               break;
           }
         }
+        break;
 
-        //ATIx commands
-        else if (commandBuffer[2] == 'I' && commandLength == 4)
+      case ('2'): //ATS2? and ATS2*?
         {
-          switch (commandBuffer[3])
+          switch (commandBuffer[4])
           {
-            case ('0'): //ATI0 - Show user settable parameters
-              displayParameters();
+            case ('?'): //ATS2?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.netID);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.netID);
               break;
-            case ('1'): //ATI1 - Show board variant
-              systemPrint(F("SparkFun STR "));
-              systemPrintln(platformPrefix);
+            case ('0'): //ATS20?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.echo);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.echo);
               break;
-            case ('2'): //ATI2 - Show firmware version
-              systemPrint(FIRMWARE_VERSION_MAJOR);
-              systemPrint(F("."));
-              systemPrintln(FIRMWARE_VERSION_MINOR);
+            case ('1'): //ATS21?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.heartbeatTimeout);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.heartbeatTimeout);
               break;
-            case ('3'): //ATI3 - Display latest RSSI
-              systemPrintln(radio.getRSSI());
+            case ('2'): //ATS22?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.flowControl);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.flowControl);
               break;
-            case ('4'): //ATI4 - Get random byte from RSSI
-              systemPrintln(radio.randomByte());
+            case ('3'): //ATS23?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.autoTuneFrequency);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.autoTuneFrequency);
               break;
-            case ('5'): //ATI5 - Show max possible bytes per second
-              systemPrintln(calcMaxThroughput());
+            case ('4'): //ATS24?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.displayPacketQuality);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.displayPacketQuality);
               break;
-            case ('6'): //ATI6 - Display AES key
-              for (uint8_t i = 0 ; i < 16 ; i++)
-              {
-                if (settings.encryptionKey[i] < 0x10) systemPrint("0");
-                systemPrint(settings.encryptionKey[i], HEX);
-                systemPrint(" ");
-              }
-              systemPrintln();
+            case ('5'): //ATS25?
+              if (commandBuffer[2] == 'S') systemPrintln(settings.maxResends);
+              if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.maxResends);
               break;
-            case ('7'): //ATI7 - Show current FHSS channel
-              systemPrintln(radio.getFHSSChannel());
-              break;
+
             default:
               reportERROR();
               break;
           }
         }
+        break;
 
-        //AT&x commands
-        else if (commandBuffer[2] == '&')
+      case ('3'): //ATS3?
+        if (commandBuffer[2] == 'S') systemPrintln(settings.pointToPoint);
+        if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.pointToPoint);
+        break;
+      case ('4'): //ATS4?
+        if (commandBuffer[2] == 'S') systemPrintln(settings.encryptData);
+        if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.encryptData);
+        break;
+      case ('5'): //ATS5?
+        if (commandBuffer[2] == 'S') systemPrintln(settings.dataScrambling);
+        if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.dataScrambling);
+        break;
+      case ('6'): //ATS6?
+        if (commandBuffer[2] == 'S') systemPrintln(settings.radioBroadcastPower_dbm);
+        if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.radioBroadcastPower_dbm);
+        break;
+      case ('7'): //ATS7?
+        if (commandBuffer[2] == 'S') systemPrintln(settings.frequencyMin);
+        if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.frequencyMin);
+        break;
+      case ('8'): //ATS8?
+        if (commandBuffer[2] == 'S') systemPrintln(settings.frequencyMax);
+        if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.frequencyMax);
+        break;
+      case ('9'): //ATS9?
+        if (commandBuffer[2] == 'S') systemPrintln(settings.numberOfChannels);
+        if (commandBuffer[2] == 'R') systemPrintln(remoteSettings.numberOfChannels);
+        break;
+
+      default:
+        reportERROR();
+        break;
+    }
+  }
+
+  //ATSn=X and ATRn=X and ATLn=X
+  else if ((commandBuffer[2] == 'S' || commandBuffer[2] == 'R' || commandBuffer[2] == 'L') && (commandBuffer[4] == '=' || commandBuffer[5] == '='))
+  {
+    if ((commandBuffer[2] == 'R' || commandBuffer[2] == 'L') && isLinked() == false)
+    {
+      reportERROR();
+      return;
+    }
+
+    char temp[30];
+    strcpy(temp, commandBuffer); //strok modifies the original so we make a copy
+
+    char *str = temp;
+
+    char* ptr;
+    str = strtok(str, "="); //Locate the location of the = sign
+    str = strtok(NULL, "="); //Move pointer to end of line, after the first occurrence
+
+    double doubleSettingValue = strtod(str, &ptr); //Pull out setting value
+    int32_t settingValue = doubleSettingValue;
+
+    switch (commandBuffer[3])
+    {
+      case ('0'): //ATS0=
         {
-          //&W, &F, &T, and &T=RSSI/TDM
-          if (commandLength == 4)
+          if (settingValue == 2400
+              || settingValue == 4800
+              || settingValue == 9600
+              || settingValue == 14400
+              || settingValue == 19200
+              || settingValue == 38400
+              || settingValue == 57600
+              || settingValue == 115200
+             )
           {
-            switch (commandBuffer[3])
-            {
-              case ('W'): //AT&W - Write parameters to the flash memory
-                {
-                  recordSystemSettings();
-                  reportOK();
-                }
-                break;
-              case ('F'): //AT&F - Restore default parameters
-                {
-                  Settings defaultSettings; //Create new settings that will have all default values
-                  settings = defaultSettings; //Overwrite all current settings with defaults
-                  recordSystemSettings();
-                  reportOK();
-                }
-                break;
-              default:
-                reportERROR();
-                break;
-            }
+            if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.serialSpeed = settingValue;
+            if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.serialSpeed = settingValue;
+            reportOK();
           }
           else
-          {
-            //RSSI
-            if (strcmp_P(commandBuffer, PSTR("AT&T=RSSI")) == 0) //Enable packet quality reporting
-            {
-              settings.displayPacketQuality = true;
-              reportOK();
-            }
-            else
-            {
-              reportERROR();
-            }
-          }
+            reportERROR();
         }
-
-        //ATSn? commands
-        else if (commandBuffer[2] == 'S' && (commandBuffer[4] == '?' || commandBuffer[5] == '?'))
+        break;
+      case ('1'): //ATS1= and ATS1*=
         {
-          switch (commandBuffer[3])
+          switch (commandBuffer[4])
           {
-            case ('0'): //ATS0?
-              systemPrintln(settings.serialSpeed);
-              break;
-            case ('1'): //ATS1? and ATS1*?
+            case ('='): //ATS1=
+              if (settingValue == 0
+                  || settingValue == 40
+                  || settingValue == 150
+                  || settingValue == 400
+                  || settingValue == 1200
+                  || settingValue == 2400
+                  || settingValue == 4800
+                  || settingValue == 9600
+                  || settingValue == 19200
+                  || settingValue == 28800
+                  || settingValue == 38400
+                 )
               {
-                switch (commandBuffer[4])
-                {
-                  case ('?'): //ATS1?
-                    systemPrintln(settings.airSpeed);
-                    break;
-                  case ('0'): //ATS10?
-                    systemPrintln(settings.frequencyHop);
-                    break;
-                  case ('1'): //ATS11?
-                    systemPrintln(settings.maxDwellTime);
-                    break;
-                  case ('2'): //ATS12?
-                    systemPrintln(settings.radioBandwidth);
-                    break;
-                  case ('3'): //ATS13?
-                    systemPrintln(settings.radioSpreadFactor);
-                    break;
-                  case ('4'): //ATS14?
-                    systemPrintln(settings.radioCodingRate);
-                    break;
-                  case ('5'): //ATS15?
-                    systemPrintln(settings.radioSyncWord);
-                    break;
-                  case ('6'): //ATS16?
-                    systemPrintln(settings.radioPreambleLength);
-                    break;
-                  case ('7'): //ATS17?
-                    systemPrintln(settings.frameSize);
-                    break;
-                  case ('8'): //ATS18?
-                    systemPrintln(settings.serialTimeoutBeforeSendingFrame_ms);
-                    break;
-                  case ('9'): //ATS19?
-                    systemPrintln(settings.debug);
-                    break;
+                if (settings.airSpeed == 0 && settingValue != 0) systemPrintln(F("Warning: AirSpeed override of bandwidth, spread factor, and coding rate"));
 
-                  default:
-                    reportERROR();
-                    break;
-                }
+                if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.airSpeed = settingValue;
+                if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.airSpeed = settingValue;
+
+                //TODO - We need to update the values for spread, etc, but without touching the radio yet.
+                //configureRadio(); //Update spread, bandwidth, and coding as needed
+                reportOK();
               }
+              else
+                reportERROR();
               break;
-
-            case ('2'): //ATS2? and ATS2*?
+            case ('0'): //ATS10=
+              if (settingValue >= 0 && settingValue <= 1)
               {
-                switch (commandBuffer[4])
-                {
-                  case ('?'): //ATS2?
-                    systemPrintln(settings.netID);
-                    break;
-                  case ('0'): //ATS20?
-                    systemPrintln(settings.echo);
-                    break;
-                  case ('1'): //ATS21?
-                    systemPrintln(settings.heartbeatTimeout);
-                    break;
-                  case ('2'): //ATS22?
-                    systemPrintln(settings.flowControl);
-                    break;
-                  case ('3'): //ATS23?
-                    systemPrintln(settings.autoTuneFrequency);
-                    break;
-                  case ('4'): //ATS24?
-                    systemPrintln(settings.displayPacketQuality);
-                    break;
-                  case ('5'): //ATS25?
-                    systemPrintln(settings.maxResends);
-                    break;
-
-                  default:
-                    reportERROR();
-                    break;
-                }
+                if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.frequencyHop = settingValue;
+                if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.frequencyHop = settingValue;
+                reportOK();
               }
+              else
+                reportERROR();
               break;
-
-            case ('3'): //ATS3?
-              systemPrintln(settings.pointToPoint);
-              break;
-            case ('4'): //ATS4?
-              systemPrintln(settings.encryptData);
-              break;
-            case ('5'): //ATS5?
-              systemPrintln(settings.dataScrambling);
-              break;
-            case ('6'): //ATS6?
-              systemPrintln(settings.radioBroadcastPower_dbm);
-              break;
-            case ('7'): //ATS7?
-              systemPrintln(settings.frequencyMin);
-              break;
-            case ('8'): //ATS8?
-              systemPrintln(settings.frequencyMax);
-              break;
-            case ('9'): //ATS9?
-              systemPrintln(settings.numberOfChannels);
-              break;
-
-            default:
-              reportERROR();
-              break;
-          }
-        }
-
-        //ATSn=X commands
-        else if (commandBuffer[2] == 'S' && (commandBuffer[4] == '=' || commandBuffer[5] == '='))
-        {
-          char temp[30];
-          strcpy(temp, commandBuffer); //strok modifies the original so we make a copy
-
-          char *str = temp;
-
-          char* ptr;
-          str = strtok(str, "="); //Locate the location of the = sign
-          str = strtok(NULL, "="); //Move pointer to end of line, after the first occurrence
-
-          double doubleSettingValue = strtod(str, &ptr); //Pull out setting value
-          int32_t settingValue = doubleSettingValue;
-
-          switch (commandBuffer[3])
-          {
-            case ('0'): //ATS0=
+            case ('1'): //ATS11=
+              if (settingValue >= 10 && settingValue <= 65535)
               {
-                if (settingValue == 2400
-                    || settingValue == 4800
-                    || settingValue == 9600
-                    || settingValue == 14400
-                    || settingValue == 19200
-                    || settingValue == 38400
-                    || settingValue == 57600
-                    || settingValue == 115200
+                if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.maxDwellTime = settingValue;
+                if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.maxDwellTime = settingValue;
+                reportOK();
+              }
+              else
+                reportERROR();
+              break;
+            case ('2'): //ATS12=
+              if (settings.airSpeed != 0)
+              {
+                systemPrintln(F("AirSpeed is overriding"));
+                reportERROR();
+              }
+              else
+              {
+                //Some doubles get rounded incorrectly
+                if ( (doubleSettingValue * 100 == 1040)
+                     || doubleSettingValue == 15.6
+                     || (doubleSettingValue * 100) == 2080
+                     || doubleSettingValue == 31.25
+                     || doubleSettingValue == 41.7
+                     || doubleSettingValue == 62.5
+                     || doubleSettingValue == 125.0
+                     || doubleSettingValue == 250.0
+                     || doubleSettingValue == 500.0
                    )
                 {
-                  settings.serialSpeed = settingValue;
+                  if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.radioBandwidth = doubleSettingValue;
+                  if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.radioBandwidth = doubleSettingValue;
                   reportOK();
                 }
                 else
                   reportERROR();
               }
               break;
-            case ('1'): //ATS1= and ATS1*=
+            case ('3'): //ATS13=
+              if (settings.airSpeed != 0)
               {
-                switch (commandBuffer[4])
+                systemPrintln(F("AirSpeed is overriding"));
+                reportERROR();
+              }
+              else
+              {
+                if (settingValue >= 6 && settingValue <= 12)
                 {
-                  case ('='): //ATS1=
-                    if (settingValue == 0
-                        || settingValue == 40
-                        || settingValue == 150
-                        || settingValue == 400
-                        || settingValue == 1200
-                        || settingValue == 2400
-                        || settingValue == 4800
-                        || settingValue == 9600
-                        || settingValue == 19200
-                        || settingValue == 28800
-                        || settingValue == 38400
-                       )
-                    {
-                      if (settings.airSpeed == 0 && settingValue != 0) systemPrintln(F("Warning: AirSpeed override of bandwidth, spread factor, and coding rate"));
-                      settings.airSpeed = settingValue;
-                      configureRadio(); //Update spread, bandwidth, and coding as needed
-                      reportOK();
-                    }
-                    else
-                      reportERROR();
-                    break;
-                  case ('0'): //ATS10=
-                    if (settingValue >= 0 && settingValue <= 1)
-                    {
-                      settings.frequencyHop = settingValue;
-                      reportOK();
-                    }
-                    else
-                      reportERROR();
-                    break;
-                  case ('1'): //ATS11=
-                    if (settingValue >= 10 && settingValue <= 65535)
-                    {
-                      settings.maxDwellTime = settingValue;
-                      reportOK();
-                    }
-                    else
-                      reportERROR();
-                    break;
-                  case ('2'): //ATS12=
-                    if (settings.airSpeed != 0)
-                    {
-                      systemPrintln(F("AirSpeed is overriding"));
-                      reportERROR();
-                    }
-                    else
-                    {
-                      //Some doubles get rounded incorrectly
-                      if ( (doubleSettingValue * 100 == 1040)
-                           || doubleSettingValue == 15.6
-                           || (doubleSettingValue * 100) == 2080
-                           || doubleSettingValue == 31.25
-                           || doubleSettingValue == 41.7
-                           || doubleSettingValue == 62.5
-                           || doubleSettingValue == 125.0
-                           || doubleSettingValue == 250.0
-                           || doubleSettingValue == 500.0
-                         )
-                      {
-                        settings.radioBandwidth = doubleSettingValue;
-                        reportOK();
-                      }
-                      else
-                        reportERROR();
-                    }
-                    break;
-                  case ('3'): //ATS13=
-                    if (settingValue >= 6 && settingValue <= 12)
-                    {
-                      settings.radioSpreadFactor = settingValue;
-                      reportOK();
-                    }
-                    else
-                      reportERROR();
-                    break;
-                  case ('4'): //ATS14=
-                    if (settingValue >= 5 && settingValue <= 8)
-                    {
-                      settings.radioCodingRate = settingValue;
-                      reportOK();
-                    }
-                    else
-                      reportERROR();
-                    break;
-                  case ('5'): //ATS15=
-                    if (settingValue >= 0 && settingValue <= 255)
-                    {
-                      settings.radioSyncWord = settingValue;
-                      reportOK();
-                    }
-                    else
-                      reportERROR();
-                    break;
-                  case ('6'): //ATS16=
-                    if (settingValue >= 6 && settingValue <= 65535)
-                    {
-                      settings.radioPreambleLength = settingValue;
-                      reportOK();
-                    }
-                    else
-                      reportERROR();
-                    break;
-                  case ('7'): //ATS17=
-                    if (settingValue >= 16 && settingValue <= (256 - 2)) //NetID+Control trailer is 2 bytes
-                    {
-                      settings.frameSize = settingValue;
-                      reportOK();
-                    }
-                    else
-                      reportERROR();
-                    break;
-                  case ('8'): //ATS18=
-                    if (settingValue >= 10 && settingValue <= 2000)
-                    {
-                      settings.serialTimeoutBeforeSendingFrame_ms = settingValue;
-                      reportOK();
-                    }
-                    else
-                      reportERROR();
-                    break;
-                  case ('9'): //ATS19=
-                    if (settingValue >= 0 && settingValue <= 1)
-                    {
-                      settings.debug = settingValue;
-                      reportOK();
-                    }
-                    else
-                      reportERROR();
-                    break;
-
-                  default:
-                    reportERROR();
-                    break;
+                  if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.radioSpreadFactor = settingValue;
+                  if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.radioSpreadFactor = settingValue;
+                  reportOK();
                 }
+                else
+                  reportERROR();
               }
               break;
-
-
-            case ('2'): //ATS2= and ATS2*=
+            case ('4'): //ATS14=
+              if (settings.airSpeed != 0)
               {
-                switch (commandBuffer[4])
+                systemPrintln(F("AirSpeed is overriding"));
+                reportERROR();
+              }
+              else
+              {
+                if (settingValue >= 5 && settingValue <= 8)
                 {
-                  case ('='): //ATS2=
-                    if (settingValue >= 0 && settingValue <= 255)
-                    {
-                      settings.netID = settingValue;
-                      reportOK();
-                    }
-                    else
-                      reportERROR();
-                    break;
-                  case ('0'): //ATS20=
-                    if (settingValue >= 0 && settingValue <= 1)
-                    {
-                      settings.echo = settingValue;
-                      reportOK();
-                    }
-                    else
-                      reportERROR();
-                    break;
-                  case ('1'): //ATS21=
-                    if (settingValue >= 250 && settingValue <= 65535)
-                    {
-                      settings.heartbeatTimeout = settingValue;
-                      reportOK();
-                    }
-                    else
-                      reportERROR();
-                    break;
-                  case ('2'): //ATS22=
-                    if (settingValue >= 0 && settingValue <= 1)
-                    {
-                      settings.flowControl = settingValue;
-                      reportOK();
-                    }
-                    else
-                      reportERROR();
-                    break;
-                  case ('3'): //ATS23=
-                    if (settingValue >= 0 && settingValue <= 1)
-                    {
-                      settings.autoTuneFrequency = settingValue;
-                      reportOK();
-                    }
-                    else
-                      reportERROR();
-                    break;
-                  case ('4'): //ATS24=
-                    if (settingValue >= 0 && settingValue <= 1)
-                    {
-                      settings.displayPacketQuality = settingValue;
-                      reportOK();
-                    }
-                    else
-                      reportERROR();
-                    break;
-                  case ('5'): //ATS25=
-                    if (settingValue >= 0 && settingValue <= 255)
-                    {
-                      settings.maxResends = settingValue;
-                      reportOK();
-                    }
-                    else
-                      reportERROR();
-                    break;
-
-                  default:
-                    reportERROR();
-                    break;
+                  if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.radioCodingRate = settingValue;
+                  if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.radioCodingRate = settingValue;
+                  reportOK();
                 }
+                else
+                  reportERROR();
               }
               break;
-
-            case ('3'): //ATS3=
+            case ('5'): //ATS15=
+              if (settingValue >= 0 && settingValue <= 255)
+              {
+                if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.radioSyncWord = settingValue;
+                if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.radioSyncWord = settingValue;
+                reportOK();
+              }
+              else
+                reportERROR();
+              break;
+            case ('6'): //ATS16=
+              if (settingValue >= 6 && settingValue <= 65535)
+              {
+                if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.radioPreambleLength = settingValue;
+                if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.radioPreambleLength = settingValue;
+                reportOK();
+              }
+              else
+                reportERROR();
+              break;
+            case ('7'): //ATS17=
+              if (settingValue >= 16 && settingValue <= (256 - 2)) //NetID+Control trailer is 2 bytes
+              {
+                if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.frameSize = settingValue;
+                if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.frameSize = settingValue;
+                reportOK();
+              }
+              else
+                reportERROR();
+              break;
+            case ('8'): //ATS18=
+              if (settingValue >= 10 && settingValue <= 2000)
+              {
+                if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.serialTimeoutBeforeSendingFrame_ms = settingValue;
+                if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.serialTimeoutBeforeSendingFrame_ms = settingValue;
+                reportOK();
+              }
+              else
+                reportERROR();
+              break;
+            case ('9'): //ATS19=
               if (settingValue >= 0 && settingValue <= 1)
               {
-                settings.pointToPoint = settingValue;
-                reportOK();
-              }
-              else
-                reportERROR();
-              break;
-            case ('4'): //ATS4=
-              if (settingValue >= 0 && settingValue <= 1)
-              {
-                settings.encryptData = settingValue;
-                reportOK();
-              }
-              else
-                reportERROR();
-              break;
-            case ('5'): //ATS5=
-              if (settingValue >= 0 && settingValue <= 1)
-              {
-                settings.dataScrambling = settingValue;
-                reportOK();
-              }
-              else
-                reportERROR();
-              break;
-            case ('6'): //ATS6=
-              if (settingValue >= 0 && settingValue <= 20)
-              {
-                settings.radioBroadcastPower_dbm = settingValue;
-                reportOK();
-              }
-              else
-                reportERROR();
-              break;
-            case ('7'): //ATS7=
-              if (doubleSettingValue >= 902.0 && doubleSettingValue <= settings.frequencyMax)
-              {
-                settings.frequencyMin = doubleSettingValue;
-                reportOK();
-              }
-              else
-                reportERROR();
-              break;
-            case ('8'): //ATS8=
-              if (doubleSettingValue >= settings.frequencyMin && doubleSettingValue <= 928.0)
-              {
-                settings.frequencyMax = doubleSettingValue;
-                reportOK();
-              }
-              else
-                reportERROR();
-              break;
-            case ('9'): //ATS9=
-              if (settingValue >= 1 && settingValue <= 50)
-              {
-                settings.numberOfChannels = settingValue;
+                if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.debug = settingValue;
+                if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.debug = settingValue;
                 reportOK();
               }
               else
@@ -606,28 +532,176 @@ void commandMode()
               reportERROR();
               break;
           }
-
-        } //End ATSn=X commands
-
-        //Unknown command
-        else
-        {
-          reportERROR();
         }
+        break;
 
-      } //End isATcommand()
-      else
-      {
+
+      case ('2'): //ATS2= and ATS2*=
+        {
+          switch (commandBuffer[4])
+          {
+            case ('='): //ATS2=
+              if (settingValue >= 0 && settingValue <= 255)
+              {
+                if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.netID = settingValue;
+                if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.netID = settingValue;
+                reportOK();
+              }
+              else
+                reportERROR();
+              break;
+            case ('0'): //ATS20=
+              if (settingValue >= 0 && settingValue <= 1)
+              {
+                if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.echo = settingValue;
+                if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.echo = settingValue;
+                reportOK();
+              }
+              else
+                reportERROR();
+              break;
+            case ('1'): //ATS21=
+              if (settingValue >= 250 && settingValue <= 65535)
+              {
+                if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.heartbeatTimeout = settingValue;
+                if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.heartbeatTimeout = settingValue;
+                reportOK();
+              }
+              else
+                reportERROR();
+              break;
+            case ('2'): //ATS22=
+              if (settingValue >= 0 && settingValue <= 1)
+              {
+                if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.flowControl = settingValue;
+                if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.flowControl = settingValue;
+                reportOK();
+              }
+              else
+                reportERROR();
+              break;
+            case ('3'): //ATS23=
+              if (settingValue >= 0 && settingValue <= 1)
+              {
+                if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.autoTuneFrequency = settingValue;
+                if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.autoTuneFrequency = settingValue;
+                reportOK();
+              }
+              else
+                reportERROR();
+              break;
+            case ('4'): //ATS24=
+              if (settingValue >= 0 && settingValue <= 1)
+              {
+                if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.displayPacketQuality = settingValue;
+                if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.displayPacketQuality = settingValue;
+                reportOK();
+              }
+              else
+                reportERROR();
+              break;
+            case ('5'): //ATS25=
+              if (settingValue >= 0 && settingValue <= 255)
+              {
+                if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.maxResends = settingValue;
+                if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.maxResends = settingValue;
+                reportOK();
+              }
+              else
+                reportERROR();
+              break;
+
+            default:
+              reportERROR();
+              break;
+          }
+        }
+        break;
+
+      case ('3'): //ATS3=
+        if (settingValue >= 0 && settingValue <= 1)
+        {
+          if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.pointToPoint = settingValue;
+          if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.pointToPoint = settingValue;
+          reportOK();
+        }
+        else
+          reportERROR();
+        break;
+      case ('4'): //ATS4=
+        if (settingValue >= 0 && settingValue <= 1)
+        {
+          if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.encryptData = settingValue;
+          if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.encryptData = settingValue;
+          reportOK();
+        }
+        else
+          reportERROR();
+        break;
+      case ('5'): //ATS5=
+        if (settingValue >= 0 && settingValue <= 1)
+        {
+          if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.dataScrambling = settingValue;
+          if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.dataScrambling = settingValue;
+          reportOK();
+        }
+        else
+          reportERROR();
+        break;
+      case ('6'): //ATS6=
+        if (settingValue >= 0 && settingValue <= 20)
+        {
+          if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.radioBroadcastPower_dbm = settingValue;
+          if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.radioBroadcastPower_dbm = settingValue;
+          reportOK();
+        }
+        else
+          reportERROR();
+        break;
+      case ('7'): //ATS7=
+        if (doubleSettingValue >= 902.0 && doubleSettingValue <= settings.frequencyMax)
+        {
+          if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.frequencyMin = doubleSettingValue;
+          if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.frequencyMin = doubleSettingValue;
+          reportOK();
+        }
+        else
+          reportERROR();
+        break;
+      case ('8'): //ATS8=
+        if (doubleSettingValue >= settings.frequencyMin && doubleSettingValue <= 928.0)
+        {
+          if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.frequencyMax = doubleSettingValue;
+          if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.frequencyMax = doubleSettingValue;
+          reportOK();
+        }
+        else
+          reportERROR();
+        break;
+      case ('9'): //ATS9=
+        if (settingValue >= 1 && settingValue <= 50)
+        {
+          if (commandBuffer[2] == 'S' || commandBuffer[2] == 'L') settings.numberOfChannels = settingValue;
+          if (commandBuffer[2] == 'R' || commandBuffer[2] == 'L') remoteSettings.numberOfChannels = settingValue;
+          reportOK();
+        }
+        else
+          reportERROR();
+        break;
+
+      default:
         reportERROR();
-      }
-
-    } //commandSize >= 2
-    else
-    {
-      reportERROR();
+        break;
     }
-  } //while == true
-} //End commandMode()
+
+  } //End ATSn=X commands
+
+  //Unknown command
+  else
+    reportERROR();
+
+  commandLength = 0; //Get ready for next command
+}
 
 void reportOK()
 {
@@ -648,59 +722,13 @@ bool isATcommand(char *buffer)
   return (false);
 }
 
-//Check if RT appears in the correct position
-//bool isRTcommand()
-//{
-//  if (commandBuffer[0] == 'r' || commandBuffer[0] == 'R')
-//    if (commandBuffer[1] == 't' || commandBuffer[1] == 'T')
-//      return (true);
-//  return (false);
-//}
-
-//Reads a line until the \n enter character is found
-byte readLine(char* readBuffer, byte bufferLength)
-{
-  memset(readBuffer, 0, bufferLength); //Clear buffer
-
-  byte readLength = 0;
-  while (readLength < bufferLength - 1)
-  {
-#if defined(ARDUINO_ARCH_SAMD)
-    while (!Serial.available() && !Serial1.available())
-#else
-    while (!Serial.available())
-#endif
-    {
-      petWDT();
-      delay(10);
-    }
-
-    byte c = systemRead();
-    systemWrite(c);
-
-    if (c == '\r') {
-      systemPrintln();
-      readBuffer[readLength] = '\0';
-      break;
-    }
-    else if (c == '\n') {
-      //Do nothing - ignore newlines
-    }
-    else {
-      readBuffer[readLength] = c;
-      ++readLength;
-    }
-  }
-
-  return readLength;
-}
-
 //Show current settings in user friendly way
-void displayParameters()
+void displayParameters(char parameterType)
 {
   for (uint8_t x = 0 ; x <= 25 ; x++)
   {
-    systemPrint(F("S"));
+    if (parameterType == 'S') systemPrint("S");
+    if (parameterType == 'R') systemPrint("R");
     systemPrint(x);
     systemPrint(F(":"));
 
@@ -796,82 +824,108 @@ void displayParameters()
     switch (x)
     {
       case (0):
-        systemPrint(settings.serialSpeed);
+        if (parameterType == 'S') systemPrint(settings.serialSpeed);
+        if (parameterType == 'R') systemPrint(remoteSettings.serialSpeed);
         break;
       case (1):
-        systemPrint(settings.airSpeed);
+        if (parameterType == 'S') systemPrint(settings.airSpeed);
+        if (parameterType == 'R') systemPrint(remoteSettings.airSpeed);
         break;
       case (2):
-        systemPrint(settings.netID);
+        if (parameterType == 'S') systemPrint(settings.netID);
+        if (parameterType == 'R') systemPrint(remoteSettings.netID);
         break;
       case (3):
-        systemPrint(settings.pointToPoint);
+        if (parameterType == 'S') systemPrint(settings.pointToPoint);
+        if (parameterType == 'R') systemPrint(remoteSettings.pointToPoint);
         break;
       case (4):
-        systemPrint(settings.encryptData);
+        if (parameterType == 'S') systemPrint(settings.encryptData);
+        if (parameterType == 'R') systemPrint(remoteSettings.encryptData);
         break;
       case (5):
-        systemPrint(settings.dataScrambling);
+        if (parameterType == 'S') systemPrint(settings.dataScrambling);
+        if (parameterType == 'R') systemPrint(remoteSettings.dataScrambling);
         break;
       case (6):
-        systemPrint(settings.radioBroadcastPower_dbm);
+        if (parameterType == 'S') systemPrint(settings.radioBroadcastPower_dbm);
+        if (parameterType == 'R') systemPrint(remoteSettings.radioBroadcastPower_dbm);
         break;
       case (7):
-        systemPrint(settings.frequencyMin, 3);
+        if (parameterType == 'S') systemPrint(settings.frequencyMin, 3);
+        if (parameterType == 'R') systemPrint(remoteSettings.frequencyMin, 3);
         break;
       case (8):
-        systemPrint(settings.frequencyMax, 3);
+        if (parameterType == 'S') systemPrint(settings.frequencyMax, 3);
+        if (parameterType == 'R') systemPrint(remoteSettings.frequencyMax, 3);
         break;
       case (9):
-        systemPrint(settings.numberOfChannels);
+        if (parameterType == 'S') systemPrint(settings.numberOfChannels);
+        if (parameterType == 'R') systemPrint(remoteSettings.numberOfChannels);
         break;
       case (10):
-        systemPrint(settings.frequencyHop);
+        if (parameterType == 'S') systemPrint(settings.frequencyHop);
+        if (parameterType == 'R') systemPrint(remoteSettings.frequencyHop);
         break;
       case (11):
-        systemPrint(settings.maxDwellTime);
+        if (parameterType == 'S') systemPrint(settings.maxDwellTime);
+        if (parameterType == 'R') systemPrint(remoteSettings.maxDwellTime);
         break;
       case (12):
-        systemPrint(settings.radioBandwidth, 2);
+        if (parameterType == 'S') systemPrint(settings.radioBandwidth, 2);
+        if (parameterType == 'R') systemPrint(remoteSettings.radioBandwidth, 2);
         break;
       case (13):
-        systemPrint(settings.radioSpreadFactor);
+        if (parameterType == 'S') systemPrint(settings.radioSpreadFactor);
+        if (parameterType == 'R') systemPrint(remoteSettings.radioSpreadFactor);
         break;
       case (14):
-        systemPrint(settings.radioCodingRate);
+        if (parameterType == 'S') systemPrint(settings.radioCodingRate);
+        if (parameterType == 'R') systemPrint(remoteSettings.radioCodingRate);
         break;
       case (15):
-        systemPrint(settings.radioSyncWord);
+        if (parameterType == 'S') systemPrint(settings.radioSyncWord);
+        if (parameterType == 'R') systemPrint(remoteSettings.radioSyncWord);
         break;
       case (16):
-        systemPrint(settings.radioPreambleLength);
+        if (parameterType == 'S') systemPrint(settings.radioPreambleLength);
+        if (parameterType == 'R') systemPrint(remoteSettings.radioPreambleLength);
         break;
       case (17):
-        systemPrint(settings.frameSize);
+        if (parameterType == 'S') systemPrint(settings.frameSize);
+        if (parameterType == 'R') systemPrint(remoteSettings.frameSize);
         break;
       case (18):
-        systemPrint(settings.serialTimeoutBeforeSendingFrame_ms);
+        if (parameterType == 'S') systemPrint(settings.serialTimeoutBeforeSendingFrame_ms);
+        if (parameterType == 'R') systemPrint(remoteSettings.serialTimeoutBeforeSendingFrame_ms);
         break;
       case (19):
-        systemPrint(settings.debug);
+        if (parameterType == 'S') systemPrint(settings.debug);
+        if (parameterType == 'R') systemPrint(remoteSettings.debug);
         break;
       case (20):
-        systemPrint(settings.echo);
+        if (parameterType == 'S') systemPrint(settings.echo);
+        if (parameterType == 'R') systemPrint(remoteSettings.echo);
         break;
       case (21):
-        systemPrint(settings.heartbeatTimeout);
+        if (parameterType == 'S') systemPrint(settings.heartbeatTimeout);
+        if (parameterType == 'R') systemPrint(remoteSettings.heartbeatTimeout);
         break;
       case (22):
-        systemPrint(settings.flowControl);
+        if (parameterType == 'S') systemPrint(settings.flowControl);
+        if (parameterType == 'R') systemPrint(remoteSettings.flowControl);
         break;
       case (23):
-        systemPrint(settings.autoTuneFrequency);
+        if (parameterType == 'S') systemPrint(settings.autoTuneFrequency);
+        if (parameterType == 'R') systemPrint(remoteSettings.autoTuneFrequency);
         break;
       case (24):
-        systemPrint(settings.displayPacketQuality);
+        if (parameterType == 'S') systemPrint(settings.displayPacketQuality);
+        if (parameterType == 'R') systemPrint(remoteSettings.displayPacketQuality);
         break;
       case (25):
-        systemPrint(settings.maxResends);
+        if (parameterType == 'S') systemPrint(settings.maxResends);
+        if (parameterType == 'R') systemPrint(remoteSettings.maxResends);
         break;
       default:
         systemPrint(F("0"));

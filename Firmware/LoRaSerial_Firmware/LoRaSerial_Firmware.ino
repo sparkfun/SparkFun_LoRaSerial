@@ -42,7 +42,7 @@
 const int FIRMWARE_VERSION_MAJOR = 1;
 const int FIRMWARE_VERSION_MINOR = 0;
 
-#define ENABLE_DEVELOPER //Uncomment this line to enable special developer modes
+//#define ENABLE_DEVELOPER //Uncomment this line to enable special developer modes
 
 //Define the LoRaSerial board identifier:
 //  This is an int which is unique to this variant of the LoRaSerial hardware which allows us
@@ -184,6 +184,10 @@ unsigned long lastTrainBlink = 0; //Controls LED during training
 Settings originalSettings; //Create a duplicate of settings during training so that we can resort as needed
 uint8_t trainNetID; //New netID passed during training
 uint8_t trainEncryptionKey[16]; //New AES key passed during training
+
+char commandBuffer[100]; //Received serial gets stored into buffer until \r or \n is received
+uint8_t commandLength = 0;
+uint8_t settingsDelivered; //Tracks how many times we successfully delivered new settings to remote unit
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

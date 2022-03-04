@@ -79,44 +79,78 @@ void updateSerial()
 
     byte incoming = systemRead();
 
-    if (incoming == settings.escapeCharacter)
+    //Process serial into either rx buffer or command buffer
+    if (serialState == RADIO_SERIAL_COMMAND)
     {
-      //Ignore escape characters received within 2 seconds of serial traffic
-      //Allow escape characters received within first 2 seconds of power on
-      if (millis() - lastByteReceived_ms > minEscapeTime_ms || millis() < minEscapeTime_ms)
+      if (incoming == '\r' && commandLength > 0)
+        checkCommand(); //Process potential command
+      else if (incoming == '\n')
+        ; //Do nothing
+      else
       {
-        escapeCharsReceived++;
-        if (escapeCharsReceived == settings.maxEscapeCharacters)
-        {
-          if (settings.echo == true)
-            systemWrite(incoming);
+        systemWrite(incoming); //Always echo during command mode
 
-          commandMode();
-
-          escapeCharsReceived = 0;
-          lastByteReceived_ms = millis();
-          return; //Avoid recording this incoming command char
-        }
-      }
-      else //This is just a character in the stream, ignore
-      {
-        lastByteReceived_ms = millis();
-        escapeCharsReceived = 0; //Update timeout check for escape char and partial frame
+        //Move this character into the command buffer
+        commandBuffer[commandLength++] = toupper(incoming);
+        commandLength %= sizeof(commandBuffer);
       }
     }
     else
     {
-      lastByteReceived_ms = millis();
-      escapeCharsReceived = 0; //Update timeout check for escape char and partial frame
-    }
+      //Check general serial stream for command characters
+      if (incoming == settings.escapeCharacter)
+      {
+        //Ignore escape characters received within 2 seconds of serial traffic
+        //Allow escape characters received within first 2 seconds of power on
+        if (millis() - lastByteReceived_ms > minEscapeTime_ms || millis() < minEscapeTime_ms)
+        {
+          escapeCharsReceived++;
+          if (escapeCharsReceived == settings.maxEscapeCharacters)
+          {
+            if (settings.echo == true)
+              systemWrite(incoming);
 
-    if (settings.echo == true)
-      systemWrite(incoming);
+            systemPrintln(F("\r\nOK"));
 
-    //We must always read in characters to avoid causing the host computer blocking USB from sending more
-    //If the buffer is full, we will overwrite oldest data first
-    serialReceiveBuffer[rxHead++] = incoming; //Push char to holding buffer
-    rxHead %= sizeof(serialReceiveBuffer);
+            serialState = RADIO_SERIAL_COMMAND;
+
+            //If we are linked to a remote radio, request remote settings
+            if (isLinked() == true)
+            {
+              //Transmit empty packet with remoteSettings = 1 to get remote's settings
+              sendCommandPacket();
+
+              //Recalculate packetAirTime because we need to wait not for a 2-byte response, but a ~73 byte response
+              packetAirTime = calcAirTime(sizeof(settings));
+
+              changeState(RADIO_LINKED_COMMAND_TRANSMITTING);
+            }
+
+            escapeCharsReceived = 0;
+            lastByteReceived_ms = millis();
+            return; //Avoid recording this incoming command char
+          }
+        }
+        else //This is just a character in the stream, ignore
+        {
+          lastByteReceived_ms = millis();
+          escapeCharsReceived = 0; //Update timeout check for escape char and partial frame
+        }
+      }
+      else
+      {
+        lastByteReceived_ms = millis();
+        escapeCharsReceived = 0; //Update timeout check for escape char and partial frame
+      }
+
+      if (settings.echo == true)
+        systemWrite(incoming);
+
+      //We must always read in characters to avoid causing the host computer blocking USB from sending more
+      //If the buffer is full, we will overwrite oldest data first
+      serialReceiveBuffer[rxHead++] = incoming; //Push char to holding buffer
+      rxHead %= sizeof(serialReceiveBuffer);
+    } //End process rx buffer
   } //End Serial.available()
 }
 

@@ -56,6 +56,25 @@ void systemPrintln(int value)
 #endif
 }
 
+void systemPrint(uint8_t value, uint8_t printType)
+{
+  Serial.print(value, printType);
+
+#if defined(ARDUINO_ARCH_SAMD)
+  Serial1.print(value, printType);
+#endif
+}
+
+void systemPrintln(uint8_t value, uint8_t printType)
+{
+  systemPrint(value, printType);
+
+  Serial.println();
+#if defined(ARDUINO_ARCH_SAMD)
+  Serial1.println();
+#endif
+}
+
 void systemPrint(float value, uint8_t decimals)
 {
   Serial.print(value, decimals);
@@ -113,7 +132,7 @@ uint8_t systemRead()
 #else
   incoming = Serial.read();
 #endif
-  return(incoming);
+  return (incoming);
 }
 
 //Check the train button and change state accordingly
@@ -231,4 +250,26 @@ void triggerEvent(uint16_t triggerWidth)
       digitalWrite(pin_trigger, HIGH);
     }
   }
+}
+
+//Copy the contents of settings struct to outgoing array
+//Note: All variables in struct_settings must be fully cast (uint16_t, int32_t, etc, not int)
+//so that we will have alignment between radios using different platforms (ie ESP32 vs SAMD)
+void moveSettingsToPacket(Settings settings, uint8_t* packetBuffer)
+{
+  //Get a byte pointer that points to the beginning of the struct
+  uint8_t *bytePtr = (uint8_t*)&settings;
+
+  for (uint8_t x = 0 ; x < sizeof(settings) ; x++)
+    packetBuffer[x] = bytePtr[x];
+}
+
+//Used to move an incoming packet into the remoteSettings temp buffer
+void movePacketToSettings(Settings settings, uint8_t* packetBuffer)
+{
+  // Get a byte pointer that points to the beginning of the struct
+  uint8_t *bytePtr = (uint8_t*)&settings;
+
+  for (uint8_t x = 0 ; x < sizeof(settings) ; x++)
+    bytePtr[x] = packetBuffer[x];
 }

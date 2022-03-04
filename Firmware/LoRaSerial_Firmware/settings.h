@@ -4,10 +4,15 @@ typedef enum
   RADIO_NO_LINK_TRANSMITTING,
   RADIO_NO_LINK_ACK_WAIT,
   RADIO_NO_LINK_RECEIVED_PACKET,
+  RADIO_NO_LINK_COMMAND,
   RADIO_LINKED_RECEIVING_STANDBY,
   RADIO_LINKED_TRANSMITTING,
   RADIO_LINKED_ACK_WAIT,
   RADIO_LINKED_RECEIVED_PACKET,
+  RADIO_LINKED_COMMAND_RECEIVING_STANDBY,
+  RADIO_LINKED_COMMAND_TRANSMITTING,
+  RADIO_LINKED_COMMAND_ACK_WAIT,
+  RADIO_LINKED_COMMAND_RECEIVED_PACKET,
   RADIO_BROADCASTING_RECEIVING_STANDBY,
   RADIO_BROADCASTING_TRANSMITTING,
   RADIO_BROADCASTING_RECEIVED_PACKET,
@@ -18,15 +23,29 @@ typedef enum
 } RadioStates;
 RadioStates radioState = RADIO_NO_LINK_RECEIVING_STANDBY;
 
+typedef enum
+{
+  RADIO_SERIAL_PASSTHROUGH = 0,
+  RADIO_SERIAL_COMMAND,
+} SerialStates;
+SerialStates serialState = RADIO_SERIAL_PASSTHROUGH;
+
 //Possible types of packets received
 typedef enum
 {
   PROCESS_BAD_PACKET = 0,
   PROCESS_NETID_MISMATCH,
-  PROCESS_ACK_PACKET,
+  PROCESS_ACK_PACKET, //ack = 1
   PROCESS_DUPLICATE_PACKET,
-  PROCESS_CONTROL_PACKET,
+  PROCESS_CONTROL_PACKET, //ack = 0, len = 0
   PROCESS_DATA_PACKET,
+
+  PACKET_COMMAND_ACK, //remoteCommand = 1, ack = 1, len = 0
+  PACKET_COMMAND_PING, //remoteCommand = 1, ack = 0, len = 0
+  PACKET_COMMAND_REQUEST_SETTINGS, //remoteCommand = 1, len = 1
+  PACKET_COMMAND_CURRENT_SETTINGS, //remoteCommand = 1, ack = 1, len > 1
+  PACKET_COMMAND_NEW_SETTINGS, //remoteCommand = 1, remoteCommandAck = 0, len > 1
+
   PROCESS_TRAINING_CONTROL_PACKET,
   PROCESS_TRAINING_DATA_PACKET,
 } PacketType;
@@ -74,23 +93,30 @@ enum
   TRIGGER_TRAINING_CONTROL_PACKET = 625,
   TRIGGER_TRAINING_DATA_PACKET = 650,
   TRIGGER_TRAINING_NO_ACK = 675,
+
+  TRIGGER_COMMAND_CONTROL_PACKET = 700,
+  TRIGGER_COMMAND_CONTROL_PACKET_ACK = 725,
+  TRIGGER_COMMAND_DATA_PACKET_ACK = 750,
+  TRIGGER_COMMAND_PACKET_RECEIVED = 775,
+  TRIGGER_COMMAND_SENT_ACK_PACKET = 800,
+  TRIGGER_COMMAND_PACKET_RESEND = 825,
 };
 
 struct ControlTrailer
 {
   uint8_t resend : 1;
   uint8_t ack : 1;
-  uint8_t remoteAT : 1;
+  uint8_t remoteCommand : 1;
   uint8_t train : 1;
-  uint8_t filler : 4;
+  uint8_t filler : 3;
 };
 struct ControlTrailer receiveTrailer;
 struct ControlTrailer responseTrailer;
 
 //These are all the settings that can be set on Serial Terminal Radio. It's recorded to NVM.
 typedef struct struct_settings {
-  int sizeOfSettings = 0; //sizeOfSettings **must** be the first entry and must be int
-  int strIdentifier = LRS_IDENTIFIER; // strIdentifier **must** be the second entry
+  uint16_t sizeOfSettings = 0; //sizeOfSettings **must** be the first entry and must be int
+  uint16_t strIdentifier = LRS_IDENTIFIER; // strIdentifier **must** be the second entry
 
   uint8_t escapeCharacter = '+';
   uint8_t maxEscapeCharacters = 3; //Number of characters needed to enter command mode
@@ -101,7 +127,7 @@ typedef struct struct_settings {
   uint8_t netID = 192; //Both radios must share a network ID
   bool pointToPoint = true; //Receiving unit will check netID and ACK. If set to false, receiving unit doesn't check netID or ACK.
   bool encryptData = true; //AES encrypt each packet
-  uint8_t encryptionKey[16] = { 0x37, 0x78, 0x21, 0x41, 0xA6, 0x65, 0x73, 0x4E,0x44, 0x75, 0x67, 0x2A, 0xE6, 0x30, 0x83, 0x08 };
+  uint8_t encryptionKey[16] = { 0x37, 0x78, 0x21, 0x41, 0xA6, 0x65, 0x73, 0x4E, 0x44, 0x75, 0x67, 0x2A, 0xE6, 0x30, 0x83, 0x08 };
   bool dataScrambling = false; //Use IBM Data Whitening to reduce DC bias
   uint16_t radioBroadcastPower_dbm = 20; //Max software setting is 20 but radios with built-in PA will get 30dBm(1W) with rx/tx_en pins
   float frequencyMin = 902.0; //MHz
@@ -126,6 +152,7 @@ typedef struct struct_settings {
 
 } Settings;
 Settings settings;
+Settings remoteSettings; //Used for remote configuration
 
 //Monitor which devices on the device are on or offline.
 struct struct_online {
