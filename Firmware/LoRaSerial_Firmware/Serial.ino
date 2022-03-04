@@ -80,7 +80,7 @@ void updateSerial()
     byte incoming = systemRead();
 
     //Process serial into either rx buffer or command buffer
-    if (serialState == RADIO_SERIAL_COMMAND)
+    if (serialState == SERIAL_COMMAND)
     {
       if (incoming == '\r' && commandLength > 0)
         checkCommand(); //Process potential command
@@ -112,19 +112,7 @@ void updateSerial()
 
             systemPrintln(F("\r\nOK"));
 
-            serialState = RADIO_SERIAL_COMMAND;
-
-            //If we are linked to a remote radio, request remote settings
-            if (isLinked() == true)
-            {
-              //Transmit empty packet with remoteSettings = 1 to get remote's settings
-              sendCommandPacket();
-
-              //Recalculate packetAirTime because we need to wait not for a 2-byte response, but a ~73 byte response
-              packetAirTime = calcAirTime(sizeof(settings));
-
-              changeState(RADIO_LINKED_COMMAND_TRANSMITTING);
-            }
+            serialState = SERIAL_COMMAND;
 
             escapeCharsReceived = 0;
             lastByteReceived_ms = millis();

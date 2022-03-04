@@ -20,14 +20,30 @@ void systemPrintln(const char* value)
 
 void systemPrint(const __FlashStringHelper* value)
 {
-  Serial.print(value);
+  //Communicate an AT response over serial or the RF link (if available)
+  if (serialState == SERIAL_COMMAND)
+  {
+    Serial.print(value);
 
 #if defined(ARDUINO_ARCH_SAMD)
-  Serial1.print(value);
+    Serial1.print(value);
 #endif
+  }
+  else if(serialState == SERIAL_REMOTE_COMMAND_TX || serialState == SERIAL_REMOTE_COMMAND_RX)
+  {
+    if (isLinked() == true && radioState == RADIO_LINKED_RECEIVING_STANDBY)
+    {
+      //Move this response to the outgoing packet and send
+//      for (int x = 0 ; x < strlen(value) ; x++)
+//        outgoingPacket[x] = value[x];
+
+      sendCommandDataPacket();
+      changeState(RADIO_LINKED_TRANSMITTING);
+    }
+  }
 }
 
-void systemPrintln(const __FlashStringHelper* value)
+void systemPrintln(const __FlashStringHelper * value)
 {
   systemPrint(value);
 

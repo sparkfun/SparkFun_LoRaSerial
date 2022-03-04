@@ -301,14 +301,22 @@ void updateRadioState()
           sendAckPacket(); //Transmit ACK
           changeState(RADIO_LINKED_TRANSMITTING);
         }
-        else if (packetType == PROCESS_COMMAND_CONTROL_PACKET)
+
+        else if (packetType == PACKET_COMMAND_DATA)
         {
-          //Someone is pinging us with a empty command packet, send settings back
-          triggerEvent(TRIGGER_COMMAND_CONTROL_PACKET);
-          packetsLost = 0; //Reset, used for linkLost testing
-          sendCommandPacketAck();
-          changeState(RADIO_LINKED_COMMAND_RECEIVING_STANDBY); //Move to command receive, standby for new settings
+          //New data to load into command buffer
+          triggerEvent(TRIGGER_PACKET_COMMAND_DATA);
+          
+          for(int x = 0 ; x < packetSize ; x++)
+            commandBuffer[x] = lastPacket[x];
+
+          serialState = SERIAL_REMOTE_COMMAND_TX; //Any system prints are piped over the RF link, ie 'OK'
+          checkCommand(); //Process this command
+
+          returnToReceiving();
+          changeState(RADIO_LINKED_RECEIVING_STANDBY);
         }
+
         else //packetType == PROCESS_BAD_PACKET, packetType == PROCESS_NETID_MISMATCH
         {
           //Packet type not supported in this state
@@ -318,261 +326,6 @@ void updateRadioState()
         }
       }
       break;
-
-
-
-    case RADIO_LINKED_COMMAND_RECEIVING_STANDBY:
-      {
-        if (linkLost())
-        {
-          digitalWrite(pin_linkLED, LOW);
-
-          //Return to home channel and begin linking process
-          returnToReceiving();
-          changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-        }
-
-        else if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
-        {
-          triggerEvent(TRIGGER_COMMAND_PACKET_RECEIVED);
-          transactionComplete = false; //Reset ISR flag
-          changeState(RADIO_LINKED_COMMAND_RECEIVED_PACKET);
-        }
-
-        else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
-          hopChannel();
-
-        else if ((millis() - packetTimestamp) > (settings.heartbeatTimeout + random(0, 1000))) //Avoid pinging each other at same time
-        {
-          if (receiveInProcess() == false)
-          {
-            randomSeed(radio.randomByte()); //Takes 10ms. Reseed the random delay between heartbeats
-            triggerEvent(TRIGGER_COMMAND_SEND_PING);
-            sendPingPacket();
-            changeState(RADIO_LINKED_COMMAND_TRANSMITTING);
-          }
-          else
-            LRS_DEBUG_PRINTLN("RECEIVING_STANDBY: RX In Progress");
-        }
-      }
-      break;
-
-    case RADIO_LINKED_COMMAND_TRANSMITTING:
-      {
-        if (transactionComplete == true) //If dio0ISR has fired, we are done transmitting
-        {
-          transactionComplete = false; //Reset ISR flag
-
-          if (expectingAck == true)
-          {
-            returnToReceiving();
-            changeState(RADIO_LINKED_COMMAND_ACK_WAIT);
-          }
-          else
-          {
-            triggerEvent(TRIGGER_COMMAND_SENT_ACK_PACKET);
-            returnToReceiving();
-            changeState(RADIO_LINKED_COMMAND_RECEIVING_STANDBY);
-          }
-        }
-        else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
-          hopChannel();
-      }
-      break;
-
-    case RADIO_LINKED_COMMAND_ACK_WAIT:
-      {
-        if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
-        {
-          transactionComplete = false; //Reset ISR flag
-          changeState(RADIO_LINKED_COMMAND_RECEIVED_PACKET);
-        }
-
-        else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
-          hopChannel();
-
-        //Check to see if we need to retransmit
-        if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response
-        {
-          if (packetSent > settings.maxResends)
-          {
-            LRS_DEBUG_PRINTLN(F("Packet Lost"));
-            packetsLost++;
-            totalPacketsLost++;
-            returnToReceiving();
-            changeState(RADIO_LINKED_COMMAND_RECEIVING_STANDBY);
-          }
-          else
-          {
-            if (receiveInProcess() == false)
-            {
-              triggerEvent(TRIGGER_COMMAND_PACKET_RESEND);
-              packetsResent++;
-              sendResendPacket();
-              changeState(RADIO_LINKED_COMMAND_TRANSMITTING);
-            }
-            else
-            {
-              LRS_DEBUG_PRINTLN("ACK_WAIT: RX In Progress");
-              triggerEvent(TRIGGER_RX_IN_PROGRESS);
-            }
-          }
-        }
-      }
-      break;
-
-    case RADIO_LINKED_COMMAND_RECEIVED_PACKET:
-      {
-        PacketType packetType = identifyPacketType(); //Look at the packet we just received
-
-        if (packetType == PROCESS_ACK_PACKET)
-        {
-          //If the remote unit has pinged us with a normal packet, we are not exchanging new settings
-          //Return to normal, unlinked operation
-          packetsLost = 0; //Reset, used for linkLost testing
-          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-          returnToReceiving();
-          changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-        }
-        else if (packetType == PROCESS_DUPLICATE_PACKET)
-        {
-          //It's a duplicate. Ack then throw data away.
-          packetsLost = 0; //Reset, used for linkLost testing
-          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-          sendAckPacket();
-          changeState(RADIO_LINKED_COMMAND_TRANSMITTING);
-        }
-
-        else if (packetType == PROCESS_COMMAND_CONTROL_PACKET)
-        {
-          //Someone is pinging us with a empty command packet, send settings back
-          triggerEvent(TRIGGER_COMMAND_CONTROL_PACKET);
-          packetsLost = 0; //Reset, used for linkLost testing
-          sendCommandPacketAck(); //Respond with setting data, ACK = 1
-          changeState(RADIO_LINKED_COMMAND_TRANSMITTING);
-        }
-        else if (packetType == PROCESS_COMMAND_CONTROL_PACKET_ACK)
-        {
-          Serial.println("Settings received!");
-          
-          //Remote has responded with its settings
-          triggerEvent(TRIGGER_COMMAND_CONTROL_PACKET_ACK);
-          packetsLost = 0; //Reset, used for linkLost testing
-
-          //Error check
-          if (lastPacketSize == sizeof(settings))
-          {
-            //Record these settings locally. Will be modified by commands.
-            movePacketToSettings(remoteSettings, lastPacket);
-          }
-
-          returnToReceiving();
-          changeState(RADIO_LINKED_COMMAND_RECEIVING_STANDBY);
-        }
-        else if (packetType == PROCESS_COMMAND_DATA_PACKET)
-        {
-          //Remote unit is giving us new settings to go to, now
-          //Absorb settings data, reconfigure radio with new settings, go to standby
-          triggerEvent(TRIGGER_TRAINING_DATA_PACKET);
-          packetsLost = 0; //Reset, used for linkLost testing
-
-          //Error check
-          if (lastPacketSize == sizeof(settings))
-          {
-            //Fire off ack packet
-            sendCommandDataPacketAck();
-
-            //Wait for transmit completion
-            while (transactionComplete == false) //If dio0ISR has fired, a packet has arrived
-            {
-              if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response
-              {
-                LRS_DEBUG_PRINTLN("Timeout");
-                break;
-              }
-            }
-
-            //Apply new settings
-            movePacketToSettings(settings, lastPacket);
-
-            generateHopTable(); //Generate frequency table based on randomByte
-
-            configureRadio(); //Generate freq table, setup radio, go to receiving, change state to standby
-
-            returnToReceiving();
-
-            if (settings.pointToPoint == true)
-              changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-            else
-              changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
-
-            LRS_DEBUG_PRINTLN("Ending Remote settings");
-          }
-          else
-          {
-            //This is very bad indeed. Give up and go home.
-            returnToReceiving();
-
-            if (settings.pointToPoint == true)
-              changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-            else
-              changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
-          }
-
-        }
-
-        else if (packetType == PROCESS_COMMAND_DATA_PACKET_ACK)
-        {
-          //A remote unit has ack'd the delivery of a settings packet
-          settingsDelivered++;
-          triggerEvent(TRIGGER_COMMAND_DATA_PACKET_ACK);
-          packetsLost = 0; //Reset, used for linkLost testing
-          //We've successfully delivered the settings to the remote unit
-          //Apply current settings to radio and return to normal operation
-
-          generateHopTable(); //Generate frequency table based on randomByte
-
-          configureRadio(); //Generate freq table, setup radio, go to receiving, change state to standby
-
-          returnToReceiving();
-
-          serialState = RADIO_SERIAL_PASSTHROUGH;
-
-          if (settings.pointToPoint == true)
-            changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-          else
-            changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
-
-          changeState(RADIO_LINKED_RECEIVING_STANDBY);
-
-          //          if(settingsDelivered == 3)
-          //          {
-          //            //We've successfully delivered the settings to the remote unit
-          //            //Apply new settings and return to normal operation
-          //            changeState(RADIO_LINKED_RECEIVING_STANDBY);
-          //          }
-          //          else
-          //          {
-          //            //Continue sending settings
-          //            sendSettingsDataPacket(false); //This new settings to be used, send data with ack = 0
-          //          }
-        }
-
-        else //PROCESS_BAD_PACKET, PROCESS_NETID_MISMATCH
-        {
-          Serial.print("Unknown packet: ");
-          if(packetType == PROCESS_BAD_PACKET) Serial.print("Bad packet");
-          if(packetType == PROCESS_NETID_MISMATCH) Serial.print("Mismatch ID");
-          Serial.println();
-          
-          //This packet type is not supported in this state
-          triggerEvent(TRIGGER_LINK_BAD_PACKET);
-          returnToReceiving();
-          changeState(RADIO_LINKED_COMMAND_RECEIVING_STANDBY);
-        }
-      }
-      break;
-
 
     case RADIO_BROADCASTING_RECEIVING_STANDBY:
       {
@@ -787,11 +540,6 @@ bool isLinked()
       || radioState == RADIO_LINKED_TRANSMITTING
       || radioState == RADIO_LINKED_ACK_WAIT
       || radioState == RADIO_LINKED_RECEIVED_PACKET
-
-      || radioState == RADIO_LINKED_COMMAND_RECEIVING_STANDBY
-      || radioState == RADIO_LINKED_COMMAND_TRANSMITTING
-      || radioState == RADIO_LINKED_COMMAND_ACK_WAIT
-      || radioState == RADIO_LINKED_COMMAND_RECEIVED_PACKET
       )
     return (true);
 
@@ -850,19 +598,6 @@ void changeState(RadioStates newState)
     case (RADIO_BROADCASTING_TRANSMITTING):
       systemPrint(F("State: B-Transmitting "));
       systemPrint(channels[radio.getFHSSChannel()], 3);
-      break;
-
-    case (RADIO_LINKED_COMMAND_RECEIVING_STANDBY):
-      systemPrint(F("State: [Command] RX Standby"));
-      break;
-    case (RADIO_LINKED_COMMAND_TRANSMITTING):
-      systemPrint(F("State: [Command] TXing"));
-      break;
-    case (RADIO_LINKED_COMMAND_ACK_WAIT):
-      systemPrint(F("State: [Command] Ack Wait"));
-      break;
-    case (RADIO_LINKED_COMMAND_RECEIVED_PACKET):
-      systemPrint(F("State: [Command] RX Packet Received"));
       break;
 
     case (RADIO_TRAINING_TRANSMITTING):

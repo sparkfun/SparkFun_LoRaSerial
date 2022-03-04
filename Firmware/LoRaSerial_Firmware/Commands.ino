@@ -7,6 +7,13 @@
 //Check to see if a valid command has been received
 void checkCommand()
 {
+  //Check if this command was received over the RF link or local serial
+  if (serialState == SERIAL_PASSTHROUGH && commandBuffer[0] == 'R')
+  {
+    //We have a remote command, change the data to AT command, but pass response to command back out over RF link
+    commandBuffer[0] = 'A';
+  }
+
   systemPrintln();
 
   if (commandLength < 2) //Too short
@@ -15,6 +22,10 @@ void checkCommand()
   //Check for 'AT'
   else if (isATcommand(commandBuffer) == false)
     reportERROR();
+
+  //Check for 'RT'
+  else if (isRTcommand(commandBuffer) == false)
+    sendRemoteCommand();
 
   //'AT'
   else if (commandLength == 2)
@@ -37,31 +48,20 @@ void checkCommand()
         systemPrintln();
         break;
       case ('O'): //Exit command mode
-        //If linked, send new settings to remote unit
-        if (isLinked() == true)
-        {
-          //Todo check to see if there are new settings to transmit or not
-          settingsDelivered = 0;
-          sendCommandDataPacket(); //Send updated settings to remote
-          changeState(RADIO_LINKED_COMMAND_TRANSMITTING);
-        }
+        //Apply settings and return
+        generateHopTable(); //Generate freq with new settings
+        configureRadio(); //Apply any new settings
+
+        digitalWrite(pin_linkLED, LOW);
+        digitalWrite(pin_activityLED, LOW);
+        if (settings.pointToPoint == true)
+          changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
         else
-        {
-          //If not linked, apply settings and return
-          generateHopTable(); //Generate freq with new settings
-          configureRadio(); //Apply any new settings
+          changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
 
-          digitalWrite(pin_linkLED, LOW);
-          digitalWrite(pin_activityLED, LOW);
-          if (settings.pointToPoint == true)
-            changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-          else
-            changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
+        serialState = SERIAL_PASSTHROUGH;
 
-          serialState = RADIO_SERIAL_PASSTHROUGH;
-
-          reportOK();
-        }
+        reportOK();
         break;
       case ('T'): //Enter training mode
         reportOK();
@@ -720,6 +720,31 @@ bool isATcommand(char *buffer)
     if (buffer[1] == 'T')
       return (true);
   return (false);
+}
+
+//Check if RT appears in the correct position
+bool isRTcommand(char *buffer)
+{
+  if (buffer[0] == 'R')
+    if (buffer[1] == 'T')
+      return (true);
+  return (false);
+}
+
+//Send the AT command over RF link, if available
+void sendRemoteCommand()
+{
+  if (isLinked() == true && radioState == RADIO_LINKED_RECEIVING_STANDBY)
+  {
+    for (int x = 0 ; x < commandLength ; x++)
+      outgoingPacket[x] = commandBuffer[x];
+
+    packetSize = commandLength;
+
+    //Fire off packet
+    sendCommandDataPacket();
+    //changeState();
+  }
 }
 
 //Show current settings in user friendly way

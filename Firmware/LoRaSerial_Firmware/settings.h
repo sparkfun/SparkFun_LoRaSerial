@@ -9,10 +9,6 @@ typedef enum
   RADIO_LINKED_TRANSMITTING,
   RADIO_LINKED_ACK_WAIT,
   RADIO_LINKED_RECEIVED_PACKET,
-  RADIO_LINKED_COMMAND_RECEIVING_STANDBY,
-  RADIO_LINKED_COMMAND_TRANSMITTING,
-  RADIO_LINKED_COMMAND_ACK_WAIT,
-  RADIO_LINKED_COMMAND_RECEIVED_PACKET,
   RADIO_BROADCASTING_RECEIVING_STANDBY,
   RADIO_BROADCASTING_TRANSMITTING,
   RADIO_BROADCASTING_RECEIVED_PACKET,
@@ -25,10 +21,12 @@ RadioStates radioState = RADIO_NO_LINK_RECEIVING_STANDBY;
 
 typedef enum
 {
-  RADIO_SERIAL_PASSTHROUGH = 0,
-  RADIO_SERIAL_COMMAND,
+  SERIAL_PASSTHROUGH = 0, //Incoming serial is meant to be sent over RF link
+  SERIAL_COMMAND, //Incoming serial is piped into the command processor
+  SERIAL_REMOTE_COMMAND_TX, //Any system prints are piped over the RF link, ie 'OK'
+  SERIAL_REMOTE_COMMAND_RX, //Any system prints are piped into serial, ie 'ERROR'
 } SerialStates;
-SerialStates serialState = RADIO_SERIAL_PASSTHROUGH;
+SerialStates serialState = SERIAL_PASSTHROUGH;
 
 //Possible types of packets received
 typedef enum
@@ -40,11 +38,8 @@ typedef enum
   PROCESS_CONTROL_PACKET, //ack = 0, len = 0
   PROCESS_DATA_PACKET,
 
-  PACKET_COMMAND_ACK, //remoteCommand = 1, ack = 1, len = 0
-  PACKET_COMMAND_PING, //remoteCommand = 1, ack = 0, len = 0
-  PACKET_COMMAND_REQUEST_SETTINGS, //remoteCommand = 1, len = 1
-  PACKET_COMMAND_CURRENT_SETTINGS, //remoteCommand = 1, ack = 1, len > 1
-  PACKET_COMMAND_NEW_SETTINGS, //remoteCommand = 1, remoteCommandAck = 0, len > 1
+  PACKET_COMMAND_DATA, //remoteCommand = 1
+  PACKET_COMMAND_ACK, //remoteCommand = 1, ack = 1
 
   PROCESS_TRAINING_CONTROL_PACKET,
   PROCESS_TRAINING_DATA_PACKET,
@@ -100,6 +95,7 @@ enum
   TRIGGER_COMMAND_PACKET_RECEIVED = 775,
   TRIGGER_COMMAND_SENT_ACK_PACKET = 800,
   TRIGGER_COMMAND_PACKET_RESEND = 825,
+  TRIGGER_PACKET_COMMAND_DATA = 850,
 };
 
 struct ControlTrailer

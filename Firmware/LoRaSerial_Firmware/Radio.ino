@@ -97,7 +97,7 @@ PacketType identifyPacketType()
       return (PROCESS_TRAINING_CONTROL_PACKET);
     }
 
-    //If this packet is marked as a remote command, it's either an ack or a ping
+    //If this packet is marked as a remote command, it's either an ack or a zero length packet (not known)
     else if (receiveTrailer.remoteCommand == 1)
     {
       if (receiveTrailer.ack == 1)
@@ -106,8 +106,8 @@ PacketType identifyPacketType()
         return (PACKET_COMMAND_ACK);
       }
 
-      LRS_DEBUG_PRINTLN(F("RX: Command Ping"));
-      return (PACKET_COMMAND_PING);
+      LRS_DEBUG_PRINTLN(F("RX: Unknown Command"));
+      return (PROCESS_BAD_PACKET);
     }
 
     //Not training, not command packet, just a ping
@@ -115,13 +115,6 @@ PacketType identifyPacketType()
     return (PROCESS_CONTROL_PACKET);
   }
 
-  //If we have one byte, and remote command, we are being asked for our settings
-  if (receivedBytes == 1 && receiveTrailer.remoteCommand == 1)
-  {
-      LRS_DEBUG_PRINTLN(F("RX: Command Request Settings"));
-      return (PACKET_COMMAND_REQUEST_SETTINGS);
-  }
-  
   //Update lastPacket details with current packet
   memcpy(lastPacket, incomingBuffer, receivedBytes);
   lastPacketSize = receivedBytes;
@@ -136,15 +129,9 @@ PacketType identifyPacketType()
 
   else if (receiveTrailer.remoteCommand == 1)
   {
-    if (receiveTrailer.ack == 1)
-    {
-      //Remote is giving us their settings
-      LRS_DEBUG_PRINTLN(F("RX: Command Current Settings"));
-      return (PACKET_COMMAND_CURRENT_SETTINGS);
-    }
-    //New settings from remote
-    LRS_DEBUG_PRINTLN(F("RX: Command New Settings"));
-    return (PACKET_COMMAND_NEW_SETTINGS);
+    //New data from remote
+    LRS_DEBUG_PRINTLN(F("RX: Command Data"));
+    return (PACKET_COMMAND_DATA);
   }
 
   LRS_DEBUG_PRINTLN(F("RX: Data packet"));
@@ -490,80 +477,19 @@ void sendCommandAckPacket()
   sendPacket();
 }
 
-//Create short packet of 2 control bytes - query remote radio for proof of life (ack)
-void sendCommandPingPacket()
+//Create packet of serial command with remote command = 1, ack = 0
+void sendCommandDataPacket()
 {
-  LRS_DEBUG_PRINT(F("TX: Command Ping "));
-  responseTrailer.ack = 0; //This is not an ACK to a previous transmission
-  responseTrailer.resend = 0; //This is not a resend
-  responseTrailer.train = 0; //This is not a training packet
-  responseTrailer.remoteCommand = 1; //This is a remote command packet
-
-  packetSize = 2;
-  packetSent = 0; //Reset the number of times we've sent this packet
-
-  //SF6 requires an implicit header which means there is no dataLength in the header
-  //Because we cannot predict when a ping packet will be received, the receiver will always
-  //expecting 255 bytes. Pings must be increased to 255 bytes. ACKs are still 2 bytes.
-  if (settings.radioSpreadFactor == 6)
-  {
-    //Manually store actual data length 3 bytes from the end (before NetID)
-    //Manual packet size is whatever has been processed + 1 for the manual packetSize byte
-    outgoingPacket[255 - 3] = packetSize + 1;
-    packetSize = 255; //We're now going to transmit 255 bytes
-  }
-
-  expectingAck = true; //We expect destination to ack
-  sendPacket();
-}
-
-//Create short packet of 2 control bytes, 1 dummy byte, with remoteSetting = 1
-void sendCommandRequestSettingsPacket()
-{
-  LRS_DEBUG_PRINT(F("TX: Settings Request "));
-  responseTrailer.ack = 0; //This is not an ACK to a previous transmission
-  responseTrailer.resend = 0; //This is not a resend
-  responseTrailer.train = 0; //This is not a training packet
-  responseTrailer.remoteCommand = 1; //This is a remote command packet
-
-  outgoingPacket[0] = 0xAA; //Avoid DC bias
-
-  packetSize = 3;
-  packetSent = 0; //Reset the number of times we've sent this packet
-
-  //SF6 requires an implicit header which means there is no dataLength in the header
-  //Because we cannot predict when a ping packet will be received, the receiver will always
-  //expecting 255 bytes. Pings must be increased to 255 bytes. ACKs are still 2 bytes.
-  if (settings.radioSpreadFactor == 6)
-  {
-    //Manually store actual data length 3 bytes from the end (before NetID)
-    //Manual packet size is whatever has been processed + 1 for the manual packetSize byte
-    outgoingPacket[255 - 3] = packetSize + 1;
-    packetSize = 255; //We're now going to transmit 255 bytes
-  }
-
-  expectingAck = true; //We expect destination to ack
-  sendPacket();
-}
-
-//Create packet of unit's settings with remote command = 1, ack = 0
-void sendCommandCurrentSettingsPacket()
-{
-  LRS_DEBUG_PRINT(F("TX: Settings Data "));
+  LRS_DEBUG_PRINT(F("TX: Command Data "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission.
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not training packet
   responseTrailer.remoteCommand = 1; //This is a remote control packet
 
-  moveSettingsToPacket(settings, outgoingPacket); //Copy settings to outgoingPacket
-  packetSize = sizeof(settings);
-
-  packetSize += 2;
+  packetSize += 2; //Make room for control bytes
   packetSent = 0; //Reset the number of times we've sent this packet
 
   //SF6 requires an implicit header which means there is no dataLength in the header
-  //Because we cannot predict when a ping packet will be received, the receiver will always
-  //expecting 255 bytes. Pings must be increased to 255 bytes. ACKs are still 2 bytes.
   if (settings.radioSpreadFactor == 6)
   {
     //Manually store actual data length 3 bytes from the end (before NetID)
@@ -572,54 +498,7 @@ void sendCommandCurrentSettingsPacket()
     packetSize = 255; //We're now going to transmit 255 bytes
   }
 
-  expectingAck = true; //We do expect destination to ack
-  sendPacket();
-}
-
-//Create packet of unit's settings with remote command = 1
-void sendCommandNewSettingsPacket()
-{
-  LRS_DEBUG_PRINT(F("TX: Settings Data "));
-  responseTrailer.ack = 0; //This is not a normal ping packet.
-  responseTrailer.resend = 0; //This is not a resend
-  responseTrailer.train = 0; //This is not training packet
-  responseTrailer.remoteCommand = 1; //This is a remote command packet
-
-  moveSettingsToPacket(settings, outgoingPacket); //Copy settings to outgoingPacket
-  packetSize = sizeof(settings);
-
-  packetSize += 2;
-  packetSent = 0; //Reset the number of times we've sent this packet
-
-  //SF6 requires an implicit header which means there is no dataLength in the header
-  //Because we cannot predict when a ping packet will be received, the receiver will always
-  //expecting 255 bytes. Pings must be increased to 255 bytes. ACKs are still 2 bytes.
-  if (settings.radioSpreadFactor == 6)
-  {
-    //Manually store actual data length 3 bytes from the end (before NetID)
-    //Manual packet size is whatever has been processed + 1 for the manual packetSize byte
-    outgoingPacket[255 - 3] = packetSize + 1;
-    packetSize = 255; //We're now going to transmit 255 bytes
-  }
-
-  expectingAck = false; //We do not expect destination to ack
-  sendPacket();
-}
-
-//Create short packet of 2 control bytes - do not expect ack, remoteCommand = 1
-void sendCommandDataPacketAck()
-{
-  LRS_DEBUG_PRINT(F("TX: Ack "));
-  responseTrailer.ack = 0; //This is not a normal packet, no ack
-  responseTrailer.resend = 0; //This is not a resend
-  responseTrailer.train = 0; //This is not a training packet
-  responseTrailer.remoteCommand = 1; //This is a remote control packet
-  responseTrailer.remoteCommandAck = 1; //ACK the reception of the remote command data packet
-
-  packetSize = 2;
-  packetSent = 0; //Reset the number of times we've sent this packet
-
-  expectingAck = false; //We do not expect destination to ack
+  expectingAck = true; //We expect destination to ack
   sendPacket();
 }
 
