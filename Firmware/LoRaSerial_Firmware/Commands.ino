@@ -712,8 +712,9 @@ void displayParameters()
     if (printerEndpoint == PRINT_TO_RF)
       systemPrint("R"); //If someone is asking for our settings over RF, respond with 'R' style settings
     else
-      systemPrint("S");
+      systemPrint("A");
       
+    systemPrint("TS");
     systemPrint(x);
     systemPrint(":");
 

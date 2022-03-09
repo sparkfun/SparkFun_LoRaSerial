@@ -89,6 +89,9 @@ void moveToTrainingFreq()
   //Disable NetID checking
   settings.pointToPoint = false;
 
+  //Turn power as low as possible. We assume two units will be near each other. 
+  settings.radioBroadcastPower_dbm = 0;
+
   generateHopTable(); //Generate frequency table based on current settings
 
   configureRadio(); //Setup radio with settings
