@@ -8,8 +8,24 @@ uint16_t availableRXBytes()
 //Return number of bytes sitting in the serial transmit buffer
 uint16_t availableTXBytes()
 {
+  if (inCommandMode == true) return (0); //If we are in command mode, block printing of data from the TXBuffer
+
   if (txHead >= txTail) return (txHead - txTail);
   return (sizeof(serialTransmitBuffer) - txTail + txHead);
+}
+
+//Return number of bytes sitting in the serial receive buffer
+uint16_t availableRXCommandBytes()
+{
+  if (commandRXHead >= commandRXTail) return (commandRXHead - commandRXTail);
+  return (sizeof(commandRXBuffer) - commandRXTail + commandRXHead);
+}
+
+//Return number of bytes sitting in the serial transmit buffer
+uint16_t availableTXCommandBytes()
+{
+  if (commandTXHead >= commandTXTail) return (commandTXHead - commandTXTail);
+  return (sizeof(commandTXBuffer) - commandTXTail + commandTXHead);
 }
 
 //See if there's any serial from the remote radio that needs printing
@@ -80,10 +96,13 @@ void updateSerial()
     byte incoming = systemRead();
 
     //Process serial into either rx buffer or command buffer
-    if (serialState == SERIAL_COMMAND)
+    if (inCommandMode == true)
     {
       if (incoming == '\r' && commandLength > 0)
-        checkCommand(); //Process potential command
+      {
+        printerEndpoint = PRINT_TO_SERIAL;
+        checkCommand(); //Process command buffer
+      }
       else if (incoming == '\n')
         ; //Do nothing
       else
@@ -110,9 +129,9 @@ void updateSerial()
             if (settings.echo == true)
               systemWrite(incoming);
 
-            systemPrintln(F("\r\nOK"));
+            systemPrintln("\r\nOK");
 
-            serialState = SERIAL_COMMAND;
+            inCommandMode = true; //Allow AT parsing. Prevent received RF data from being printed.
 
             escapeCharsReceived = 0;
             lastByteReceived_ms = millis();
@@ -140,6 +159,31 @@ void updateSerial()
       rxHead %= sizeof(serialReceiveBuffer);
     } //End process rx buffer
   } //End Serial.available()
+
+  //Process any remote commands sitting in buffer
+  if (availableRXCommandBytes() && inCommandMode == false)
+  {
+    commandLength = availableRXCommandBytes();
+
+    for (int x = 0 ; x < commandLength ; x++)
+    {
+      commandBuffer[x] = commandRXBuffer[commandRXTail++];
+      commandRXTail %= sizeof(commandRXBuffer);
+    }
+
+    if (commandBuffer[0] == 'R') //Error check
+    {
+      commandBuffer[0] = 'A'; //Convert this RT command to an AT command for local consumption
+      printerEndpoint = PRINT_TO_RF; //Send prints to RF link
+      checkCommand(); //Parse the command buffer
+
+      //We now have the commandTXBuffer loaded. But we need to send an remoteCommandResponse. Use the printerEndpoint within the State machine.
+    }
+    else
+    {
+      LRS_DEBUG_PRINT(F("Corrupt remote command received"));
+    }
+  }
 }
 
 //Returns true if CTS is asserted (high = host says it's ok to send data)
@@ -188,12 +232,31 @@ void readyOutgoingPacket()
   packetSize = bytesToSend;
 
   //Move this portion of the circular buffer into the outgoingPacket
-  uint16_t tempTail = rxTail; //Don't move the tail until we sucessfully send packet
   for (uint8_t x = 0 ; x < packetSize ; x++)
   {
-    outgoingPacket[x] = serialReceiveBuffer[tempTail++];
-    tempTail %= sizeof(serialReceiveBuffer);
+    outgoingPacket[x] = serialReceiveBuffer[rxTail++];
+    rxTail %= sizeof(serialReceiveBuffer);
+  }
+}
+
+//Send a portion of the commandTXBuffer to outgoingPacket
+void readyOutgoingCommandPacket()
+{
+  uint16_t bytesToSend = availableTXCommandBytes();
+  if (bytesToSend > settings.frameSize) bytesToSend = settings.frameSize;
+
+  //SF6 requires an implicit header which means there is no dataLength in the header
+  if (settings.radioSpreadFactor == 6)
+  {
+    if (bytesToSend > 255 - 3) bytesToSend = 255 - 3; //We are going to transmit 255 bytes no matter what
   }
 
-  rxTail = tempTail; //TODO - We move the tail no matter if sendDataPacket was successful or errored out
+  packetSize = bytesToSend;
+
+  //Move this portion of the circular buffer into the outgoingPacket
+  for (uint8_t x = 0 ; x < packetSize ; x++)
+  {
+    outgoingPacket[x] = commandTXBuffer[commandTXTail++];
+    commandTXTail %= sizeof(commandTXBuffer);
+  }
 }

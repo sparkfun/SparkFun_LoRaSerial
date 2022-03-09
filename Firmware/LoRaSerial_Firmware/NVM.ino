@@ -8,7 +8,7 @@ void loadSettings()
   uint32_t testRead = 0;
   if (EEPROM.get(0, testRead) == 0xFFFFFFFF)
   {
-    //systemPrintln(F("EEPROM is blank. Default settings applied."));
+    //systemPrintln("EEPROM is blank. Default settings applied.");
     recordSystemSettings(); //Record default settings to EEPROM. At power on, settings are in default state
   }
 
@@ -18,7 +18,7 @@ void loadSettings()
   EEPROM.get(0, tempSize); //Load the sizeOfSettings
   if (tempSize != sizeof(settings))
   {
-    //systemPrintln(F("Settings wrong size. Default settings applied."));
+    //systemPrintln("Settings wrong size. Default settings applied.");
     recordSystemSettings(); //Record default settings to EEPROM. At power on, settings are in default state
   }
 
@@ -27,9 +27,9 @@ void loadSettings()
   EEPROM.get(sizeof(int), tempIdentifier); //Load the identifier from the EEPROM location after sizeOfSettings (int)
   if (tempIdentifier != LRS_IDENTIFIER)
   {
-    //systemPrint(F("Settings are not valid for this variant of STR "));
+    //systemPrint("Settings are not valid for this variant of STR ");
     //systemPrint((String)platformPrefix);
-    //systemPrintln(F(". Default settings applied."));
+    //systemPrintln(". Default settings applied.");
     recordSystemSettings(); //Record default settings to EEPROM. At power on, settings are in default state
   }
 

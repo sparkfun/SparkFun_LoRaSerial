@@ -31,7 +31,7 @@ PacketType identifyPacketType()
   if (receivedBytes < 2)
   {
     LRS_DEBUG_PRINTLN(F("Bad packet"));
-    return (PROCESS_BAD_PACKET);
+    return (PACKET_BAD);
   }
 
   //Pull out control header
@@ -58,13 +58,13 @@ PacketType identifyPacketType()
   {
     LRS_DEBUG_PRINT(F("NetID mismatch: "));
     LRS_DEBUG_PRINTLN(receivedNetID);
-    return (PROCESS_NETID_MISMATCH);
+    return (PACKET_NETID_MISMATCH);
   }
 
-  if (receiveTrailer.ack == 1 && receiveTrailer.remoteCommand == 0)
+  if (receiveTrailer.ack == 1 && receiveTrailer.remoteCommand == 0 && receiveTrailer.remoteCommandResponse == 0)
   {
     LRS_DEBUG_PRINTLN(F("RX: Ack packet"));
-    return (PROCESS_ACK_PACKET);
+    return (PACKET_ACK);
   }
 
   if (receiveTrailer.resend == 1)
@@ -77,7 +77,7 @@ PacketType identifyPacketType()
       if (memcmp(lastPacket, incomingBuffer, lastPacketSize) == 0)
       {
         LRS_DEBUG_PRINTLN(F("Duplicate received. Acking again."));
-        return (PROCESS_DUPLICATE_PACKET); //It's a duplicate. Ack then ignore
+        return (PACKET_DUPLICATE); //It's a duplicate. Ack then ignore
       }
     }
     else
@@ -94,7 +94,7 @@ PacketType identifyPacketType()
     if (receiveTrailer.train == 1)
     {
       LRS_DEBUG_PRINTLN(F("RX: Training Control Packet"));
-      return (PROCESS_TRAINING_CONTROL_PACKET);
+      return (PACKET_TRAINING_PING);
     }
 
     //If this packet is marked as a remote command, it's either an ack or a zero length packet (not known)
@@ -107,12 +107,25 @@ PacketType identifyPacketType()
       }
 
       LRS_DEBUG_PRINTLN(F("RX: Unknown Command"));
-      return (PROCESS_BAD_PACKET);
+      return (PACKET_BAD);
+    }
+
+    //If this packet is marked as a remote command response, it's either an ack or a zero length packet (not known)
+    else if (receiveTrailer.remoteCommandResponse == 1)
+    {
+      if (receiveTrailer.ack == 1)
+      {
+        LRS_DEBUG_PRINTLN(F("RX: Command Response Ack"));
+        return (PACKET_COMMAND_RESPONSE_ACK);
+      }
+
+      LRS_DEBUG_PRINTLN(F("RX: Unknown Response Command"));
+      return (PACKET_BAD);
     }
 
     //Not training, not command packet, just a ping
     LRS_DEBUG_PRINTLN(F("RX: Control Packet"));
-    return (PROCESS_CONTROL_PACKET);
+    return (PACKET_PING);
   }
 
   //Update lastPacket details with current packet
@@ -123,8 +136,8 @@ PacketType identifyPacketType()
   //payload contains new AES key and netID which will be processed externally
   if (receiveTrailer.train == 1)
   {
-    LRS_DEBUG_PRINTLN(F("RX: Training data packet"));
-    return (PROCESS_TRAINING_DATA_PACKET);
+    LRS_DEBUG_PRINTLN(F("RX: Training Data"));
+    return (PACKET_TRAINING_DATA);
   }
 
   else if (receiveTrailer.remoteCommand == 1)
@@ -134,8 +147,15 @@ PacketType identifyPacketType()
     return (PACKET_COMMAND_DATA);
   }
 
-  LRS_DEBUG_PRINTLN(F("RX: Data packet"));
-  return (PROCESS_DATA_PACKET);
+  else if (receiveTrailer.remoteCommandResponse == 1)
+  {
+    //New response data from remote
+    LRS_DEBUG_PRINTLN(F("RX: Command Response Data"));
+    return (PACKET_COMMAND_RESPONSE_DATA);
+  }
+
+  LRS_DEBUG_PRINTLN(F("RX: Data"));
+  return (PACKET_DATA);
 }
 
 //Apply settings to radio
@@ -205,7 +225,7 @@ void configureRadio()
       default:
         if (settings.debug == true)
         {
-          systemPrint(F("Unknown airSpeed: "));
+          systemPrint("Unknown airSpeed: ");
           systemPrintln(settings.airSpeed);
         }
         break;
@@ -268,23 +288,23 @@ void configureRadio()
 
   if (settings.debug == true)
   {
-    systemPrint(F("Freq: "));
+    systemPrint("Freq: ");
     systemPrintln(channels[0], 3);
-    systemPrint(F("radioBandwidth: "));
+    systemPrint("radioBandwidth: ");
     systemPrintln(settings.radioBandwidth);
-    systemPrint(F("radioSpreadFactor: "));
+    systemPrint("radioSpreadFactor: ");
     systemPrintln(settings.radioSpreadFactor);
-    systemPrint(F("radioCodingRate: "));
+    systemPrint("radioCodingRate: ");
     systemPrintln(settings.radioCodingRate);
-    systemPrint(F("radioSyncWord: "));
+    systemPrint("radioSyncWord: ");
     systemPrintln(settings.radioSyncWord);
-    systemPrint(F("radioPreambleLength: "));
+    systemPrint("radioPreambleLength: ");
     systemPrintln(settings.radioPreambleLength);
-    systemPrint(F("calcSymbolTime: "));
+    systemPrint("calcSymbolTime: ");
     systemPrintln(calcSymbolTime());
-    systemPrint(F("HoppingPeriod: "));
+    systemPrint("HoppingPeriod: ");
     systemPrintln(hoppingPeriod);
-    systemPrint(F("controlPacketAirTime: "));
+    systemPrint("controlPacketAirTime: ");
     systemPrintln(controlPacketAirTime);
   }
 
@@ -293,10 +313,10 @@ void configureRadio()
     reportERROR();
     if (settings.debug == true)
     {
-      systemPrintln(F("Radio init failed. Check settings."));
+      systemPrintln("Radio init failed. Check settings.");
     }
   }
-  LRS_DEBUG_PRINTLN(F("Radio online"));
+  LRS_DEBUG_PRINTLN("Radio online");
 }
 
 void returnToReceiving()
@@ -346,6 +366,7 @@ void sendPingPacket()
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
   responseTrailer.remoteCommand = 0; //This is not a remote command packet
+  responseTrailer.remoteCommandResponse = 0; //This is not a response to a previous remote command
 
   packetSize = 2;
   packetSent = 0; //Reset the number of times we've sent this packet
@@ -373,6 +394,7 @@ void sendDataPacket()
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
   responseTrailer.remoteCommand = 0; //This is not a remote command packet
+  responseTrailer.remoteCommandResponse = 0; //This is not a response to a previous remote command
 
   packetSize += 2; //Make room for control bytes
   packetSent = 0; //Reset the number of times we've sent this packet
@@ -398,6 +420,7 @@ void sendResendPacket()
   responseTrailer.resend = 1; //This is a resend
   responseTrailer.train = 0; //This is not a training packet
   //responseTrailer.remoteCommand = ; //Don't modify the remoteCommand bit; we may be resending a command packet
+  //responseTrailer.remoteCommandResponse = ; //Don't modify the remoteCommand bit; we may be resending a command packet
 
   //packetSize += 2; //Don't adjust the packet size
   //packetSent = 0; //Don't reset
@@ -413,6 +436,7 @@ void sendAckPacket()
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
   responseTrailer.remoteCommand = 0; //This is not a remote command packet
+  responseTrailer.remoteCommandResponse = 0; //This is not a response to a previous remote command
 
   packetSize = 2;
   packetSent = 0; //Reset the number of times we've sent this packet
@@ -428,6 +452,7 @@ void sendTrainingPingPacket()
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 1; //This is a training packet
   responseTrailer.remoteCommand = 0; //This is not a remote command packet
+  responseTrailer.remoteCommandResponse = 0; //This is not a response to a previous remote command
 
   packetSize = 2;
   packetSent = 0; //Reset the number of times we've sent this packet
@@ -446,6 +471,7 @@ void sendTrainingDataPacket()
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 1; //This is training packet
   responseTrailer.remoteCommand = 0; //This is not a remote command packet
+  responseTrailer.remoteCommandResponse = 0; //This is not a response to a previous remote command
 
   packetSize = sizeof(trainEncryptionKey) + sizeof(trainNetID);
 
@@ -470,6 +496,7 @@ void sendCommandAckPacket()
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
   responseTrailer.remoteCommand = 1; //This is a remote command packet
+  responseTrailer.remoteCommandResponse = 0; //This is not a response to a previous command
 
   packetSize = 2;
   packetSent = 0; //Reset the number of times we've sent this packet
@@ -485,6 +512,49 @@ void sendCommandDataPacket()
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not training packet
   responseTrailer.remoteCommand = 1; //This is a remote control packet
+  responseTrailer.remoteCommandResponse = 0; //This is not a response to a previous command
+
+  packetSize += 2; //Make room for control bytes
+  packetSent = 0; //Reset the number of times we've sent this packet
+
+  //SF6 requires an implicit header which means there is no dataLength in the header
+  if (settings.radioSpreadFactor == 6)
+  {
+    //Manually store actual data length 3 bytes from the end (before NetID)
+    //Manual packet size is whatever has been processed + 1 for the manual packetSize byte
+    outgoingPacket[255 - 3] = packetSize + 1;
+    packetSize = 255; //We're now going to transmit 255 bytes
+  }
+
+  expectingAck = true; //We expect destination to ack
+  sendPacket();
+}
+
+//Create short packet of 2 control bytes - do not expect ack
+void sendCommandResponseAckPacket()
+{
+  LRS_DEBUG_PRINT(F("TX: Command Response Ack "));
+  responseTrailer.ack = 1; //This is an ACK to a previous reception
+  responseTrailer.resend = 0; //This is not a resend
+  responseTrailer.train = 0; //This is not a training packet
+  responseTrailer.remoteCommand = 0; //This is not a remote command packet
+  responseTrailer.remoteCommandResponse = 1; //This is a response to a previous command
+
+  packetSize = 2;
+  packetSent = 0; //Reset the number of times we've sent this packet
+  expectingAck = false; //We do not expect destination to ack
+  sendPacket();
+}
+
+//Create packet of serial command with remote command = 1, ack = 0
+void sendCommandResponseDataPacket()
+{
+  LRS_DEBUG_PRINT(F("TX: Command Response Data "));
+  responseTrailer.ack = 0; //This is not an ACK to a previous transmission.
+  responseTrailer.resend = 0; //This is not a resend
+  responseTrailer.train = 0; //This is not training packet
+  responseTrailer.remoteCommand = 0; //This is a remote control packet
+  responseTrailer.remoteCommandResponse = 1; //This is a response to a previous command
 
   packetSize += 2; //Make room for control bytes
   packetSent = 0; //Reset the number of times we've sent this packet
@@ -643,23 +713,22 @@ void generateHopTable()
 
   if (settings.debug == true)
   {
-    systemPrint(F("channelSpacing: "));
+    systemPrint("channelSpacing: ");
     systemPrintln(channelSpacing, 3);
 
-    systemPrintln(F("Channel table:"));
+    systemPrintln("Channel table:");
     for (int x = 0 ; x < settings.numberOfChannels ; x++)
     {
       systemPrint(x);
-      systemPrint(F(": "));
+      systemPrint(": ");
       systemPrint(channels[x], 3);
       systemPrintln();
     }
 
-    systemPrint(F("AES IV:"));
+    systemPrint("AES IV:");
     for (uint8_t i = 0 ; i < 12 ; i++)
     {
       systemPrint(" 0x");
-      if (AESiv[i] < 0x10) systemPrint("0");
       systemPrint(AESiv[i], HEX);
     }
     systemPrintln();

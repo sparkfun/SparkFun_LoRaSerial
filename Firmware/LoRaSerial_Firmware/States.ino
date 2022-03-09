@@ -2,6 +2,9 @@ void updateRadioState()
 {
   switch (radioState)
   {
+
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
     case RADIO_NO_LINK_RECEIVING_STANDBY:
       {
         if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
@@ -84,12 +87,12 @@ void updateRadioState()
       {
         PacketType packetType = identifyPacketType(); //Look at the packet we just received
 
-        if (packetType == PROCESS_BAD_PACKET || packetType == PROCESS_NETID_MISMATCH)
+        if (packetType == PACKET_BAD || packetType == PACKET_NETID_MISMATCH)
         {
           returnToReceiving(); //Ignore
           changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
         }
-        else if (packetType == PROCESS_ACK_PACKET)
+        else if (packetType == PACKET_ACK)
         {
           //Yay! Return to normal communication
           packetsLost = 0; //Reset, used for linkLost testing
@@ -97,21 +100,23 @@ void updateRadioState()
           returnToReceiving();
           changeState(RADIO_LINKED_RECEIVING_STANDBY);
         }
-        else if (packetType == PROCESS_DUPLICATE_PACKET)
+        else if (packetType == PACKET_DUPLICATE)
         {
           sendAckPacket(); //It's a duplicate. Ack then ignore.
           changeState(RADIO_NO_LINK_TRANSMITTING);
         }
-        else if (packetType == PROCESS_CONTROL_PACKET)
+        else if (packetType == PACKET_PING)
         {
           triggerEvent(TRIGGER_NOLINK_IDENT_PACKET);
           sendAckPacket(); //Someone is pinging us
           changeState(RADIO_NO_LINK_TRANSMITTING);
         }
-        else if (packetType == PROCESS_DATA_PACKET)
+        else if (packetType == PACKET_DATA)
           ; //No data packets allowed when not linked
       }
       break;
+
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     case RADIO_LINKED_RECEIVING_STANDBY:
       {
@@ -147,7 +152,7 @@ void updateRadioState()
             LRS_DEBUG_PRINTLN("RECEIVING_STANDBY: RX In Progress");
         }
 
-        else //Process waiting serial
+        else //Process any waiting serial or commands
         {
           //If the radio is available, send any data in the serial buffer over the radio
           if (receiveInProcess() == false)
@@ -160,6 +165,34 @@ void updateRadioState()
                 sendDataPacket();
                 changeState(RADIO_LINKED_TRANSMITTING);
               }
+            }
+            else if (availableTXCommandBytes()) //If we have command bytes to send out
+            {
+              //Load command bytes into outgoing packet
+              readyOutgoingCommandPacket();
+
+              triggerEvent(TRIGGER_LINK_DATA_PACKET);
+
+              //Serial.print("Sending Command/Response: ");
+              //for (int x = 0 ; x < packetSize ; x++)
+              //  Serial.write(outgoingPacket[x]);
+              //Serial.println();
+
+              //We now have the commandTXBuffer loaded. But we need to send an remoteCommandResponse if we are pointed at PRINT_TO_RF.
+              if (printerEndpoint == PRINT_TO_RF)
+              {
+                //If printerEndpoint is PRINT_TO_RF we know the last commandTXBuffer was filled with a response to a command
+                sendCommandResponseDataPacket();
+              }
+              else
+              {
+                //This packet was generated with sendRemoteCommand() and is a command packet
+                sendCommandDataPacket();
+              }
+
+              printerEndpoint = PRINT_TO_SERIAL; //Once the response is received, we need to print it to serial
+
+              changeState(RADIO_LINKED_TRANSMITTING);
             }
           }
         } //End processWaitingSerial
@@ -234,7 +267,7 @@ void updateRadioState()
       {
         PacketType packetType = identifyPacketType(); //Look at the packet we just received
 
-        if (packetType == PROCESS_ACK_PACKET)
+        if (packetType == PACKET_ACK || packetType == PACKET_COMMAND_ACK || packetType == PACKET_COMMAND_RESPONSE_ACK)
         {
           //This packet is an ack. Return to receiving.
           triggerEvent(TRIGGER_ACK_PROCESSED); //Trigger for transmission timing
@@ -242,11 +275,11 @@ void updateRadioState()
           if (settings.displayPacketQuality == true)
           {
             systemPrintln();
-            systemPrint(F("R:"));
+            systemPrint("R:");
             systemPrint(radio.getRSSI());
-            systemPrint(F("\tS:"));
+            systemPrint("\tS:");
             systemPrint(radio.getSNR());
-            systemPrint(F("\tfE:"));
+            systemPrint("\tfE:");
             systemPrint(radio.getFrequencyError());
             systemPrintln();
           }
@@ -255,7 +288,7 @@ void updateRadioState()
           returnToReceiving();
           changeState(RADIO_LINKED_RECEIVING_STANDBY);
         }
-        else if (packetType == PROCESS_DUPLICATE_PACKET)
+        else if (packetType == PACKET_DUPLICATE)
         {
           //It's a duplicate. Ack then throw data away.
           triggerEvent(TRIGGER_LINK_DUPLICATE_PACKET);
@@ -264,7 +297,7 @@ void updateRadioState()
           sendAckPacket();
           changeState(RADIO_LINKED_TRANSMITTING);
         }
-        else if (packetType == PROCESS_CONTROL_PACKET)
+        else if (packetType == PACKET_PING)
         {
           //Someone is pinging us. Ack back.
           triggerEvent(TRIGGER_LINK_CONTROL_PACKET);
@@ -273,17 +306,17 @@ void updateRadioState()
           sendAckPacket();
           changeState(RADIO_LINKED_TRANSMITTING);
         }
-        else if (packetType == PROCESS_DATA_PACKET)
+        else if (packetType == PACKET_DATA)
         {
           //Pull data from packet and move into outbound serial buffer
           if (settings.displayPacketQuality == true)
           {
             systemPrintln();
-            systemPrint(F("R:"));
+            systemPrint("R:");
             systemPrint(radio.getRSSI());
-            systemPrint(F("\tS:"));
+            systemPrint("\tS:");
             systemPrint(radio.getSNR());
-            systemPrint(F("\tfE:"));
+            systemPrint("\tfE:");
             systemPrint(radio.getFrequencyError());
             systemPrintln();
           }
@@ -304,20 +337,62 @@ void updateRadioState()
 
         else if (packetType == PACKET_COMMAND_DATA)
         {
-          //New data to load into command buffer
-          triggerEvent(TRIGGER_PACKET_COMMAND_DATA);
-          
-          for(int x = 0 ; x < packetSize ; x++)
-            commandBuffer[x] = lastPacket[x];
+          //Serial.print("Received Command Data: ");
+          //for (int x = 0 ; x < lastPacketSize ; x++)
+          //  Serial.write(lastPacket[x]);
+          //Serial.println();
 
-          serialState = SERIAL_REMOTE_COMMAND_TX; //Any system prints are piped over the RF link, ie 'OK'
-          checkCommand(); //Process this command
+          //Move this packet into the command RX buffer
+          for (int x = 0 ; x < lastPacketSize ; x++)
+          {
+            commandRXBuffer[commandRXHead++] = lastPacket[x];
+            commandRXHead %= sizeof(commandRXBuffer);
+          }
 
-          returnToReceiving();
-          changeState(RADIO_LINKED_RECEIVING_STANDBY);
+          packetsLost = 0; //Reset, used for linkLost testing
+          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+          sendCommandAckPacket(); //Transmit ACK
+          changeState(RADIO_LINKED_TRANSMITTING);
         }
 
-        else //packetType == PROCESS_BAD_PACKET, packetType == PROCESS_NETID_MISMATCH
+        else if (packetType == PACKET_COMMAND_RESPONSE_DATA)
+        {
+          //Print received data. This is blocking but we do not use the serialTransmitBuffer because we're in command mode (and it's not much data to print).
+          for (int x = 0 ; x < lastPacketSize ; x++)
+            Serial.write(lastPacket[x]);
+
+          packetsLost = 0; //Reset, used for linkLost testing
+          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+          sendCommandResponseAckPacket(); //Transmit ACK
+          changeState(RADIO_LINKED_TRANSMITTING);
+        }
+        else if (packetType == PACKET_COMMAND_RESPONSE_ACK)
+        {
+          //If we are waiting for ack before radio config, apply settings
+          if (confirmDeliveryBeforeRadioConfig == true)
+          {
+            confirmDeliveryBeforeRadioConfig = false;
+
+            //Apply settings
+            generateHopTable(); //Generate freq with new settings
+            configureRadio(); //Apply any new settings
+
+            digitalWrite(pin_linkLED, LOW);
+            digitalWrite(pin_activityLED, LOW);
+            if (settings.pointToPoint == true)
+              changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
+            else
+              changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
+          }
+          else //It was just an ACK
+          {
+            packetsLost = 0; //Reset, used for linkLost testing
+            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+            returnToReceiving();
+            changeState(RADIO_LINKED_RECEIVING_STANDBY);
+          }
+        }
+        else //packetType == PACKET_BAD, packetType == PACKET_NETID_MISMATCH
         {
           //Packet type not supported in this state
           triggerEvent(TRIGGER_LINK_BAD_PACKET);
@@ -326,6 +401,8 @@ void updateRadioState()
         }
       }
       break;
+
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     case RADIO_BROADCASTING_RECEIVING_STANDBY:
       {
@@ -388,30 +465,30 @@ void updateRadioState()
       {
         PacketType packetType = identifyPacketType(); //Look at the packet we just received
 
-        if (packetType == PROCESS_ACK_PACKET)
+        if (packetType == PACKET_ACK)
         {
           //We should not be receiving ack packets, but if we do, just ignore
           frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           returnToReceiving();
           changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
         }
-        else if (packetType == PROCESS_DUPLICATE_PACKET || packetType == PROCESS_CONTROL_PACKET)
+        else if (packetType == PACKET_DUPLICATE || packetType == PACKET_PING)
         {
           //We should not be receiving control packets, but if we do, just ignore
           frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           returnToReceiving(); //No response when in broadcasting mode
           changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
         }
-        else if (packetType == PROCESS_DATA_PACKET)
+        else if (packetType == PACKET_DATA)
         {
           if (settings.displayPacketQuality == true)
           {
             systemPrintln();
-            systemPrint(F("R:"));
+            systemPrint("R:");
             systemPrint(radio.getRSSI());
-            systemPrint(F("\tS:"));
+            systemPrint("\tS:");
             systemPrint(radio.getSNR());
-            systemPrint(F("\tfE:"));
+            systemPrint("\tfE:");
             systemPrint(radio.getFrequencyError());
             systemPrintln();
           }
@@ -430,7 +507,7 @@ void updateRadioState()
 
           lastPacketReceived = millis(); //Update timestamp for Link LED
         }
-        else //PROCESS_BAD_PACKET, PROCESS_NETID_MISMATCH
+        else //PACKET_BAD, PACKET_NETID_MISMATCH
         {
           //This packet type is not supported in this state
           returnToReceiving();
@@ -485,7 +562,7 @@ void updateRadioState()
       {
         PacketType packetType = identifyPacketType(); //Look at the packet we just received
 
-        if (packetType == PROCESS_TRAINING_CONTROL_PACKET)
+        if (packetType == PACKET_TRAINING_PING)
         {
           triggerEvent(TRIGGER_TRAINING_CONTROL_PACKET);
           packetsLost = 0; //Reset, used for linkLost testing
@@ -505,7 +582,7 @@ void updateRadioState()
           endTraining(false); //We do not have data to apply to settings
         }
 
-        else if (packetType == PROCESS_TRAINING_DATA_PACKET)
+        else if (packetType == PACKET_TRAINING_DATA)
         {
           //The waiting node has responded with a data packet
           //Absorb training data and then return to normal operation
@@ -515,7 +592,7 @@ void updateRadioState()
         }
 
         //During training, only training packets are valid
-        else //PROCESS_BAD_PACKET, PROCESS_NETID_MISMATCH, PROCESS_ACK_PACKET, PROCESS_CONTROL_PACKET, PROCESS_DATA_PACKET
+        else //PACKET_BAD, PACKET_NETID_MISMATCH, PACKET_ACK, PACKET_PING, PACKET_DATA
         {
           triggerEvent(TRIGGER_TRAINING_BAD_PACKET);
           returnToReceiving();
@@ -526,7 +603,7 @@ void updateRadioState()
 
     default:
       {
-        systemPrintln(F("Unknown state"));
+        systemPrintln("Unknown state");
       }
       break;
   }
@@ -540,7 +617,7 @@ bool isLinked()
       || radioState == RADIO_LINKED_TRANSMITTING
       || radioState == RADIO_LINKED_ACK_WAIT
       || radioState == RADIO_LINKED_RECEIVED_PACKET
-      )
+     )
     return (true);
 
   return (false);
@@ -558,63 +635,63 @@ void changeState(RadioStates newState)
   switch (radioState)
   {
     case (RADIO_NO_LINK_RECEIVING_STANDBY):
-      systemPrint(F("State: [No Link] Receiving Standby"));
+      systemPrint("State: [No Link] Receiving Standby");
       break;
     case (RADIO_NO_LINK_RECEIVED_PACKET):
-      systemPrint(F("State: [No Link] Received Packet"));
+      systemPrint("State: [No Link] Received Packet");
       break;
     case (RADIO_NO_LINK_TRANSMITTING):
-      systemPrint(F("State: [No Link] Transmitting"));
+      systemPrint("State: [No Link] Transmitting");
       break;
     case (RADIO_NO_LINK_ACK_WAIT):
-      systemPrint(F("State: [No Link] Ack Wait"));
+      systemPrint("State: [No Link] Ack Wait");
       break;
 
     case (RADIO_LINKED_RECEIVING_STANDBY):
-      systemPrint(F("State: Receiving Standby "));
+      systemPrint("State: Receiving Standby ");
       systemPrint(channels[radio.getFHSSChannel()], 3);
       break;
     case (RADIO_LINKED_RECEIVED_PACKET):
-      systemPrint(F("State: Received Packet "));
+      systemPrint("State: Received Packet ");
       systemPrint(channels[radio.getFHSSChannel()], 3);
       break;
     case (RADIO_LINKED_TRANSMITTING):
-      systemPrint(F("State: Transmitting "));
+      systemPrint("State: Transmitting ");
       systemPrint(channels[radio.getFHSSChannel()], 3);
       break;
     case (RADIO_LINKED_ACK_WAIT):
-      systemPrint(F("State: Ack Wait "));
+      systemPrint("State: Ack Wait ");
       systemPrint(channels[radio.getFHSSChannel()], 3);
       break;
 
     case (RADIO_BROADCASTING_RECEIVING_STANDBY):
-      systemPrint(F("State: B-Receiving Standby "));
+      systemPrint("State: B-Receiving Standby ");
       systemPrint(channels[radio.getFHSSChannel()], 3);
       break;
     case (RADIO_BROADCASTING_RECEIVED_PACKET):
-      systemPrint(F("State: B-Received Packet "));
+      systemPrint("State: B-Received Packet ");
       systemPrint(channels[radio.getFHSSChannel()], 3);
       break;
     case (RADIO_BROADCASTING_TRANSMITTING):
-      systemPrint(F("State: B-Transmitting "));
+      systemPrint("State: B-Transmitting ");
       systemPrint(channels[radio.getFHSSChannel()], 3);
       break;
 
     case (RADIO_TRAINING_TRANSMITTING):
-      systemPrint(F("State: [Training] TX"));
+      systemPrint("State: [Training] TX");
       break;
     case (RADIO_TRAINING_ACK_WAIT):
-      systemPrint(F("State: [Training] Ack Wait"));
+      systemPrint("State: [Training] Ack Wait");
       break;
     case (RADIO_TRAINING_RECEIVING_HERE_FIRST):
-      systemPrint(F("State: [Training] RX Here First"));
+      systemPrint("State: [Training] RX Here First");
       break;
     case (RADIO_TRAINING_RECEIVED_PACKET):
-      systemPrint(F("State: [Training] RX Packet"));
-      break;      
+      systemPrint("State: [Training] RX Packet");
+      break;
 
     default:
-      systemPrint(F("Change State Unknown: "));
+      systemPrint("Change State Unknown: ");
       systemPrint(radioState);
       break;
   }

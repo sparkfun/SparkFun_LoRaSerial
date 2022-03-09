@@ -4,14 +4,16 @@ typedef enum
   RADIO_NO_LINK_TRANSMITTING,
   RADIO_NO_LINK_ACK_WAIT,
   RADIO_NO_LINK_RECEIVED_PACKET,
-  RADIO_NO_LINK_COMMAND,
+
   RADIO_LINKED_RECEIVING_STANDBY,
   RADIO_LINKED_TRANSMITTING,
   RADIO_LINKED_ACK_WAIT,
   RADIO_LINKED_RECEIVED_PACKET,
+
   RADIO_BROADCASTING_RECEIVING_STANDBY,
   RADIO_BROADCASTING_TRANSMITTING,
   RADIO_BROADCASTING_RECEIVED_PACKET,
+
   RADIO_TRAINING_RECEIVING_HERE_FIRST,
   RADIO_TRAINING_TRANSMITTING,
   RADIO_TRAINING_ACK_WAIT,
@@ -19,30 +21,24 @@ typedef enum
 } RadioStates;
 RadioStates radioState = RADIO_NO_LINK_RECEIVING_STANDBY;
 
-typedef enum
-{
-  SERIAL_PASSTHROUGH = 0, //Incoming serial is meant to be sent over RF link
-  SERIAL_COMMAND, //Incoming serial is piped into the command processor
-  SERIAL_REMOTE_COMMAND_TX, //Any system prints are piped over the RF link, ie 'OK'
-  SERIAL_REMOTE_COMMAND_RX, //Any system prints are piped into serial, ie 'ERROR'
-} SerialStates;
-SerialStates serialState = SERIAL_PASSTHROUGH;
-
 //Possible types of packets received
 typedef enum
 {
-  PROCESS_BAD_PACKET = 0,
-  PROCESS_NETID_MISMATCH,
-  PROCESS_ACK_PACKET, //ack = 1
-  PROCESS_DUPLICATE_PACKET,
-  PROCESS_CONTROL_PACKET, //ack = 0, len = 0
-  PROCESS_DATA_PACKET,
+  PACKET_BAD = 0,
+  PACKET_NETID_MISMATCH,
+  PACKET_ACK, //ack = 1
+  PACKET_DUPLICATE,
+  PACKET_PING, //ack = 0, len = 0
+  PACKET_DATA,
 
-  PACKET_COMMAND_DATA, //remoteCommand = 1
   PACKET_COMMAND_ACK, //remoteCommand = 1, ack = 1
+  PACKET_COMMAND_DATA, //remoteCommand = 1
 
-  PROCESS_TRAINING_CONTROL_PACKET,
-  PROCESS_TRAINING_DATA_PACKET,
+  PACKET_COMMAND_RESPONSE_ACK, //remoteCommand = 1, remoteCommandResponse = 1, ack = 1
+  PACKET_COMMAND_RESPONSE_DATA, //remoteCommand = 1, remoteCommandResponse = 1,
+
+  PACKET_TRAINING_PING,
+  PACKET_TRAINING_DATA,
 } PacketType;
 
 //Train button states
@@ -98,11 +94,21 @@ enum
   TRIGGER_PACKET_COMMAND_DATA = 850,
 };
 
+//Control where to print command output
+typedef enum
+{
+  PRINT_TO_SERIAL = 0,
+  PRINT_TO_RF,
+} PrinterEndpoints;
+PrinterEndpoints printerEndpoint = PRINT_TO_SERIAL;
+
+
 struct ControlTrailer
 {
   uint8_t resend : 1;
   uint8_t ack : 1;
   uint8_t remoteCommand : 1;
+  uint8_t remoteCommandResponse : 1;
   uint8_t train : 1;
   uint8_t filler : 3;
 };
@@ -148,7 +154,6 @@ typedef struct struct_settings {
 
 } Settings;
 Settings settings;
-Settings remoteSettings; //Used for remote configuration
 
 //Monitor which devices on the device are on or offline.
 struct struct_online {

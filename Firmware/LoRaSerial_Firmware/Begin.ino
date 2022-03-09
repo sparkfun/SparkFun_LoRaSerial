@@ -112,7 +112,7 @@ void beginLoRa()
   int state = radio.begin(centerFreq); //Doesn't matter what freq we start at
   if (state != RADIOLIB_ERR_NONE)
   {
-    systemPrint(F("Radio init failed with code: "));
+    systemPrint("Radio init failed with code: ");
     systemPrintln(state);
     while (1)
     {

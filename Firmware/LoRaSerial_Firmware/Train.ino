@@ -35,7 +35,6 @@ void endTraining(bool newTrainingAvailable)
         systemPrint("New Key: ");
         for (uint8_t i = 0 ; i < 16 ; i++)
         {
-          if (settings.encryptionKey[i] < 0x10) systemPrint("0");
           systemPrint(settings.encryptionKey[i], HEX);
           systemPrint(" ");
         }
@@ -131,14 +130,13 @@ void generateTrainingSettings()
 
   if (settings.debug == true)
   {
-    systemPrint(F("trainNetID: "));
+    systemPrint("trainNetID: ");
     systemPrintln(trainNetID);
 
-    systemPrint(F("trainEncryptionKey:"));
+    systemPrint("trainEncryptionKey:");
     for (uint8_t i = 0 ; i < 16 ; i++)
     {
       systemPrint(" 0x");
-      if (trainEncryptionKey[i] < 0x10) systemPrint("0");
       systemPrint(trainEncryptionKey[i], HEX);
     }
     systemPrintln();

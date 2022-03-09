@@ -142,6 +142,14 @@ uint16_t txHead = 0;
 uint16_t txTail = 0;
 uint16_t rxHead = 0;
 uint16_t rxTail = 0;
+
+uint8_t commandRXBuffer[700]; //Bytes received from remote, waiting for printing or AT parsing
+uint8_t commandTXBuffer[700]; //Bytes waiting to be transmitted to the remote unit
+uint16_t commandTXHead = 0;
+uint16_t commandTXTail = 0;
+uint16_t commandRXHead = 0;
+uint16_t commandRXTail = 0;
+
 unsigned long lastByteReceived_ms = 0; //Track when last transmission was. Send partial buffer once time has expired.
 
 char platformPrefix[15]; //Used for printing platform specific device name
@@ -185,9 +193,9 @@ Settings originalSettings; //Create a duplicate of settings during training so t
 uint8_t trainNetID; //New netID passed during training
 uint8_t trainEncryptionKey[16]; //New AES key passed during training
 
+bool inCommandMode = false; //Normal data is prevented from entering serial output when in command mode
 char commandBuffer[100]; //Received serial gets stored into buffer until \r or \n is received
 uint8_t commandLength = 0;
-uint8_t settingsDelivered; //Tracks how many times we successfully delivered new settings to remote unit
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -195,6 +203,8 @@ uint8_t settingsDelivered; //Tracks how many times we successfully delivered new
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 long startTime = 0; //Used for air time of TX frames
 long stopTime = 0;
+
+bool confirmDeliveryBeforeRadioConfig = false; //Goes true when we have remotely configured a radio
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 void setup()
@@ -216,7 +226,7 @@ void setup()
 
   beginWDT(); //Start watchdog timer
 
-  systemPrintln(F("LRS"));
+  systemPrintln("LRS");
 }
 
 void loop()
