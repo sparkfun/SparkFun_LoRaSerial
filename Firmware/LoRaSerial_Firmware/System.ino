@@ -1,27 +1,6 @@
-//Helper functions to print to all available ports
 void systemPrint(const char* value)
 {
-  Serial.print(value);
-
-#if defined(ARDUINO_ARCH_SAMD)
-  Serial1.print(value);
-#endif
-}
-
-void systemPrintln(const char* value)
-{
-  systemPrint(value);
-
-  Serial.println();
-#if defined(ARDUINO_ARCH_SAMD)
-  Serial1.println();
-#endif
-}
-
-void systemPrint(const __FlashStringHelper* value)
-{
-  //Communicate an AT response over serial or the RF link (if available)
-  if (serialState == SERIAL_COMMAND)
+  if (printerEndpoint == PRINT_TO_SERIAL)
   {
     Serial.print(value);
 
@@ -29,103 +8,77 @@ void systemPrint(const __FlashStringHelper* value)
     Serial1.print(value);
 #endif
   }
-  else if(serialState == SERIAL_REMOTE_COMMAND_TX || serialState == SERIAL_REMOTE_COMMAND_RX)
+  else if (printerEndpoint == PRINT_TO_RF)
   {
-    if (isLinked() == true && radioState == RADIO_LINKED_RECEIVING_STANDBY)
+    //Move these characters into the transmit buffer
+    for (int x = 0 ; x < strlen(value) ; x++)
     {
-      //Move this response to the outgoing packet and send
-//      for (int x = 0 ; x < strlen(value) ; x++)
-//        outgoingPacket[x] = value[x];
-
-      sendCommandDataPacket();
-      changeState(RADIO_LINKED_TRANSMITTING);
+      commandTXBuffer[commandTXHead++] = value[x];
+      commandTXHead %= sizeof(commandTXBuffer);
     }
   }
 }
 
-void systemPrintln(const __FlashStringHelper * value)
+void systemPrintln(const char* value)
 {
   systemPrint(value);
-
-  Serial.println();
-#if defined(ARDUINO_ARCH_SAMD)
-  Serial1.println();
-#endif
+  systemPrint("\r\n");
 }
 
 void systemPrint(int value)
 {
-  Serial.print(value);
-
-#if defined(ARDUINO_ARCH_SAMD)
-  Serial1.print(value);
-#endif
+  char temp[20];
+  sprintf(temp, "%d", value);
+  systemPrint(temp);
 }
 
 void systemPrintln(int value)
 {
   systemPrint(value);
-
-  Serial.println();
-#if defined(ARDUINO_ARCH_SAMD)
-  Serial1.println();
-#endif
+  systemPrint("\r\n");
 }
 
 void systemPrint(uint8_t value, uint8_t printType)
 {
-  Serial.print(value, printType);
+  char temp[20];
 
-#if defined(ARDUINO_ARCH_SAMD)
-  Serial1.print(value, printType);
-#endif
+  if (printType == HEX)
+    sprintf(temp, "%02X", value);
+  else if (printType == DEC)
+    sprintf(temp, "%d", value);
+
+  systemPrint(temp);
 }
 
 void systemPrintln(uint8_t value, uint8_t printType)
 {
   systemPrint(value, printType);
-
-  Serial.println();
-#if defined(ARDUINO_ARCH_SAMD)
-  Serial1.println();
-#endif
+  systemPrint("\r\n");
 }
 
 void systemPrint(float value, uint8_t decimals)
 {
-  Serial.print(value, decimals);
-
-#if defined(ARDUINO_ARCH_SAMD)
-  Serial1.print(value, decimals);
-#endif
+  char temp[20];
+  sprintf(temp, "%.*f", decimals, value);
+  systemPrint(temp);
 }
 
 void systemPrintln(float value, uint8_t decimals)
 {
   systemPrint(value, decimals);
-
-  Serial.println();
-#if defined(ARDUINO_ARCH_SAMD)
-  Serial1.println();
-#endif
+  systemPrint("\r\n");
 }
 
 void systemPrintln()
 {
-  Serial.println();
-
-#if defined(ARDUINO_ARCH_SAMD)
-  Serial1.println();
-#endif
+  systemPrint("\r\n");
 }
 
 void systemWrite(uint8_t value)
 {
-  Serial.write(value);
-
-#if defined(ARDUINO_ARCH_SAMD)
-  Serial1.write(value);
-#endif
+  char temp[2];
+  sprintf(temp, "%c", value);
+  systemPrint(temp);
 }
 
 void systemFlush()
@@ -288,4 +241,19 @@ void movePacketToSettings(Settings settings, uint8_t* packetBuffer)
 
   for (uint8_t x = 0 ; x < sizeof(settings) ; x++)
     bytePtr[x] = packetBuffer[x];
+}
+
+//Given two letters, convert to base 10
+uint8_t charToHex(char a, char b)
+{
+  a = toupper(a);
+  b = toupper(b);
+
+  if ('0' <= a && a <= '9') a -= '0';
+  if ('A' <= a && a <= 'F') a = a - 'A' + 10;
+
+  if ('0' <= b && b <= '9') b -= '0';
+  if ('A' <= b && b <= 'F') b = b - 'A' + 10;
+
+  return((a << 4) | b);
 }
