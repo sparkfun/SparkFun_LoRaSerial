@@ -134,8 +134,8 @@ const int trainWithDefaultsButtonTime = 10000; //ms press and hold before enteri
 //uint8_t serialReceiveBuffer[512]; //Conserve RAM due to limitations
 uint8_t serialReceiveBuffer[32]; //Conserve RAM due to limitations
 #else
-uint8_t serialReceiveBuffer[1024 * 4]; //Buffer up to 1s of bytes at 4k
-uint8_t serialTransmitBuffer[1024 * 4]; //Buffer up to 1s of bytes at 4k
+uint8_t serialReceiveBuffer[1024 * 4]; //Bytes received from UART waiting to be RF transmitted. Buffer up to 1s of bytes at 4k
+uint8_t serialTransmitBuffer[1024 * 4]; //Bytes received from RF waiting to be printed out UART. Buffer up to 1s of bytes at 4k
 #endif
 
 uint16_t txHead = 0;

@@ -707,9 +707,13 @@ void trimCommand()
 //Show current settings in user friendly way
 void displayParameters()
 {
-  for (uint8_t x = 0 ; x <= 25 ; x++)
+  for (uint8_t x = 0 ; x <= 26 ; x++)
   {
-    systemPrint("S");
+    if (printerEndpoint == PRINT_TO_RF)
+      systemPrint("R"); //If someone is asking for our settings over RF, respond with 'R' style settings
+    else
+      systemPrint("S");
+      
     systemPrint(x);
     systemPrint(":");
 

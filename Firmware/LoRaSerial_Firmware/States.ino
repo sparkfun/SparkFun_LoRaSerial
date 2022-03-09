@@ -190,7 +190,8 @@ void updateRadioState()
                 sendCommandDataPacket();
               }
 
-              printerEndpoint = PRINT_TO_SERIAL; //Once the response is received, we need to print it to serial
+              if(availableTXCommandBytes() == 0) 
+                printerEndpoint = PRINT_TO_SERIAL; //Once the response is received, we need to print it to serial
 
               changeState(RADIO_LINKED_TRANSMITTING);
             }

@@ -250,10 +250,12 @@ uint8_t charToHex(char a, char b)
   b = toupper(b);
 
   if ('0' <= a && a <= '9') a -= '0';
-  if ('A' <= a && a <= 'F') a = a - 'A' + 10;
+  else if ('A' <= a && a <= 'F') a = a - 'A' + 10;
+  else return 0;
 
   if ('0' <= b && b <= '9') b -= '0';
-  if ('A' <= b && b <= 'F') b = b - 'A' + 10;
+  else if ('A' <= b && b <= 'F') b = b - 'A' + 10;
+  else return 0;
 
   return((a << 4) | b);
 }
