@@ -90,7 +90,7 @@ void moveToTrainingFreq()
   settings.pointToPoint = false;
 
   //Turn power as low as possible. We assume two units will be near each other. 
-  settings.radioBroadcastPower_dbm = 0;
+  settings.radioBroadcastPower_dbm = 14;
 
   generateHopTable(); //Generate frequency table based on current settings
 

@@ -235,9 +235,11 @@ void configureRadio()
   if (radio.setFrequency(channels[0]) == RADIOLIB_ERR_INVALID_FREQUENCY)
     success = false;
 
-  // Set output power (accepted range is -3 - 17 dBm)
-  // NOTE: 20 dBm value allows high power operation, but transmission duty cycle MUST NOT exceed 1%
-  if (radio.setOutputPower(settings.radioBroadcastPower_dbm) == RADIOLIB_ERR_INVALID_OUTPUT_POWER)
+  //The SX1276 and RadioLib accepts a value of 2 to 17, with 20 enabling the power amplifier
+  //Measuring actual power output the radio will output 14dBm (25mW) to 27.9dBm (617mW) in constant transmission
+  //So we use a lookup to convert between the user's chosen power and the radio setting
+  int radioPowerSetting = covertdBmToSetting(settings.radioBroadcastPower_dbm);
+  if (radio.setOutputPower(radioPowerSetting) == RADIOLIB_ERR_INVALID_OUTPUT_POWER)
     success = false;
 
   if (radio.setBandwidth(settings.radioBandwidth) == RADIOLIB_ERR_INVALID_BANDWIDTH)
@@ -821,4 +823,35 @@ bool receiveInProcess()
 
   //if ((radioStatus & 0b1) == 0) return (false); //If bit 0 is cleared, there is no receive in progress
   //return (true); //If bit 0 is set, forget the other bits, there is a receive in progress
+}
+
+//Convert the user's requested dBm to what the radio should be set to, to hit that power level
+//3 is lowest allowed setting using SX1276+RadioLib
+uint8_t covertdBmToSetting(uint8_t userSetting)
+{
+  if(userSetting < 14) return 3; //Error check
+  
+  switch (userSetting)
+  {
+    case 14: return (2); break;
+    case 15: return (3); break;
+    case 16: return (4); break;
+    case 17: return (5); break;
+    case 18: return (6); break;
+    case 19: return (7); break;
+    case 20: return (7); break;
+    case 21: return (8); break;
+    case 22: return (9); break;
+    case 23: return (10); break;
+    case 24: return (11); break;
+    case 25: return (12); break;
+    case 26: return (13); break;
+    case 27: return (20); break;
+    case 28: return (20); break;
+    case 29: return (20); break;
+    case 30: return (20); break;
+    default: return (3); break;
+  }
+
+
 }

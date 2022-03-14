@@ -607,7 +607,7 @@ void checkCommand()
           reportERROR();
         break;
       case ('7'): //ATS7=
-        if (settingValue >= 0 && settingValue <= 20)
+        if (settingValue >= 14 && settingValue <= 30)
         {
           settings.radioBroadcastPower_dbm = settingValue;
           reportOK();
