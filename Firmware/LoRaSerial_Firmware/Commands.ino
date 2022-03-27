@@ -34,7 +34,7 @@ void checkCommand()
       case ('I'):
         //Shows the radio version
         reportOK();
-        systemPrint("SparkFun STR ");
+        systemPrint("SparkFun LoRaSerial ");
         systemPrint(platformPrefix);
         systemPrint(" v");
         systemPrint(FIRMWARE_VERSION_MAJOR);
@@ -93,7 +93,7 @@ void checkCommand()
         displayParameters();
         break;
       case ('1'): //ATI1 - Show board variant
-        systemPrint("SparkFun STR ");
+        systemPrint("SparkFun LoRaSerial ");
         systemPrint(platformPrefix);
         systemPrint("\r\n");
         break;

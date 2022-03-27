@@ -318,7 +318,7 @@ void configureRadio()
       systemPrintln("Radio init failed. Check settings.");
     }
   }
-  LRS_DEBUG_PRINTLN("Radio online");
+  LRS_DEBUG_PRINTLN("Radio configured");
 }
 
 void returnToReceiving()

@@ -14,7 +14,7 @@ void loadSettings()
 
   //Check that the current settings struct size matches what is stored in EEPROM
   //Misalignment happens when we add a new feature or setting
-  int tempSize = 0;
+  uint16_t tempSize = 0;
   EEPROM.get(0, tempSize); //Load the sizeOfSettings
   if (tempSize != sizeof(settings))
   {
@@ -23,13 +23,11 @@ void loadSettings()
   }
 
   //Check that the strIdentifier is correct
-  int tempIdentifier = 0;
-  EEPROM.get(sizeof(int), tempIdentifier); //Load the identifier from the EEPROM location after sizeOfSettings (int)
+  uint16_t tempIdentifier = 0;
+  EEPROM.get(sizeof(tempSize), tempIdentifier); //Load the identifier from the EEPROM location after sizeOfSettings (int)
   if (tempIdentifier != LRS_IDENTIFIER)
   {
-    //systemPrint("Settings are not valid for this variant of STR ");
-    //systemPrint((String)platformPrefix);
-    //systemPrintln(". Default settings applied.");
+    //systemPrint("Settings are not valid for this variant of LoRaSerial. Default settings applied.");
     recordSystemSettings(); //Record default settings to EEPROM. At power on, settings are in default state
   }
 

@@ -218,9 +218,6 @@ void setup()
 
   beginBoard(); //Determine what hardware platform we are running on
 
-  //settings.airSpeed = 19200;
-  //settings.debug = true; //Enable trigger pin events
-
   beginLoRa(); //Start radio
 
   beginButton(); //Start watching the train button
