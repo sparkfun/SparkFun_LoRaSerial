@@ -443,21 +443,27 @@ void updateRadioState()
           }
         } //End processWaitingSerial
 
-        //Blink Link LED if we've had successful data received or transmitted
-        if (millis() - lastPacketReceived < 5000 || millis() - packetTimestamp < 5000)
+        //Toggle 2 LEDs if we have recently transmitted
+        if (millis() - packetTimestamp < 5000)
         {
-          if (millis() - lastLinkBlink > 500) //Blink at 2Hz
+          if (millis() - lastLinkBlink > 250) //Blink at 4Hz
           {
             lastLinkBlink = millis();
-            //Toggle all RSSI LEDs
-            if (digitalRead(pin_rssi1LED) == HIGH)
-              setRSSI(0);
+            if (digitalRead(pin_rssi2LED) == HIGH)
+              setRSSI(0b0001);
             else
-              setRSSI(0b1111); //All on
+              setRSSI(0b0010);
           }
         }
+        else if (millis() - lastPacketReceived < 5000)
+        {
+          updateRSSI(); //Adjust LEDs to RSSI level
+        }
+
+        //Turn off RSSI after 5 seconds of no activity
         else
-          setRSSI(0); //No link
+          setRSSI(0);
+
       }
       break;
 
@@ -468,7 +474,7 @@ void updateRadioState()
           transactionComplete = false; //Reset ISR flag
           returnToReceiving();
           changeState(RADIO_BROADCASTING_RECEIVING_STANDBY); //No ack response when in broadcasting mode
-          setRSSI(0); //Turn off RSSI LEDs
+          setRSSI(0b0001);
         }
 
         else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
@@ -515,6 +521,7 @@ void updateRadioState()
             txHead %= sizeof(serialTransmitBuffer);
           }
 
+          updateRSSI(); //Adjust LEDs to RSSI level
           frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           returnToReceiving(); //No response when in broadcasting mode
           changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
@@ -580,7 +587,7 @@ void updateRadioState()
           if (trainCylonNumber == 0b1000 || trainCylonNumber == 0b0001)
             trainCylonDirection *= -1; //Change direction
 
-          if(trainCylonDirection > 0)
+          if (trainCylonDirection > 0)
             trainCylonNumber <<= 1;
           else
             trainCylonNumber >>= 1;
