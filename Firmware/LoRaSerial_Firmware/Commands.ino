@@ -54,8 +54,7 @@ void checkCommand()
           generateHopTable(); //Generate freq with new settings
           configureRadio(); //Apply any new settings
 
-          digitalWrite(pin_linkLED, LOW);
-          digitalWrite(pin_activityLED, LOW);
+          setRSSI(0); //Turn off LEDs
           if (settings.pointToPoint == true)
             changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
           else
@@ -713,7 +712,7 @@ void displayParameters()
       systemPrint("R"); //If someone is asking for our settings over RF, respond with 'R' style settings
     else
       systemPrint("A");
-      
+
     systemPrint("TS");
     systemPrint(x);
     systemPrint(":");

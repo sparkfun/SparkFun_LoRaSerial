@@ -17,7 +17,7 @@ void updateRadioState()
           hopChannel();
 
         //Check to see if we need to send a ping
-        else if ( (millis() - packetTimestamp) > (settings.heartbeatTimeout + random(0, 1000)) //Avoid pinging each other at same time
+        else if ( (millis() - packetTimestamp) > (unsigned int)(settings.heartbeatTimeout + random(0, 1000)) //Avoid pinging each other at same time
                   || sentFirstPing == false) //Immediately send pings at POR
         {
           if (receiveInProcess() == false)
@@ -46,7 +46,7 @@ void updateRadioState()
             //We're done transmitting our ack packet
             //Yay! Return to normal communication
             packetsLost = 0; //Reset, used for linkLost testing
-            digitalWrite(pin_linkLED, HIGH);
+            updateRSSI(); //Adjust LEDs to RSSI level. We will soon be linked.
             returnToReceiving();
             changeState(RADIO_LINKED_RECEIVING_STANDBY);
           }
@@ -96,7 +96,7 @@ void updateRadioState()
         {
           //Yay! Return to normal communication
           packetsLost = 0; //Reset, used for linkLost testing
-          digitalWrite(pin_linkLED, HIGH);
+          updateRSSI(); //Adjust LEDs to RSSI level
           returnToReceiving();
           changeState(RADIO_LINKED_RECEIVING_STANDBY);
         }
@@ -108,11 +108,14 @@ void updateRadioState()
         else if (packetType == PACKET_PING)
         {
           triggerEvent(TRIGGER_NOLINK_IDENT_PACKET);
+          updateRSSI(); //Adjust LEDs to RSSI level. We will soon be linked.
           sendAckPacket(); //Someone is pinging us
           changeState(RADIO_NO_LINK_TRANSMITTING);
         }
         else if (packetType == PACKET_DATA)
+        {
           ; //No data packets allowed when not linked
+        }
       }
       break;
 
@@ -122,7 +125,7 @@ void updateRadioState()
       {
         if (linkLost())
         {
-          digitalWrite(pin_linkLED, LOW);
+          setRSSI(0);
 
           //Return to home channel and begin linking process
           returnToReceiving();
@@ -139,7 +142,7 @@ void updateRadioState()
         else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
           hopChannel();
 
-        else if ((millis() - packetTimestamp) > (settings.heartbeatTimeout + random(0, 1000))) //Avoid pinging each other at same time
+        else if ((millis() - packetTimestamp) > (unsigned int)(settings.heartbeatTimeout + random(0, 1000))) //Avoid pinging each other at same time
         {
           if (receiveInProcess() == false)
           {
@@ -190,7 +193,7 @@ void updateRadioState()
                 sendCommandDataPacket();
               }
 
-              if(availableTXCommandBytes() == 0) 
+              if (availableTXCommandBytes() == 0)
                 printerEndpoint = PRINT_TO_SERIAL; //Once the response is received, we need to print it to serial
 
               changeState(RADIO_LINKED_TRANSMITTING);
@@ -285,6 +288,7 @@ void updateRadioState()
             systemPrintln();
           }
           packetsLost = 0; //Reset, used for linkLost testing
+          updateRSSI(); //Adjust LEDs to RSSI level
           frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           returnToReceiving();
           changeState(RADIO_LINKED_RECEIVING_STANDBY);
@@ -294,6 +298,7 @@ void updateRadioState()
           //It's a duplicate. Ack then throw data away.
           triggerEvent(TRIGGER_LINK_DUPLICATE_PACKET);
           packetsLost = 0; //Reset, used for linkLost testing
+          updateRSSI(); //Adjust LEDs to RSSI level
           frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           sendAckPacket();
           changeState(RADIO_LINKED_TRANSMITTING);
@@ -303,6 +308,7 @@ void updateRadioState()
           //Someone is pinging us. Ack back.
           triggerEvent(TRIGGER_LINK_CONTROL_PACKET);
           packetsLost = 0; //Reset, used for linkLost testing
+          updateRSSI(); //Adjust LEDs to RSSI level
           frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           sendAckPacket();
           changeState(RADIO_LINKED_TRANSMITTING);
@@ -331,6 +337,7 @@ void updateRadioState()
           }
 
           packetsLost = 0; //Reset, used for linkLost testing
+          updateRSSI(); //Adjust LEDs to RSSI level
           frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           sendAckPacket(); //Transmit ACK
           changeState(RADIO_LINKED_TRANSMITTING);
@@ -351,6 +358,7 @@ void updateRadioState()
           }
 
           packetsLost = 0; //Reset, used for linkLost testing
+          updateRSSI(); //Adjust LEDs to RSSI level
           frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           sendCommandAckPacket(); //Transmit ACK
           changeState(RADIO_LINKED_TRANSMITTING);
@@ -363,6 +371,7 @@ void updateRadioState()
             Serial.write(lastPacket[x]);
 
           packetsLost = 0; //Reset, used for linkLost testing
+          updateRSSI(); //Adjust LEDs to RSSI level
           frequencyCorrection += radio.getFrequencyError() / 1000000.0;
           sendCommandResponseAckPacket(); //Transmit ACK
           changeState(RADIO_LINKED_TRANSMITTING);
@@ -378,8 +387,7 @@ void updateRadioState()
             generateHopTable(); //Generate freq with new settings
             configureRadio(); //Apply any new settings
 
-            digitalWrite(pin_linkLED, LOW);
-            digitalWrite(pin_activityLED, LOW);
+            setRSSI(0); //Turn off RSSI LEDs
             if (settings.pointToPoint == true)
               changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
             else
@@ -388,6 +396,7 @@ void updateRadioState()
           else //It was just an ACK
           {
             packetsLost = 0; //Reset, used for linkLost testing
+            updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
             returnToReceiving();
             changeState(RADIO_LINKED_RECEIVING_STANDBY);
@@ -440,11 +449,15 @@ void updateRadioState()
           if (millis() - lastLinkBlink > 500) //Blink at 2Hz
           {
             lastLinkBlink = millis();
-            digitalWrite(pin_linkLED, !digitalRead(pin_linkLED)); //Toggle LED
+            //Toggle all RSSI LEDs
+            if (digitalRead(pin_rssi1LED) == HIGH)
+              setRSSI(0);
+            else
+              setRSSI(0b1111); //All on
           }
         }
         else
-          digitalWrite(pin_linkLED, LOW); //No link
+          setRSSI(0); //No link
       }
       break;
 
@@ -455,7 +468,7 @@ void updateRadioState()
           transactionComplete = false; //Reset ISR flag
           returnToReceiving();
           changeState(RADIO_BROADCASTING_RECEIVING_STANDBY); //No ack response when in broadcasting mode
-          digitalWrite(pin_activityLED, LOW);
+          setRSSI(0); //Turn off RSSI LEDs
         }
 
         else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
@@ -518,6 +531,8 @@ void updateRadioState()
       }
       break;
 
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
     case RADIO_TRAINING_TRANSMITTING:
       {
         if (transactionComplete == true) //If dio0ISR has fired, we are done transmitting
@@ -525,7 +540,6 @@ void updateRadioState()
           transactionComplete = false; //Reset ISR flag
           returnToReceiving();
           changeState(RADIO_TRAINING_ACK_WAIT);
-          digitalWrite(pin_activityLED, LOW);
         }
       }
       break;
@@ -555,6 +569,21 @@ void updateRadioState()
         {
           transactionComplete = false; //Reset ISR flag
           changeState(RADIO_TRAINING_RECEIVED_PACKET);
+        }
+        else if ( (millis() - lastTrainBlink) > 75) //Blink while unit waits in training state
+        {
+          lastTrainBlink = millis();
+
+          //Cylon the RSSI LEDs
+          setRSSI(trainCylonNumber);
+
+          if (trainCylonNumber == 0b1000 || trainCylonNumber == 0b0001)
+            trainCylonDirection *= -1; //Change direction
+
+          if(trainCylonDirection > 0)
+            trainCylonNumber <<= 1;
+          else
+            trainCylonNumber >>= 1;
         }
       }
       break;

@@ -40,6 +40,8 @@ void updateSerial()
     {
       if (isCTS())
       {
+        txLED(true); //Turn on LED during serial transmissions
+
         //Print data to both ports
         for (int x = 0 ; x < availableTXBytes() ; x++)
         {
@@ -65,6 +67,8 @@ void updateSerial()
           txTail++;
           txTail %= sizeof(serialTransmitBuffer);
         }
+
+        txLED(false); //Turn off LED
       }
     }
   }
@@ -76,6 +80,8 @@ void updateSerial()
   while (Serial.available() && transactionComplete == false)
 #endif
   {
+    rxLED(true); //Turn on LED during serial reception
+
     //Take a break if there are ISRs to attend to
     petWDT();
     if (timeToHop == true) hopChannel();
@@ -158,6 +164,9 @@ void updateSerial()
       serialReceiveBuffer[rxHead++] = incoming; //Push char to holding buffer
       rxHead %= sizeof(serialReceiveBuffer);
     } //End process rx buffer
+
+    rxLED(false); //Turn off LED
+  
   } //End Serial.available()
 
   //Process any remote commands sitting in buffer

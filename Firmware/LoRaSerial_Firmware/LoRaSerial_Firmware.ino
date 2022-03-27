@@ -69,18 +69,21 @@ uint8_t pin_dio0 = 255;
 uint8_t pin_dio1 = 255;
 uint8_t pin_rts = 255;
 uint8_t pin_cts = 255;
-uint8_t pin_linkLED = 255;
-uint8_t pin_activityLED = 255;
 uint8_t pin_txLED = 255;
 uint8_t pin_rxLED = 255;
-uint8_t pin_setupButton = 255;
+uint8_t pin_trainButton = 255;
+uint8_t pin_rssi1LED = 255;
+uint8_t pin_rssi2LED = 255;
+uint8_t pin_rssi3LED = 255;
+uint8_t pin_rssi4LED = 255;
+uint8_t pin_boardID = 255;
 
 uint8_t pin_trigger = 255;
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //EEPROM for storing settings
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-#if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_ARCH_ESP32)
+#if defined(ARDUINO_ARCH_ESP32)
 
 #include <EEPROM.h>
 #define EEPROM_SIZE 1024 //ESP32 emulates EEPROM in non-volatile storage (external flash IC). Max is 508k.
@@ -123,20 +126,15 @@ WDTZero myWatchDog;
 #include <JC_Button.h> // http://librarymanager/All#JC_Button
 Button *trainBtn = NULL; //We can't instantiate the button here because we don't yet know what pin number to use
 
-const int trainButtonTime = 4000; //ms press and hold before entering training
-const int trainWithDefaultsButtonTime = 10000; //ms press and hold before entering training
+const int trainButtonTime = 2000; //ms press and hold before entering training
+const int trainWithDefaultsButtonTime = 5000; //ms press and hold before entering training
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - Serial
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 //Buffer to store bytes incoming from serial before broadcasting over LoRa
-#if defined(ARDUINO_AVR_UNO)
-//uint8_t serialReceiveBuffer[512]; //Conserve RAM due to limitations
-uint8_t serialReceiveBuffer[32]; //Conserve RAM due to limitations
-#else
 uint8_t serialReceiveBuffer[1024 * 4]; //Bytes received from UART waiting to be RF transmitted. Buffer up to 1s of bytes at 4k
 uint8_t serialTransmitBuffer[1024 * 4]; //Bytes received from RF waiting to be printed out UART. Buffer up to 1s of bytes at 4k
-#endif
 
 uint16_t txHead = 0;
 uint16_t txTail = 0;
@@ -152,7 +150,7 @@ uint16_t commandRXTail = 0;
 
 unsigned long lastByteReceived_ms = 0; //Track when last transmission was. Send partial buffer once time has expired.
 
-char platformPrefix[15]; //Used for printing platform specific device name
+char platformPrefix[25]; //Used for printing platform specific device name, ie "SAMD21 1W 915MHz"
 uint8_t escapeCharsReceived = 0; //Used to enter command mode
 unsigned long lastEscapeReceived_ms = 0; //Tracks end of serial traffic
 const long minEscapeTime_ms = 2000; //Serial traffic must stop this amount before an escape char is recognized
@@ -205,6 +203,9 @@ long startTime = 0; //Used for air time of TX frames
 long stopTime = 0;
 
 bool confirmDeliveryBeforeRadioConfig = false; //Goes true when we have remotely configured a radio
+
+int trainCylonNumber = 0b0001;
+int trainCylonDirection = -1;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 void setup()

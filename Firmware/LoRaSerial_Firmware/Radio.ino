@@ -323,8 +323,6 @@ void configureRadio()
 
 void returnToReceiving()
 {
-  digitalWrite(pin_activityLED, LOW);
-
   if (settings.autoTuneFrequency == true)
     radio.setFrequency(channels[radio.getFHSSChannel()] - frequencyCorrection);
   else
@@ -595,8 +593,6 @@ void sendPacket()
   if (settings.airSpeed == 28800 || settings.airSpeed == 38400)
     delay(2);
 
-  digitalWrite(pin_activityLED, HIGH);
-
   radio.setFrequency(channels[radio.getFHSSChannel()]); //Return home before every transmission
 
   LRS_DEBUG_PRINT("Transmitting @ ");
@@ -702,7 +698,7 @@ void generateHopTable()
 
   if (settings.encryptData == true)
   {
-    for (int x = 0 ; x < sizeof(settings.encryptionKey) ; x++)
+    for (uint8_t x = 0 ; x < sizeof(settings.encryptionKey) ; x++)
       myRandSeed += settings.encryptionKey[x];
   }
 
@@ -829,8 +825,6 @@ bool receiveInProcess()
 //3 is lowest allowed setting using SX1276+RadioLib
 uint8_t covertdBmToSetting(uint8_t userSetting)
 {
-  if(userSetting < 14) return 3; //Error check
-  
   switch (userSetting)
   {
     case 14: return (2); break;
@@ -852,6 +846,4 @@ uint8_t covertdBmToSetting(uint8_t userSetting)
     case 30: return (20); break;
     default: return (3); break;
   }
-
-
 }

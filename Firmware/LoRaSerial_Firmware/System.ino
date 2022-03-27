@@ -11,7 +11,7 @@ void systemPrint(const char* value)
   else if (printerEndpoint == PRINT_TO_RF)
   {
     //Move these characters into the transmit buffer
-    for (int x = 0 ; x < strlen(value) ; x++)
+    for (uint16_t x = 0 ; x < strlen(value) ; x++)
     {
       commandTXBuffer[commandTXHead++] = value[x];
       commandTXHead %= sizeof(commandTXBuffer);
@@ -92,7 +92,7 @@ void systemFlush()
 
 uint8_t systemRead()
 {
-  byte incoming;
+  byte incoming = 0;
 #if defined(ARDUINO_ARCH_SAMD)
   if (Serial.available())
     incoming = Serial.read();
@@ -113,24 +113,24 @@ void updateButton()
 
     if (trainState == TRAIN_NO_PRESS && trainBtn->pressedFor(trainButtonTime))
     {
-      trainState = TRAIN_PRESSED_4S;
+      trainState = TRAIN_PRESSED_2S;
       lastTrainBlink = millis();
     }
-    else if (trainState == TRAIN_PRESSED_4S && trainBtn->wasReleased())
+    else if (trainState == TRAIN_PRESSED_2S && trainBtn->wasReleased())
     {
-      digitalWrite(pin_linkLED, LOW);
+      setRSSI(0b1111);
 
       beginTraining();
 
       trainState = TRAIN_NO_PRESS;
     }
-    else if (trainState == TRAIN_PRESSED_4S && trainBtn->pressedFor(trainWithDefaultsButtonTime))
+    else if (trainState == TRAIN_PRESSED_2S && trainBtn->pressedFor(trainWithDefaultsButtonTime))
     {
-      trainState = TRAIN_PRESSED_10S;
+      trainState = TRAIN_PRESSED_5S;
     }
-    else if (trainState == TRAIN_PRESSED_10S && trainBtn->wasReleased())
+    else if (trainState == TRAIN_PRESSED_5S && trainBtn->wasReleased())
     {
-      digitalWrite(pin_linkLED, LOW);
+      setRSSI(0b1111);
 
       beginDefaultTraining();
 
@@ -138,20 +138,31 @@ void updateButton()
     }
 
     //Blink LEDs according to our state while we wait for user to release button
-    if (trainState == TRAIN_PRESSED_4S)
+    if (trainState == TRAIN_PRESSED_2S)
     {
       if (millis() - lastTrainBlink > 500) //Slow blink
       {
+        Serial.println("Train Blinking LEDs");
         lastTrainBlink = millis();
-        digitalWrite(pin_linkLED, !digitalRead(pin_linkLED));
+
+        //Toggle RSSI LEDs
+        if (digitalRead(pin_rssi1LED) == HIGH)
+          setRSSI(0);
+        else
+          setRSSI(0b1111);
       }
     }
-    else if (trainState == TRAIN_PRESSED_10S)
+    else if (trainState == TRAIN_PRESSED_5S)
     {
       if (millis() - lastTrainBlink > 100) //Fast blink
       {
         lastTrainBlink = millis();
-        digitalWrite(pin_linkLED, !digitalRead(pin_linkLED));
+
+        //Toggle RSSI LEDs
+        if (digitalRead(pin_rssi1LED) == HIGH)
+          setRSSI(0);
+        else
+          setRSSI(0b1111);
       }
     }
   }
@@ -257,5 +268,74 @@ uint8_t charToHex(char a, char b)
   else if ('A' <= b && b <= 'F') b = b - 'A' + 10;
   else return 0;
 
-  return((a << 4) | b);
+  return ((a << 4) | b);
+}
+
+void updateRSSI()
+{
+  //RSSI must be above these negative numbers for LED to illuminate
+  const int rssiLevelLow = -150;
+  const int rssiLevelMed = -70;
+  const int rssiLevelHigh = -50;
+  const int rssiLevelMax = -20;
+
+  int rssi = radio.getRSSI();
+
+  LRS_DEBUG_PRINT(F("RSSI: "));
+  LRS_DEBUG_PRINTLN(rssi);
+
+  //Set LEDs according to RSSI level
+  if (rssi > rssiLevelLow)
+    setRSSI(0b0001);
+  if (rssi > rssiLevelMed)
+    setRSSI(0b0011);
+  if (rssi > rssiLevelHigh)
+    setRSSI(0b0111);
+  if (rssi > rssiLevelMax)
+    setRSSI(0b1111);
+}
+
+void setRSSI(uint8_t ledBits)
+{
+  if (ledBits & 0b0001)
+    digitalWrite(pin_rssi1LED, HIGH);
+  else
+    digitalWrite(pin_rssi1LED, LOW);
+
+  if (ledBits & 0b0010)
+    digitalWrite(pin_rssi2LED, HIGH);
+  else
+    digitalWrite(pin_rssi2LED, LOW);
+
+  if (ledBits & 0b0100)
+    digitalWrite(pin_rssi3LED, HIGH);
+  else
+    digitalWrite(pin_rssi3LED, LOW);
+
+  if (ledBits & 0b1000)
+    digitalWrite(pin_rssi4LED, HIGH);
+  else
+    digitalWrite(pin_rssi4LED, LOW);
+}
+
+void txLED(bool illuminate)
+{
+  if (pin_txLED != 255)
+  {
+    if (illuminate == true)
+      digitalWrite(pin_txLED, HIGH);
+    else
+      digitalWrite(pin_txLED, LOW);
+  }
+}
+
+void rxLED(bool illuminate)
+{
+  if (pin_rxLED != 255)
+  {
+    if (illuminate == true)
+      digitalWrite(pin_rxLED, HIGH);
+    else
+      digitalWrite(pin_rxLED, LOW);
+  }
 }

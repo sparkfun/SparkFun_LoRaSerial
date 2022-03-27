@@ -45,8 +45,8 @@ typedef enum
 typedef enum
 {
   TRAIN_NO_PRESS = 0,
-  TRAIN_PRESSED_4S,
-  TRAIN_PRESSED_10S,
+  TRAIN_PRESSED_2S,
+  TRAIN_PRESSED_5S,
 } TrainStates;
 TrainStates trainState = TRAIN_NO_PRESS;
 

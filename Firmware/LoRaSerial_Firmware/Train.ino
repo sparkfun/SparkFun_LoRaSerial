@@ -1,6 +1,8 @@
 
 void beginTraining()
 {
+  LRS_DEBUG_PRINTLN("Begin training");
+
   originalSettings = settings; //Make copy of current settings
 
   moveToTrainingFreq();
@@ -8,6 +10,8 @@ void beginTraining()
 
 void beginDefaultTraining()
 {
+  LRS_DEBUG_PRINTLN("Begin default training");
+
   Settings defaultSettings;
   originalSettings = defaultSettings; //Upon completion we will return to default settings
 
@@ -25,7 +29,7 @@ void endTraining(bool newTrainingAvailable)
     if (lastPacketSize == sizeof(settings.encryptionKey) + 1) //Error check, should be AES key + NetID
     {
       //Move training data into settings
-      for (int x = 0 ; x < sizeof(settings.encryptionKey); x++)
+      for (uint8_t x = 0 ; x < sizeof(settings.encryptionKey); x++)
         settings.encryptionKey[x] = lastPacket[x];
 
       settings.netID = lastPacket[lastPacketSize - 1]; //Last spot in array is netID
@@ -52,7 +56,7 @@ void endTraining(bool newTrainingAvailable)
   else
   {
     //We transmitted the training data, move the local training data into settings
-    for (int x = 0 ; x < sizeof(settings.encryptionKey); x++)
+    for (uint8_t x = 0 ; x < sizeof(settings.encryptionKey); x++)
       settings.encryptionKey[x] = trainEncryptionKey[x];
 
     settings.netID = trainNetID; //Last spot in array is netID
@@ -66,11 +70,35 @@ void endTraining(bool newTrainingAvailable)
 
   returnToReceiving();
 
+  //Blink LEDs to indicate training success
+  setRSSI(0b0000);
+  delayWDT(100);
+
+  setRSSI(0b1001);
+  delayWDT(500);
+
+  setRSSI(0b0110);
+  delayWDT(500);
+
+  setRSSI(0b1111);
+  delayWDT(500);
+
+  setRSSI(0b0000);
+  delayWDT(500);
+
+  setRSSI(0b1111);
+  delayWDT(1500);
+
+  setRSSI(0);
+  delayWDT(2000);
+
   if (settings.pointToPoint == true)
     changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
   else
     changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
 
+  sentFirstPing = false; //Send ping as soon as we exit
+  
   systemPrintln("LINK TRAINED");
 }
 
@@ -89,7 +117,7 @@ void moveToTrainingFreq()
   //Disable NetID checking
   settings.pointToPoint = false;
 
-  //Turn power as low as possible. We assume two units will be near each other. 
+  //Turn power as low as possible. We assume two units will be near each other.
   settings.radioBroadcastPower_dbm = 14;
 
   generateHopTable(); //Generate frequency table based on current settings
@@ -108,6 +136,10 @@ void moveToTrainingFreq()
 
   //Recalculate packetAirTime because we need to wait not for a 2-byte response, but a 19 byte response
   packetAirTime = calcAirTime(sizeof(trainEncryptionKey) + sizeof(trainNetID) + 2);
+
+  //Reset cylon variables
+  trainCylonNumber = 0b0001;
+  trainCylonDirection = -1;
 
   changeState(RADIO_TRAINING_TRANSMITTING);
 }
