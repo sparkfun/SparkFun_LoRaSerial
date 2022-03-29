@@ -22505,8 +22505,8 @@ You are welcome to use this library for commercial purposes. For attribution, we
 </device>
 </devices>
 </deviceset>
-<deviceset name="4.7KOHM" prefix="R">
-<description>&lt;h3&gt;4.7kΩ resistor&lt;/h3&gt;
+<deviceset name="330OHM" prefix="R">
+<description>&lt;h3&gt;330Ω resistor&lt;/h3&gt;
 &lt;p&gt;A resistor is a passive two-terminal electrical component that implements electrical resistance as a circuit element. Resistors act to reduce current flow, and, at the same time, act to lower voltage levels within circuits. - Wikipedia&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
@@ -22519,20 +22519,44 @@ You are welcome to use this library for commercial purposes. For attribution, we
 </connects>
 <technologies>
 <technology name="">
-<attribute name="PROD_ID" value="RES-07857"/>
-<attribute name="VALUE" value="4.7k"/>
+<attribute name="PROD_ID" value="RES-00818"/>
+<attribute name="VALUE" value="330"/>
 </technology>
 </technologies>
 </device>
-<device name="-0402T-1/16W-1%" package="0402-TIGHT">
+<device name="-HORIZ-1/10W-5%" package="AXIAL-0.3">
+<connects>
+<connect gate="G$1" pin="1" pad="P$1"/>
+<connect gate="G$1" pin="2" pad="P$2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="PROD_ID" value="RES-8371" constant="no"/>
+<attribute name="VALUE" value="330" constant="no"/>
+</technology>
+</technologies>
+</device>
+<device name="-0402-1/16W-5%" package="0402">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="PROD_ID" value="RES-15343" constant="no"/>
-<attribute name="VALUE" value="4.7k" constant="no"/>
+<attribute name="PROD_ID" value="RES-15407"/>
+<attribute name="VALUE" value="330"/>
+</technology>
+</technologies>
+</device>
+<device name="-0402T-1/16W-5%" package="0402-TIGHT">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="PROD_ID" value="RES-15407"/>
+<attribute name="VALUE" value="330"/>
 </technology>
 </technologies>
 </device>
@@ -22576,6 +22600,51 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <technology name="">
 <attribute name="PROD_ID" value="RES-14340" constant="no"/>
 <attribute name="VALUE" value="5.1k" constant="no"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="0OHM" prefix="R">
+<description>&lt;h3&gt;0Ω resistor&lt;/h3&gt;
+&lt;p&gt;A resistor is a passive two-terminal electrical component that implements electrical resistance as a circuit element. Resistors act to reduce current flow, and, at the same time, act to lower voltage levels within circuits. - Wikipedia&lt;/p&gt;</description>
+<gates>
+<gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
+</gates>
+<devices>
+<device name="-0603-1/10W" package="0603">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="PROD_ID" value="RES-08609"/>
+<attribute name="VALUE" value="0"/>
+</technology>
+</technologies>
+</device>
+<device name="-0402-1/10W" package="0402">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="PROD_ID" value="RES-14244" constant="no"/>
+<attribute name="VALUE" value="0" constant="no"/>
+</technology>
+</technologies>
+</device>
+<device name="-0402T-1/10W" package="0402-TIGHT">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="PROD_ID" value="RES-14244" constant="no"/>
+<attribute name="VALUE" value="0" constant="no"/>
 </technology>
 </technologies>
 </device>
@@ -30281,8 +30350,8 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <part name="SUPPLY7" library="SparkFun-PowerSymbols" deviceset="3.3V" device=""/>
 <part name="GND3" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
 <part name="D3" library="SparkFun-LED" deviceset="LED-YELLOW" device="0603" value="Yellow"/>
-<part name="R12" library="SparkFun-Resistors" deviceset="4.7KOHM" device="-0603-1/10W-1%" value="4.7k"/>
-<part name="R5" library="SparkFun-Resistors" deviceset="1KOHM" device="-0603-1/10W-1%" value="1k"/>
+<part name="R12" library="SparkFun-Resistors" deviceset="330OHM" device="-0603-1/10W-1%" value="330"/>
+<part name="R5" library="SparkFun-Resistors" deviceset="0OHM" device="-0603-1/10W" value="0"/>
 <part name="D2" library="SparkFun-LED" deviceset="LED-BLUE" device="0603" value="BLUE"/>
 <part name="J3" library="USB-C" deviceset="USB_C" device="16PIN" value="USB C"/>
 <part name="R7" library="SparkFun-Resistors" deviceset="5.1KOHM" device="5.1KOHM-0603-1/10W-1%" value="5.1k"/>
@@ -30298,7 +30367,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <part name="D4" library="SparkFun-LED" deviceset="LED-GREEN" device="0603" value="GREEN"/>
 <part name="D5" library="SparkFun-LED" deviceset="LED-RED" device="0603" value="RED"/>
 <part name="R1" library="SparkFun-Resistors" deviceset="1KOHM" device="-0603-1/10W-1%" value="1k"/>
-<part name="R9" library="SparkFun-Resistors" deviceset="4.7KOHM" device="-0603-1/10W-1%" value="4.7k"/>
+<part name="R9" library="SparkFun-Resistors" deviceset="0OHM" device="-0603-1/10W" value="0"/>
 <part name="GND10" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
 <part name="GND16" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
 <part name="D6" library="SparkFun-DiscreteSemi" deviceset="PESD0402" device="-0402T" value="PESD0402"/>
@@ -30353,14 +30422,14 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <part name="SUPPLY3" library="SparkFun-PowerSymbols" deviceset="3.3V" device=""/>
 <part name="SUPPLY10" library="SparkFun-PowerSymbols" deviceset="5V" device=""/>
 <part name="SUPPLY14" library="SparkFun-PowerSymbols" deviceset="5V" device=""/>
-<part name="R20" library="SparkFun-Resistors" deviceset="4.7KOHM" device="-0603-1/10W-1%" value="4.7k"/>
+<part name="R20" library="SparkFun-Resistors" deviceset="0OHM" device="-0603-1/10W" value="0"/>
 <part name="D1" library="SparkFun-LED" deviceset="LED-GREEN" device="0603" value="GREEN"/>
 <part name="GND14" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
-<part name="R21" library="SparkFun-Resistors" deviceset="4.7KOHM" device="-0603-1/10W-1%" value="4.7k"/>
+<part name="R21" library="SparkFun-Resistors" deviceset="0OHM" device="-0603-1/10W" value="0"/>
 <part name="D7" library="SparkFun-LED" deviceset="LED-GREEN" device="0603" value="GREEN"/>
 <part name="GND15" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
 <part name="D8" library="SparkFun-LED" deviceset="LED-GREEN" device="0603" value="GREEN"/>
-<part name="R22" library="SparkFun-Resistors" deviceset="4.7KOHM" device="-0603-1/10W-1%" value="4.7k"/>
+<part name="R22" library="SparkFun-Resistors" deviceset="0OHM" device="-0603-1/10W" value="0"/>
 <part name="GND26" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
 <part name="SUPPLY18" library="SparkFun-PowerSymbols" deviceset="3.3V" device=""/>
 </parts>
