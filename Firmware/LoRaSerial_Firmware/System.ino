@@ -76,9 +76,11 @@ void systemPrintln()
 
 void systemWrite(uint8_t value)
 {
-  char temp[2];
-  sprintf(temp, "%c", value);
-  systemPrint(temp);
+  Serial.write(value);
+
+#if defined(ARDUINO_ARCH_SAMD)
+  Serial1.write(value);
+#endif
 }
 
 void systemFlush()
