@@ -58,6 +58,7 @@ void updateSerial()
           //
           //          //TODO this may introduce delays when we should be checking ISRs
           //          Serial.write(&serialTransmitBuffer[txTail], bytesToSend);
+          //          Serial1.write(&serialTransmitBuffer[txTail], bytesToSend);
           //          txTail += bytesToSend;
           //          txTail %= sizeof(serialTransmitBuffer);
 
@@ -166,7 +167,7 @@ void updateSerial()
     } //End process rx buffer
 
     rxLED(false); //Turn off LED
-  
+
   } //End Serial.available()
 
   //Process any remote commands sitting in buffer
