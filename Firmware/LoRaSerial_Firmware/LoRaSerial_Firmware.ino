@@ -39,8 +39,8 @@
   Compiled with Arduino v1.8.15
 */
 
-const int FIRMWARE_VERSION_MAJOR = 0;
-const int FIRMWARE_VERSION_MINOR = 2;
+const int FIRMWARE_VERSION_MAJOR = 1;
+const int FIRMWARE_VERSION_MINOR = 0;
 
 //#define ENABLE_DEVELOPER //Uncomment this line to enable special developer modes
 
