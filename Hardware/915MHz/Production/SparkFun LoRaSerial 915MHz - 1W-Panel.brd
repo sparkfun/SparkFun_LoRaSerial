@@ -6053,10 +6053,10 @@ These are the free and generally easy to produce 4-layer PCB design rules. You c
 <attribute name="PROD_ID" value="CAP-08604" x="13.78" y="19.51508125" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
 <attribute name="VALUE" x="17.78" y="15.75308125" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
-<element name="U3" library="SparkFun-IC-Power" package="SOT23-5" value="AP2112K-3.3" x="17.78" y="21.34108125" smashed="yes" rot="R180">
+<element name="U3" library="SparkFun-IC-Power" package="SOT23-5" value="3.3V/150mA" x="17.78" y="21.34108125" smashed="yes" rot="R180">
 <attribute name="NAME" x="19.558" y="19.18208125" size="0.6096" layer="25" ratio="20" rot="R180"/>
-<attribute name="PROD_ID" value="VREG-12457" x="22.78" y="21.34108125" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
-<attribute name="VALUE" x="19.558" y="24.13508125" size="0.6096" layer="27" ratio="20" rot="R180"/>
+<attribute name="PROD_ID" value="VREG-00822" x="22.78" y="21.34108125" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
+<attribute name="VALUE" value="3.3V/150mA" x="19.558" y="24.13508125" size="0.6096" layer="27" ratio="20" rot="R180"/>
 </element>
 <element name="LOGO2" library="SparkFun-Aesthetics" package="SFE_LOGO_NAME_FLAME_9MM" value="SFE_LOGO_NAME_FLAME9_MM" x="44.958" y="5.84708125" smashed="yes" rot="MR90"/>
 <element name="LOGO4" library="SparkFun-Aesthetics" package="OSHW-LOGO-MINI" value="OSHW-LOGOMINI" x="44.45" y="25.15108125" smashed="yes" rot="MR90"/>
@@ -6452,10 +6452,10 @@ These are the free and generally easy to produce 4-layer PCB design rules. You c
 <attribute name="PROD_ID" value="CAP-08604" x="65.088" y="19.51508125" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
 <attribute name="VALUE" x="69.088" y="15.75308125" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
-<element name="U1" library="SparkFun-IC-Power" package="SOT23-5" value="AP2112K-3.3" x="69.088" y="21.34108125" smashed="yes" rot="R180">
+<element name="U1" library="SparkFun-IC-Power" package="SOT23-5" value="3.3V/150mA" x="69.088" y="21.34108125" smashed="yes" rot="R180">
 <attribute name="NAME" x="70.866" y="19.18208125" size="0.6096" layer="25" ratio="20" rot="R180"/>
-<attribute name="PROD_ID" value="VREG-12457" x="74.088" y="21.34108125" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
-<attribute name="VALUE" x="70.866" y="24.13508125" size="0.6096" layer="27" ratio="20" rot="R180"/>
+<attribute name="PROD_ID" value="VREG-00822" x="74.088" y="21.34108125" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
+<attribute name="VALUE" value="3.3V/150mA" x="70.866" y="24.13508125" size="0.6096" layer="27" ratio="20" rot="R180"/>
 </element>
 <element name="LOGO6" library="SparkFun-Aesthetics" package="SFE_LOGO_NAME_FLAME_9MM" value="SFE_LOGO_NAME_FLAME9_MM" x="96.266" y="5.84708125" smashed="yes" rot="MR90"/>
 <element name="LOGO7" library="SparkFun-Aesthetics" package="OSHW-LOGO-MINI" value="OSHW-LOGOMINI" x="95.758" y="25.15108125" smashed="yes" rot="MR90"/>
@@ -6851,10 +6851,10 @@ These are the free and generally easy to produce 4-layer PCB design rules. You c
 <attribute name="PROD_ID" value="CAP-08604" x="13.78" y="47.4627" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
 <attribute name="VALUE" x="17.78" y="43.7007" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
-<element name="U7" library="SparkFun-IC-Power" package="SOT23-5" value="AP2112K-3.3" x="17.78" y="49.2887" smashed="yes" rot="R180">
+<element name="U7" library="SparkFun-IC-Power" package="SOT23-5" value="3.3V/150mA" x="17.78" y="49.2887" smashed="yes" rot="R180">
 <attribute name="NAME" x="19.558" y="47.1297" size="0.6096" layer="25" ratio="20" rot="R180"/>
-<attribute name="PROD_ID" value="VREG-12457" x="22.78" y="49.2887" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
-<attribute name="VALUE" x="19.558" y="52.0827" size="0.6096" layer="27" ratio="20" rot="R180"/>
+<attribute name="PROD_ID" value="VREG-00822" x="22.78" y="49.2887" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
+<attribute name="VALUE" value="3.3V/150mA" x="19.558" y="52.0827" size="0.6096" layer="27" ratio="20" rot="R180"/>
 </element>
 <element name="LOGO10" library="SparkFun-Aesthetics" package="SFE_LOGO_NAME_FLAME_9MM" value="SFE_LOGO_NAME_FLAME9_MM" x="44.958" y="33.7947" smashed="yes" rot="MR90"/>
 <element name="LOGO11" library="SparkFun-Aesthetics" package="OSHW-LOGO-MINI" value="OSHW-LOGOMINI" x="44.45" y="53.0987" smashed="yes" rot="MR90"/>
@@ -7250,10 +7250,10 @@ These are the free and generally easy to produce 4-layer PCB design rules. You c
 <attribute name="PROD_ID" value="CAP-08604" x="65.088" y="47.4627" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
 <attribute name="VALUE" x="69.088" y="43.7007" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
-<element name="U10" library="SparkFun-IC-Power" package="SOT23-5" value="AP2112K-3.3" x="69.088" y="49.2887" smashed="yes" rot="R180">
+<element name="U10" library="SparkFun-IC-Power" package="SOT23-5" value="3.3V/150mA" x="69.088" y="49.2887" smashed="yes" rot="R180">
 <attribute name="NAME" x="70.866" y="47.1297" size="0.6096" layer="25" ratio="20" rot="R180"/>
-<attribute name="PROD_ID" value="VREG-12457" x="74.088" y="49.2887" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
-<attribute name="VALUE" x="70.866" y="52.0827" size="0.6096" layer="27" ratio="20" rot="R180"/>
+<attribute name="PROD_ID" value="VREG-00822" x="74.088" y="49.2887" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
+<attribute name="VALUE" value="3.3V/150mA" x="70.866" y="52.0827" size="0.6096" layer="27" ratio="20" rot="R180"/>
 </element>
 <element name="LOGO14" library="SparkFun-Aesthetics" package="SFE_LOGO_NAME_FLAME_9MM" value="SFE_LOGO_NAME_FLAME9_MM" x="96.266" y="33.7947" smashed="yes" rot="MR90"/>
 <element name="LOGO15" library="SparkFun-Aesthetics" package="OSHW-LOGO-MINI" value="OSHW-LOGOMINI" x="95.758" y="53.0987" smashed="yes" rot="MR90"/>
@@ -7649,10 +7649,10 @@ These are the free and generally easy to produce 4-layer PCB design rules. You c
 <attribute name="PROD_ID" value="CAP-08604" x="13.78" y="75.410321875" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
 <attribute name="VALUE" x="17.78" y="71.648321875" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
-<element name="U13" library="SparkFun-IC-Power" package="SOT23-5" value="AP2112K-3.3" x="17.78" y="77.236321875" smashed="yes" rot="R180">
+<element name="U13" library="SparkFun-IC-Power" package="SOT23-5" value="3.3V/150mA" x="17.78" y="77.236321875" smashed="yes" rot="R180">
 <attribute name="NAME" x="19.558" y="75.077321875" size="0.6096" layer="25" ratio="20" rot="R180"/>
-<attribute name="PROD_ID" value="VREG-12457" x="22.78" y="77.236321875" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
-<attribute name="VALUE" x="19.558" y="80.030321875" size="0.6096" layer="27" ratio="20" rot="R180"/>
+<attribute name="PROD_ID" value="VREG-00822" x="22.78" y="77.236321875" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
+<attribute name="VALUE" value="3.3V/150mA" x="19.558" y="80.030321875" size="0.6096" layer="27" ratio="20" rot="R180"/>
 </element>
 <element name="LOGO18" library="SparkFun-Aesthetics" package="SFE_LOGO_NAME_FLAME_9MM" value="SFE_LOGO_NAME_FLAME9_MM" x="44.958" y="61.742321875" smashed="yes" rot="MR90"/>
 <element name="LOGO19" library="SparkFun-Aesthetics" package="OSHW-LOGO-MINI" value="OSHW-LOGOMINI" x="44.45" y="81.046321875" smashed="yes" rot="MR90"/>
@@ -8048,10 +8048,10 @@ These are the free and generally easy to produce 4-layer PCB design rules. You c
 <attribute name="PROD_ID" value="CAP-08604" x="65.088" y="75.410321875" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
 <attribute name="VALUE" x="69.088" y="71.648321875" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
-<element name="U16" library="SparkFun-IC-Power" package="SOT23-5" value="AP2112K-3.3" x="69.088" y="77.236321875" smashed="yes" rot="R180">
+<element name="U16" library="SparkFun-IC-Power" package="SOT23-5" value="3.3V/150mA" x="69.088" y="77.236321875" smashed="yes" rot="R180">
 <attribute name="NAME" x="70.866" y="75.077321875" size="0.6096" layer="25" ratio="20" rot="R180"/>
-<attribute name="PROD_ID" value="VREG-12457" x="74.088" y="77.236321875" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
-<attribute name="VALUE" x="70.866" y="80.030321875" size="0.6096" layer="27" ratio="20" rot="R180"/>
+<attribute name="PROD_ID" value="VREG-00822" x="74.088" y="77.236321875" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
+<attribute name="VALUE" value="3.3V/150mA" x="70.866" y="80.030321875" size="0.6096" layer="27" ratio="20" rot="R180"/>
 </element>
 <element name="LOGO22" library="SparkFun-Aesthetics" package="SFE_LOGO_NAME_FLAME_9MM" value="SFE_LOGO_NAME_FLAME9_MM" x="96.266" y="61.742321875" smashed="yes" rot="MR90"/>
 <element name="LOGO23" library="SparkFun-Aesthetics" package="OSHW-LOGO-MINI" value="OSHW-LOGOMINI" x="95.758" y="81.046321875" smashed="yes" rot="MR90"/>
@@ -8447,10 +8447,10 @@ These are the free and generally easy to produce 4-layer PCB design rules. You c
 <attribute name="PROD_ID" value="CAP-08604" x="13.78" y="103.357940625" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
 <attribute name="VALUE" x="17.78" y="99.595940625" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
-<element name="U19" library="SparkFun-IC-Power" package="SOT23-5" value="AP2112K-3.3" x="17.78" y="105.183940625" smashed="yes" rot="R180">
+<element name="U19" library="SparkFun-IC-Power" package="SOT23-5" value="3.3V/150mA" x="17.78" y="105.183940625" smashed="yes" rot="R180">
 <attribute name="NAME" x="19.558" y="103.024940625" size="0.6096" layer="25" ratio="20" rot="R180"/>
-<attribute name="PROD_ID" value="VREG-12457" x="22.78" y="105.183940625" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
-<attribute name="VALUE" x="19.558" y="107.977940625" size="0.6096" layer="27" ratio="20" rot="R180"/>
+<attribute name="PROD_ID" value="VREG-00822" x="22.78" y="105.183940625" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
+<attribute name="VALUE" value="3.3V/150mA" x="19.558" y="107.977940625" size="0.6096" layer="27" ratio="20" rot="R180"/>
 </element>
 <element name="LOGO26" library="SparkFun-Aesthetics" package="SFE_LOGO_NAME_FLAME_9MM" value="SFE_LOGO_NAME_FLAME9_MM" x="44.958" y="89.689940625" smashed="yes" rot="MR90"/>
 <element name="LOGO27" library="SparkFun-Aesthetics" package="OSHW-LOGO-MINI" value="OSHW-LOGOMINI" x="44.45" y="108.993940625" smashed="yes" rot="MR90"/>
@@ -8846,10 +8846,10 @@ These are the free and generally easy to produce 4-layer PCB design rules. You c
 <attribute name="PROD_ID" value="CAP-08604" x="65.088" y="103.357940625" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
 <attribute name="VALUE" x="69.088" y="99.595940625" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
-<element name="U22" library="SparkFun-IC-Power" package="SOT23-5" value="AP2112K-3.3" x="69.088" y="105.183940625" smashed="yes" rot="R180">
+<element name="U22" library="SparkFun-IC-Power" package="SOT23-5" value="3.3V/150mA" x="69.088" y="105.183940625" smashed="yes" rot="R180">
 <attribute name="NAME" x="70.866" y="103.024940625" size="0.6096" layer="25" ratio="20" rot="R180"/>
-<attribute name="PROD_ID" value="VREG-12457" x="74.088" y="105.183940625" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
-<attribute name="VALUE" x="70.866" y="107.977940625" size="0.6096" layer="27" ratio="20" rot="R180"/>
+<attribute name="PROD_ID" value="VREG-00822" x="74.088" y="105.183940625" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
+<attribute name="VALUE" value="3.3V/150mA" x="70.866" y="107.977940625" size="0.6096" layer="27" ratio="20" rot="R180"/>
 </element>
 <element name="LOGO30" library="SparkFun-Aesthetics" package="SFE_LOGO_NAME_FLAME_9MM" value="SFE_LOGO_NAME_FLAME9_MM" x="96.266" y="89.689940625" smashed="yes" rot="MR90"/>
 <element name="LOGO31" library="SparkFun-Aesthetics" package="OSHW-LOGO-MINI" value="OSHW-LOGOMINI" x="95.758" y="108.993940625" smashed="yes" rot="MR90"/>
@@ -9245,10 +9245,10 @@ These are the free and generally easy to produce 4-layer PCB design rules. You c
 <attribute name="PROD_ID" value="CAP-08604" x="13.78" y="131.3081" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
 <attribute name="VALUE" x="17.78" y="127.5461" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
-<element name="U25" library="SparkFun-IC-Power" package="SOT23-5" value="AP2112K-3.3" x="17.78" y="133.1341" smashed="yes" rot="R180">
+<element name="U25" library="SparkFun-IC-Power" package="SOT23-5" value="3.3V/150mA" x="17.78" y="133.1341" smashed="yes" rot="R180">
 <attribute name="NAME" x="19.558" y="130.9751" size="0.6096" layer="25" ratio="20" rot="R180"/>
-<attribute name="PROD_ID" value="VREG-12457" x="22.78" y="133.1341" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
-<attribute name="VALUE" x="19.558" y="135.9281" size="0.6096" layer="27" ratio="20" rot="R180"/>
+<attribute name="PROD_ID" value="VREG-00822" x="22.78" y="133.1341" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
+<attribute name="VALUE" value="3.3V/150mA" x="19.558" y="135.9281" size="0.6096" layer="27" ratio="20" rot="R180"/>
 </element>
 <element name="LOGO34" library="SparkFun-Aesthetics" package="SFE_LOGO_NAME_FLAME_9MM" value="SFE_LOGO_NAME_FLAME9_MM" x="44.958" y="117.6401" smashed="yes" rot="MR90"/>
 <element name="LOGO35" library="SparkFun-Aesthetics" package="OSHW-LOGO-MINI" value="OSHW-LOGOMINI" x="44.45" y="136.9441" smashed="yes" rot="MR90"/>
@@ -9644,10 +9644,10 @@ These are the free and generally easy to produce 4-layer PCB design rules. You c
 <attribute name="PROD_ID" value="CAP-08604" x="65.088" y="131.3081" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
 <attribute name="VALUE" x="69.088" y="127.5461" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
-<element name="U28" library="SparkFun-IC-Power" package="SOT23-5" value="AP2112K-3.3" x="69.088" y="133.1341" smashed="yes" rot="R180">
+<element name="U28" library="SparkFun-IC-Power" package="SOT23-5" value="3.3V/150mA" x="69.088" y="133.1341" smashed="yes" rot="R180">
 <attribute name="NAME" x="70.866" y="130.9751" size="0.6096" layer="25" ratio="20" rot="R180"/>
-<attribute name="PROD_ID" value="VREG-12457" x="74.088" y="133.1341" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
-<attribute name="VALUE" x="70.866" y="135.9281" size="0.6096" layer="27" ratio="20" rot="R180"/>
+<attribute name="PROD_ID" value="VREG-00822" x="74.088" y="133.1341" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
+<attribute name="VALUE" value="3.3V/150mA" x="70.866" y="135.9281" size="0.6096" layer="27" ratio="20" rot="R180"/>
 </element>
 <element name="LOGO38" library="SparkFun-Aesthetics" package="SFE_LOGO_NAME_FLAME_9MM" value="SFE_LOGO_NAME_FLAME9_MM" x="96.266" y="117.6401" smashed="yes" rot="MR90"/>
 <element name="LOGO39" library="SparkFun-Aesthetics" package="OSHW-LOGO-MINI" value="OSHW-LOGOMINI" x="95.758" y="136.9441" smashed="yes" rot="MR90"/>

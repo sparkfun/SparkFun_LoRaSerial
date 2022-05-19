@@ -38551,61 +38551,71 @@ You are welcome to use this library for commercial purposes. For attribution, we
 </package>
 </packages>
 <symbols>
-<symbol name="V-REG-LDO_NO-BP">
-<description>&lt;h3&gt; Voltage Regulator - No bypass&lt;/h3&gt;
-5  pin, with Enable function.</description>
+<symbol name="V-REG-LDO">
+<description>&lt;h3&gt; Voltage Regulator&lt;/h3&gt;
+5  pin, with Bypass/Enable functions.</description>
 <wire x1="-7.62" y1="-7.62" x2="5.08" y2="-7.62" width="0.4064" layer="94"/>
 <wire x1="5.08" y1="-7.62" x2="5.08" y2="7.62" width="0.4064" layer="94"/>
 <wire x1="5.08" y1="7.62" x2="-7.62" y2="7.62" width="0.4064" layer="94"/>
 <wire x1="-7.62" y1="7.62" x2="-7.62" y2="-7.62" width="0.4064" layer="94"/>
 <text x="-7.62" y="7.874" size="1.778" layer="95" font="vector">&gt;NAME</text>
-<text x="-7.62" y="-7.874" size="1.778" layer="96" font="vector" align="top-left">&gt;VALUE</text>
+<text x="-7.62" y="-8.128" size="1.778" layer="96" font="vector" align="top-left">&gt;VALUE</text>
 <pin name="IN" x="-10.16" y="5.08" visible="pin" length="short" direction="in"/>
 <pin name="GND" x="-10.16" y="-5.08" visible="pin" length="short" direction="in"/>
 <pin name="OUT" x="7.62" y="5.08" visible="pin" length="short" direction="pas" rot="R180"/>
 <pin name="EN" x="-10.16" y="0" visible="pin" length="short" direction="in"/>
-<pin name="NC" x="7.62" y="-5.08" visible="pin" length="short" direction="nc" rot="R180"/>
+<pin name="BP" x="7.62" y="-5.08" visible="pin" length="short" direction="in" rot="R180"/>
 </symbol>
 </symbols>
 <devicesets>
-<deviceset name="V_REG_AP2112" prefix="U">
-<description>&lt;h3&gt;AP2112 - 600mA CMOS LDO Regulator w/ Enable&lt;/h3&gt;
-&lt;p&gt;The AP2112 is CMOS process low dropout linear regulator with enable function, the regulator delivers a guaranteed 600mA (min.) continuous load current.&lt;/p&gt;
-&lt;p&gt;Features&lt;br&gt;
-&lt;ul&gt;
-&lt;li&gt;Output Voltage Accuracy: ±1.5% &lt;/li&gt;
-&lt;li&gt;Output Current: 600mA (Min.) &lt;/li&gt;
-&lt;li&gt;Foldback Short Current Protection: 50mA &lt;/li&gt;
-&lt;li&gt;Enable Function to Turn ON/OFF VOUT&lt;/li&gt;
-&lt;li&gt;Low Dropout Voltage (3.3V): 250mV (Typ.) @IOUT=600mA &lt;/li&gt;
-&lt;li&gt;Excellent Load Regulation: 0.2%/A (Typ.) &lt;/li&gt;
-&lt;li&gt;Excellent Line Regulation: 0.02%/V (Typ.) &lt;/li&gt;
-&lt;li&gt;Low Quiescent Current: 55μA (Typ.)&lt;/li&gt;
-&lt;li&gt;Low Standby Current: 0.01μA (Typ.)&lt;/li&gt;
-&lt;li&gt;Low Output Noise: 50μVRMS &lt;/li&gt;
-&lt;li&gt;PSRR: 100Hz -65dB, 1kHz -65dB &lt;/li&gt;
-&lt;li&gt; OTSD Protection &lt;/li&gt;
-&lt;li&gt;Stable  with  1.0μF Flexible Cap: Ceramic, Tantalum and Aluminum Electrolytic &lt;/li&gt;
-&lt;li&gt;Operation Temperature Range: -40°C to 85°C &lt;/li&gt;
-&lt;li&gt;ESD: MM 400V, HBM 4000V&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/p&gt;</description>
+<deviceset name="V_REG_MIC5205" prefix="U">
+<description>&lt;b&gt;V_REG MIC5205&lt;/b&gt; Standard 3.3V, 5V, and Adjustable 150mA LDO voltage regulator in SOT-23 layout. Micrel part MIC5205. BP (by-pass) pin is used to lower output noise with 470pF cap, may be left open. On the adjustable version BP is used to set output.</description>
 <gates>
-<gate name="G$1" symbol="V-REG-LDO_NO-BP" x="0" y="0"/>
+<gate name="U1" symbol="V-REG-LDO" x="0" y="0"/>
 </gates>
 <devices>
-<device name="K-3.3V" package="SOT23-5">
+<device name="3.3V" package="SOT23-5">
 <connects>
-<connect gate="G$1" pin="EN" pad="3"/>
-<connect gate="G$1" pin="GND" pad="2"/>
-<connect gate="G$1" pin="IN" pad="1"/>
-<connect gate="G$1" pin="NC" pad="4"/>
-<connect gate="G$1" pin="OUT" pad="5"/>
+<connect gate="U1" pin="BP" pad="4"/>
+<connect gate="U1" pin="EN" pad="3"/>
+<connect gate="U1" pin="GND" pad="2"/>
+<connect gate="U1" pin="IN" pad="1"/>
+<connect gate="U1" pin="OUT" pad="5"/>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="PROD_ID" value="VREG-12457"/>
-<attribute name="VALUE" value="3.3V"/>
+<attribute name="PROD_ID" value="VREG-00822" constant="no"/>
+<attribute name="VALUE" value="3.3V/150mA" constant="no"/>
+</technology>
+</technologies>
+</device>
+<device name="5V" package="SOT23-5">
+<connects>
+<connect gate="U1" pin="BP" pad="4"/>
+<connect gate="U1" pin="EN" pad="3"/>
+<connect gate="U1" pin="GND" pad="2"/>
+<connect gate="U1" pin="IN" pad="1"/>
+<connect gate="U1" pin="OUT" pad="5"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="PROD_ID" value="VREG-00823" constant="no"/>
+<attribute name="VALUE" value="5V" constant="no"/>
+</technology>
+</technologies>
+</device>
+<device name="ADJ" package="SOT23-5">
+<connects>
+<connect gate="U1" pin="BP" pad="4"/>
+<connect gate="U1" pin="EN" pad="3"/>
+<connect gate="U1" pin="GND" pad="2"/>
+<connect gate="U1" pin="IN" pad="1"/>
+<connect gate="U1" pin="OUT" pad="5"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="PROD_ID" value="VREG-12594" constant="no"/>
+<attribute name="VALUE" value="MIC5205(ADJ)" constant="no"/>
 </technology>
 </technologies>
 </device>
@@ -43347,7 +43357,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <part name="LOGO1" library="SparkFun-Aesthetics" deviceset="SPECIAL_INSTRUCTIONS" device="-ORDERING"/>
 <part name="C3" library="SparkFun-Capacitors" deviceset="1.0UF" device="-0603-16V-10%-X7R" value="1.0uF"/>
 <part name="C4" library="SparkFun-Capacitors" deviceset="0.1UF" device="-0603-25V-5%" value="0.1uF"/>
-<part name="U3" library="SparkFun-IC-Power" deviceset="V_REG_AP2112" device="K-3.3V" value="AP2112K-3.3"/>
+<part name="U3" library="SparkFun-IC-Power" deviceset="V_REG_MIC5205" device="3.3V" value="3.3V/150mA"/>
 <part name="SUPPLY38" library="SparkFun-PowerSymbols" deviceset="3.3V" device=""/>
 <part name="GND53" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
 <part name="GND54" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
@@ -43511,8 +43521,6 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <wire x1="147.32" y1="149.86" x2="88.9" y2="149.86" width="0.2032" layer="97" style="longdash"/>
 <text x="172.974" y="40.386" size="2.54" layer="94" font="vector" align="center">Cable Port</text>
 <text x="251.46" y="137.16" size="2.54" layer="94" font="vector" rot="MR180" align="center">Voltage Regulation</text>
-<text x="248.92" y="96.52" size="1.27" layer="97" font="vector" align="center">600mA Max
-55uA Quiescent</text>
 <wire x1="88.9" y1="149.86" x2="0" y2="149.86" width="0.2032" layer="97" style="longdash"/>
 <wire x1="147.32" y1="76.2" x2="292.1" y2="76.2" width="0.2032" layer="97" style="longdash"/>
 <wire x1="292.1" y1="76.2" x2="330.2" y2="76.2" width="0.2032" layer="97" style="longdash"/>
@@ -43582,7 +43590,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <attribute name="NAME" x="272.796" y="109.347" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="272.796" y="105.029" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="U3" gate="G$1" x="248.92" y="109.22" smashed="yes">
+<instance part="U3" gate="U1" x="248.92" y="109.22" smashed="yes">
 <attribute name="NAME" x="241.3" y="117.348" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="241.3" y="101.092" size="1.778" layer="96" font="vector" align="top-left"/>
 </instance>
@@ -44130,7 +44138,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <segment>
 <wire x1="238.76" y1="104.14" x2="236.22" y2="104.14" width="0.1524" layer="91"/>
 <wire x1="236.22" y1="104.14" x2="236.22" y2="101.6" width="0.1524" layer="91"/>
-<pinref part="U3" gate="G$1" pin="GND"/>
+<pinref part="U3" gate="U1" pin="GND"/>
 <pinref part="GND53" gate="1" pin="GND"/>
 </segment>
 <segment>
@@ -44329,7 +44337,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <wire x1="261.62" y1="114.3" x2="261.62" y2="111.76" width="0.1524" layer="91"/>
 <wire x1="271.78" y1="111.76" x2="271.78" y2="114.3" width="0.1524" layer="91"/>
 <junction x="261.62" y="114.3"/>
-<pinref part="U3" gate="G$1" pin="OUT"/>
+<pinref part="U3" gate="U1" pin="OUT"/>
 <pinref part="C3" gate="G$1" pin="1"/>
 <pinref part="C4" gate="G$1" pin="2"/>
 <pinref part="SUPPLY38" gate="G$1" pin="3.3V"/>
@@ -44527,11 +44535,11 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <pinref part="SUPPLY13" gate="G$1" pin="5V"/>
 </segment>
 <segment>
-<pinref part="U3" gate="G$1" pin="IN"/>
+<pinref part="U3" gate="U1" pin="IN"/>
 <wire x1="238.76" y1="114.3" x2="236.22" y2="114.3" width="0.1524" layer="91"/>
 <wire x1="236.22" y1="116.84" x2="236.22" y2="114.3" width="0.1524" layer="91"/>
 <pinref part="SUPPLY11" gate="G$1" pin="5V"/>
-<pinref part="U3" gate="G$1" pin="EN"/>
+<pinref part="U3" gate="U1" pin="EN"/>
 <wire x1="238.76" y1="109.22" x2="236.22" y2="109.22" width="0.1524" layer="91"/>
 <wire x1="236.22" y1="109.22" x2="236.22" y2="114.3" width="0.1524" layer="91"/>
 <junction x="236.22" y="114.3"/>

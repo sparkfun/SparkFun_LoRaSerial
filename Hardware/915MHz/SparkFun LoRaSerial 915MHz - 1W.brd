@@ -45,7 +45,7 @@
 <layer number="46" name="Milling" color="3" fill="1" visible="no" active="yes"/>
 <layer number="47" name="Measures" color="7" fill="1" visible="no" active="yes"/>
 <layer number="48" name="Document" color="7" fill="1" visible="no" active="yes"/>
-<layer number="49" name="Reference" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="49" name="Reference" color="7" fill="1" visible="no" active="yes"/>
 <layer number="50" name="dxf" color="7" fill="1" visible="no" active="yes"/>
 <layer number="51" name="tDocu" color="6" fill="1" visible="yes" active="yes"/>
 <layer number="52" name="bDocu" color="7" fill="1" visible="no" active="yes"/>
@@ -5883,10 +5883,10 @@ These are the free and generally easy to produce 4-layer PCB design rules. You c
 <attribute name="PROD_ID" value="CAP-08604" x="13.78" y="19.764" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
 <attribute name="VALUE" x="17.78" y="16.002" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
-<element name="U3" library="SparkFun-IC-Power" package="SOT23-5" value="AP2112K-3.3" x="17.78" y="21.59" smashed="yes" rot="R180">
+<element name="U3" library="SparkFun-IC-Power" package="SOT23-5" value="3.3V/150mA" x="17.78" y="21.59" smashed="yes" rot="R180">
 <attribute name="NAME" x="19.558" y="19.431" size="0.6096" layer="25" ratio="20" rot="R180"/>
-<attribute name="PROD_ID" value="VREG-12457" x="22.78" y="21.59" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
-<attribute name="VALUE" x="19.558" y="24.384" size="0.6096" layer="27" ratio="20" rot="R180"/>
+<attribute name="PROD_ID" value="VREG-00822" x="22.78" y="21.59" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
+<attribute name="VALUE" value="3.3V/150mA" x="19.558" y="24.384" size="0.6096" layer="27" ratio="20" rot="R180"/>
 </element>
 <element name="LOGO2" library="SparkFun-Aesthetics" package="SFE_LOGO_NAME_FLAME_9MM" value="SFE_LOGO_NAME_FLAME9_MM" x="44.958" y="6.096" smashed="yes" rot="MR90"/>
 <element name="LOGO4" library="SparkFun-Aesthetics" package="OSHW-LOGO-MINI" value="OSHW-LOGOMINI" x="44.45" y="25.4" smashed="yes" rot="MR90"/>
