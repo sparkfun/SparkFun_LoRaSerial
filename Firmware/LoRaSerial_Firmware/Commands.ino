@@ -274,10 +274,10 @@ void checkCommand()
         systemPrintln(settings.radioBroadcastPower_dbm);
         break;
       case ('8'): //ATS8?
-        systemPrintln(settings.frequencyMin);
+        systemPrintln(settings.frequencyMin, 3);
         break;
       case ('9'): //ATS9?
-        systemPrintln(settings.frequencyMax);
+        systemPrintln(settings.frequencyMax, 3);
         break;
 
       default:
