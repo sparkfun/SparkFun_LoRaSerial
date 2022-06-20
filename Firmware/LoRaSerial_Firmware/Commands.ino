@@ -352,7 +352,7 @@ void checkCommand()
                 reportERROR();
               break;
             case ('0'): //ATS10=
-              if (settingValue >= 1 && settingValue <= 50)
+              if (settingValue >= 1 && settingValue <= 255)
               {
                 settings.numberOfChannels = settingValue;
                 reportOK();
