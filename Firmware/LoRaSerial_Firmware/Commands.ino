@@ -265,6 +265,7 @@ void checkCommand()
       case ('5'): //ATS5?
         for (uint8_t i = 0 ; i < 16 ; i++)
           systemPrint(settings.encryptionKey[i], HEX);
+        systemPrintln();
         break;
       case ('6'): //ATS6?
         systemPrintln(settings.dataScrambling);

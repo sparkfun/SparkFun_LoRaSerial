@@ -40,7 +40,7 @@
 */
 
 const int FIRMWARE_VERSION_MAJOR = 1;
-const int FIRMWARE_VERSION_MINOR = 0;
+const int FIRMWARE_VERSION_MINOR = 1;
 
 //#define ENABLE_DEVELOPER //Uncomment this line to enable special developer modes
 
