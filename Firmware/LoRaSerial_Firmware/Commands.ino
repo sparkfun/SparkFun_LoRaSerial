@@ -192,7 +192,7 @@ void checkCommand()
               systemPrintln(settings.maxDwellTime);
               break;
             case ('3'): //ATS13?
-              systemPrintln(settings.radioBandwidth);
+              systemPrintln(settings.radioBandwidth, 3);
               break;
             case ('4'): //ATS14?
               systemPrintln(settings.radioSpreadFactor);
