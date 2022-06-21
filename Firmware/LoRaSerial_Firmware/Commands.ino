@@ -11,6 +11,8 @@ void checkCommand()
 
   trimCommand(); //Remove any leading whitespace
 
+  commandBuffer[commandLength] = '\0'; //Terminate buffer
+
   if (commandLength < 2) //Too short
     reportERROR();
 
