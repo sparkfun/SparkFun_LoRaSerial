@@ -711,6 +711,8 @@ void displayParameters()
 {
   for (uint8_t x = 0 ; x <= 26 ; x++)
   {
+    petWDT(); //Printing may take longer than WDT at 9600, so pet the WDT.
+
     if (printerEndpoint == PRINT_TO_RF)
       systemPrint("R"); //If someone is asking for our settings over RF, respond with 'R' style settings
     else
