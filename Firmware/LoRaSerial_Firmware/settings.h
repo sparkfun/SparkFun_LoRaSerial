@@ -160,3 +160,36 @@ struct struct_online {
   bool radio = false;
   bool eeprom = false;
 } online;
+
+#include <RadioLib.h> //Click here to get the library: http://librarymanager/All#RadioLib v5.1.0
+
+typedef void (* ARCH_BEGIN_BOARD)();
+typedef void (* ARCH_BEGIN_SERIAL)(uint16_t serialSpeed);
+typedef void (* ARCH_BEGIN_WDT)();
+typedef void (* ARCH_EEPROM_BEGIN)();
+typedef void (* ARCH_EEPROM_COMMIT)();
+typedef void (* ARCH_PET_WDT)();
+typedef Module * (* ARCH_RADIO)();
+typedef bool (* ARCH_SERIAL_AVAILABLE)();
+typedef void (* ARCH_SERIAL_FLUSH)();
+typedef void (* ARCH_SERIAL_PRINT)(const char * value);
+typedef uint8_t (* ARCH_SERIAL_READ)();
+typedef void (* ARCH_SERIAL_WRITE)(uint8_t value);
+typedef void (* ARCH_SYSTEM_RESET)();
+
+typedef struct _ARCH_TABLE
+{
+  ARCH_BEGIN_BOARD beginBoard;    //Initialize the board
+  ARCH_BEGIN_SERIAL beginSerial;  //Finish initializing the serial port
+  ARCH_BEGIN_WDT beginWDT;        //Initialize the watchdog timer
+  ARCH_EEPROM_BEGIN eepromBegin;  //Start an EEPROM operation
+  ARCH_EEPROM_COMMIT eepromCommit;//Done with the EEPROM operation
+  ARCH_PET_WDT petWDT;            //Reset the expiration time for the WDT
+  ARCH_RADIO radio;               //Initialize the radio
+  ARCH_SERIAL_AVAILABLE serialAvailable;  //Determine if serial data is available
+  ARCH_SERIAL_FLUSH serialFlush;  //Flush the serial port
+  ARCH_SERIAL_PRINT serialPrint;  //Print the specified string value
+  ARCH_SERIAL_READ serialRead;    //Read a byte from the serial port
+  ARCH_SERIAL_WRITE serialWrite;  //Print the specified character
+  ARCH_SYSTEM_RESET systemReset;  //Reset the system
+} ARCH_TABLE;

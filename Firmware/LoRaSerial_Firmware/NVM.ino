@@ -1,8 +1,6 @@
 void loadSettings()
 {
-#if defined(ARDUINO_ARCH_ESP32)
-  EEPROM.begin(EEPROM_SIZE);
-#endif
+  arch.eepromBegin();
 
   //Check to see if EEPROM is blank
   uint32_t testRead = 0;
@@ -43,9 +41,7 @@ void recordSystemSettings()
   settings.sizeOfSettings = sizeof(settings);
   EEPROM.put(0, settings);
 
-#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_SAMD)
-  EEPROM.commit();
-#endif
+  arch.eepromCommit();
 }
 
 void eepromErase()
@@ -56,8 +52,6 @@ void eepromErase()
 
     EEPROM.write(i, 0);
 
-#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_SAMD)
-    EEPROM.commit();
-#endif
+    arch.eepromCommit();
   }
 }
