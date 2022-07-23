@@ -2,11 +2,7 @@ void systemPrint(const char* value)
 {
   if (printerEndpoint == PRINT_TO_SERIAL)
   {
-    Serial.print(value);
-
-#if defined(ARDUINO_ARCH_SAMD)
-    Serial1.print(value);
-#endif
+    arch.serialPrint(value);
   }
   else if (printerEndpoint == PRINT_TO_RF)
   {
@@ -76,34 +72,17 @@ void systemPrintln()
 
 void systemWrite(uint8_t value)
 {
-  Serial.write(value);
-
-#if defined(ARDUINO_ARCH_SAMD)
-  Serial1.write(value);
-#endif
+  arch.serialWrite(value);
 }
 
 void systemFlush()
 {
-  Serial.flush();
-
-#if defined(ARDUINO_ARCH_SAMD)
-  Serial1.flush();
-#endif
+  arch.serialFlush();
 }
 
 uint8_t systemRead()
 {
-  byte incoming = 0;
-#if defined(ARDUINO_ARCH_SAMD)
-  if (Serial.available())
-    incoming = Serial.read();
-  else if (Serial1.available())
-    incoming = Serial1.read();
-#else
-  incoming = Serial.read();
-#endif
-  return (incoming);
+  return (arch.serialRead());
 }
 
 //Check the train button and change state accordingly
@@ -173,11 +152,7 @@ void updateButton()
 //Platform specific reset commands
 void systemReset()
 {
-#if defined(ARDUINO_ARCH_SAMD)
-  NVIC_SystemReset();
-#elif defined(ARDUINO_ARCH_ESP32)
-  ESP.restart();
-#endif
+  arch.systemReset();
 }
 
 //Encrypt a given array in place
