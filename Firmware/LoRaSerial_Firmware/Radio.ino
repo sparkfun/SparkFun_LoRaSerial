@@ -19,6 +19,12 @@ PacketType identifyPacketType()
   LRS_DEBUG_PRINT(F("\n\rReceived bytes: "));
   LRS_DEBUG_PRINTLN(receivedBytes);
 
+  if (receivedBytes < 2)
+  {
+    LRS_DEBUG_PRINTLN(F("Bad packet"));
+    return (PACKET_BAD);
+  }
+
   LRS_DEBUG_PRINT(F("ProcessPacket NetID: 0x"));
   if (incomingBuffer[receivedBytes - 2] < 0x10) LRS_DEBUG_PRINT(F("0"));
   LRS_DEBUG_PRINT(incomingBuffer[receivedBytes - 2], HEX);
@@ -27,12 +33,6 @@ PacketType identifyPacketType()
   if (incomingBuffer[receivedBytes - 1] < 0x10) LRS_DEBUG_PRINT(F("0"));
   LRS_DEBUG_PRINT(incomingBuffer[receivedBytes - 1], HEX);
   LRS_DEBUG_PRINTLN();
-
-  if (receivedBytes < 2)
-  {
-    LRS_DEBUG_PRINTLN(F("Bad packet"));
-    return (PACKET_BAD);
-  }
 
   //Pull out control header
   uint8_t receivedNetID = incomingBuffer[receivedBytes - 2];
