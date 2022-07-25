@@ -8,6 +8,8 @@ PacketType identifyPacketType()
 {
   uint8_t incomingBuffer[MAX_PACKET_SIZE];
   radio.readData(incomingBuffer, MAX_PACKET_SIZE);
+
+  //Receive the data packet
   uint8_t receivedBytes = radio.getPacketLength();
 
   if (settings.dataScrambling == true)
@@ -19,12 +21,27 @@ PacketType identifyPacketType()
   LRS_DEBUG_PRINT(F("\n\rReceived bytes: "));
   LRS_DEBUG_PRINTLN(receivedBytes);
 
+  //All packets must include the 2-byte control header
   if (receivedBytes < 2)
   {
     LRS_DEBUG_PRINTLN(F("Bad packet"));
     return (PACKET_BAD);
   }
 
+  /*
+        |<--------------- data --------------->|
+        |                                      |
+
+        +-------------------------+------------+--------+---------+
+        |                         | SF6 length | NET ID | Control |
+        |                         |   8 bits   | 8 bits | 8 bits  |
+        +-------------------------+------------+--------+---------+
+
+        |                                                         |
+        |<-------------------- receivedBytes -------------------->|
+  */
+
+  //Display the control header
   LRS_DEBUG_PRINT(F("ProcessPacket NetID: 0x"));
   if (incomingBuffer[receivedBytes - 2] < 0x10) LRS_DEBUG_PRINT(F("0"));
   LRS_DEBUG_PRINT(incomingBuffer[receivedBytes - 2], HEX);
@@ -61,6 +78,10 @@ PacketType identifyPacketType()
     return (PACKET_NETID_MISMATCH);
   }
 
+  //----------
+  //Handle ACKs and duplicate packets
+  //----------
+
   if (receiveTrailer.ack == 1 && receiveTrailer.remoteCommand == 0 && receiveTrailer.remoteCommandResponse == 0)
   {
     LRS_DEBUG_PRINTLN(F("RX: Ack packet"));
@@ -86,6 +107,10 @@ PacketType identifyPacketType()
       //Go ahead and print it
     }
   }
+
+  //----------
+  //Handle control packets
+  //----------
 
   //We have empty data packet, this is a control packet used for pinging/scanning
   if (receivedBytes == 0)
@@ -127,6 +152,10 @@ PacketType identifyPacketType()
     LRS_DEBUG_PRINTLN(F("RX: Control Packet"));
     return (PACKET_PING);
   }
+
+  //----------
+  //Handle data packets
+  //----------
 
   //Update lastPacket details with current packet
   memcpy(lastPacket, incomingBuffer, receivedBytes);
