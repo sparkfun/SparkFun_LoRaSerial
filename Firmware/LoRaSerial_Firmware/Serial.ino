@@ -75,11 +75,7 @@ void updateSerial()
   }
 
   //Look for local incoming serial
-#if defined(ARDUINO_ARCH_SAMD)
-  while ((Serial.available() || Serial1.available()) && transactionComplete == false)
-#else
-  while (Serial.available() && transactionComplete == false)
-#endif
+  while (arch.serialAvailable() && transactionComplete == false)
   {
     rxLED(true); //Turn on LED during serial reception
 
