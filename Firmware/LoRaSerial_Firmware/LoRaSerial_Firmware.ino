@@ -97,7 +97,7 @@ uint8_t pin_trigger = 255;
 
 //Radio Library
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-#include <RadioLib.h> //Click here to get the library: http://librarymanager/All#RadioLib v5.1.0
+#include <RadioLib.h> //Click here to get the library: http://librarymanager/All#RadioLib v5.1.2
 SX1276 radio = NULL; //We can't instantiate here because we don't yet know what pin numbers to use
 
 float *channels;
