@@ -43572,6 +43572,10 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <text x="106.68" y="68.58" size="2.54" layer="94" font="vector" rot="MR180" align="center">Source Selection</text>
 <wire x1="88.9" y1="76.2" x2="88.9" y2="149.86" width="0.2032" layer="97" style="longdash"/>
 <wire x1="66.04" y1="0" x2="66.04" y2="76.2" width="0.2032" layer="97" style="longdash"/>
+<text x="7.62" y="134.62" size="1.778" layer="97" align="center-left">IDs:</text>
+<text x="7.62" y="132.08" size="1.778" layer="97" align="center-left">915MHz: 10/10</text>
+<text x="7.62" y="129.54" size="1.778" layer="97" align="center-left">868MHz: 3.3/10</text>
+<text x="7.62" y="127" size="1.778" layer="97" align="center-left">433MHz: 10/20</text>
 </plain>
 <instances>
 <instance part="FID1" gate="G$1" x="424.18" y="43.18" smashed="yes"/>

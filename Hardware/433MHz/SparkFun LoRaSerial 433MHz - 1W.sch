@@ -34235,8 +34235,8 @@ You are welcome to use this library for commercial purposes. For attribution, we
 </device>
 </devices>
 </deviceset>
-<deviceset name="3.3KOHM" prefix="R">
-<description>&lt;h3&gt;3.3kΩ resistor&lt;/h3&gt;
+<deviceset name="20KOHM" prefix="R">
+<description>&lt;h3&gt;20kΩ resistor&lt;/h3&gt;
 &lt;p&gt;A resistor is a passive two-terminal electrical component that implements electrical resistance as a circuit element. Resistors act to reduce current flow, and, at the same time, act to lower voltage levels within circuits. - Wikipedia&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
@@ -34249,8 +34249,20 @@ You are welcome to use this library for commercial purposes. For attribution, we
 </connects>
 <technologies>
 <technology name="">
-<attribute name="PROD_ID" value="RES-07851"/>
-<attribute name="VALUE" value="3.3k"/>
+<attribute name="PROD_ID" value="RES-09383"/>
+<attribute name="VALUE" value="20k"/>
+</technology>
+</technologies>
+</device>
+<device name="-0603-1/10W-5%" package="0603">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="PROD_ID" value="RES-09231"/>
+<attribute name="VALUE" value="20k"/>
 </technology>
 </technologies>
 </device>
@@ -34261,7 +34273,8 @@ You are welcome to use this library for commercial purposes. For attribution, we
 </connects>
 <technologies>
 <technology name="">
-<attribute name="PROD_ID" value="RES-15923" constant="no"/>
+<attribute name="PROD_ID" value="RES-15131"/>
+<attribute name="VALUE" value="20k"/>
 </technology>
 </technologies>
 </device>
@@ -43409,7 +43422,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <part name="LOGO2" library="SparkFun-Aesthetics" deviceset="SFE_LOGO_NAME_FLAME" device="9_MM" value="SFE_LOGO_NAME_FLAME9_MM"/>
 <part name="LOGO4" library="SparkFun-Aesthetics" deviceset="OSHW-LOGO" device="MINI" value="OSHW-LOGOMINI"/>
 <part name="GND31" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
-<part name="U4" library="SparkFun-RF" deviceset="LORA-E19" device="868MHZ" value="E19-915M30S"/>
+<part name="U4" library="SparkFun-RF" deviceset="LORA-E19" device="433MHZ" value="E19-915M30S"/>
 <part name="R16" library="SparkFun-Resistors" deviceset="100KOHM" device="-0603-1/10W-1%" value="100k"/>
 <part name="SUPPLY12" library="SparkFun-PowerSymbols" deviceset="3.3V" device=""/>
 <part name="R17" library="SparkFun-Resistors" deviceset="100KOHM" device="-0603-1/10W-1%" value="100k"/>
@@ -43428,8 +43441,8 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <part name="SUPPLY11" library="SparkFun-PowerSymbols" deviceset="5V" device=""/>
 <part name="SUPPLY13" library="SparkFun-PowerSymbols" deviceset="5V" device=""/>
 <part name="GND4" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
-<part name="R2" library="SparkFun-Resistors" deviceset="3.3KOHM" device="-0603-1/10W-1%" value="3.3k"/>
-<part name="R4" library="SparkFun-Resistors" deviceset="10KOHM" device="-0603-1/10W-1%" value="10k"/>
+<part name="R2" library="SparkFun-Resistors" deviceset="10KOHM" device="-0603-1/10W-1%" value="10k"/>
+<part name="R4" library="SparkFun-Resistors" deviceset="20KOHM" device="-0603-1/10W-1%" value="20k"/>
 <part name="SUPPLY7" library="SparkFun-PowerSymbols" deviceset="3.3V" device=""/>
 <part name="GND3" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
 <part name="D3" library="SparkFun-LED" deviceset="LED-YELLOW" device="0603" value="Yellow"/>
@@ -43484,7 +43497,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <part name="R6" library="SparkFun-Resistors" deviceset="2.2KOHM" device="-0603-1/10W-1%" value="2.2k"/>
 <part name="SUPPLY9" library="SparkFun-PowerSymbols" deviceset="3.3V" device=""/>
 <part name="JP9" library="SparkFun-Jumpers" deviceset="JUMPER-SMT_3_2-NC_TRACE" device="_SILK" package3d_urn="urn:adsk.eagle:package:39289/1" value="JUMPER-SMT_3_2-NC_TRACE_SILK"/>
-<part name="E2" library="SparkFun-RF" deviceset="ANTENNA-SMA-GROUNDED" device="EDGE_RPSMA" value="RP-SMA"/>
+<part name="E2" library="SparkFun-RF" deviceset="ANTENNA-SMA-GROUNDED" device="EDGE_SMA" value="SMA"/>
 <part name="S1" library="SparkFun-Switches" deviceset="MOMENTARY-SWITCH-SPST" device="-SMD-RIGHT-ANGLE" value="Train"/>
 <part name="GND9" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
 <part name="GND12" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
@@ -43604,10 +43617,10 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <text x="106.68" y="68.58" size="2.54" layer="94" font="vector" rot="MR180" align="center">Source Selection</text>
 <wire x1="88.9" y1="76.2" x2="88.9" y2="149.86" width="0.2032" layer="97" style="longdash"/>
 <wire x1="66.04" y1="0" x2="66.04" y2="76.2" width="0.2032" layer="97" style="longdash"/>
-<text x="5.08" y="134.62" size="1.778" layer="97" align="center-left">IDs:</text>
-<text x="5.08" y="132.08" size="1.778" layer="97" align="center-left">915MHz: 10/10</text>
-<text x="5.08" y="129.54" size="1.778" layer="97" align="center-left">868MHz: 3.3/10</text>
-<text x="5.08" y="127" size="1.778" layer="97" align="center-left">433MHz: 10/20</text>
+<text x="7.62" y="134.62" size="1.778" layer="97" align="center-left">IDs:</text>
+<text x="7.62" y="132.08" size="1.778" layer="97" align="center-left">915MHz: 10/10</text>
+<text x="7.62" y="129.54" size="1.778" layer="97" align="center-left">868MHz: 3.3/10</text>
+<text x="7.62" y="127" size="1.778" layer="97" align="center-left">433MHz: 10/20</text>
 </plain>
 <instances>
 <instance part="FID1" gate="G$1" x="424.18" y="43.18" smashed="yes"/>
@@ -45378,17 +45391,6 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 </nets>
 </sheet>
 </sheets>
-<errors>
-<approved hash="104,1,83.82,241.3,U1,VCC,3.3V,,,"/>
-<approved hash="202,1,114.3,195.58,U1,I2S_RXD,,,,"/>
-<approved hash="202,1,114.3,236.22,U1,ANT_DET,,,,"/>
-<approved hash="202,1,114.3,170.18,U1,ANT_GNSS,,,,"/>
-<approved hash="104,1,241.3,231.14,IC1,VCCA,VCCIO,,,"/>
-<approved hash="104,1,241.3,228.6,IC1,VCCB,3.3V,,,"/>
-<approved hash="104,1,388.62,127,J4,VCC,VSIM,,,"/>
-<approved hash="202,1,388.62,129.54,J4,VPP,,,,"/>
-<approved hash="113,1,391.605,124.566,J4,,,,,"/>
-</errors>
 </schematic>
 </drawing>
 <compatibility>
