@@ -34436,13 +34436,25 @@ You are welcome to use this library for commercial purposes. For attribution, we
 </device>
 </devices>
 </deviceset>
-<deviceset name="220OHM" prefix="R">
-<description>&lt;h3&gt;220Ω resistor&lt;/h3&gt;
+<deviceset name="22OHM" prefix="R">
+<description>&lt;h3&gt;22Ω resistor&lt;/h3&gt;
 &lt;p&gt;A resistor is a passive two-terminal electrical component that implements electrical resistance as a circuit element. Resistors act to reduce current flow, and, at the same time, act to lower voltage levels within circuits. - Wikipedia&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
 </gates>
 <devices>
+<device name="-0402-1/10W-1%" package="0402">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="PROD_ID" value="RES-12427"/>
+<attribute name="VALUE" value="22Ω"/>
+</technology>
+</technologies>
+</device>
 <device name="-0603-1/10W-1%" package="0603">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
@@ -34450,20 +34462,20 @@ You are welcome to use this library for commercial purposes. For attribution, we
 </connects>
 <technologies>
 <technology name="">
-<attribute name="PROD_ID" value="RES-07861"/>
-<attribute name="VALUE" value="220"/>
+<attribute name="PROD_ID" value="RES-08698"/>
+<attribute name="VALUE" value="22Ω"/>
 </technology>
 </technologies>
 </device>
-<device name="-0402-TIGHT-1/16W-1%" package="0402-TIGHT">
+<device name="-0402T-1/16W-1%" package="0402-TIGHT">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="PROD_ID" value="RES-15269" constant="no"/>
-<attribute name="VALUE" value="220" constant="no"/>
+<attribute name="PROD_ID" value="RES-12427" constant="no"/>
+<attribute name="VALUE" value="22Ω" constant="no"/>
 </technology>
 </technologies>
 </device>
@@ -43404,7 +43416,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <part name="D4" library="SparkFun-LED" deviceset="LED-GREEN" device="0603" value="GREEN"/>
 <part name="D5" library="SparkFun-LED" deviceset="LED-RED" device="0603" value="RED"/>
 <part name="R1" library="SparkFun-Resistors" deviceset="1KOHM" device="-0603-1/10W-1%" value="1k"/>
-<part name="R9" library="SparkFun-Resistors" deviceset="220OHM" device="-0603-1/10W-1%" value="220"/>
+<part name="R9" library="SparkFun-Resistors" deviceset="22OHM" device="-0603-1/10W-1%" value="22Ω"/>
 <part name="GND10" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
 <part name="GND16" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
 <part name="D6" library="SparkFun-DiscreteSemi" deviceset="PESD0402" device="-0402T" value="PESD0402"/>
@@ -43459,14 +43471,14 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <part name="SUPPLY3" library="SparkFun-PowerSymbols" deviceset="3.3V" device=""/>
 <part name="SUPPLY10" library="SparkFun-PowerSymbols" deviceset="5V" device=""/>
 <part name="SUPPLY14" library="SparkFun-PowerSymbols" deviceset="5V" device=""/>
-<part name="R20" library="SparkFun-Resistors" deviceset="220OHM" device="-0603-1/10W-1%" value="220"/>
+<part name="R20" library="SparkFun-Resistors" deviceset="22OHM" device="-0603-1/10W-1%" value="22Ω"/>
 <part name="D1" library="SparkFun-LED" deviceset="LED-GREEN" device="0603" value="GREEN"/>
 <part name="GND14" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
-<part name="R21" library="SparkFun-Resistors" deviceset="220OHM" device="-0603-1/10W-1%" value="220"/>
+<part name="R21" library="SparkFun-Resistors" deviceset="22OHM" device="-0603-1/10W-1%" value="22Ω"/>
 <part name="D7" library="SparkFun-LED" deviceset="LED-GREEN" device="0603" value="GREEN"/>
 <part name="GND15" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
 <part name="D8" library="SparkFun-LED" deviceset="LED-GREEN" device="0603" value="GREEN"/>
-<part name="R22" library="SparkFun-Resistors" deviceset="220OHM" device="-0603-1/10W-1%" value="220"/>
+<part name="R22" library="SparkFun-Resistors" deviceset="22OHM" device="-0603-1/10W-1%" value="22Ω"/>
 <part name="GND26" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
 <part name="SUPPLY18" library="SparkFun-PowerSymbols" deviceset="3.3V" device=""/>
 <part name="Q3" library="SparkFun-DiscreteSemi" deviceset="TRANS_NPN" device="-MMBT2222AL" value="600mA/40V"/>

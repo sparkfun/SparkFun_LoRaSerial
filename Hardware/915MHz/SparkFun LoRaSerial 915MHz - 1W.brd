@@ -5998,10 +5998,10 @@ These are the free and generally easy to produce 4-layer PCB design rules. You c
 <attribute name="PROD_ID" value="RES-07856" x="27.94" y="1.905" size="1.778" layer="27" font="vector" ratio="15" rot="R180" display="off"/>
 <attribute name="VALUE" x="27.94" y="2.667" size="0.6096" layer="27" font="vector" ratio="20" rot="R180" align="top-center"/>
 </element>
-<element name="R9" library="SparkFun-Resistors" package="0603" value="220" x="40.64" y="10.16" smashed="yes">
+<element name="R9" library="SparkFun-Resistors" package="0603" value="22Ω" x="40.64" y="10.16" smashed="yes">
 <attribute name="NAME" x="40.64" y="10.922" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center"/>
-<attribute name="PROD_ID" value="RES-07861" x="40.64" y="10.16" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
-<attribute name="VALUE" value="220" x="40.64" y="9.398" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
+<attribute name="PROD_ID" value="RES-08698" x="40.64" y="10.16" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
+<attribute name="VALUE" value="22Ω" x="40.64" y="9.398" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
 <element name="U$10" library="output" package="RX1" value="" x="8.89" y="1.27" smashed="yes"/>
 <element name="U$11" library="output" package="TX0" value="" x="8.89" y="10.16" smashed="yes"/>
@@ -6150,20 +6150,20 @@ These are the free and generally easy to produce 4-layer PCB design rules. You c
 </element>
 <element name="U$19" library="output" package="C50" value="" x="4.3" y="1" smashed="yes"/>
 <element name="U$20" library="output" package="R50" value="" x="4.2" y="13.8" smashed="yes"/>
-<element name="R20" library="SparkFun-Resistors" package="0603" value="220" x="40.64" y="5.715" smashed="yes">
+<element name="R20" library="SparkFun-Resistors" package="0603" value="22Ω" x="40.64" y="5.715" smashed="yes">
 <attribute name="NAME" x="40.64" y="6.477" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center"/>
-<attribute name="PROD_ID" value="RES-07861" x="41.91" y="5.715" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
-<attribute name="VALUE" value="220" x="40.64" y="4.953" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
+<attribute name="PROD_ID" value="RES-08698" x="41.91" y="5.715" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
+<attribute name="VALUE" value="22Ω" x="40.64" y="4.953" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
 <element name="D1" library="SparkFun-LED" package="LED-0603" value="GREEN" x="40.64" y="7.62" smashed="yes">
 <attribute name="NAME" x="40.64" y="8.255" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center"/>
 <attribute name="PROD_ID" value="DIO-00821" x="41.91" y="7.62" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
 <attribute name="VALUE" x="40.64" y="6.985" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
-<element name="R21" library="SparkFun-Resistors" package="0603" value="220" x="40.64" y="13.97" smashed="yes">
+<element name="R21" library="SparkFun-Resistors" package="0603" value="22Ω" x="40.64" y="13.97" smashed="yes">
 <attribute name="NAME" x="40.64" y="14.732" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center"/>
-<attribute name="PROD_ID" value="RES-07861" x="41.91" y="13.97" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
-<attribute name="VALUE" value="220" x="40.64" y="13.208" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
+<attribute name="PROD_ID" value="RES-08698" x="41.91" y="13.97" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
+<attribute name="VALUE" value="22Ω" x="40.64" y="13.208" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
 <element name="D7" library="SparkFun-LED" package="LED-0603" value="GREEN" x="40.64" y="16.129" smashed="yes">
 <attribute name="NAME" x="40.64" y="16.764" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center"/>
@@ -6175,10 +6175,10 @@ These are the free and generally easy to produce 4-layer PCB design rules. You c
 <attribute name="PROD_ID" value="DIO-00821" x="41.91" y="24.13" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
 <attribute name="VALUE" x="40.64" y="19.685" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
-<element name="R22" library="SparkFun-Resistors" package="0603" value="220" x="40.64" y="18.415" smashed="yes">
+<element name="R22" library="SparkFun-Resistors" package="0603" value="22Ω" x="40.64" y="18.415" smashed="yes">
 <attribute name="NAME" x="40.64" y="19.177" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center"/>
-<attribute name="PROD_ID" value="RES-07861" x="41.91" y="14.605" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
-<attribute name="VALUE" value="220" x="40.64" y="17.653" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
+<attribute name="PROD_ID" value="RES-08698" x="41.91" y="14.605" size="1.778" layer="27" font="vector" ratio="15" display="off"/>
+<attribute name="VALUE" value="22Ω" x="40.64" y="17.653" size="0.6096" layer="27" font="vector" ratio="20" align="top-center"/>
 </element>
 <element name="U$21" library="output" package="RSSI0" value="" x="43.18" y="14.351" smashed="yes" rot="R90"/>
 <element name="U$7" library="output" package="PWR0" value="" x="24.13" y="3.048" smashed="yes"/>
