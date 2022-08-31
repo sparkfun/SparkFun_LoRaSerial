@@ -28,6 +28,18 @@ void systemPrint(int value)
   systemPrint(temp);
 }
 
+void systemPrint(int value, uint8_t printType)
+{
+  char temp[20];
+
+  if (printType == HEX)
+    sprintf(temp, "%08x", value);
+  else if (printType == DEC)
+    sprintf(temp, "%d", value);
+
+  systemPrint(temp);
+}
+
 void systemPrintln(int value)
 {
   systemPrint(value);
