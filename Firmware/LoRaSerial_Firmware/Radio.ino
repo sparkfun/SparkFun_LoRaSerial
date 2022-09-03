@@ -252,7 +252,7 @@ void configureRadio()
         settings.radioCodingRate = 5;
         break;
       default:
-        if (settings.debug == true)
+        if ((settings.debug == true) || (settings.debugRadio == true))
         {
           systemPrint("Unknown airSpeed: ");
           systemPrintln(settings.airSpeed);
@@ -317,7 +317,7 @@ void configureRadio()
   uint16_t responseDelay = controlPacketAirTime / settings.responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
   controlPacketAirTime += responseDelay;
 
-  if (settings.debug == true)
+  if ((settings.debug == true) || (settings.debugRadio == true))
   {
     systemPrint("Freq: ");
     systemPrintln(channels[0], 3);
@@ -847,7 +847,7 @@ void generateHopTable()
   for (uint8_t x = 0 ; x < 12 ; x++)
     AESiv[x] = myRand();
 
-  if (settings.debug == true)
+  if ((settings.debug == true) || (settings.debugRadio == true))
   {
     systemPrint("channelSpacing: ");
     systemPrintln(channelSpacing, 3);

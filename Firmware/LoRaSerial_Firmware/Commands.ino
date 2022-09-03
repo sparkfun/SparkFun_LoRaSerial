@@ -421,6 +421,11 @@ const COMMAND_ENTRY commands[] =
   {27,    0,   1,    0, TYPE_BOOL,         valInt,         "SortParametersByName", &settings.sortParametersByName},
   {28,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintParameterName",   &settings.printParameterName},
   {29,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintFrequency",       &settings.printFrequency},
+
+  {30,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugRadio",           &settings.debugRadio},
+  {31,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugStates",          &settings.debugStates},
+  {32,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTraining",        &settings.debugTraining},
+  {33,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTrigger",         &settings.debugTrigger},
 };
 
 const int commandCount = sizeof(commands) / sizeof(commands[0]);

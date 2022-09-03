@@ -46,7 +46,7 @@ void beginLoRa()
 
   uint8_t radioSeed = radio.randomByte(); //Puts radio into standy-by state
   randomSeed(radioSeed);
-  if (settings.debug == true)
+  if ((settings.debug == true) || (settings.debugRadio == true))
   {
     systemPrint("RadioSeed: ");
     systemPrintln(radioSeed);
