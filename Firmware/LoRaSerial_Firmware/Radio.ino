@@ -36,7 +36,7 @@ PacketType identifyPacketType()
 
   //Pull out control header
   uint8_t receivedNetID = incomingBuffer[receivedBytes - 2];
-  memcpy(&receiveTrailer, &incomingBuffer[receivedBytes - 1], 1);
+  *(uint8_t *)&receiveTrailer = incomingBuffer[receivedBytes - 1];
 
   //SF6 requires an implicit header which means there is no dataLength in the header
   //Instead, we manually store it 3 bytes from the end (before NetID)
@@ -577,7 +577,7 @@ void sendPacket()
 {
   //Attach netID and control byte to end of packet
   outgoingPacket[packetSize - 2] = settings.netID;
-  memcpy(&outgoingPacket[packetSize - 1], &responseTrailer, 1);
+  outgoingPacket[packetSize - 1] = *(uint8_t *)&responseTrailer;
 
   //Apply AES and whitening only to new packets, not resends
   if (responseTrailer.resend == 0)
