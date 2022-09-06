@@ -540,6 +540,33 @@ void updateRadioState()
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+    /*
+          beginTraining                beginDefaultTraining
+                | Save current settings          | Save default settings
+                V                                |
+                +<-------------------------------’
+                |
+                V
+        moveToTrainingFreq
+                |
+                V
+        RADIO_TRAINING_TRANSMITTING
+                |
+                V
+        RADIO_TRAINING_ACK_WAIT --------------.
+                |                             |
+                V                             |
+        RADIO_TRAINING_RECEIVING_HERE_FIRST   |
+                |                             |
+                +<----------------------------’
+                |
+                V
+        RADIO_TRAINING_RECEIVED_PACKET
+                |
+                V
+           endTraining
+    */
+
     case RADIO_TRAINING_TRANSMITTING:
       {
         if (transactionComplete == true) //If dio0ISR has fired, we are done transmitting

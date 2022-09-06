@@ -98,9 +98,55 @@ void endTraining(bool newTrainingAvailable)
     changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
 
   sentFirstPing = false; //Send ping as soon as we exit
-  
+
   systemPrintln("LINK TRAINED");
 }
+
+/*
+      beginTraining                beginDefaultTraining
+            | Save current settings          | Save default settings
+            V                                |
+            +<-------------------------------’
+            |
+            V
+    moveToTrainingFreq
+            |
+            V
+    RADIO_TRAINING_TRANSMITTING
+            |
+            V
+    RADIO_TRAINING_ACK_WAIT --------------.
+            |                             |
+            V                             |
+    RADIO_TRAINING_RECEIVING_HERE_FIRST   |
+            |                             |
+            +<----------------------------’
+            |
+            V
+    RADIO_TRAINING_RECEIVED_PACKET
+            |
+            V
+       endTraining
+
+
+    moveToTrainingFreq
+
+      1. Disable point-to-point
+      2. Disable frequency hopping
+      3. Reduce power to minimum
+      4. Generate HOP table
+      5. Compute channel spacing
+      6. Set training frequency
+      7. Configure the radio
+      8. Send training ping
+      9. Set state RADIO_TRAINING_TRANSMITTING
+
+    endTraining
+
+      1. Restore original settings
+      2. Update encryption key
+      3. Set net ID
+*/
 
 //Change to known training frequency based on available freq and current major firmware version
 //This will allow different minor versions to continue to train to each other
