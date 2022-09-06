@@ -79,20 +79,6 @@ uint8_t pin_rssi4LED = 255;
 uint8_t pin_boardID = 255;
 
 uint8_t pin_trigger = 255;
-//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-//EEPROM for storing settings
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-#if defined(ARDUINO_ARCH_ESP32)
-
-#include <EEPROM.h>
-#define EEPROM_SIZE 1024 //ESP32 emulates EEPROM in non-volatile storage (external flash IC). Max is 508k.
-
-#elif defined(ARDUINO_ARCH_SAMD)
-
-#include <FlashAsEEPROM_SAMD.h> //Click here to get the library: http://librarymanager/All#FlashStorage_SAMD21 v1.2.1 by Khoi Hoang
-
-#endif
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Radio Library
@@ -111,14 +97,6 @@ float *channels;
 GCM <AES128> gcm;
 
 uint8_t AESiv[12] = {0}; //Set during hop table generation
-//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-//Watchdog
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-#if defined(ARDUINO_ARCH_SAMD)
-#include <WDTZero.h> //https://github.com/javos65/WDTZero
-WDTZero myWatchDog;
-#endif
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Buttons - Interrupt driven and debounce
@@ -208,6 +186,12 @@ int trainCylonNumber = 0b0001;
 int trainCylonDirection = -1;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+//Architecture variables
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+#include "Arch_ESP32.h"
+#include "Arch_SAMD.h"
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 void setup()
 {
   beginSerial(57600); //Default for debug messages before board begins
@@ -222,7 +206,7 @@ void setup()
 
   beginButton(); //Start watching the train button
 
-  beginWDT(); //Start watchdog timer
+  arch.beginWDT(); //Start watchdog timer
 
   systemPrintln("LRS");
 }
