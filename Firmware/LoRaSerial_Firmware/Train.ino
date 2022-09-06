@@ -36,6 +36,9 @@ void endTraining(bool newTrainingAvailable)
 
       if (settings.debug == true)
       {
+        systemPrint("New ID: ");
+        systemPrintln(settings.netID);
+
         systemPrint("New Key: ");
         for (uint8_t i = 0 ; i < 16 ; i++)
         {
@@ -43,9 +46,6 @@ void endTraining(bool newTrainingAvailable)
           systemPrint(" ");
         }
         systemPrintln();
-
-        systemPrint("New ID: ");
-        systemPrintln(settings.netID);
       }
     }
     else
@@ -211,13 +211,13 @@ void generateTrainingSettings()
 
   if (settings.debug == true)
   {
-    systemPrint("trainNetID: ");
+    systemPrint("Select new NetID: ");
     systemPrintln(trainNetID);
 
-    systemPrint("trainEncryptionKey:");
+    systemPrint("Select new Encryption Key:");
     for (uint8_t i = 0 ; i < 16 ; i++)
     {
-      systemPrint(" 0x");
+      systemPrint(" ");
       systemPrint(trainEncryptionKey[i], HEX);
     }
     systemPrintln();
