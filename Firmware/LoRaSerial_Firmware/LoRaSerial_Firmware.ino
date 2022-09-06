@@ -42,6 +42,7 @@
 const int FIRMWARE_VERSION_MAJOR = 1;
 const int FIRMWARE_VERSION_MINOR = 1;
 
+#define RADIOLIB_LOW_LEVEL  //Enable access to the module functions
 //#define ENABLE_DEVELOPER //Uncomment this line to enable special developer modes
 
 //Define the LoRaSerial board identifier:

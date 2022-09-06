@@ -876,3 +876,35 @@ uint8_t covertdBmToSetting(uint8_t userSetting)
     default: return (3); break;
   }
 }
+
+#ifdef  RADIOLIB_LOW_LEVEL
+uint8_t readSX1276Register(uint8_t reg)
+{
+  return radio._mod->SPIreadRegister(reg);
+}
+
+//Print the SX1276 LoRa registers
+void printSX1276Registers ()
+{
+  //Define the valid LoRa registers
+  const uint8_t valid_regs [16] =
+  {
+    0xc2, 0xff, 0xff, 0xff, 0x7f, 0x97, 0xcb, 0x0e,
+    0x07, 0x28, 0x00, 0x08, 0x1e, 0x00, 0x01, 0x00
+  };
+
+  systemPrint("Registers:");
+  for (uint8_t i = 0; i < (sizeof(valid_regs) * 8); i++)
+  {
+    //Only read and print the valid registers
+    if (valid_regs[i >> 3] & (1 << (i & 7)))
+    {
+      systemPrint("    0x");
+      systemPrint(i, HEX);
+      systemPrint(": 0x");
+      systemPrintln(readSX1276Register(i), HEX);
+    }
+  }
+}
+
+#endif  //RADIOLIB_LOW_LEVEL
