@@ -110,11 +110,29 @@ void updateSerial()
         ; //Do nothing
       else
       {
-        systemWrite(incoming); //Always echo during command mode
+        if (incoming == 8)
+        {
+          if (commandLength > 0)
+          {
+            //Remove this character from the command buffer
+            commandLength--;
 
-        //Move this character into the command buffer
-        commandBuffer[commandLength++] = toupper(incoming);
-        commandLength %= sizeof(commandBuffer);
+            //Erase the previous character
+            systemWrite(incoming);
+            systemWrite(' ');
+            systemWrite(incoming);
+          }
+          else
+            systemWrite(7);
+        }
+        else
+        {
+          systemWrite(incoming); //Always echo during command mode
+
+          //Move this character into the command buffer
+          commandBuffer[commandLength++] = toupper(incoming);
+          commandLength %= sizeof(commandBuffer);
+        }
       }
     }
     else
