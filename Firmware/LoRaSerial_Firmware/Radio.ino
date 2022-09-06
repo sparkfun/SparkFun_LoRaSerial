@@ -390,6 +390,15 @@ void returnToReceiving()
 //Create short packet of 2 control bytes - query remote radio for proof of life (ack)
 void sendPingPacket()
 {
+  /*
+      +--------+---------+
+      | NET ID | Trailer |
+      | 8 bits | 8 bits  |
+      +--------+---------+
+      |                  |
+      |<-- packetSize -->|
+  */
+
   LRS_DEBUG_PRINT(F("TX: Ping "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
@@ -418,6 +427,15 @@ void sendPingPacket()
 //Create packet of current data + control bytes - expect ACK from recipient
 void sendDataPacket()
 {
+  /*
+      +---  ...  ---+--------+---------+
+      |    Data     | NET ID | Trailer |
+      |   n bytes   | 8 bits | 8 bits  |
+      +-------------+--------+---------+
+      |                                |
+      |<--------- packetSize --------->|
+  */
+
   LRS_DEBUG_PRINT(F("TX: Data "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
@@ -444,6 +462,15 @@ void sendDataPacket()
 //Create packet of current data + control bytes - expect ACK from recipient
 void sendResendPacket()
 {
+  /*
+      +---  ...  ---+--------+---------+
+      |    Data     | NET ID | Trailer |
+      |   n bytes   | 8 bits | 8 bits  |
+      +-------------+--------+---------+
+      |                                |
+      |<--------- packetSize --------->|
+  */
+
   LRS_DEBUG_PRINT(F("TX: Resend "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 1; //This is a resend
@@ -460,6 +487,15 @@ void sendResendPacket()
 //Create short packet of 2 control bytes - do not expect ack
 void sendAckPacket()
 {
+  /*
+      +--------+---------+
+      | NET ID | Trailer |
+      | 8 bits | 8 bits  |
+      +--------+---------+
+      |                  |
+      |<-- packetSize -->|
+  */
+
   LRS_DEBUG_PRINT(F("TX: Ack "));
   responseTrailer.ack = 1; //This is an ACK to a previous reception
   responseTrailer.resend = 0; //This is not a resend
@@ -476,6 +512,15 @@ void sendAckPacket()
 //Create short packet of 2 control bytes with train = 1
 void sendTrainingPingPacket()
 {
+  /*
+      +--------+---------+
+      | NET ID | Trailer |
+      | 8 bits | 8 bits  |
+      +--------+---------+
+      |                  |
+      |<-- packetSize -->|
+  */
+
   LRS_DEBUG_PRINT(F("TX: Training Ping "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
@@ -495,6 +540,15 @@ void sendTrainingPingPacket()
 //Create packet of AES + netID with training = 1
 void sendTrainingDataPacket()
 {
+  /*
+      +----------------+------------+--------+---------+
+      | Encryption Key | New NET ID | NET ID | Trailer |
+      |    16 bytes    |   8 bits   | 8 bits | 8 bits  |
+      +----------------+------------+--------+---------+
+      |                                                |
+      |<----------------- packetSize ----------------->|
+  */
+
   LRS_DEBUG_PRINT(F("TX: Training Data "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
@@ -520,6 +574,15 @@ void sendTrainingDataPacket()
 //Create short packet of 2 control bytes - do not expect ack
 void sendCommandAckPacket()
 {
+  /*
+      +--------+---------+
+      | NET ID | Trailer |
+      | 8 bits | 8 bits  |
+      +--------+---------+
+      |                  |
+      |<-- packetSize -->|
+  */
+
   LRS_DEBUG_PRINT(F("TX: Command Ack "));
   responseTrailer.ack = 1; //This is an ACK to a previous reception
   responseTrailer.resend = 0; //This is not a resend
@@ -536,6 +599,15 @@ void sendCommandAckPacket()
 //Create packet of serial command with remote command = 1, ack = 0
 void sendCommandDataPacket()
 {
+  /*
+      +---------+--------+---------+
+      | Command | NET ID | Trailer |
+      | n bytes | 8 bits | 8 bits  |
+      +---------+--------+---------+
+      |                            |
+      |<------- packetSize ------->|
+  */
+
   LRS_DEBUG_PRINT(F("TX: Command Data "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission.
   responseTrailer.resend = 0; //This is not a resend
@@ -562,6 +634,15 @@ void sendCommandDataPacket()
 //Create short packet of 2 control bytes - do not expect ack
 void sendCommandResponseAckPacket()
 {
+  /*
+      +--------+---------+
+      | NET ID | Trailer |
+      | 8 bits | 8 bits  |
+      +--------+---------+
+      |                  |
+      |<-- packetSize -->|
+  */
+
   LRS_DEBUG_PRINT(F("TX: Command Response Ack "));
   responseTrailer.ack = 1; //This is an ACK to a previous reception
   responseTrailer.resend = 0; //This is not a resend
@@ -578,6 +659,15 @@ void sendCommandResponseAckPacket()
 //Create packet of serial command with remote command = 1, ack = 0
 void sendCommandResponseDataPacket()
 {
+  /*
+      +----------+--------+---------+
+      | Response | NET ID | Trailer |
+      | n bytes  | 8 bits | 8 bits  |
+      +----------+--------+---------+
+      |                             |
+      |<-------- packetSize ------->|
+  */
+
   LRS_DEBUG_PRINT(F("TX: Command Response Data "));
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission.
   responseTrailer.resend = 0; //This is not a resend
@@ -604,6 +694,15 @@ void sendCommandResponseDataPacket()
 //Push the outgoing packet to the air
 void sendPacket()
 {
+  /*
+      +---  ...  ---+--------+---------+
+      |    Data     | NET ID | Trailer |
+      |   n bytes   | 8 bits | 8 bits  |
+      +-------------+--------+---------+
+      |                                |
+      |<--------- packetSize --------->|
+  */
+
   //Attach netID and control byte to end of packet
   outgoingPacket[packetSize - 2] = settings.netID;
   outgoingPacket[packetSize - 1] = *(uint8_t *)&responseTrailer;
