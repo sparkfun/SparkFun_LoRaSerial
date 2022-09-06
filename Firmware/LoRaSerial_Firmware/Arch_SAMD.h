@@ -5,13 +5,68 @@
 #include <WDTZero.h> //https://github.com/javos65/WDTZero
 WDTZero myWatchDog;
 
+/*
+  Data flow
+                   +--------------+
+                   |     SAMD     |
+                   |              |
+    TTL Serial <-->| Serial1      |       +--------------+
+                   |          SPI |<----->| SX1276 Radio |<---> Antenna
+    USB Serial <-->| Serial       |       +--------------+         ^
+                   +--------------+                                |
+                                                                   |
+                   +--------------+                                |
+                   |     SAMD     |                                |
+                   |              |                                |
+    TTL Serial <-->| Serial1      |       +--------------+         V
+                   |          SPI |<----->| SX1276 Radio |<---> Antenna
+    USB Serial <-->| Serial       |       +--------------+
+                   +--------------+
+
+                          +--------------+
+                          | SAMD         |
+                          |              |
+                          |      PB02 A5 |---> rxLED
+                          |      PB23 31 |---> txLED
+                          |              |
+                          |      PA07  9 |---> rssi4LED
+                          |      PA06  8 |---> rssi3LED
+                          |      PA05 A4 |---> rssi2LED
+                          |      PA04 A3 |---> rssi1LED
+                          |              |
+    USB_D- <------------->| 28 PA24      |
+    USB_D+ <------------->| 29 PA25      |
+                          |              |
+                          |      PA15  5 |---> cs -----> LORA_CS/
+                          |      PA17 13 |---> SCLK ---> SPI_SCK
+                          |      PA16 11 |---> MOSI ---> SPI_PICO
+                          |      PA19 12 |<--- MISO ---> SPI_POCI
+                          |              |
+    RTS-0 <------ rts <---| 38 PA13      |
+    TX-0 <------- tx <----| 0  PA10      |
+    RX-I_LV <---- rx ---->| 1  PA11      |
+    CTS-I_LV <--- cts --->| 30 PB22      |
+                          |              |
+                          |      PA09  3 |---> rxen ---> LORA_RXEN
+                          |      PA14  2 |---> txen ---> LORA_TXEN
+                          |              |
+                          |      PA18 10 |<--- dio1 <--- LORA_D1 (Freq Change)
+                          |      PA21  7 |<--- dio0 <--- LORA_D0 (TX Done)
+                          |              |
+                          |      PA20  6 |---> rst ----> LORA_RST/
+                          |              |
+                          |      PA23 21 |---> SCL
+                          |      PA22 20 |---> SDA
+                          +--------------+
+*/
+
 void samdBeginBoard()
 {
   //Use ADC to check resistor divider
   pin_boardID = A2;
 
   pin_cs = 5;
-  pin_dio0 = 7; //aka A0
+  pin_dio0 = 7;  //aka A0
   pin_dio1 = 10; //aka A1
   pin_txen = 2;
   pin_rxen = 3;

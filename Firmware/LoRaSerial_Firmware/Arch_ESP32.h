@@ -4,6 +4,25 @@
 #include <EEPROM.h>
 #define EEPROM_SIZE 1024 //ESP32 emulates EEPROM in non-volatile storage (external flash IC). Max is 508k.
 
+/*
+  Data flow
+                   +--------+
+                   | ESP32  |
+                   |        |       +--------------+
+                   |    SPI |<----->| SX1276 Radio |<---> Antenna
+                   |        |       +--------------+         ^
+    USB Serial <-->| Serial |                                |
+                   +--------+                                |
+                                                             |
+                   +--------+                                |
+                   | ESP32  |                                |
+                   |        |       +--------------+         V
+                   |    SPI |<----->| SX1276 Radio |<---> Antenna
+                   |        |       +--------------+
+    USB Serial <-->| Serial |
+                   +--------+
+*/
+
 void esp32BeginBoard()
 {
   //Lower power boards
