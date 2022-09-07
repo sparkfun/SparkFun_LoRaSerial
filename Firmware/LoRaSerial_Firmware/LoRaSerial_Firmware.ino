@@ -200,6 +200,8 @@ void setup()
   loadSettings(); //Load settings from EEPROM
 
   beginSerial(settings.serialSpeed);
+  if (settings.usbSerialWait)
+    while (!Serial);
 
   systemPrintln("LRS");
 

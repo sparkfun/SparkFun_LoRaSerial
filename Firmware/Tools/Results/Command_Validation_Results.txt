@@ -15,7 +15,7 @@ SparkFun LoRaSerial SAMD21 1W 915MHz
 ati3
 -157
 ati4
-13
+95
 ati5
 506
 ati6
@@ -59,6 +59,7 @@ ATS30:DebugRadio=0
 ATS31:DebugStates=0
 ATS32:DebugTraining=0
 ATS33:DebugTrigger=0
+ATS34:UsbSerialWait=0
 ats28=0
 OK
 # SerialSpeed
@@ -693,11 +694,23 @@ DebugTrigger=0
 OK
 ats33?
 DebugTrigger=0
-# Invalid commands
+# UsbSerialWait
 ERROR
 ats34=1
+UsbSerialWait=1
+OK
+ats34=2
 ERROR
+ats34=0
+UsbSerialWait=0
+OK
 ats34?
+UsbSerialWait=0
+# Invalid commands
+ERROR
+ats35=1
+ERROR
+ats35?
 ERROR
 ats255=1
 ERROR
@@ -738,6 +751,7 @@ ATS27:SortParametersByName=1
 ATS14:SpreadFactor=9
 ATS16:SyncWord=18
 ATS7:TxPower=30
+ATS34:UsbSerialWait=0
 at&w
 OK
 atz

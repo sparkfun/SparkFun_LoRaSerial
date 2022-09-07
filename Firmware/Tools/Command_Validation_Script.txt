@@ -358,9 +358,15 @@ ats33=2
 ats33=0
 ats33?
 
-# Invalid commands
+# UsbSerialWait
 ats34=1
+ats34=2
+ats34=0
 ats34?
+
+# Invalid commands
+ats35=1
+ats35?
 
 ats255=1
 ats255?
