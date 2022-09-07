@@ -15,7 +15,7 @@ SparkFun LoRaSerial SAMD21 1W 915MHz
 ati3
 -157
 ati4
-116
+228
 ati5
 506
 ati6
@@ -52,6 +52,10 @@ ATS23:FlowControl=0
 ATS24:AutoTune=0
 ATS25:DisplayPacketQuality=0
 ATS26:MaxResends=2
+ATS27:SortParametersByName=0
+ATS28:PrintParameterName=0
+ats28=0
+OK
 # SerialSpeed
 ERROR
 ats0=0
@@ -247,7 +251,7 @@ ERROR
 ats5=00112233445566778899aabbccddeefff
 ERROR
 ats5=00112233445566778899aabbccddeefg
-OK
+ERROR
 ats5=37782141A665734E4475672AE6308308
 OK
 ats5?
@@ -354,8 +358,7 @@ ats1=4800
 Warning: AirSpeed override of bandwidth, spread factor, and coding rate
 OK
 ats13=0
-AirSpeed is overriding
-ERROR
+OK
 ats13=10.4
 AirSpeed is overriding
 ERROR
@@ -406,7 +409,7 @@ OK
 ats13=500
 OK
 ats13?
-500.000
+500.00
 ats1=4800
 Warning: AirSpeed override of bandwidth, spread factor, and coding rate
 OK
@@ -604,44 +607,67 @@ ats26=2
 OK
 ats26?
 2
-# Invalid commands
+# SortParametersByName
+ERROR
+ats27=0
+OK
+ats27=2
 ERROR
 ats27=1
-ERROR
+OK
 ats27?
+1
+# ParameterName
+ERROR
+ats28=0
+OK
+ats28=2
+ERROR
+ats28=1
+PrintParameterName=1
+OK
+ats28?
+PrintParameterName=1
+# Invalid commands
+ERROR
+ats29=1
+ERROR
+ats29?
 ERROR
 ats255=1
 ERROR
 ats255?
 ERROR
 ati0
-ATS0:SerialSpeed=57600
 ATS1:AirSpeed=4800
-ATS2:netID=192
-ATS3:PointToPoint=1
+ATS24:AutoTune=0
+ATS13:Bandwidth=500.00
+ATS15:CodingRate=8
+ATS6:DataScrambling=0
+ATS20:Debug=0
+ATS25:DisplayPacketQuality=0
+ATS21:Echo=0
 ATS4:EncryptData=1
 ATS5:EncryptionKey=37782141A665734E4475672AE6308308
-ATS6:DataScrambling=0
-ATS7:TxPower=30
-ATS8:FrequencyMin=902.000
-ATS9:FrequencyMax=928.000
-ATS10:NumberOfChannels=50
-ATS11:FrequencyHop=1
-ATS12:MaxDwellTime=400
-ATS13:Bandwidth=500.00
-ATS14:SpreadFactor=9
-ATS15:CodingRate=8
-ATS16:SyncWord=18
-ATS17:PreambleLength=8
+ATS23:FlowControl=0
 ATS18:FrameSize=253
 ATS19:FrameTimeout=50
-ATS20:Debug=0
-ATS21:Echo=0
+ATS11:FrequencyHop=1
+ATS9:FrequencyMax=928.000
+ATS8:FrequencyMin=902.000
 ATS22:HeartBeatTimeout=5000
-ATS23:FlowControl=0
-ATS24:AutoTune=0
-ATS25:DisplayPacketQuality=0
+ATS12:MaxDwellTime=400
 ATS26:MaxResends=2
+ATS2:netID=192
+ATS10:NumberOfChannels=50
+ATS3:PointToPoint=1
+ATS17:PreambleLength=8
+ATS28:PrintParameterName=1
+ATS0:SerialSpeed=57600
+ATS27:SortParametersByName=1
+ATS14:SpreadFactor=9
+ATS16:SyncWord=18
+ATS7:TxPower=30
 at&w
 OK
 atz

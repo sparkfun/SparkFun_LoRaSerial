@@ -14,6 +14,8 @@ ati7
 ati8
 ati0
 
+ats28=0
+
 # SerialSpeed
 ats0=0
 ats0=1
@@ -314,9 +316,21 @@ ats26=256
 ats26=2
 ats26?
 
-# Invalid commands
+# SortParametersByName
+ats27=0
+ats27=2
 ats27=1
 ats27?
+
+# ParameterName
+ats28=0
+ats28=2
+ats28=1
+ats28?
+
+# Invalid commands
+ats29=1
+ats29?
 
 ats255=1
 ats255?

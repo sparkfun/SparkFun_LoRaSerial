@@ -231,20 +231,22 @@ void movePacketToSettings(Settings settings, uint8_t* packetBuffer)
     bytePtr[x] = packetBuffer[x];
 }
 
-//Given two letters, convert to base 10
-uint8_t charToHex(char a, char b)
+//Convert ASCII character to base 16
+int8_t charToHex(char a)
 {
   a = toupper(a);
-  b = toupper(b);
 
   if ('0' <= a && a <= '9') a -= '0';
   else if ('A' <= a && a <= 'F') a = a - 'A' + 10;
-  else return 0;
+  else a = -1;
+  return a;
+}
 
-  if ('0' <= b && b <= '9') b -= '0';
-  else if ('A' <= b && b <= 'F') b = b - 'A' + 10;
-  else return 0;
-
+//Given two letters, convert to base 10
+uint8_t charHexToDec(char a, char b)
+{
+  a = charToHex(a);
+  b = charToHex(b);
   return ((a << 4) | b);
 }
 
@@ -315,4 +317,19 @@ void rxLED(bool illuminate)
     else
       digitalWrite(pin_rxLED, LOW);
   }
+}
+
+int stricmp(const char * str1, const char * str2)
+{
+  char char1;
+  char char2;
+
+  //Do a case insensitive comparison between the two strings
+  do {
+    char1 = toupper(*str1++);
+    char2 = toupper(*str2++);
+  } while (char1 && (char1 == char2));
+
+  //Return the difference between the two strings
+  return char1 - char2;
 }
