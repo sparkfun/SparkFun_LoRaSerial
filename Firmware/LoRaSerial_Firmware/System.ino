@@ -275,6 +275,57 @@ uint8_t charHexToDec(char a, char b)
   return ((a << 4) | b);
 }
 
+void dumpBuffer(uint8_t * data, int length)
+{
+  char byte[2];
+  int bytes;
+  uint8_t * dataEnd;
+  uint8_t * dataStart;
+  const int displayWidth = 16;
+  int index;
+
+  byte[1] = 0;
+  dataStart = data;
+  dataEnd = &data[length];
+  while (data < dataEnd)
+  {
+    // Display the offset
+    systemPrint("    0x");
+    systemPrint((uint8_t)(data - dataStart), HEX);
+    systemPrint(": ");
+
+    // Determine the number of bytes to display
+    bytes = displayWidth;
+    if (bytes > length)
+      bytes = length;
+
+    // Display the data bytes in hex
+    for (index = 0; index < bytes; index++)
+    {
+      systemPrint(" ");
+      systemPrint(*data++, HEX);
+      petWDT();
+    }
+
+    // Space over to the ASCII display
+    for (; index < displayWidth; index++)
+    {
+      systemPrint("   ");
+      petWDT();
+    }
+    systemPrint("  ");
+
+    // Display the ASCII bytes
+    data -= bytes;
+    for (index = 0; index < bytes; index++) {
+      byte[0] = *data++;
+      systemPrint(((byte[0] <= ' ') || (byte[0] >= 0x7f)) ? "." : byte);
+    }
+    systemPrintln();
+    petWDT();
+  }
+}
+
 void updateRSSI()
 {
   //RSSI must be above these negative numbers for LED to illuminate
