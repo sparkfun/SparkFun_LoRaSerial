@@ -328,9 +328,15 @@ ats28=2
 ats28=1
 ats28?
 
-# Invalid commands
+# PrintFrequency
 ats29=1
+ats29=2
+ats29=0
 ats29?
+
+# Invalid commands
+ats30=1
+ats30?
 
 ats255=1
 ats255?

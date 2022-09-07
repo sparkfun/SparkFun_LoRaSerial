@@ -153,6 +153,7 @@ typedef struct struct_settings {
   uint8_t maxResends = 2; //Attempt resends up to this number.
   bool sortParametersByName = false; //Sort the parameter list (ATI0) by parameter name
   bool printParameterName = false; //Print the parameter name in the ATSx? response
+  bool printFrequency = false; //Print the updated frequency
 } Settings;
 Settings settings;
 

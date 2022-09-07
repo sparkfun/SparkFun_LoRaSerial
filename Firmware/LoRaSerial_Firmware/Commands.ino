@@ -420,6 +420,7 @@ const COMMAND_ENTRY commands[] =
   {26,    0, 255,    0, TYPE_U8,           valInt,         "MaxResends",           &settings.maxResends},
   {27,    0,   1,    0, TYPE_BOOL,         valInt,         "SortParametersByName", &settings.sortParametersByName},
   {28,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintParameterName",   &settings.printParameterName},
+  {29,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintFrequency",       &settings.printFrequency},
 };
 
 const int commandCount = sizeof(commands) / sizeof(commands[0]);
