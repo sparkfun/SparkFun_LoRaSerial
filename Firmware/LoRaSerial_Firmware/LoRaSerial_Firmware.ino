@@ -185,6 +185,8 @@ bool confirmDeliveryBeforeRadioConfig = false; //Goes true when we have remotely
 
 int trainCylonNumber = 0b0001;
 int trainCylonDirection = -1;
+
+const Settings defaultSettings;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Architecture variables

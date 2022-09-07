@@ -46,8 +46,6 @@ typedef struct
 
 bool commandAT(const char * commandString)
 {
-  const Settings defaultSettings;
-
   //'AT'
   if (commandLength == 2)
     reportOK();
@@ -165,7 +163,6 @@ bool commandAT(const char * commandString)
           break;
         case ('F'): //AT&F - Restore default parameters
           {
-            Settings defaultSettings; //Create new settings that will have all default values
             settings = defaultSettings; //Overwrite all current settings with defaults
             recordSystemSettings();
             reportOK();
