@@ -430,6 +430,7 @@ const COMMAND_ENTRY commands[] =
 
   {35,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintRfData",          &settings.printRfData},
   {36,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintPktData",         &settings.printPktData},
+  {37,    0,   1,    0, TYPE_BOOL,         valInt,         "VerifyRxNetID",        &settings.verifyRxNetID},
 };
 
 const int commandCount = sizeof(commands) / sizeof(commands[0]);
