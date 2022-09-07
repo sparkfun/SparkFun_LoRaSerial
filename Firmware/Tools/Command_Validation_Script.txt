@@ -364,9 +364,21 @@ ats34=2
 ats34=0
 ats34?
 
-# Invalid commands
+# PrintRfData
 ats35=1
+ats35=2
+ats35=0
 ats35?
+
+# PrintPktData
+ats36=1
+ats36=2
+ats36=0
+ats36?
+
+# Invalid commands
+ats37=1
+ats37?
 
 ats255=1
 ats255?
