@@ -15,7 +15,7 @@ SparkFun LoRaSerial SAMD21 1W 915MHz
 ati3
 -157
 ati4
-249
+213
 ati5
 506
 ati6
