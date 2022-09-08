@@ -342,10 +342,7 @@ void configureRadio()
   if (success == false)
   {
     reportERROR();
-    if (settings.debug == true)
-    {
-      systemPrintln("Radio init failed. Check settings.");
-    }
+    systemPrintln("Radio init failed. Check settings.");
   }
   LRS_DEBUG_PRINTLN("Radio configured");
 }
