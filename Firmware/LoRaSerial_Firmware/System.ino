@@ -231,15 +231,39 @@ void radioComputeWhitening(uint8_t *buffer, uint16_t bufferSize)
 }
 
 //Toggle a pin. Used for logic analyzer debugging.
-void triggerEvent(uint16_t triggerWidth)
+void triggerEvent(uint8_t triggerNumber)
 {
-  if (pin_trigger != 255)
+  uint8_t triggerBitNumber;
+  uint32_t triggerEnable;
+  uint16_t triggerWidth;
+
+  //Determine which trigger enable to use
+  triggerBitNumber = triggerNumber;
+  triggerEnable = settings.triggerEnable;
+  if (triggerNumber >= 32)
   {
-    if ((settings.debug == true) || (settings.debugTrigger == true))
+    triggerBitNumber -= 32;
+    triggerEnable = settings.triggerEnable2;
+  }
+
+  //Determine if the trigger is enabled
+  if ((pin_trigger != 255) && (triggerEnable & (1 << triggerBitNumber)))
+  {
+    //Determine if the trigger pin is enabled
+    if (pin_trigger != 255)
     {
-      digitalWrite(pin_trigger, LOW);
-      delayMicroseconds(triggerWidth);
-      digitalWrite(pin_trigger, HIGH);
+      if ((settings.debug == true) || (settings.debugTrigger == true))
+      {
+        //Determine the trigger pulse width
+        triggerWidth = settings.triggerWidth;
+        if (settings.triggerWidthIsMultiplier)
+          triggerWidth *= (triggerNumber + 1);
+
+        //Output the trigger pulse
+        digitalWrite(pin_trigger, LOW);
+        delayMicroseconds(triggerWidth);
+        digitalWrite(pin_trigger, HIGH);
+      }
     }
   }
 }

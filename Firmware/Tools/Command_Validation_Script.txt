@@ -387,9 +387,29 @@ ats37=2
 ats37=0
 ats37?
 
-# Invalid commands
+# TriggerWidth
+ats38=0
 ats38=1
-ats38?
+ats38=255
+ats38=256
+ats38=25
+
+# TriggerWidthIsMultiplier
+ats39=0
+ats39=2
+ats39=1
+
+# TriggerEnable: 31-0
+ats40=0
+ats40=4294967295
+
+# TriggerEnable: 63-32
+ats41=0
+ats41=4294967295
+
+# Invalid commands
+ats42=1
+ats42?
 
 ats255=1
 ats255?
