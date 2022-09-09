@@ -604,21 +604,7 @@ void updateRadioState()
           transactionComplete = false; //Reset ISR flag
           changeState(RADIO_TRAINING_RECEIVED_PACKET);
         }
-        else if ( (millis() - lastTrainBlink) > 75) //Blink while unit waits in training state
-        {
-          lastTrainBlink = millis();
-
-          //Cylon the RSSI LEDs
-          setRSSI(trainCylonNumber);
-
-          if (trainCylonNumber == 0b1000 || trainCylonNumber == 0b0001)
-            trainCylonDirection *= -1; //Change direction
-
-          if (trainCylonDirection > 0)
-            trainCylonNumber <<= 1;
-          else
-            trainCylonNumber >>= 1;
-        }
+        updateCylonLEDs();
       }
       break;
 

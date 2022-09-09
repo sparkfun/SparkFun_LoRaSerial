@@ -184,8 +184,7 @@ void moveToTrainingFreq()
   packetAirTime = calcAirTime(sizeof(trainEncryptionKey) + sizeof(trainNetID) + 2);
 
   //Reset cylon variables
-  trainCylonNumber = 0b0001;
-  trainCylonDirection = -1;
+  startCylonLEDs();
 
   changeState(RADIO_TRAINING_TRANSMITTING);
 }
@@ -223,3 +222,31 @@ void generateTrainingSettings()
     systemPrintln();
   }
 }
+
+//Start the cylon LEDs
+void startCylonLEDs()
+{
+  trainCylonNumber = 0b0001;
+  trainCylonDirection = -1;
+}
+
+//Update the cylon LEDs
+void updateCylonLEDs()
+{
+  if ( (millis() - lastTrainBlink) > 75) //Blink while unit waits in training state
+  {
+    lastTrainBlink = millis();
+
+    //Cylon the RSSI LEDs
+    setRSSI(trainCylonNumber);
+
+    if (trainCylonNumber == 0b1000 || trainCylonNumber == 0b0001)
+      trainCylonDirection *= -1; //Change direction
+
+    if (trainCylonDirection > 0)
+      trainCylonNumber <<= 1;
+    else
+      trainCylonNumber >>= 1;
+  }
+}
+
