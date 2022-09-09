@@ -2,6 +2,11 @@ void updateRadioState()
 {
   switch (radioState)
   {
+    default:
+      {
+        systemPrintln("Unknown state");
+      }
+      break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -664,12 +669,6 @@ void updateRadioState()
         }
       }
       break;
-
-    default:
-      {
-        systemPrintln("Unknown state");
-      }
-      break;
   }
 }
 
@@ -698,6 +697,11 @@ void changeState(RadioStates newState)
   //Debug print
   switch (radioState)
   {
+    default:
+      systemPrint("Change State Unknown: ");
+      systemPrint(radioState);
+      break;
+
     case (RADIO_NO_LINK_RECEIVING_STANDBY):
       systemPrint("State: [No Link] Receiving Standby");
       break;
@@ -752,11 +756,6 @@ void changeState(RadioStates newState)
       break;
     case (RADIO_TRAINING_RECEIVED_PACKET):
       systemPrint("State: [Training] RX Packet");
-      break;
-
-    default:
-      systemPrint("Change State Unknown: ");
-      systemPrint(radioState);
       break;
   }
   systemPrintln();
