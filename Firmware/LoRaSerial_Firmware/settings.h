@@ -141,7 +141,7 @@ typedef struct struct_settings {
   uint8_t radioSpreadFactor = 9; //6 to 12. Use higher factor for longer range.
   uint8_t radioCodingRate = 8; //5 to 8. Higher coding rates ensure less packets dropped.
   uint8_t radioSyncWord = 18; //18 = 0x12 is default for custom/private networks. Different sync words does *not* guarantee a remote radio will not get packet.
-  uint8_t radioPreambleLength = 8; //Number of symbols. Different lengths does *not* guarantee a remote radio privacy. 8 to 11 works. 8 to 15 drops some. 8 to 20 is silent.
+  uint16_t radioPreambleLength = 8; //Number of symbols. Different lengths does *not* guarantee a remote radio privacy. 8 to 11 works. 8 to 15 drops some. 8 to 20 is silent.
   uint8_t frameSize = MAX_PACKET_SIZE - 2; //Send batches of bytes through LoRa link, max (255 - control trailer) = 253.
   uint16_t serialTimeoutBeforeSendingFrame_ms = 50; //Send partial buffer if time expires
   bool debug = false; //Print basic events: ie, radio state changes
@@ -151,7 +151,8 @@ typedef struct struct_settings {
   bool autoTuneFrequency = false; //Based on the last packets frequency error, adjust our next transaction frequency
   bool displayPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
   uint8_t maxResends = 2; //Attempt resends up to this number.
-
+  bool sortParametersByName = false; //Sort the parameter list (ATI0) by parameter name
+  bool printParameterName = false; //Print the parameter name in the ATSx? response
 } Settings;
 Settings settings;
 

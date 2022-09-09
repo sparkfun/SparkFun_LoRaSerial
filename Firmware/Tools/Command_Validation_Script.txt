@@ -1,0 +1,342 @@
++++
+#Restore factory defaults
+at&f
+
+# Allow leading white space (space, tab, cr, lf)
+        	ati
+        ati1
+	ati2
+ati3
+ati4
+ati5
+ati6
+ati7
+ati8
+ati0
+
+ats28=0
+
+# SerialSpeed
+ats0=0
+ats0=1
+ats0=40
+ats0=50
+ats0=110
+ats0=134
+ats0=150
+ats0=300
+ats0=400
+ats0=600
+ats0=1200
+ats0=2400
+ats0=4800
+ats0=9600
+ats0=14400
+ats0=19200
+ats0=28800
+ats0=38400
+ats0=57600
+ats0=76800
+ats0=115200
+ats0=128000
+ats0=230400
+ats0=250000
+ats0=256000
+ats0=460800
+ats0=500000
+ats0=512000
+ats0=576000
+ats0=921600
+ats0=1000000
+ats0=1843200
+ats0=2000000
+ats0=3000000
+ats0=3686400
+ats0=4000000
+ats0=57600
+ats0?
+
+# AirSpeed
+ats1=1
+ats1=40
+ats1=50
+ats1=110
+ats1=134
+ats1=150
+ats1=300
+ats1=400
+ats1=600
+ats1=1200
+ats1=2400
+ats1=4800
+ats1=9600
+ats1=14400
+ats1=19200
+ats1=28800
+ats1=38400
+ats1=57600
+ats1=76800
+ats1=115200
+ats1=128000
+ats1=230400
+ats1=250000
+ats1=256000
+ats1=460800
+ats1=500000
+ats1=512000
+ats1=576000
+ats1=921600
+ats1=1000000
+ats1=1843200
+ats1=2000000
+ats1=3000000
+ats1=3686400
+ats1=4000000
+ats1=0
+ats1?
+
+# NetID
+ats2=0
+ats2=255
+ats2=192
+ats2?
+
+# PointToPoint
+ats3=0
+ats3=2
+ats3=1
+ats3?
+
+# EncryptData
+ats4=0
+ats4=2
+ats4=1
+ats4?
+
+# EncryptionKey
+ats5=00112233445566778899aabbccddeeff
+ats5?
+ats5=00112233445566778899aabbccddeef
+ats5=00112233445566778899aabbccddeefff
+ats5=00112233445566778899aabbccddeefg
+ats5=37782141A665734E4475672AE6308308
+ats5?
+
+# DataScrambling
+ats6=1
+ats6=2
+ats6=0
+ats6?
+
+# TxPower
+ats7=13
+ats7=14
+ats7=31
+ats7=30
+ats7?
+
+# FrequencyMin
+ats9=928
+ats8=0
+ats8=928.1
+ats8=928
+ats8=927.9
+ats8=901.9
+ats8=902
+ats8?
+
+# FrequencyMax
+ats9=0
+ats9=901.9
+ats9=902
+ats9=902.1
+ats9=927.9
+ats9=928.1
+ats9=928
+ats9?
+
+# NumberOfChannels
+ats10=0
+ats10=1
+ats10=255
+ats10=256
+ats10=50
+ats10?
+
+# FrequencyHop
+ats11=0
+ats11=2
+ats11=1
+ats11?
+
+# MaxDwellTime
+ats12=9
+ats12=10
+ats12=65535
+ast12=65536
+ats12=400
+ats12?
+
+# Bandwidth
+ats1=4800
+
+ats13=0
+ats13=10.4
+ats13=15.6
+ats13=20
+ats13=31.25
+ats13=41.7
+ats13=62.5
+ats13=125
+ats13=250
+ats13=500
+
+ats1=0
+
+ats13=0
+ats13=10.4
+ats13=15.6
+ats13=20.8
+ats13=31.25
+ats13=41.7
+ats13=62.5
+ats13=125
+ats13=250
+ats13=500
+ats13?
+
+ats1=4800
+
+# SpreadFactor
+ats14=5
+ats14=6
+ats14=12
+ats14=13
+ats14=9
+
+ats1=0
+
+ats14=5
+ats14=6
+ats14=12
+ats14=13
+ats14=9
+ats14?
+
+# CodingRate
+ats15=4
+ats15=5
+ats15=9
+ats15=8
+
+ats1=4800
+
+ats15=4
+ats15=5
+ats15=9
+ats15=8
+ats15?
+
+# SyncWord
+ats16=0
+ats16=255
+ats16=256
+ats16=18
+ats16?
+
+# PreambleLength
+ats17=5
+ats17=6
+ats17=255
+ats17=256
+ats17=65535
+ats17=65536
+ats17=8
+ats17?
+
+# FrameSize
+ats18=15
+ats18=16
+ats18=256
+ats18=255
+ats18=254
+ats18=253
+ats18?
+
+# FrameTimeout
+ats19=9
+ats19=10
+ats19=2000
+ats19=2001
+ats19=50
+ats19?
+
+# Debug
+ats20=1
+ats20=2
+ats20=0
+ats20?
+
+# Echo
+ats21=1
+ats21=2
+ats21=0
+ats21?
+
+# HeartBeatTimeout
+ats22=249
+ats22=250
+ats22=65535
+ats22=65536
+ats22=5000
+ats22?
+
+# FlowControl
+ats23=1
+ats23=2
+ats23=0
+ats23?
+
+# AutoTune
+ats24=1
+ats24=2
+ats24=0
+ats24?
+
+# DisplayPacketQuality
+ats25=1
+ats25=2
+ats25=0
+ats25?
+
+# MaxResends
+ats26=0
+ats26=255
+ats26=256
+ats26=2
+ats26?
+
+# SortParametersByName
+ats27=0
+ats27=2
+ats27=1
+ats27?
+
+# ParameterName
+ats28=0
+ats28=2
+ats28=1
+ats28?
+
+# Invalid commands
+ats29=1
+ats29?
+
+ats255=1
+ats255?
+
+ati0
+
+at&w
+
+atz
