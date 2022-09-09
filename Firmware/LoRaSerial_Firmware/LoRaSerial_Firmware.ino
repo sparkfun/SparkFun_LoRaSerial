@@ -201,6 +201,8 @@ void setup()
 
   beginSerial(settings.serialSpeed);
 
+  systemPrintln("LRS");
+
   beginBoard(); //Determine what hardware platform we are running on
 
   beginLoRa(); //Start radio
@@ -209,7 +211,7 @@ void setup()
 
   arch.beginWDT(); //Start watchdog timer
 
-  systemPrintln("LRS");
+  systemPrintln("LRS Setup Complete");
 }
 
 void loop()
