@@ -77,6 +77,19 @@ void systemPrintln(float value, uint8_t decimals)
   systemPrint("\r\n");
 }
 
+void systemPrint(double value, uint8_t decimals)
+{
+  char temp[20];
+  sprintf(temp, "%.*g", decimals, value);
+  systemPrint(temp);
+}
+
+void systemPrintln(double value, uint8_t decimals)
+{
+  systemPrint(value, decimals);
+  systemPrint("\r\n");
+}
+
 void systemPrintln()
 {
   systemPrint("\r\n");
