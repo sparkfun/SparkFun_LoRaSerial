@@ -472,8 +472,7 @@ void commandDisplay(uint8_t number, bool printName)
       systemPrint(*((float *)(command->setting)), command->digits);
       break;
     case TYPE_KEY:
-      for (uint8_t i = 0 ; i < sizeof(settings.encryptionKey) ; i++)
-        systemPrint(((uint8_t *)(command->setting))[i], HEX);
+      displayEncryptionKey((uint8_t *)(command->setting));
       break;
     case TYPE_U8:
       systemPrint(*(uint8_t *)(command->setting));
@@ -574,6 +573,13 @@ void commandSet(const char * buffer)
 
   //Report the error
   reportERROR();
+}
+
+//Display the encryption key
+void displayEncryptionKey(uint8_t * key)
+{
+  for (uint8_t index = 0 ; index < sizeof(settings.encryptionKey) ; index++)
+    systemPrint(key[index], HEX);
 }
 
 //Show current settings in user friendly way
