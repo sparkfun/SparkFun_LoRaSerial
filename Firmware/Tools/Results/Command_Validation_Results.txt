@@ -3,6 +3,30 @@ OK
 ERROR
 at&f
 OK
+# Display the commands
+ERROR
+at?
+Command summary:
+  AT? - Print the command summary
+  ATF - Enter training mode and return to factory defaults
+  ATI - Display the radio version
+  ATI? - Display the information commands
+  ATIn - Display system information
+  ATO - Exit command mode
+  ATSn=xxx - Set parameter n's value to xxx
+  ATSn? - Print parameter n's current value
+  ATT - Enter training mode
+  ATX - Stop the training server
+  ATZ - Reboot the radio
+ati?
+  ATI0 - Show user settable parameters
+  ATI1 - Show board variant
+  ATI2 - Show firmware version
+  ATI3 - Display RSSI value
+  ATI4 - Get random byte from RSSI
+  ATI5 - Show max possible bytes per second
+  ATI6 - Display AES key
+  ATI7 - Show current FHSS channel
 # Allow leading white space (space, tab, cr, lf)
 ERROR
         	ati
@@ -15,7 +39,7 @@ SparkFun LoRaSerial SAMD21 1W 915MHz
 ati3
 -157
 ati4
-213
+188
 ati5
 506
 ati6
