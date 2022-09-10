@@ -186,6 +186,7 @@ typedef void (* ARCH_SERIAL_PRINT)(const char * value);
 typedef uint8_t (* ARCH_SERIAL_READ)();
 typedef void (* ARCH_SERIAL_WRITE)(uint8_t value);
 typedef void (* ARCH_SYSTEM_RESET)();
+typedef void (* ARCH_UNIQUE_ID)(uint32_t * unique128_BitID);
 
 typedef struct _ARCH_TABLE
 {
@@ -202,4 +203,5 @@ typedef struct _ARCH_TABLE
   ARCH_SERIAL_READ serialRead;    //Read a byte from the serial port
   ARCH_SERIAL_WRITE serialWrite;  //Print the specified character
   ARCH_SYSTEM_RESET systemReset;  //Reset the system
+  ARCH_UNIQUE_ID uniqueID;        //Get the 128 bit unique ID value
 } ARCH_TABLE;

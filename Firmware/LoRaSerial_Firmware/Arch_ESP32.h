@@ -106,6 +106,15 @@ void esp32SystemReset()
   ESP.restart();
 }
 
+void esp32UniqueID(uint32_t * unique128_BitID)
+{
+  unique128_BitID[0] = 0;
+  unique128_BitID[1] = 0;
+  unique128_BitID[2] = 0;
+  unique128_BitID[3] = 0;
+  esp_read_mac((uint8_t *)unique128_BitID, ESP_MAC_WIFI_STA);
+}
+
 const ARCH_TABLE arch = {
   esp32BeginBoard,          //beginBoard
   esp32BeginSerial,         //beginSerial
@@ -119,7 +128,8 @@ const ARCH_TABLE arch = {
   esp32SerialPrint,         //serialPrint
   esp32SerialRead,          //serialRead
   esp32SerialWrite,         //serialWrite
-  esp32SystemReset          //systemReset
+  esp32SystemReset,         //systemReset
+  esp32UniqueID,            //uniqueID
 };
 
 #endif  //__ESP32_H__
