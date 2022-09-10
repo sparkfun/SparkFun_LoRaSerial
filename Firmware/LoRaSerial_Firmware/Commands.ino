@@ -124,6 +124,8 @@ bool commandAT(const char * commandString)
   //ATIx commands
   else if (commandString[2] == 'I' && commandLength == 4)
   {
+    uint32_t uniqueID[4];
+
     switch (commandString[3])
     {
       case ('?'): //ATI? - Display the information commands
@@ -135,6 +137,7 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI5 - Show max possible bytes per second");
         systemPrintln("  ATI6 - Display AES key");
         systemPrintln("  ATI7 - Show current FHSS channel");
+        systemPrintln("  ATI8 - Display unique ID");
         break;
       case ('0'): //ATI0 - Show user settable parameters
         displayParameters();
@@ -165,6 +168,11 @@ bool commandAT(const char * commandString)
         break;
       case ('7'): //ATI7 - Show current FHSS channel
         systemPrintln(radio.getFHSSChannel());
+        break;
+      case ('8'): //ATI8 - Display the unique ID
+        arch.uniqueID(uniqueID);
+        systemPrintUniqueID(uniqueID);
+        systemPrintln();
         break;
       default:
         return false;

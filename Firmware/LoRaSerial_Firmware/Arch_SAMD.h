@@ -207,6 +207,15 @@ void samdSystemReset()
   NVIC_SystemReset();
 }
 
+void samdUniqueID(uint32_t * unique128_BitID)
+{
+  //Read the CPU's unique ID value
+  unique128_BitID[0] = *(uint32_t *)0x0080a00c;
+  unique128_BitID[1] = *(uint32_t *)0x0080a040;
+  unique128_BitID[2] = *(uint32_t *)0x0080a044;
+  unique128_BitID[3] = *(uint32_t *)0x0080a048;
+}
+
 const ARCH_TABLE arch = {
   samdBeginBoard,             //beginBoard
   samdBeginSerial,            //beginSerial
@@ -220,7 +229,8 @@ const ARCH_TABLE arch = {
   samdSerialPrint,            //serialPrint
   samdSerialRead,             //serialRead
   samdSerialWrite,            //serialWrite
-  samdSystemReset             //systemReset
+  samdSystemReset,            //systemReset
+  samdUniqueID,               //uniqueID
 };
 
 #endif  //__SAMD_H__

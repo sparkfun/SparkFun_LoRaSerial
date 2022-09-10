@@ -27,6 +27,7 @@ ati?
   ATI5 - Show max possible bytes per second
   ATI6 - Display AES key
   ATI7 - Show current FHSS channel
+  ATI8 - Display unique ID
 # Allow leading white space (space, tab, cr, lf)
 ERROR
         	ati
@@ -39,7 +40,7 @@ SparkFun LoRaSerial SAMD21 1W 915MHz
 ati3
 -157
 ati4
-188
+149
 ati5
 506
 ati6
@@ -47,6 +48,8 @@ ati6
 ati7
 0
 ati8
+75E1FA5B4A34555020312E340F2715FF
+ati9
 ERROR
 ati0
 ATS0:SerialSpeed=57600
