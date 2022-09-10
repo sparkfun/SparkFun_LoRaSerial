@@ -2,6 +2,10 @@
 #Restore factory defaults
 at&f
 
+# Display the commands
+at?
+ati?
+
 # Allow leading white space (space, tab, cr, lf)
         	ati
         ati1
