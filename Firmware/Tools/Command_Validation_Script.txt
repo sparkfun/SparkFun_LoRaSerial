@@ -417,9 +417,14 @@ ats43=1
 ats43=2
 ats43=0
 
-# Invalid commands
+# PrintTxError
 ats44=1
-ats44?
+ats44=2
+ats44=0
+
+# Invalid commands
+ats45=1
+ats45?
 
 ats255=1
 ats255?

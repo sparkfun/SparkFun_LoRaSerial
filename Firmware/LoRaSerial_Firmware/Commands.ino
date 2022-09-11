@@ -495,6 +495,7 @@ const COMMAND_ENTRY commands[] =
   {41,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable: 63-32", &settings.triggerEnable},
   {42,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugReceive",         &settings.debugReceive},
   {43,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &settings.debugTransmit},
+  {44,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTxError",         &settings.printTxError},
 
   //Define any user parameters starting at 255 decrementing towards 0
 };

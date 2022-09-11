@@ -918,8 +918,11 @@ void sendPacket()
     if (timeToHop) hopChannel();
   }
   else
-    if (settings.debugTransmit)
-      systemPrintln("Error: TX");
+    if (settings.debugTransmit || settings.printTxError)
+    {
+      systemPrint("TX Error: ");
+      systemPrintln(state);
+    }
 
   packetTimestamp = millis(); //Move timestamp even if error
 }

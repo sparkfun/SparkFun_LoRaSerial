@@ -40,7 +40,7 @@ SparkFun LoRaSerial SAMD21 1W 915MHz
 ati3
 -157
 ati4
-128
+130
 ati5
 506
 ati6
@@ -96,6 +96,7 @@ ATS40:TriggerEnable: 31-0=-1
 ATS41:TriggerEnable: 63-32=-1
 ATS42:DebugReceive=0
 ATS43:DebugTransmit=0
+ATS44:PrintTxError=0
 ats28=0
 OK
 # SerialSpeed
@@ -839,11 +840,21 @@ ERROR
 ats43=0
 DebugTransmit=0
 OK
-# Invalid commands
+# PrintTxError
 ERROR
 ats44=1
+PrintTxError=1
+OK
+ats44=2
 ERROR
-ats44?
+ats44=0
+PrintTxError=0
+OK
+# Invalid commands
+ERROR
+ats45=1
+ERROR
+ats45?
 ERROR
 ats255=1
 ERROR
@@ -883,6 +894,7 @@ ATS29:PrintFrequency=0
 ATS28:PrintParameterName=1
 ATS36:PrintPktData=0
 ATS35:PrintRfData=0
+ATS44:PrintTxError=0
 ATS0:SerialSpeed=57600
 ATS27:SortParametersByName=1
 ATS14:SpreadFactor=9
