@@ -796,26 +796,70 @@ void sendCommandResponseDataPacket()
 void sendPacket()
 {
   /*
-      +---  ...  ---+--------+---------+
-      |    Data     | NET ID | Trailer |
-      |   n bytes   | 8 bits | 8 bits  |
-      +-------------+--------+---------+
-      |                                |
-      |<--------- packetSize --------->|
+      +---  ...  ---+---------------------+--------+---------+
+      |    Data     | Optional SF6 Length | NET ID | Trailer |
+      |   n bytes   |       8 bits        | 8 bits | 8 bits  |
+      +-------------+---------------------+--------+---------+
+      |                                                      |
+      |<-------------------- packetSize -------------------->|
   */
+
+  if (settings.debugTransmit)
+  {
+    if ((settings.radioSpreadFactor == 6) && (packetSize > 2))
+    {
+      //Display the packet length
+      petWDT();
+      systemPrint("TX: SF6 length ");
+      systemPrint(outgoingPacket[packetSize - 3]);
+      systemPrint(" (0x");
+      systemPrint(outgoingPacket[packetSize - 3], HEX);
+      systemPrintln(") bytes");
+    }
+  }
 
   //Attach netID and control byte to end of packet
   outgoingPacket[packetSize - 2] = settings.netID;
   outgoingPacket[packetSize - 1] = *(uint8_t *)&responseTrailer;
 
+  //Display the added bytes
+  if (settings.debugTransmit)
+  {
+    petWDT();
+    systemPrint("TX: netID ");
+    systemPrint(outgoingPacket[packetSize - 2]);
+    systemPrint(" (0x");
+    systemPrint(outgoingPacket[packetSize - 2], HEX);
+    systemPrintln(")");
+
+    petWDT();
+    systemPrint("TX: Trailer 0x");
+    systemPrintln(outgoingPacket[packetSize - 1], HEX);
+    if (outgoingPacket[packetSize - 1])
+    {
+      if (responseTrailer.resend)                systemPrintln("    0x01: resend");
+      if (responseTrailer.ack)                   systemPrintln("    0x02: ack");
+      if (responseTrailer.remoteCommand)         systemPrintln("    0x04: remoteCommand");
+      if (responseTrailer.remoteCommandResponse) systemPrintln("    0x08: remoteCommandResponse");
+      if (responseTrailer.train)                 systemPrintln("    0x10: train");
+    }
+    petWDT();
+  }
+
   //Apply AES and whitening only to new packets, not resends
   if (responseTrailer.resend == 0)
   {
     //Display the packet contents
-    if (settings.printPktData)
+    if (settings.printPktData || settings.debugTransmit)
     {
-      systemPrintln("TX packet data:");
-      dumpBuffer(outgoingPacket, packetSize);
+      petWDT();
+      systemPrint("TX: Packet data ");
+      systemPrint(packetSize);
+      systemPrint(" (0x");
+      systemPrint(packetSize, HEX);
+      systemPrintln(") bytes");
+      if (settings.printPktData)
+        dumpBuffer(outgoingPacket, packetSize);
     }
 
     if (settings.encryptData == true)
@@ -828,7 +872,12 @@ void sendPacket()
   //Display the transmitted packet bytes
   if (settings.printRfData)
   {
-    systemPrintln("TX data:");
+    petWDT();
+    systemPrint("TX: Data ");
+    systemPrint(packetSize);
+    systemPrint(" (0x");
+    systemPrint(packetSize, HEX);
+    systemPrintln(") bytes");
     dumpBuffer(outgoingPacket, packetSize);
   }
 
@@ -838,8 +887,13 @@ void sendPacket()
 
   setRadioFrequency(false); //Return home before every transmission
 
-  LRS_DEBUG_PRINT("Transmitting @ ");
-  LRS_DEBUG_PRINTLN(channels[radio.getFHSSChannel()], 3);
+  if (settings.debugTransmit)
+  {
+    systemPrint("TX: Transmitting @ ");
+    systemPrint(channels[radio.getFHSSChannel()], 3);
+    systemPrintln(" MHz");
+    petWDT();
+  }
 
   int state = radio.startTransmit(outgoingPacket, packetSize);
   if (state == RADIOLIB_ERR_NONE)
@@ -852,17 +906,20 @@ void sendPacket()
 
     packetSent++;
 
-    LRS_DEBUG_PRINT(F("PacketAirTime: "));
-    LRS_DEBUG_PRINTLN(packetAirTime);
-    LRS_DEBUG_PRINT(F("responseDelay: "));
-    LRS_DEBUG_PRINTLN(responseDelay);
+    if (settings.debugTransmit)
+    {
+      systemPrint("TX: PacketAirTime: ");
+      systemPrintln(packetAirTime);
+      systemPrint("TX: responseDelay: ");
+      systemPrintln(responseDelay);
+      petWDT();
+    }
 
     if (timeToHop) hopChannel();
   }
   else
-  {
-    LRS_DEBUG_PRINTLN(F("Error: TX"));
-  }
+    if (settings.debugTransmit)
+      systemPrintln("Error: TX");
 
   packetTimestamp = millis(); //Move timestamp even if error
 }

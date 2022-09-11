@@ -412,9 +412,14 @@ ats42=1
 ats42=2
 ats42=0
 
-# Invalid commands
+# DebugTransmit
 ats43=1
-ats43?
+ats43=2
+ats43=0
+
+# Invalid commands
+ats44=1
+ats44?
 
 ats255=1
 ats255?
