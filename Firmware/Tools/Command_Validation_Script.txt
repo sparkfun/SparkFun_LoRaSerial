@@ -407,9 +407,14 @@ ats40=4294967295
 ats41=0
 ats41=4294967295
 
-# Invalid commands
+# DebugReceive
 ats42=1
-ats42?
+ats42=2
+ats42=0
+
+# Invalid commands
+ats43=1
+ats43?
 
 ats255=1
 ats255?

@@ -169,6 +169,7 @@ typedef struct struct_settings {
   bool triggerWidthIsMultiplier = true; //Use the trigger width as a multiplier
   uint32_t triggerEnable = 0xffffffff; //Determine which triggers are enabled: 31 - 0
   uint32_t triggerEnable2 = 0xffffffff; //Determine which triggers are enabled: 63 - 32
+  bool debugReceive = false; //Print receive processing
 } Settings;
 Settings settings;
 
