@@ -7,30 +7,33 @@
 //Check to see if a valid command has been received
 void checkCommand()
 {
+  char * commandString;
+  const Settings defaultSettings;
+
   systemPrintln();
 
-  trimCommand(); //Remove any leading whitespace
+  commandString = trimCommand(); //Remove any leading whitespace
 
-  commandBuffer[commandLength] = '\0'; //Terminate buffer
+  commandString[commandLength] = '\0'; //Terminate buffer
   if (commandLength < 2) //Too short
     reportERROR();
 
   //Check for 'AT' or 'RT'
-  else if (isATcommand(commandBuffer) == false && isRTcommand(commandBuffer) == false)
+  else if (isATcommand(commandString) == false && isRTcommand(commandString) == false)
     reportERROR();
 
   //Pass 'RT' commands out the RF link
-  else if (isRTcommand(commandBuffer) == true)
-    sendRemoteCommand();
+  else if (isRTcommand(commandString) == true)
+    sendRemoteCommand(commandString);
 
   //'AT'
   else if (commandLength == 2)
     reportOK();
 
-  //ATI, ATO, ATZ commands
+  //ATI, ATO, ATR, ATZ commands
   else if (commandLength == 3)
   {
-    switch (commandBuffer[2])
+    switch (commandString[2])
     {
       case ('I'):
         //Shows the radio version
@@ -86,9 +89,9 @@ void checkCommand()
   }
 
   //ATIx commands
-  else if (commandBuffer[2] == 'I' && commandLength == 4)
+  else if (commandString[2] == 'I' && commandLength == 4)
   {
-    switch (commandBuffer[3])
+    switch (commandString[3])
     {
       case ('0'): //ATI0 - Show user settable parameters
         displayParameters();
@@ -127,12 +130,12 @@ void checkCommand()
   }
 
   //AT&x commands
-  else if (commandBuffer[2] == '&')
+  else if (commandString[2] == '&')
   {
     //&W, &F, &T, and &T=RSSI/TDM
     if (commandLength == 4)
     {
-      switch (commandBuffer[3])
+      switch (commandString[3])
       {
         case ('W'): //AT&W - Write parameters to the flash memory
           {
@@ -156,7 +159,7 @@ void checkCommand()
     else
     {
       //RSSI
-      if (strcmp_P(commandBuffer, PSTR("AT&T=RSSI")) == 0) //Enable packet quality reporting
+      if (strcmp_P(commandString, PSTR("AT&T=RSSI")) == 0) //Enable packet quality reporting
       {
         settings.displayPacketQuality = true;
         reportOK();
@@ -169,8 +172,8 @@ void checkCommand()
   }
 
   //ATSn? or ATSn=X
-  else if (commandBuffer[2] == 'S')
-    commandSet(&commandBuffer[3]);
+  else if (commandString[2] == 'S')
+    commandSet(&commandString[3]);
 
   //Unknown command
   else
@@ -208,7 +211,7 @@ bool isRTcommand(char *buffer)
 }
 
 //Send the AT command over RF link
-void sendRemoteCommand()
+void sendRemoteCommand(const char * commandString)
 {
   //We cannot send a command if not linked
   if (isLinked() == false)
@@ -220,19 +223,22 @@ void sendRemoteCommand()
   //Move this command into the transmit buffer
   for (int x = 0 ; x < commandLength ; x++)
   {
-    commandTXBuffer[commandTXHead++] = commandBuffer[x];
+    commandTXBuffer[commandTXHead++] = commandString[x];
     commandTXHead %= sizeof(commandTXBuffer);
   }
 }
 
 //Remove any preceeding or following whitespace chars
-void trimCommand()
+char * trimCommand()
 {
-  while (isspace(commandBuffer[0]))
+  char * commandString = commandBuffer;
+
+  while (isspace(*commandString))
   {
-    strcpy(commandBuffer, &commandBuffer[1]);
+    commandString++;
     commandLength--;
   }
+  return commandString;
 }
 
 enum {
