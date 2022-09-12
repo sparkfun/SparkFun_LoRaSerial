@@ -51,47 +51,50 @@ typedef enum
 TrainStates trainState = TRAIN_NO_PRESS;
 
 enum
-{
-  TRIGGER_ACK_PROCESSED = 25,
-  TRIGGER_DATA_SEND = 50,
-  TRIGGER_RTR_2BYTE = 75,
-  TRIGGER_RTR_255BYTE = 100,
+{                                             //#, Width - Computed with:
+                                              //        triggerWidth = 25
+                                              //        triggerUseWidthAsMultiplier = true
+                                              //        triggerEnable = 0xffffffff
+  TRIGGER_ACK_PROCESSED = 0,                  // 0,   25us
+  TRIGGER_DATA_SEND,                          // 1,   50us
+  TRIGGER_RTR_2BYTE,                          // 2,   75us
+  TRIGGER_RTR_255BYTE,                        // 3,  100us
 
-  TRIGGER_LINK_SEND_PING = 125,
-  TRIGGER_LINK_SENT_ACK_PACKET = 150,
-  TRIGGER_LINK_NOISE_TRIGGERED_HOP = 175,
-  TRIGGER_LINK_NOISE_TRIGGERED_HOP_ACK_WAIT = 200,
-  TRIGGER_LINK_NO_ACK_GIVEUP = 225,
-  TRIGGER_LINK_PACKET_RESEND = 250,
-  TRIGGER_LINK_DATA_PACKET = 275,
-  TRIGGER_LINK_PACKET_RECEIVED = 300,
+  TRIGGER_LINK_SEND_PING,                     // 4,  125us
+  TRIGGER_LINK_SENT_ACK_PACKET,               // 5,  150 us
+  TRIGGER_LINK_NOISE_TRIGGERED_HOP,           // 6,  175us
+  TRIGGER_LINK_NOISE_TRIGGERED_HOP_ACK_WAIT,  // 7,  200us
+  TRIGGER_LINK_NO_ACK_GIVEUP,                 // 8,  225us
+  TRIGGER_LINK_PACKET_RESEND,                 // 9,  250us
+  TRIGGER_LINK_DATA_PACKET,                   //10,  275us
+  TRIGGER_LINK_PACKET_RECEIVED,               //11,  300us
 
-  TRIGGER_NOLINK_SEND_PING = 325,
-  TRIGGER_NOLINK_SEND_ACK_PACKET = 350,
-  TRIGGER_NOLINK_NOISE_TRIGGERED_HOP = 375,
-  TRIGGER_NOLINK_NO_ACK_GIVEUP = 400,
-  TRIGGER_NOLINK_IDENT_PACKET = 425,
+  TRIGGER_NOLINK_SEND_PING,                   //12,  325us
+  TRIGGER_NOLINK_SEND_ACK_PACKET,             //13,  350us
+  TRIGGER_NOLINK_NOISE_TRIGGERED_HOP,         //14,  375us
+  TRIGGER_NOLINK_NO_ACK_GIVEUP,               //15,  400us
+  TRIGGER_NOLINK_IDENT_PACKET,                //16,  425us
 
-  TRIGGER_BROADCAST_DATA_PACKET = 450,
-  TRIGGER_BROADCAST_PACKET_RECEIVED = 475,
+  TRIGGER_BROADCAST_DATA_PACKET,              //17,  450us
+  TRIGGER_BROADCAST_PACKET_RECEIVED,          //18,  475us
 
-  TRIGGER_RX_IN_PROGRESS = 500,
-  TRIGGER_LINK_BAD_PACKET = 525,
-  TRIGGER_LINK_DUPLICATE_PACKET = 550,
-  TRIGGER_LINK_CONTROL_PACKET = 575,
+  TRIGGER_RX_IN_PROGRESS,                     //19,  500us
+  TRIGGER_LINK_BAD_PACKET,                    //20,  525us
+  TRIGGER_LINK_DUPLICATE_PACKET,              //21,  550us
+  TRIGGER_LINK_CONTROL_PACKET,                //22,  575us
 
-  TRIGGER_TRAINING_BAD_PACKET = 600,
-  TRIGGER_TRAINING_CONTROL_PACKET = 625,
-  TRIGGER_TRAINING_DATA_PACKET = 650,
-  TRIGGER_TRAINING_NO_ACK = 675,
+  TRIGGER_TRAINING_BAD_PACKET,                //23,  600us
+  TRIGGER_TRAINING_CONTROL_PACKET,            //24,  625us
+  TRIGGER_TRAINING_DATA_PACKET,               //25,  650us
+  TRIGGER_TRAINING_NO_ACK,                    //26,  675us
 
-  TRIGGER_COMMAND_CONTROL_PACKET = 700,
-  TRIGGER_COMMAND_CONTROL_PACKET_ACK = 725,
-  TRIGGER_COMMAND_DATA_PACKET_ACK = 750,
-  TRIGGER_COMMAND_PACKET_RECEIVED = 775,
-  TRIGGER_COMMAND_SENT_ACK_PACKET = 800,
-  TRIGGER_COMMAND_PACKET_RESEND = 825,
-  TRIGGER_PACKET_COMMAND_DATA = 850,
+  TRIGGER_COMMAND_CONTROL_PACKET,             //27,  700us
+  TRIGGER_COMMAND_CONTROL_PACKET_ACK,         //28,  725us
+  TRIGGER_COMMAND_DATA_PACKET_ACK,            //29,  750us
+  TRIGGER_COMMAND_PACKET_RECEIVED,            //30,  775us
+  TRIGGER_COMMAND_SENT_ACK_PACKET,            //31,  800us
+  TRIGGER_COMMAND_PACKET_RESEND,              //32,  825us
+  TRIGGER_PACKET_COMMAND_DATA,                //33,  850us
 };
 
 //Control where to print command output
@@ -162,6 +165,10 @@ typedef struct struct_settings {
   bool printRfData = false; //Print RX and TX data
   bool printPktData = false; //Print data, before encryption and after decryption
   bool verifyRxNetID = false; //Verify RX netID value when not operating in point-to-point mode
+  uint8_t triggerWidth = 25; //Trigger width in microSeconds or multipler for trigger width
+  bool triggerWidthIsMultiplier = true; //Use the trigger width as a multiplier
+  uint32_t triggerEnable = 0xffffffff; //Determine which triggers are enabled: 31 - 0
+  uint32_t triggerEnable2 = 0xffffffff; //Determine which triggers are enabled: 63 - 32
 } Settings;
 Settings settings;
 

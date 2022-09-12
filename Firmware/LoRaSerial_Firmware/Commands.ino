@@ -16,6 +16,7 @@ enum {
   TYPE_SPEED_SERIAL,
   TYPE_U8,
   TYPE_U16,
+  TYPE_U32,
 } TYPES;
 
 typedef bool (* VALIDATION_ROUTINE)(void * value, uint32_t valMin, uint32_t valMax);
@@ -33,7 +34,6 @@ typedef struct _COMMAND_ENTRY
 } COMMAND_ENTRY;
 
 typedef bool (* COMMAND_ROUTINE)(const char * commandString);
-
 typedef struct
 {
   const char * prefix;
@@ -50,7 +50,7 @@ bool commandAT(const char * commandString)
   if (commandLength == 2)
     reportOK();
 
-  //ATI, ATO, ATR, ATZ commands
+  //ATI, ATO, ATZ commands
   else if (commandLength == 3)
   {
     switch (commandString[2])
@@ -487,6 +487,13 @@ const COMMAND_ENTRY commands[] =
   {35,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintRfData",          &settings.printRfData},
   {36,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintPktData",         &settings.printPktData},
   {37,    0,   1,    0, TYPE_BOOL,         valInt,         "VerifyRxNetID",        &settings.verifyRxNetID},
+  {38,    1, 255,    0, TYPE_U8,           valInt,         "TriggerWidth",         &settings.triggerWidth},
+  {39,    0,   1,    0, TYPE_BOOL,         valInt,         "TriggerWidthIsMultiplier", &settings.triggerWidthIsMultiplier},
+
+  {40,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable: 31-0",  &settings.triggerEnable},
+  {41,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable: 63-32", &settings.triggerEnable},
+
+  //Define any user parameters starting at 255 decrementing towards 0
 };
 
 const int commandCount = sizeof(commands) / sizeof(commands[0]);
@@ -559,6 +566,7 @@ void commandDisplay(uint8_t number, bool printName)
       break;
     case TYPE_SPEED_AIR:
     case TYPE_SPEED_SERIAL:
+    case TYPE_U32:
       systemPrint(*(uint32_t *)(command->setting));
       break;
   }
@@ -622,6 +630,7 @@ bool commandSet(const char * commandString)
         break;
       case TYPE_SPEED_AIR:
       case TYPE_SPEED_SERIAL:
+      case TYPE_U32:
         valid = command->validate((void *)&settingValue, command->minValue, command->maxValue);
         if (valid)
           *(uint32_t *)(command->setting) = settingValue;
