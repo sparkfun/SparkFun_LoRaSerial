@@ -21,6 +21,7 @@ PacketType identifyPacketType()
         |                                                         |
         |<-------------------- receivedBytes -------------------->|
   */
+
   //Display the received data bytes
   if (settings.printRfData || settings.debugReceive)
   {
@@ -31,7 +32,7 @@ PacketType identifyPacketType()
     systemPrint(receivedBytes, HEX);
     systemPrintln(") bytes");
     petWDT();
-    if (settings.printRfData)
+    if (settings.printRfData && receivedBytes)
       dumpBuffer(incomingBuffer, receivedBytes);
   }
 
@@ -41,20 +42,22 @@ PacketType identifyPacketType()
   if (settings.encryptData == true)
     decryptBuffer(incomingBuffer, receivedBytes);
 
-  //Display the packet contents
-  if (settings.printPktData)
-  {
-    systemPrintln("RX packet data:");
-    dumpBuffer(incomingBuffer, receivedBytes);
-  }
-
-  LRS_DEBUG_PRINT("\n\rReceived bytes: ");
-  LRS_DEBUG_PRINTLN(receivedBytes);
-
   //All packets must include the 2-byte control header
   if (receivedBytes < 2)
   {
-    LRS_DEBUG_PRINTLN("Bad packet");
+    //Display the packet contents
+    if (settings.printPktData || settings.debugReceive)
+    {
+      petWDT();
+      systemPrint("RX: Bad packet");
+      systemPrint(receivedBytes);
+      systemPrint(" (0x");
+      systemPrint(receivedBytes, HEX);
+      systemPrintln(") bytes");
+      petWDT();
+      if (settings.printRfData && receivedBytes)
+          dumpBuffer(incomingBuffer, receivedBytes);
+    }
     return (PACKET_BAD);
   }
 
@@ -68,56 +71,24 @@ PacketType identifyPacketType()
         |<---------- receivedBytes ----------->|
   */
 
-  //Display the control header
-  LRS_DEBUG_PRINT("ProcessPacket NetID: 0x");
-  if (incomingBuffer[receivedBytes - 2] < 0x10) LRS_DEBUG_PRINT("0");
-  LRS_DEBUG_PRINT(incomingBuffer[receivedBytes - 2], HEX);
-
-  LRS_DEBUG_PRINT(" Control: 0x");
-  if (incomingBuffer[receivedBytes - 1] < 0x10) LRS_DEBUG_PRINT("0");
-  LRS_DEBUG_PRINT(incomingBuffer[receivedBytes - 1], HEX);
-  LRS_DEBUG_PRINTLN();
-
   //Pull out control header
   uint8_t receivedNetID = incomingBuffer[receivedBytes - 2];
   *(uint8_t *)&receiveTrailer = incomingBuffer[receivedBytes - 1];
-
-  //SF6 requires an implicit header which means there is no dataLength in the header
-  //Instead, we manually store it 3 bytes from the end (before NetID)
-  if (settings.radioSpreadFactor == 6)
-  {
-    //We've either received a control packet (2 bytes) or a data packet
-    if (receivedBytes > 2)
-    {
-      receivedBytes = incomingBuffer[receivedBytes - 3]; //Obtain actual packet data length
-      receivedBytes -= 1; //Remove the manual packetSize byte from consideration
-    }
-    LRS_DEBUG_PRINT("SF6 Received bytes: ");
-    LRS_DEBUG_PRINTLN(receivedBytes);
-  }
-
   receivedBytes -= 2; //Remove control bytes
 
-  /*
-        +-------------------------+------------+--------+---------+
-        |          data           | SF6 length | NET ID | Control |
-        |         n bytes         |   8 bits   | 8 bits | 8 bits  |
-        +-------------------------+------------+--------+---------+
-        |                         |
-        |<---- receivedBytes ---->|
-  */
-
+  //Display the control header
   if (settings.debugReceive)
   {
     petWDT();
-    systemPrint("RX: netID ");
+    systemPrint("RX: NetID ");
     systemPrint(receivedNetID);
     systemPrint(" (0x");
     systemPrint(receivedNetID, HEX);
     systemPrintln(")");
 
     petWDT();
-    systemPrint("RX: Trailer 0x");
+    systemPrint("RX: Control");
+    systemPrint(" 0x");
     systemPrintln(*(uint8_t *)&receiveTrailer, HEX);
     if (*(uint8_t *)&receiveTrailer)
     {
@@ -129,6 +100,37 @@ PacketType identifyPacketType()
     }
     petWDT();
   }
+
+  /*
+        +-------------------------+------------+
+        |                         |  Optional  |
+        |          data           | SF6 length |
+        |         n bytes         |   8 bits   |
+        +-------------------------+------------+
+        |                                      |
+        |<---------- receivedBytes ----------->|
+  */
+
+  //SF6 requires an implicit header which means there is no dataLength in the header
+  //Instead, we manually store it after the data and before NetID
+  if (settings.radioSpreadFactor == 6)
+  {
+    //We've either received a control packet (2 bytes) or a data packet
+    if (receivedBytes)
+    {
+      receivedBytes -= 1; //Remove the manual packetSize byte from consideration
+      receivedBytes = incomingBuffer[receivedBytes]; //Obtain actual packet data length
+    }
+  }
+
+  /*
+        +-------------------------+
+        |          data           |
+        |         n bytes         |
+        +-------------------------+
+        |                         |
+        |<---- receivedBytes ---->|
+  */
 
   //Display the packet contents
   if (settings.printPktData || settings.debugReceive)
@@ -217,7 +219,7 @@ PacketType identifyPacketType()
     }
 
     //If this packet is marked as a remote command, it's either an ack or a zero length packet (not known)
-    else if (receiveTrailer.remoteCommand == 1)
+    if (receiveTrailer.remoteCommand == 1)
     {
       if (receiveTrailer.ack == 1)
       {
@@ -238,7 +240,7 @@ PacketType identifyPacketType()
     }
 
     //If this packet is marked as a remote command response, it's either an ack or a zero length packet (not known)
-    else if (receiveTrailer.remoteCommandResponse == 1)
+    if (receiveTrailer.remoteCommandResponse == 1)
     {
       if (receiveTrailer.ack == 1)
       {
@@ -287,7 +289,7 @@ PacketType identifyPacketType()
     return (PACKET_TRAINING_DATA);
   }
 
-  else if (receiveTrailer.remoteCommand == 1)
+  if (receiveTrailer.remoteCommand == 1)
   {
     //New data from remote
     if (settings.debugReceive)
@@ -298,7 +300,7 @@ PacketType identifyPacketType()
     return (PACKET_COMMAND_DATA);
   }
 
-  else if (receiveTrailer.remoteCommandResponse == 1)
+  if (receiveTrailer.remoteCommandResponse == 1)
   {
     //New response data from remote
     if (settings.debugReceive)
@@ -309,7 +311,12 @@ PacketType identifyPacketType()
     return (PACKET_COMMAND_RESPONSE_DATA);
   }
 
-  LRS_DEBUG_PRINTLN("RX: Data");
+  //Return the data to the user
+  if (settings.debugReceive)
+  {
+    petWDT();
+    systemPrintln("RX: Return user data");
+  }
   return (PACKET_DATA);
 }
 
