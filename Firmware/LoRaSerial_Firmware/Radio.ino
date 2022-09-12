@@ -7,16 +7,32 @@
 PacketType identifyPacketType()
 {
   uint8_t incomingBuffer[MAX_PACKET_SIZE];
-  radio.readData(incomingBuffer, MAX_PACKET_SIZE);
 
   //Receive the data packet
+  radio.readData(incomingBuffer, MAX_PACKET_SIZE);
   uint8_t receivedBytes = radio.getPacketLength();
 
+  /*
+        +-------------------------+------------+--------+---------+
+        |                         |  Optional  |        |         |
+        |          data           | SF6 length | NET ID | Control |
+        |       0 - n bytes       |   8 bits   | 8 bits | 8 bits  |
+        +-------------------------+------------+--------+---------+
+        |                                                         |
+        |<-------------------- receivedBytes -------------------->|
+  */
   //Display the received data bytes
-  if (settings.printRfData)
+  if (settings.printRfData || settings.debugReceive)
   {
-    systemPrintln("RX data:");
-    dumpBuffer(incomingBuffer, receivedBytes);
+    petWDT();
+    systemPrint("RX: Data ");
+    systemPrint(receivedBytes);
+    systemPrint(" (0x");
+    systemPrint(receivedBytes, HEX);
+    systemPrintln(") bytes");
+    petWDT();
+    if (settings.printRfData)
+      dumpBuffer(incomingBuffer, receivedBytes);
   }
 
   if (settings.dataScrambling == true)
@@ -43,16 +59,13 @@ PacketType identifyPacketType()
   }
 
   /*
-        |<--------------- data --------------->|
+        +-------------------------+------------+--------+---------+
+        |                         |  Optional  |        |         |
+        |          data           | SF6 length | NET ID | Control |
+        |         n bytes         |   8 bits   | 8 bits | 8 bits  |
+        +-------------------------+------------+--------+---------+
         |                                      |
-
-        +-------------------------+------------+--------+---------+
-        |                         | SF6 length | NET ID | Control |
-        |                         |   8 bits   | 8 bits | 8 bits  |
-        +-------------------------+------------+--------+---------+
-
-        |                                                         |
-        |<-------------------- receivedBytes -------------------->|
+        |<---------- receivedBytes ----------->|
   */
 
   //Display the control header
@@ -85,11 +98,63 @@ PacketType identifyPacketType()
 
   receivedBytes -= 2; //Remove control bytes
 
+  /*
+        +-------------------------+------------+--------+---------+
+        |          data           | SF6 length | NET ID | Control |
+        |         n bytes         |   8 bits   | 8 bits | 8 bits  |
+        +-------------------------+------------+--------+---------+
+        |                         |
+        |<---- receivedBytes ---->|
+  */
+
+  if (settings.debugReceive)
+  {
+    petWDT();
+    systemPrint("RX: netID ");
+    systemPrint(receivedNetID);
+    systemPrint(" (0x");
+    systemPrint(receivedNetID, HEX);
+    systemPrintln(")");
+
+    petWDT();
+    systemPrint("RX: Trailer 0x");
+    systemPrintln(*(uint8_t *)&receiveTrailer, HEX);
+    if (*(uint8_t *)&receiveTrailer)
+    {
+      if (receiveTrailer.resend)                systemPrintln("    0x01: resend");
+      if (receiveTrailer.ack)                   systemPrintln("    0x02: ack");
+      if (receiveTrailer.remoteCommand)         systemPrintln("    0x04: remoteCommand");
+      if (receiveTrailer.remoteCommandResponse) systemPrintln("    0x08: remoteCommandResponse");
+      if (receiveTrailer.train)                 systemPrintln("    0x10: train");
+    }
+    petWDT();
+  }
+
+  //Display the packet contents
+  if (settings.printPktData || settings.debugReceive)
+  {
+    petWDT();
+    systemPrint("RX: Packet data ");
+    systemPrint(receivedBytes);
+    systemPrint(" (0x");
+    systemPrint(receivedBytes, HEX);
+    systemPrintln(") bytes");
+    petWDT();
+    if (settings.printPktData && receivedBytes)
+      dumpBuffer(incomingBuffer, receivedBytes);
+  }
+
   if ((receivedNetID != settings.netID)
     && ((settings.pointToPoint == true) || (settings.verifyRxNetID == true)))
   {
-    LRS_DEBUG_PRINT("NetID mismatch: ");
-    LRS_DEBUG_PRINTLN(receivedNetID);
+    if (settings.debugReceive)
+    {
+      petWDT();
+      systemPrint("RX: netID ");
+      systemPrint(receivedNetID);
+      systemPrint(" expecting ");
+      systemPrintln(settings.netID);
+    }
     return (PACKET_NETID_MISMATCH);
   }
 
@@ -97,9 +162,15 @@ PacketType identifyPacketType()
   //Handle ACKs and duplicate packets
   //----------
 
-  if (receiveTrailer.ack == 1 && receiveTrailer.remoteCommand == 0 && receiveTrailer.remoteCommandResponse == 0)
+  if ((receiveTrailer.ack == 1)
+    && (receiveTrailer.remoteCommand == 0)
+    && (receiveTrailer.remoteCommandResponse == 0))
   {
-    LRS_DEBUG_PRINTLN("RX: Ack packet");
+    if (settings.debugReceive)
+    {
+      petWDT();
+      systemPrintln("RX: Ack packet");
+    }
     return (PACKET_ACK);
   }
 
@@ -112,7 +183,11 @@ PacketType identifyPacketType()
       //Check packet contents
       if (memcmp(lastPacket, incomingBuffer, lastPacketSize) == 0)
       {
-        LRS_DEBUG_PRINTLN("Duplicate received. Acking again.");
+        if (settings.debugReceive)
+        {
+          petWDT();
+          systemPrintln("RX: Duplicate received. Acking again.");
+        }
         return (PACKET_DUPLICATE); //It's a duplicate. Ack then ignore
       }
     }
@@ -133,7 +208,11 @@ PacketType identifyPacketType()
     //If this packet is marked as training data, someone is sending training ping
     if (receiveTrailer.train == 1)
     {
-      LRS_DEBUG_PRINTLN("RX: Training Control Packet");
+      if (settings.debugReceive)
+      {
+        petWDT();
+        systemPrintln("RX: Training Control Packet");
+      }
       return (PACKET_TRAINING_PING);
     }
 
@@ -142,11 +221,19 @@ PacketType identifyPacketType()
     {
       if (receiveTrailer.ack == 1)
       {
-        LRS_DEBUG_PRINTLN("RX: Command Ack");
+        if (settings.debugReceive)
+        {
+          petWDT();
+          systemPrintln("RX: Command Ack");
+        }
         return (PACKET_COMMAND_ACK);
       }
 
-      LRS_DEBUG_PRINTLN("RX: Unknown Command");
+      if (settings.debugReceive)
+      {
+        petWDT();
+        systemPrintln("RX: Unknown Command");
+      }
       return (PACKET_BAD);
     }
 
@@ -155,16 +242,28 @@ PacketType identifyPacketType()
     {
       if (receiveTrailer.ack == 1)
       {
-        LRS_DEBUG_PRINTLN("RX: Command Response Ack");
+        if (settings.debugReceive)
+        {
+          petWDT();
+          systemPrintln("RX: Command Response Ack");
+        }
         return (PACKET_COMMAND_RESPONSE_ACK);
       }
 
-      LRS_DEBUG_PRINTLN("RX: Unknown Response Command");
+      if (settings.debugReceive)
+      {
+        petWDT();
+        systemPrintln("RX: Unknown Response Command");
+      }
       return (PACKET_BAD);
     }
 
     //Not training, not command packet, just a ping
-    LRS_DEBUG_PRINTLN("RX: Control Packet");
+    if (settings.debugReceive)
+    {
+      petWDT();
+      systemPrintln("RX: Control Packet");
+    }
     return (PACKET_PING);
   }
 
@@ -180,21 +279,33 @@ PacketType identifyPacketType()
   //payload contains new AES key and netID which will be processed externally
   if (receiveTrailer.train == 1)
   {
-    LRS_DEBUG_PRINTLN("RX: Training Data");
+    if (settings.debugReceive)
+    {
+      petWDT();
+      systemPrintln("RX: Training Data");
+    }
     return (PACKET_TRAINING_DATA);
   }
 
   else if (receiveTrailer.remoteCommand == 1)
   {
     //New data from remote
-    LRS_DEBUG_PRINTLN("RX: Command Data");
+    if (settings.debugReceive)
+    {
+      petWDT();
+      systemPrintln("RX: Command Data");
+    }
     return (PACKET_COMMAND_DATA);
   }
 
   else if (receiveTrailer.remoteCommandResponse == 1)
   {
     //New response data from remote
-    LRS_DEBUG_PRINTLN("RX: Command Response Data");
+    if (settings.debugReceive)
+    {
+      petWDT();
+      systemPrintln("RX: Command Response Data");
+    }
     return (PACKET_COMMAND_RESPONSE_DATA);
   }
 
