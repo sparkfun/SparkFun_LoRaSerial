@@ -46,8 +46,6 @@ typedef struct
 
 bool commandAT(const char * commandString)
 {
-  const Settings defaultSettings;
-
   //'AT'
   if (commandLength == 2)
     reportOK();
@@ -57,6 +55,24 @@ bool commandAT(const char * commandString)
   {
     switch (commandString[2])
     {
+      case ('?'): //Display the command help
+        systemPrintln("Command summary:");
+        systemPrintln("  AT? - Print the command summary");
+        systemPrintln("  ATF - Enter training mode and return to factory defaults");
+        systemPrintln("  ATI - Display the radio version");
+        systemPrintln("  ATI? - Display the information commands");
+        systemPrintln("  ATIn - Display system information");
+        systemPrintln("  ATO - Exit command mode");
+        systemPrintln("  ATSn=xxx - Set parameter n's value to xxx");
+        systemPrintln("  ATSn? - Print parameter n's current value");
+        systemPrintln("  ATT - Enter training mode");
+        systemPrintln("  ATX - Stop the training server");
+        systemPrintln("  ATZ - Reboot the radio");
+        break;
+      case ('F'): //Enter training mode and return to factory defaults
+        reportOK();
+        beginDefaultTraining();
+        break;
       case ('I'):
         //Shows the radio version
         reportOK();
@@ -95,10 +111,6 @@ bool commandAT(const char * commandString)
         reportOK();
         beginTraining();
         break;
-      case ('F'): //Enter training mode and return to factory defaults
-        reportOK();
-        beginDefaultTraining();
-        break;
       case ('Z'): //Reboots the radio
         reportOK();
         systemFlush();
@@ -114,6 +126,16 @@ bool commandAT(const char * commandString)
   {
     switch (commandString[3])
     {
+      case ('?'): //ATI? - Display the information commands
+        systemPrintln("  ATI0 - Show user settable parameters");
+        systemPrintln("  ATI1 - Show board variant");
+        systemPrintln("  ATI2 - Show firmware version");
+        systemPrintln("  ATI3 - Display RSSI value");
+        systemPrintln("  ATI4 - Get random byte from RSSI");
+        systemPrintln("  ATI5 - Show max possible bytes per second");
+        systemPrintln("  ATI6 - Display AES key");
+        systemPrintln("  ATI7 - Show current FHSS channel");
+        break;
       case ('0'): //ATI0 - Show user settable parameters
         displayParameters();
         break;
@@ -165,7 +187,6 @@ bool commandAT(const char * commandString)
           break;
         case ('F'): //AT&F - Restore default parameters
           {
-            Settings defaultSettings; //Create new settings that will have all default values
             settings = defaultSettings; //Overwrite all current settings with defaults
             recordSystemSettings();
             reportOK();

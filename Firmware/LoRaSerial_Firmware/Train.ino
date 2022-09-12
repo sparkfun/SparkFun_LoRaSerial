@@ -12,7 +12,6 @@ void beginDefaultTraining()
 {
   LRS_DEBUG_PRINTLN("Begin default training");
 
-  Settings defaultSettings;
   originalSettings = defaultSettings; //Upon completion we will return to default settings
 
   moveToTrainingFreq();
@@ -154,7 +153,6 @@ void endTraining(bool newTrainingAvailable)
 void moveToTrainingFreq()
 {
   //During training use default radio settings. This ensures both radios are at known good settings.
-  Settings defaultSettings;
   settings = defaultSettings; //Move to default settings
 
   //Disable hopping
