@@ -839,28 +839,48 @@ void sendCommandResponseDataPacket()
 void sendPacket()
 {
   /*
-      +---  ...  ---+--------+---------+
-      |    Data     | NET ID | Trailer |
-      |   n bytes   | 8 bits | 8 bits  |
-      +-------------+--------+---------+
-      |                                |
-      |<--------- packetSize --------->|
+      +---  ...  ---+------------+--------+---------+
+      |             |  Optional  |        |         |
+      |    Data     | SF6 Length | NET ID | Trailer |
+      |   n bytes   |   8 bits   | 8 bits | 8 bits  |
+      +-------------+------------+--------+---------+
+      |                                             |
+      |<--------------- packetSize ---------------->|
   */
 
   //Attach netID and control byte to end of packet
   outgoingPacket[packetSize - 2] = settings.netID;
   outgoingPacket[packetSize - 1] = *(uint8_t *)&responseTrailer;
 
+  //Display the packet contents
+  if (settings.printPktData || settings.debugTransmit)
+  {
+    petWDT();
+    systemPrint("TX: Control");
+    systemPrint(" 0x");
+    systemPrintln(*(uint8_t *)&receiveTrailer, HEX);
+    if (*(uint8_t *)&receiveTrailer)
+    {
+      if (receiveTrailer.resend)                systemPrintln("    0x01: resend");
+      if (receiveTrailer.ack)                   systemPrintln("    0x02: ack");
+      if (receiveTrailer.remoteCommand)         systemPrintln("    0x04: remoteCommand");
+      if (receiveTrailer.remoteCommandResponse) systemPrintln("    0x08: remoteCommandResponse");
+      if (receiveTrailer.train)                 systemPrintln("    0x10: train");
+    }
+    petWDT();
+    systemPrint("TX: Packet data ");
+    systemPrint(packetSize);
+    systemPrint(" (0x");
+    systemPrint(packetSize, HEX);
+    systemPrintln(") bytes");
+    petWDT();
+    if (settings.printPktData)
+      dumpBuffer(outgoingPacket, packetSize);
+  }
+
   //Apply AES and whitening only to new packets, not resends
   if (responseTrailer.resend == 0)
   {
-    //Display the packet contents
-    if (settings.printPktData)
-    {
-      systemPrintln("TX packet data:");
-      dumpBuffer(outgoingPacket, packetSize);
-    }
-
     if (settings.encryptData == true)
       encryptBuffer(outgoingPacket, packetSize);
 
@@ -869,10 +889,17 @@ void sendPacket()
   }
 
   //Display the transmitted packet bytes
-  if (settings.printRfData)
+  if (settings.printPktData || settings.debugTransmit)
   {
-    systemPrintln("TX data:");
-    dumpBuffer(outgoingPacket, packetSize);
+    petWDT();
+    systemPrint("TX: Data ");
+    systemPrint(packetSize);
+    systemPrint(" (0x");
+    systemPrint(packetSize, HEX);
+    systemPrintln(") bytes");
+    petWDT();
+    if (settings.printPktData)
+      dumpBuffer(outgoingPacket, packetSize);
   }
 
   //If we are trainsmitting at high data rates the receiver is often not ready for new data. Pause for a few ms (measured with logic analyzer).
@@ -881,8 +908,13 @@ void sendPacket()
 
   setRadioFrequency(false); //Return home before every transmission
 
-  LRS_DEBUG_PRINT("Transmitting @ ");
-  LRS_DEBUG_PRINTLN(channels[radio.getFHSSChannel()], 3);
+  //Display the transmit frequency
+  if (settings.debugTransmit)
+  {
+    systemPrint("TX: Transmitting @ ");
+    systemPrint(channels[radio.getFHSSChannel()], 3);
+    systemPrintln(" MHz");
+  }
 
   int state = radio.startTransmit(outgoingPacket, packetSize);
   if (state == RADIOLIB_ERR_NONE)
@@ -895,16 +927,20 @@ void sendPacket()
 
     packetSent++;
 
-    LRS_DEBUG_PRINT("PacketAirTime: ");
-    LRS_DEBUG_PRINTLN(packetAirTime);
-    LRS_DEBUG_PRINT("responseDelay: ");
-    LRS_DEBUG_PRINTLN(responseDelay);
+    if (settings.debugTransmit)
+    {
+      systemPrint("TX: PacketAirTime ");
+      systemPrintln(packetAirTime);
+      systemPrint("TX: responseDelay: ");
+      systemPrintln(responseDelay);
+    }
 
     if (timeToHop) hopChannel();
   }
   else
   {
-    LRS_DEBUG_PRINTLN("Error: TX");
+    if (settings.debugTransmit || settings.printTxErrors)
+      systemPrintln("Error: TX");
   }
 
   packetTimestamp = millis(); //Move timestamp even if error

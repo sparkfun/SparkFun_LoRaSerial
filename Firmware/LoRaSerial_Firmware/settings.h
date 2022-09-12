@@ -170,6 +170,8 @@ typedef struct struct_settings {
   uint32_t triggerEnable = 0xffffffff; //Determine which triggers are enabled: 31 - 0
   uint32_t triggerEnable2 = 0xffffffff; //Determine which triggers are enabled: 63 - 32
   bool debugReceive = false; //Print receive processing
+  bool debugTransmit = false; //Print transmit processing
+  bool printTxErrors = false; //Print any transmit errors
 } Settings;
 Settings settings;
 
