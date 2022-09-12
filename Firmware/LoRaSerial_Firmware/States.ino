@@ -247,7 +247,7 @@ void updateRadioState()
         {
           if (packetSent > settings.maxResends)
           {
-            LRS_DEBUG_PRINTLN(F("Packet Lost"));
+            LRS_DEBUG_PRINTLN("Packet Lost");
             packetsLost++;
             totalPacketsLost++;
             returnToReceiving();

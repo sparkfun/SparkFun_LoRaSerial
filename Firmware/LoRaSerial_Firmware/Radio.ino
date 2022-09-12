@@ -32,13 +32,13 @@ PacketType identifyPacketType()
     dumpBuffer(incomingBuffer, receivedBytes);
   }
 
-  LRS_DEBUG_PRINT(F("\n\rReceived bytes: "));
+  LRS_DEBUG_PRINT("\n\rReceived bytes: ");
   LRS_DEBUG_PRINTLN(receivedBytes);
 
   //All packets must include the 2-byte control header
   if (receivedBytes < 2)
   {
-    LRS_DEBUG_PRINTLN(F("Bad packet"));
+    LRS_DEBUG_PRINTLN("Bad packet");
     return (PACKET_BAD);
   }
 
@@ -56,12 +56,12 @@ PacketType identifyPacketType()
   */
 
   //Display the control header
-  LRS_DEBUG_PRINT(F("ProcessPacket NetID: 0x"));
-  if (incomingBuffer[receivedBytes - 2] < 0x10) LRS_DEBUG_PRINT(F("0"));
+  LRS_DEBUG_PRINT("ProcessPacket NetID: 0x");
+  if (incomingBuffer[receivedBytes - 2] < 0x10) LRS_DEBUG_PRINT("0");
   LRS_DEBUG_PRINT(incomingBuffer[receivedBytes - 2], HEX);
 
-  LRS_DEBUG_PRINT(F(" Control: 0x"));
-  if (incomingBuffer[receivedBytes - 1] < 0x10) LRS_DEBUG_PRINT(F("0"));
+  LRS_DEBUG_PRINT(" Control: 0x");
+  if (incomingBuffer[receivedBytes - 1] < 0x10) LRS_DEBUG_PRINT("0");
   LRS_DEBUG_PRINT(incomingBuffer[receivedBytes - 1], HEX);
   LRS_DEBUG_PRINTLN();
 
@@ -79,7 +79,7 @@ PacketType identifyPacketType()
       receivedBytes = incomingBuffer[receivedBytes - 3]; //Obtain actual packet data length
       receivedBytes -= 1; //Remove the manual packetSize byte from consideration
     }
-    LRS_DEBUG_PRINT(F("SF6 Received bytes: "));
+    LRS_DEBUG_PRINT("SF6 Received bytes: ");
     LRS_DEBUG_PRINTLN(receivedBytes);
   }
 
@@ -88,7 +88,7 @@ PacketType identifyPacketType()
   if ((receivedNetID != settings.netID)
     && ((settings.pointToPoint == true) || (settings.verifyRxNetID == true)))
   {
-    LRS_DEBUG_PRINT(F("NetID mismatch: "));
+    LRS_DEBUG_PRINT("NetID mismatch: ");
     LRS_DEBUG_PRINTLN(receivedNetID);
     return (PACKET_NETID_MISMATCH);
   }
@@ -99,7 +99,7 @@ PacketType identifyPacketType()
 
   if (receiveTrailer.ack == 1 && receiveTrailer.remoteCommand == 0 && receiveTrailer.remoteCommandResponse == 0)
   {
-    LRS_DEBUG_PRINTLN(F("RX: Ack packet"));
+    LRS_DEBUG_PRINTLN("RX: Ack packet");
     return (PACKET_ACK);
   }
 
@@ -112,7 +112,7 @@ PacketType identifyPacketType()
       //Check packet contents
       if (memcmp(lastPacket, incomingBuffer, lastPacketSize) == 0)
       {
-        LRS_DEBUG_PRINTLN(F("Duplicate received. Acking again."));
+        LRS_DEBUG_PRINTLN("Duplicate received. Acking again.");
         return (PACKET_DUPLICATE); //It's a duplicate. Ack then ignore
       }
     }
@@ -133,7 +133,7 @@ PacketType identifyPacketType()
     //If this packet is marked as training data, someone is sending training ping
     if (receiveTrailer.train == 1)
     {
-      LRS_DEBUG_PRINTLN(F("RX: Training Control Packet"));
+      LRS_DEBUG_PRINTLN("RX: Training Control Packet");
       return (PACKET_TRAINING_PING);
     }
 
@@ -142,11 +142,11 @@ PacketType identifyPacketType()
     {
       if (receiveTrailer.ack == 1)
       {
-        LRS_DEBUG_PRINTLN(F("RX: Command Ack"));
+        LRS_DEBUG_PRINTLN("RX: Command Ack");
         return (PACKET_COMMAND_ACK);
       }
 
-      LRS_DEBUG_PRINTLN(F("RX: Unknown Command"));
+      LRS_DEBUG_PRINTLN("RX: Unknown Command");
       return (PACKET_BAD);
     }
 
@@ -155,16 +155,16 @@ PacketType identifyPacketType()
     {
       if (receiveTrailer.ack == 1)
       {
-        LRS_DEBUG_PRINTLN(F("RX: Command Response Ack"));
+        LRS_DEBUG_PRINTLN("RX: Command Response Ack");
         return (PACKET_COMMAND_RESPONSE_ACK);
       }
 
-      LRS_DEBUG_PRINTLN(F("RX: Unknown Response Command"));
+      LRS_DEBUG_PRINTLN("RX: Unknown Response Command");
       return (PACKET_BAD);
     }
 
     //Not training, not command packet, just a ping
-    LRS_DEBUG_PRINTLN(F("RX: Control Packet"));
+    LRS_DEBUG_PRINTLN("RX: Control Packet");
     return (PACKET_PING);
   }
 
@@ -180,25 +180,25 @@ PacketType identifyPacketType()
   //payload contains new AES key and netID which will be processed externally
   if (receiveTrailer.train == 1)
   {
-    LRS_DEBUG_PRINTLN(F("RX: Training Data"));
+    LRS_DEBUG_PRINTLN("RX: Training Data");
     return (PACKET_TRAINING_DATA);
   }
 
   else if (receiveTrailer.remoteCommand == 1)
   {
     //New data from remote
-    LRS_DEBUG_PRINTLN(F("RX: Command Data"));
+    LRS_DEBUG_PRINTLN("RX: Command Data");
     return (PACKET_COMMAND_DATA);
   }
 
   else if (receiveTrailer.remoteCommandResponse == 1)
   {
     //New response data from remote
-    LRS_DEBUG_PRINTLN(F("RX: Command Response Data"));
+    LRS_DEBUG_PRINTLN("RX: Command Response Data");
     return (PACKET_COMMAND_RESPONSE_DATA);
   }
 
-  LRS_DEBUG_PRINTLN(F("RX: Data"));
+  LRS_DEBUG_PRINTLN("RX: Data");
   return (PACKET_DATA);
 }
 
@@ -407,7 +407,7 @@ void returnToReceiving()
   }
 
   if (state != RADIOLIB_ERR_NONE) {
-    LRS_DEBUG_PRINT(F("Receive failed: "));
+    LRS_DEBUG_PRINT("Receive failed: ");
     LRS_DEBUG_PRINTLN(state);
   }
 }
@@ -424,7 +424,7 @@ void sendPingPacket()
       |<-- packetSize -->|
   */
 
-  LRS_DEBUG_PRINT(F("TX: Ping "));
+  LRS_DEBUG_PRINT("TX: Ping ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -461,7 +461,7 @@ void sendDataPacket()
       |<--------- packetSize --------->|
   */
 
-  LRS_DEBUG_PRINT(F("TX: Data "));
+  LRS_DEBUG_PRINT("TX: Data ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -496,7 +496,7 @@ void sendResendPacket()
       |<--------- packetSize --------->|
   */
 
-  LRS_DEBUG_PRINT(F("TX: Resend "));
+  LRS_DEBUG_PRINT("TX: Resend ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 1; //This is a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -521,7 +521,7 @@ void sendAckPacket()
       |<-- packetSize -->|
   */
 
-  LRS_DEBUG_PRINT(F("TX: Ack "));
+  LRS_DEBUG_PRINT("TX: Ack ");
   responseTrailer.ack = 1; //This is an ACK to a previous reception
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -546,7 +546,7 @@ void sendTrainingPingPacket()
       |<-- packetSize -->|
   */
 
-  LRS_DEBUG_PRINT(F("TX: Training Ping "));
+  LRS_DEBUG_PRINT("TX: Training Ping ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 1; //This is a training packet
@@ -574,7 +574,7 @@ void sendTrainingDataPacket()
       |<----------------- packetSize ----------------->|
   */
 
-  LRS_DEBUG_PRINT(F("TX: Training Data "));
+  LRS_DEBUG_PRINT("TX: Training Data ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 1; //This is training packet
@@ -608,7 +608,7 @@ void sendCommandAckPacket()
       |<-- packetSize -->|
   */
 
-  LRS_DEBUG_PRINT(F("TX: Command Ack "));
+  LRS_DEBUG_PRINT("TX: Command Ack ");
   responseTrailer.ack = 1; //This is an ACK to a previous reception
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -633,7 +633,7 @@ void sendCommandDataPacket()
       |<------- packetSize ------->|
   */
 
-  LRS_DEBUG_PRINT(F("TX: Command Data "));
+  LRS_DEBUG_PRINT("TX: Command Data ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission.
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not training packet
@@ -668,7 +668,7 @@ void sendCommandResponseAckPacket()
       |<-- packetSize -->|
   */
 
-  LRS_DEBUG_PRINT(F("TX: Command Response Ack "));
+  LRS_DEBUG_PRINT("TX: Command Response Ack ");
   responseTrailer.ack = 1; //This is an ACK to a previous reception
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -693,7 +693,7 @@ void sendCommandResponseDataPacket()
       |<-------- packetSize ------->|
   */
 
-  LRS_DEBUG_PRINT(F("TX: Command Response Data "));
+  LRS_DEBUG_PRINT("TX: Command Response Data ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission.
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not training packet
@@ -776,16 +776,16 @@ void sendPacket()
 
     packetSent++;
 
-    LRS_DEBUG_PRINT(F("PacketAirTime: "));
+    LRS_DEBUG_PRINT("PacketAirTime: ");
     LRS_DEBUG_PRINTLN(packetAirTime);
-    LRS_DEBUG_PRINT(F("responseDelay: "));
+    LRS_DEBUG_PRINT("responseDelay: ");
     LRS_DEBUG_PRINTLN(responseDelay);
 
     if (timeToHop) hopChannel();
   }
   else
   {
-    LRS_DEBUG_PRINTLN(F("Error: TX"));
+    LRS_DEBUG_PRINTLN("Error: TX");
   }
 
   packetTimestamp = millis(); //Move timestamp even if error
@@ -939,9 +939,16 @@ void hopChannel()
   radio.clearFHSSInt();
   timeToHop = false;
 
-  setRadioFrequency(settings.autoTuneFrequency
-    && (radioState == RADIO_LINKED_RECEIVING_STANDBY || radioState == RADIO_LINKED_ACK_WAIT
-        || radioState == RADIO_BROADCASTING_RECEIVING_STANDBY)); //Only adjust frequency on RX. Not TX.
+  if (settings.autoTuneFrequency == true)
+  {
+    if (radioState == RADIO_LINKED_RECEIVING_STANDBY || radioState == RADIO_LINKED_ACK_WAIT
+        || radioState == RADIO_BROADCASTING_RECEIVING_STANDBY) //Only adjust frequency on RX. Not TX.
+      radio.setFrequency(channels[radio.getFHSSChannel()] - frequencyCorrection);
+    else
+      radio.setFrequency(channels[radio.getFHSSChannel()]);
+  }
+  else
+    radio.setFrequency(channels[radio.getFHSSChannel()]);
 }
 
 //Returns true if the radio indicates we have an ongoing reception

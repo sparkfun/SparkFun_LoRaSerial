@@ -40,7 +40,7 @@ SparkFun LoRaSerial SAMD21 1W 915MHz
 ati3
 -157
 ati4
-9
+149
 ati5
 506
 ati6
@@ -822,6 +822,11 @@ ERROR
 ats42=1
 ERROR
 ats42?
+# Invalid commands
+ERROR
+ats38=1
+ERROR
+ats38?
 ERROR
 ats255=1
 ERROR
