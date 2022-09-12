@@ -159,6 +159,8 @@ typedef struct struct_settings {
   bool debugTraining = false; //Print training info
   bool debugTrigger = false; //Print triggers
   bool usbSerialWait = false; //Wait for USB serial initialization
+  bool printRfData = false; //Print RX and TX data
+  bool printPktData = false; //Print data, before encryption and after decryption
 } Settings;
 Settings settings;
 

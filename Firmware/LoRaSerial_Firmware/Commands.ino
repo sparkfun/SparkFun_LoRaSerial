@@ -427,6 +427,9 @@ const COMMAND_ENTRY commands[] =
   {32,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTraining",        &settings.debugTraining},
   {33,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTrigger",         &settings.debugTrigger},
   {34,    0,   1,    0, TYPE_BOOL,         valInt,         "UsbSerialWait",        &settings.usbSerialWait},
+
+  {35,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintRfData",          &settings.printRfData},
+  {36,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintPktData",         &settings.printPktData},
 };
 
 const int commandCount = sizeof(commands) / sizeof(commands[0]);

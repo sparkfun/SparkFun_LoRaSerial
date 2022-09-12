@@ -163,6 +163,14 @@ void moveToTrainingFreq()
   //Disable NetID checking
   settings.pointToPoint = false;
 
+  //Debug training if requested
+  if (originalSettings.debugTraining)
+  {
+    settings.debugTraining = originalSettings.debugTraining;
+    settings.printPktData = originalSettings.printPktData;
+    settings.printRfData = originalSettings.printRfData;
+  }
+
   //Turn power as low as possible. We assume two units will be near each other.
   settings.radioBroadcastPower_dbm = 14;
 

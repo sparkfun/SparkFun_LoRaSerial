@@ -12,11 +12,25 @@ PacketType identifyPacketType()
   //Receive the data packet
   uint8_t receivedBytes = radio.getPacketLength();
 
+  //Display the received data bytes
+  if (settings.printRfData)
+  {
+    systemPrintln("RX data:");
+    dumpBuffer(incomingBuffer, receivedBytes);
+  }
+
   if (settings.dataScrambling == true)
     radioComputeWhitening(incomingBuffer, receivedBytes);
 
   if (settings.encryptData == true)
     decryptBuffer(incomingBuffer, receivedBytes);
+
+  //Display the packet contents
+  if (settings.printPktData)
+  {
+    systemPrintln("RX packet data:");
+    dumpBuffer(incomingBuffer, receivedBytes);
+  }
 
   LRS_DEBUG_PRINT("\n\rReceived bytes: ");
   LRS_DEBUG_PRINTLN(receivedBytes);
@@ -720,11 +734,25 @@ void sendPacket()
   //Apply AES and whitening only to new packets, not resends
   if (responseTrailer.resend == 0)
   {
+    //Display the packet contents
+    if (settings.printPktData)
+    {
+      systemPrintln("TX packet data:");
+      dumpBuffer(outgoingPacket, packetSize);
+    }
+
     if (settings.encryptData == true)
       encryptBuffer(outgoingPacket, packetSize);
 
     if (settings.dataScrambling == true)
       radioComputeWhitening(outgoingPacket, packetSize);
+  }
+
+  //Display the transmitted packet bytes
+  if (settings.printRfData)
+  {
+    systemPrintln("TX data:");
+    dumpBuffer(outgoingPacket, packetSize);
   }
 
   //If we are trainsmitting at high data rates the receiver is often not ready for new data. Pause for a few ms (measured with logic analyzer).
