@@ -394,7 +394,7 @@ const COMMAND_ENTRY commands[] =
 
   {5,   0,   0,      0, TYPE_KEY,          valKey,         "EncryptionKey",        &settings.encryptionKey},
   {6,   0,   1,      0, TYPE_BOOL,         valInt,         "DataScrambling",       &settings.dataScrambling},
-  {7,  14,  30,      0, TYPE_U16,          valInt,         "TxPower",              &settings.radioBroadcastPower_dbm},
+  {7,  14,  30,      0, TYPE_U8,           valInt,         "TxPower",              &settings.radioBroadcastPower_dbm},
   {8, 902,   0,      3, TYPE_FLOAT,        valFreqMin,     "FrequencyMin",         &settings.frequencyMin},
   {9,   0, 928,      3, TYPE_FLOAT,        valFreqMax,     "FrequencyMax",         &settings.frequencyMax},
 
@@ -488,8 +488,7 @@ void commandDisplay(uint8_t number, bool printName)
       systemPrint(*((float *)(command->setting)), command->digits);
       break;
     case TYPE_KEY:
-      for (uint8_t i = 0 ; i < sizeof(settings.encryptionKey) ; i++)
-        systemPrint(((uint8_t *)(command->setting))[i], HEX);
+      displayEncryptionKey((uint8_t *)(command->setting));
       break;
     case TYPE_U8:
       systemPrint(*(uint8_t *)(command->setting));
@@ -590,6 +589,13 @@ void commandSet(const char * buffer)
 
   //Report the error
   reportERROR();
+}
+
+//Display the encryption key
+void displayEncryptionKey(uint8_t * key)
+{
+  for (uint8_t index = 0 ; index < sizeof(settings.encryptionKey) ; index++)
+    systemPrint(key[index], HEX);
 }
 
 //Show current settings in user friendly way

@@ -205,7 +205,7 @@ void updateSerial()
     }
     else
     {
-      LRS_DEBUG_PRINT(F("Corrupt remote command received"));
+      LRS_DEBUG_PRINT("Corrupt remote command received");
     }
   }
 }
@@ -226,7 +226,7 @@ bool processWaitingSerial()
   //Push any available data out
   if (availableRXBytes() >= settings.frameSize)
   {
-    LRS_DEBUG_PRINTLN(F("Sending max frame"));
+    LRS_DEBUG_PRINTLN("Sending max frame");
     readyOutgoingPacket();
     return (true);
   }
@@ -234,7 +234,7 @@ bool processWaitingSerial()
   //Check if we should send out a partial frame
   else if (availableRXBytes() > 0 && (millis() - lastByteReceived_ms) >= settings.serialTimeoutBeforeSendingFrame_ms)
   {
-    LRS_DEBUG_PRINTLN(F("Sending partial frame"));
+    LRS_DEBUG_PRINTLN("Sending partial frame");
     readyOutgoingPacket();
     return (true);
   }
