@@ -347,12 +347,25 @@ void configureRadio()
   LRS_DEBUG_PRINTLN("Radio configured");
 }
 
+//Set radio frequency
+void setRadioFrequency(bool rxAdjust)
+{
+  float frequency;
+
+  frequency = channels[radio.getFHSSChannel()];
+  if (rxAdjust)
+    frequency -= frequencyCorrection;
+  if (settings.printFrequency)
+  {
+    systemPrint(frequency);
+    systemPrintln(" MHz");
+  }
+  radio.setFrequency(frequency);
+}
+
 void returnToReceiving()
 {
-  if (settings.autoTuneFrequency == true)
-    radio.setFrequency(channels[radio.getFHSSChannel()] - frequencyCorrection);
-  else
-    radio.setFrequency(channels[radio.getFHSSChannel()]);
+  setRadioFrequency(settings.autoTuneFrequency);
 
   timeToHop = false;
 
@@ -718,7 +731,7 @@ void sendPacket()
   if (settings.airSpeed == 28800 || settings.airSpeed == 38400)
     delay(2);
 
-  radio.setFrequency(channels[radio.getFHSSChannel()]); //Return home before every transmission
+  setRadioFrequency(false); //Return home before every transmission
 
   LRS_DEBUG_PRINT("Transmitting @ ");
   LRS_DEBUG_PRINTLN(channels[radio.getFHSSChannel()], 3);
