@@ -910,9 +910,16 @@ void hopChannel()
   radio.clearFHSSInt();
   timeToHop = false;
 
-  setRadioFrequency(settings.autoTuneFrequency
-    && (radioState == RADIO_LINKED_RECEIVING_STANDBY || radioState == RADIO_LINKED_ACK_WAIT
-        || radioState == RADIO_BROADCASTING_RECEIVING_STANDBY)); //Only adjust frequency on RX. Not TX.
+  if (settings.autoTuneFrequency == true)
+  {
+    if (radioState == RADIO_LINKED_RECEIVING_STANDBY || radioState == RADIO_LINKED_ACK_WAIT
+        || radioState == RADIO_BROADCASTING_RECEIVING_STANDBY) //Only adjust frequency on RX. Not TX.
+      radio.setFrequency(channels[radio.getFHSSChannel()] - frequencyCorrection);
+    else
+      radio.setFrequency(channels[radio.getFHSSChannel()]);
+  }
+  else
+    radio.setFrequency(channels[radio.getFHSSChannel()]);
 }
 
 //Returns true if the radio indicates we have an ongoing reception
