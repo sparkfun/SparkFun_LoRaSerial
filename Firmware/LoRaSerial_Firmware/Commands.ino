@@ -1,33 +1,55 @@
-//To add a new command:
-//Add the response to a query: ATS13?
-//Add the data entry and validity check: ATS13=
-//Add the setting to displayParameters
-//Increase displayParameters loop value
+//To add a new ATSxx command:
+//Add an entry to the "commands" table below
 
-//Check to see if a valid command has been received
-void checkCommand()
+//To add a new commnd prefix such as AT or RT
+//Add an entry to the "prefix" table below
+
+//----------------------------------------
+//  Data structures
+//----------------------------------------
+
+enum {
+  TYPE_BOOL = 0,
+  TYPE_FLOAT,
+  TYPE_KEY,
+  TYPE_SPEED_AIR,
+  TYPE_SPEED_SERIAL,
+  TYPE_U8,
+  TYPE_U16,
+} TYPES;
+
+typedef bool (* VALIDATION_ROUTINE)(void * value, uint32_t valMin, uint32_t valMax);
+
+typedef struct _COMMAND_ENTRY
 {
-  char * commandString;
+  uint8_t number;
+  int32_t minValue;
+  int32_t maxValue;
+  uint8_t digits;
+  uint8_t type;
+  VALIDATION_ROUTINE validate;
+  const char * name;
+  void * setting;
+} COMMAND_ENTRY;
+
+typedef bool (* COMMAND_ROUTINE)(const char * commandString);
+
+typedef struct
+{
+  const char * prefix;
+  COMMAND_ROUTINE processCommand;
+} COMMAND_PREFIX;
+
+//----------------------------------------
+//  Command prefix routines
+//----------------------------------------
+
+bool commandAT(const char * commandString)
+{
   const Settings defaultSettings;
 
-  systemPrintln();
-
-  commandString = trimCommand(); //Remove any leading whitespace
-
-  commandString[commandLength] = '\0'; //Terminate buffer
-  if (commandLength < 2) //Too short
-    reportERROR();
-
-  //Check for 'AT' or 'RT'
-  else if (isATcommand(commandString) == false && isRTcommand(commandString) == false)
-    reportERROR();
-
-  //Pass 'RT' commands out the RF link
-  else if (isRTcommand(commandString) == true)
-    sendRemoteCommand(commandString);
-
   //'AT'
-  else if (commandLength == 2)
+  if (commandLength == 2)
     reportOK();
 
   //ATI, ATO, ATR, ATZ commands
@@ -83,8 +105,7 @@ void checkCommand()
         systemReset();
         break;
       default:
-        reportERROR();
-        break;
+        return false;
     }
   }
 
@@ -124,8 +145,7 @@ void checkCommand()
         systemPrintln(radio.getFHSSChannel());
         break;
       default:
-        reportERROR();
-        break;
+        return false;
     }
   }
 
@@ -152,8 +172,7 @@ void checkCommand()
           }
           break;
         default:
-          reportERROR();
-          break;
+          return false;
       }
     }
     else
@@ -165,18 +184,78 @@ void checkCommand()
         reportOK();
       }
       else
-      {
-        reportERROR();
-      }
+        return false;
     }
   }
-
-  //ATSn? or ATSn=X
-  else if (commandString[2] == 'S')
-    commandSet(&commandString[3]);
-
-  //Unknown command
   else
+    return false;
+  return true;
+}
+
+//Send the AT command over RF link
+bool sendRemoteCommand(const char * commandString)
+{
+  //We cannot send a command if not linked
+  if (isLinked() == false)
+    return false;
+
+  //Move this command into the transmit buffer
+  for (int x = 0 ; x < commandLength ; x++)
+  {
+    commandTXBuffer[commandTXHead++] = commandString[x];
+    commandTXHead %= sizeof(commandTXBuffer);
+  }
+  return true;
+}
+
+//----------------------------------------
+//  Command prefix table
+//----------------------------------------
+
+const COMMAND_PREFIX prefixTable[] = {
+  {"ATS", commandSet},
+  {"AT", commandAT},
+  {"RT", sendRemoteCommand},
+};
+
+const int prefixCount = sizeof(prefixTable) / sizeof(prefixTable[0]);
+
+//----------------------------------------
+//  Command processing routine
+//----------------------------------------
+
+//Check to see if a valid command has been received
+void checkCommand()
+{
+  char * commandString;
+  int index;
+  int prefixLength;
+  bool success;
+
+  systemPrintln();
+
+  //Verify the command length
+  commandString = trimCommand(); //Remove any leading whitespace
+  commandString[commandLength] = '\0'; //Terminate buffer
+  if (commandLength < 2) //Too short
+    reportERROR();
+
+  //Locate the correct processing routine for the command prefix
+  success = false;
+  for (index = 0; index < prefixCount; index++)
+  {
+    //Locate the prefix
+    prefixLength = strlen(prefixTable[index].prefix);
+    if (strncmp(commandString, prefixTable[index].prefix, prefixLength) != 0)
+      continue;
+
+    //Process the command
+    success = prefixTable[index].processCommand(commandString);
+    break;
+  }
+
+  //Print the command failure
+  if (!success)
     reportERROR();
 
   commandLength = 0; //Get ready for next command
@@ -192,42 +271,6 @@ void reportERROR()
   systemPrintln("ERROR");
 }
 
-//Check if AT appears in the correct position
-bool isATcommand(char *buffer)
-{
-  if (buffer[0] == 'A')
-    if (buffer[1] == 'T')
-      return (true);
-  return (false);
-}
-
-//Check if RT appears in the correct position
-bool isRTcommand(char *buffer)
-{
-  if (buffer[0] == 'R')
-    if (buffer[1] == 'T')
-      return (true);
-  return (false);
-}
-
-//Send the AT command over RF link
-void sendRemoteCommand(const char * commandString)
-{
-  //We cannot send a command if not linked
-  if (isLinked() == false)
-  {
-    reportERROR();
-    return;
-  }
-
-  //Move this command into the transmit buffer
-  for (int x = 0 ; x < commandLength ; x++)
-  {
-    commandTXBuffer[commandTXHead++] = commandString[x];
-    commandTXHead %= sizeof(commandTXBuffer);
-  }
-}
-
 //Remove any preceeding or following whitespace chars
 char * trimCommand()
 {
@@ -241,29 +284,9 @@ char * trimCommand()
   return commandString;
 }
 
-enum {
-  TYPE_BOOL = 0,
-  TYPE_FLOAT,
-  TYPE_KEY,
-  TYPE_SPEED_AIR,
-  TYPE_SPEED_SERIAL,
-  TYPE_U8,
-  TYPE_U16,
-} TYPES;
-
-typedef bool (* VALIDATION_ROUTINE)(void * value, uint32_t valMin, uint32_t valMax);
-
-typedef struct _COMMAND_ENTRY
-{
-  uint8_t number;
-  int32_t minValue;
-  int32_t maxValue;
-  uint8_t digits;
-  uint8_t type;
-  VALIDATION_ROUTINE validate;
-  const char * name;
-  void * setting;
-} COMMAND_ENTRY;
+//----------------------------------------
+//  Data validation routines
+//----------------------------------------
 
 bool valBandwidth (void * value, uint32_t valMin, uint32_t valMax)
 {
@@ -384,6 +407,10 @@ bool valSpeedSerial (void * value, uint32_t valMin, uint32_t valMax)
           || (settingValue == 115200));
 }
 
+//----------------------------------------
+//  Command table
+//----------------------------------------
+
 const COMMAND_ENTRY commands[] =
 {//#, min, max, digits,   type,            validation,        name,                setting addr
   {0,   0,   0,      0, TYPE_SPEED_SERIAL, valSpeedSerial, "SerialSpeed",          &settings.serialSpeed},
@@ -434,6 +461,10 @@ const COMMAND_ENTRY commands[] =
 };
 
 const int commandCount = sizeof(commands) / sizeof(commands[0]);
+
+//----------------------------------------
+//  ATSxx routines
+//----------------------------------------
 
 const char * commandGetNumber(const char * buffer, uint32_t * value)
 {
@@ -506,8 +537,9 @@ void commandDisplay(uint8_t number, bool printName)
 }
 
 //Set or display the command
-void commandSet(const char * buffer)
+bool commandSet(const char * commandString)
 {
+  const char * buffer;
   const COMMAND_ENTRY * command;
   double doubleSettingValue;
   int index;
@@ -517,7 +549,7 @@ void commandSet(const char * buffer)
 
   do {
     //Validate the command number
-    buffer = commandGetNumber(buffer, &number);
+    buffer = commandGetNumber(&commandString[3], &number);
     for (index = 0; index < commandCount; index++)
       if (number == commands[index].number)
         break;
@@ -529,7 +561,7 @@ void commandSet(const char * buffer)
     if (strcmp(buffer, "?") == 0)
     {
       commandDisplay(command->number, settings.printParameterName);
-      return;
+      return true;
     }
 
     //Make sure the command has the proper syntax
@@ -585,11 +617,11 @@ void commandSet(const char * buffer)
 
     //The parameter was successfully set
     reportOK();
-    return;
+    return true;
   } while (0);
 
   //Report the error
-  reportERROR();
+  return false;
 }
 
 //Display the encryption key
