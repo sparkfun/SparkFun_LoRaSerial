@@ -85,7 +85,8 @@ PacketType identifyPacketType()
 
   receivedBytes -= 2; //Remove control bytes
 
-  if (receivedNetID != settings.netID && settings.pointToPoint == true)
+  if ((receivedNetID != settings.netID)
+    && ((settings.pointToPoint == true) || (settings.verifyRxNetID == true)))
   {
     LRS_DEBUG_PRINT("NetID mismatch: ");
     LRS_DEBUG_PRINTLN(receivedNetID);

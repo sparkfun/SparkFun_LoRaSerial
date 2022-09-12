@@ -376,9 +376,15 @@ ats36=2
 ats36=0
 ats36?
 
-# Invalid commands
+# VerifyRxNetID
 ats37=1
+ats37=2
+ats37=0
 ats37?
+
+# Invalid commands
+ats38=1
+ats38?
 
 ats255=1
 ats255?

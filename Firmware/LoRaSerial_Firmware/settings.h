@@ -161,6 +161,7 @@ typedef struct struct_settings {
   bool usbSerialWait = false; //Wait for USB serial initialization
   bool printRfData = false; //Print RX and TX data
   bool printPktData = false; //Print data, before encryption and after decryption
+  bool verifyRxNetID = false; //Verify RX netID value when not operating in point-to-point mode
 } Settings;
 Settings settings;
 

@@ -162,6 +162,7 @@ void moveToTrainingFreq()
 
   //Disable NetID checking
   settings.pointToPoint = false;
+  settings.verifyRxNetID = false;
 
   //Debug training if requested
   if (originalSettings.debugTraining)
