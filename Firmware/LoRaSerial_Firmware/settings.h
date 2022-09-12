@@ -154,6 +154,10 @@ typedef struct struct_settings {
   bool sortParametersByName = false; //Sort the parameter list (ATI0) by parameter name
   bool printParameterName = false; //Print the parameter name in the ATSx? response
   bool printFrequency = false; //Print the updated frequency
+  bool debugRadio = false; //Print radio info
+  bool debugStates = false; //Print state changes
+  bool debugTraining = false; //Print training info
+  bool debugTrigger = false; //Print triggers
 } Settings;
 Settings settings;
 

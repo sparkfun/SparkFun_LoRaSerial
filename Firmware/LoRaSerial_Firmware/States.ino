@@ -677,7 +677,7 @@ void changeState(RadioStates newState)
 {
   radioState = newState;
 
-  if (settings.debug == false)
+  if ((settings.debug == false) && (settings.debugStates == false))
     return;
 
   //Debug print

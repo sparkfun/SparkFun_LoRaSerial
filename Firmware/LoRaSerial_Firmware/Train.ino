@@ -34,7 +34,7 @@ void endTraining(bool newTrainingAvailable)
 
       settings.netID = lastPacket[lastPacketSize - 1]; //Last spot in array is netID
 
-      if (settings.debug == true)
+      if ((settings.debug == true) || (settings.debugTraining == true))
       {
         systemPrint("New ID: ");
         systemPrintln(settings.netID);
@@ -208,7 +208,7 @@ void generateTrainingSettings()
 
   //We do not generate new AES Initial Values here. Those are generated during generateHopTable() based on the unit's settings.
 
-  if (settings.debug == true)
+  if ((settings.debug == true) || (settings.debugTraining == true))
   {
     systemPrint("Select new NetID: ");
     systemPrintln(trainNetID);

@@ -334,9 +334,33 @@ ats29=2
 ats29=0
 ats29?
 
-# Invalid commands
+# DebugRadio
 ats30=1
+ats30=2
+ats30=0
 ats30?
+
+# DebugStates
+ats31=1
+ats31=2
+ats31=0
+ats31?
+
+# DebugTraining
+ats32=1
+ats32=2
+ats32=0
+ats32?
+
+# DebugTrigger
+ats33=1
+ats33=2
+ats33=0
+ats33?
+
+# Invalid commands
+ats34=1
+ats34?
 
 ats255=1
 ats255?

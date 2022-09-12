@@ -225,7 +225,7 @@ void triggerEvent(uint16_t triggerWidth)
 {
   if (pin_trigger != 255)
   {
-    if (settings.debug == true)
+    if ((settings.debug == true) || (settings.debugTrigger == true))
     {
       digitalWrite(pin_trigger, LOW);
       delayMicroseconds(triggerWidth);
