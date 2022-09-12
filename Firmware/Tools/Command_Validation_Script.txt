@@ -412,9 +412,19 @@ ats42=1
 ats42=2
 ats42=0
 
-# Invalid commands
+# DebugTransmit
 ats43=1
-ats43?
+ats43=2
+ats43=0
+
+# PrintTxErrors
+ats44=1
+ats44=2
+ats44=0
+
+# Invalid commands
+ats45=1
+ats45?
 
 ats255=1
 ats255?
