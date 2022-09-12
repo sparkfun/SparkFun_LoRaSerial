@@ -388,7 +388,7 @@ const COMMAND_ENTRY commands[] =
 
   {5,   0,   0,      0, TYPE_KEY,          valKey,         "EncryptionKey",        &settings.encryptionKey},
   {6,   0,   1,      0, TYPE_BOOL,         valInt,         "DataScrambling",       &settings.dataScrambling},
-  {7,  14,  30,      0, TYPE_U16,          valInt,         "TxPower",              &settings.radioBroadcastPower_dbm},
+  {7,  14,  30,      0, TYPE_U8,           valInt,         "TxPower",              &settings.radioBroadcastPower_dbm},
   {8, 902,   0,      3, TYPE_FLOAT,        valFreqMin,     "FrequencyMin",         &settings.frequencyMin},
   {9,   0, 928,      3, TYPE_FLOAT,        valFreqMax,     "FrequencyMax",         &settings.frequencyMax},
 
