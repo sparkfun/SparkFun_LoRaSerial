@@ -44,24 +44,7 @@ void beginLoRa()
     }
   }
 
-  uint8_t radioSeed = radio.randomByte(); //Puts radio into standy-by state
-  randomSeed(radioSeed);
-  if ((settings.debug == true) || (settings.debugRadio == true))
-  {
-    systemPrint("RadioSeed: ");
-    systemPrintln(radioSeed);
-  }
-
-  generateHopTable(); //Generate frequency table based on randomByte
-
-  configureRadio(); //Generate freq table, setup radio, go to receiving, change state to standby
-
-  returnToReceiving();
-
-  if (settings.pointToPoint == true)
-    changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-  else
-    changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
+  changeState(RADIO_RESET);
 }
 
 void beginButton()

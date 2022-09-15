@@ -1,11 +1,40 @@
 void updateRadioState()
 {
+  uint8_t radioSeed;
+
   switch (radioState)
   {
     default:
       {
         systemPrintln("Unknown state");
       }
+      break;
+
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // Reset
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    case RADIO_RESET:
+      radioSeed = radio.randomByte(); //Puts radio into standy-by state
+      randomSeed(radioSeed);
+      if ((settings.debug == true) || (settings.debugRadio == true))
+      {
+        systemPrint("RadioSeed: ");
+        systemPrintln(radioSeed);
+      }
+
+      generateHopTable(); //Generate frequency table based on randomByte
+
+      configureRadio(); //Generate freq table, setup radio, go to receiving, change state to standby
+
+      //Start receiving
+      returnToReceiving();
+
+      //Start the link between the radios
+      if (settings.pointToPoint == true)
+        changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
+      else
+        changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -393,10 +422,7 @@ void updateRadioState()
             configureRadio(); //Apply any new settings
 
             setRSSI(0); //Turn off RSSI LEDs
-            if (settings.pointToPoint == true)
-              changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-            else
-              changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
+            changeState(RADIO_RESET);
           }
           else //It was just an ACK
           {
@@ -686,6 +712,10 @@ void changeState(RadioStates newState)
     default:
       systemPrint("Change State Unknown: ");
       systemPrint(radioState);
+      break;
+
+    case RADIO_RESET:
+      systemPrint("State: RESET");
       break;
 
     case (RADIO_NO_LINK_RECEIVING_STANDBY):
