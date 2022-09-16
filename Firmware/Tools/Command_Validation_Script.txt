@@ -422,9 +422,14 @@ ats44=1
 ats44=2
 ats44=0
 
-# Invalid commands
+# useV2
 ats45=1
-ats45?
+ats45=2
+ats45=0
+
+# Invalid commands
+ats46=1
+ats46?
 
 ats255=1
 ats255?

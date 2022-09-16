@@ -40,7 +40,7 @@ SparkFun LoRaSerial SAMD21 1W 915MHz
 ati3
 -157
 ati4
-255
+168
 ati5
 506
 ati6
@@ -97,6 +97,7 @@ ATS41:TriggerEnable: 63-32=-1
 ATS42:DebugReceive=0
 ATS43:DebugTransmit=0
 ATS44:PrintTxErrors=0
+ATS45:UseV2=0
 ats28=0
 OK
 # SerialSpeed
@@ -850,11 +851,21 @@ ERROR
 ats44=0
 PrintTxErrors=0
 OK
-# Invalid commands
+# useV2
 ERROR
 ats45=1
+UseV2=1
+OK
+ats45=2
 ERROR
-ats45?
+ats45=0
+UseV2=0
+OK
+# Invalid commands
+ERROR
+ats46=1
+ERROR
+ats46?
 ERROR
 ats255=1
 ERROR
@@ -905,6 +916,7 @@ ATS38:TriggerWidth=25
 ATS39:TriggerWidthIsMultiplier=1
 ATS7:TxPower=30
 ATS34:UsbSerialWait=0
+ATS45:UseV2=0
 ATS37:VerifyRxNetID=0
 at&w
 OK
