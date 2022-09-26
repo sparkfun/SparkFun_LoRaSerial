@@ -497,6 +497,7 @@ const COMMAND_ENTRY commands[] =
   {44,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTxErrors",        &settings.printTxErrors},
 
   {45,    0,   1,    0, TYPE_BOOL,         valInt,         "UseV2",                &settings.useV2},
+  {46,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTimestamp",       &settings.printTimestamp},
 
   //Define any user parameters starting at 255 decrementing towards 0
 };

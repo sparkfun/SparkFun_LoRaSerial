@@ -173,6 +173,7 @@ typedef struct struct_settings {
   bool debugTransmit = false; //Print transmit processing
   bool printTxErrors = false; //Print any transmit errors
   bool useV2 = false; //Use the V2 protocol
+  bool printTimestamp = false; //Print a timestamp: days hours:minutes:seconds.milliseconds
 } Settings;
 Settings settings;
 

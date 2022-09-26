@@ -95,6 +95,62 @@ void systemPrintln()
   systemPrint("\r\n");
 }
 
+void systemPrintTimestamp()
+{
+  unsigned int milliseconds;
+  unsigned int seconds;
+  unsigned int minutes;
+  unsigned int hours;
+  unsigned int days;
+  unsigned int total;
+
+  if (settings.printTimestamp)
+  {
+    petWDT();
+    milliseconds = millis();
+    seconds = milliseconds / 1000;
+    minutes = seconds / 60;
+    hours = minutes / 60;
+    days = hours / 24;
+
+    total = days * 24;
+    hours -= total;
+
+    total = (total + hours) * 60;
+    minutes -= total;
+
+    total = (total + minutes) * 60;
+    seconds -= total;
+
+    total = (total + seconds) * 1000;
+    milliseconds -= total;
+
+    //Print the days
+    if (days < 10) systemPrint(" ");
+    if (days)
+      systemPrint(days);
+    else
+      systemPrint(" ");
+    systemPrint(" ");
+
+    //Print the time
+    if (hours < 10) systemPrint(" ");
+    systemPrint(hours);
+    systemPrint(":");
+    if (minutes < 10) systemPrint("0");
+    systemPrint(minutes);
+    systemPrint(":");
+    if (seconds < 10) systemPrint("0");
+    systemPrint(seconds);
+    systemPrint(".");
+    if (milliseconds < 100) systemPrint("0");
+    if (milliseconds < 10) systemPrint("0");
+    systemPrint(milliseconds);
+    systemPrint(": ");
+    petWDT();
+  }
+}
+
 void systemPrintUniqueID(uint32_t * uniqueID)
 {
   uint8_t * id = (uint8_t *)uniqueID;
