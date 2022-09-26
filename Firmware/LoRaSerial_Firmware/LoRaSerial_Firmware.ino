@@ -205,6 +205,8 @@ void setup()
   if (settings.usbSerialWait)
     while (!Serial);
 
+  verifyRadioStateTable(); //Verify that the state table contains all of the states in increasing order
+
   systemPrintln("LRS");
 
   beginBoard(); //Determine what hardware platform we are running on

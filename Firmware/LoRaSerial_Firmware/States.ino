@@ -698,6 +698,204 @@ bool isLinked()
   return (false);
 }
 
+const RADIO_STATE_ENTRY radioStateTable[] =
+{
+  {RADIO_RESET,                          "RESET",                          NULL},                         // 0
+
+  //V1
+  //    State                                 Name                              Description
+  {RADIO_NO_LINK_RECEIVING_STANDBY,      "NO_LINK_RECEIVING_STANDBY",      "[No Link] Receiving Standby"},// 1
+  {RADIO_NO_LINK_TRANSMITTING,           "NO_LINK_TRANSMITTING",           "[No Link] Transmitting"},     // 2
+  {RADIO_NO_LINK_ACK_WAIT,               "NO_LINK_ACK_WAIT",               "[No Link] Ack Wait"},         // 3
+  {RADIO_NO_LINK_RECEIVED_PACKET,        "NO_LINK_RECEIVED_PACKET",        "[No Link] Received Packet"},  // 4
+  {RADIO_LINKED_RECEIVING_STANDBY,       "LINKED_RECEIVING_STANDBY",       "Receiving Standby "},         // 5
+  {RADIO_LINKED_TRANSMITTING,            "LINKED_TRANSMITTING",            "Transmitting "},              // 6
+  {RADIO_LINKED_ACK_WAIT,                "LINKED_ACK_WAIT",                "Ack Wait "},                  // 7
+  {RADIO_LINKED_RECEIVED_PACKET,         "LINKED_RECEIVED_PACKET",         "Received Packet "},           // 8
+  {RADIO_BROADCASTING_RECEIVING_STANDBY, "BROADCASTING_RECEIVING_STANDBY", "B-Receiving Standby "},       // 9
+  {RADIO_BROADCASTING_TRANSMITTING,      "BROADCASTING_TRANSMITTING",      "B-Transmitting "},            //10
+  {RADIO_BROADCASTING_RECEIVED_PACKET,   "BROADCASTING_RECEIVED_PACKET",   "B-Received Packet "},         //11
+  {RADIO_TRAINING_RECEIVING_HERE_FIRST,  "TRAINING_RECEIVING_HERE_FIRST",  "[Training] RX Here First"},   //12
+  {RADIO_TRAINING_TRANSMITTING,          "TRAINING_TRANSMITTING",          "[Training] TX"},              //13
+  {RADIO_TRAINING_ACK_WAIT,              "TRAINING_ACK_WAIT",              "[Training] Ack Wait"},        //14
+  {RADIO_TRAINING_RECEIVED_PACKET,       "TRAINING_RECEIVED_PACKET",       "[Training] RX Packet"},       //15
+};
+
+void verifyRadioStateTable()
+{
+  int expectedState;
+  int i;
+  int index;
+  int j;
+  unsigned int lastPrint;
+  int maxDescriptionLength;
+  int maxNameLength;
+  bool missing;
+  int * order;
+  int tableEntries;
+  int temp;
+
+  //Verify that all the entries are in the state table
+  tableEntries = sizeof(radioStateTable) / sizeof(radioStateTable[0]);
+  for (index = 0; index < tableEntries; index++)
+  {
+    //Validate the current table entry
+    if (index == radioStateTable[index].state)
+      continue;
+
+    //Wait for the USB serial port
+    if (!settings.usbSerialWait)
+      while (!Serial);
+
+    //An invalid entry was found
+    //Try to build a valid table
+    order = (int *)malloc(tableEntries * sizeof(*order));
+    if (!order)
+    {
+      systemPrintln("ERROR - Failed to allocate the order table from the heap!");
+      while (1);
+    }
+
+    //Assume the table is in the correct order
+    maxDescriptionLength = 0;
+    maxNameLength = 0;
+    for (index = 0; index < tableEntries; index++)
+    {
+      order[index] = index;
+      if (radioStateTable[index].state < RADIO_MAX_STATE)
+      {
+        if (maxNameLength < strlen(radioStateTable[index].name))
+          maxNameLength = strlen(radioStateTable[index].name);
+        if (radioStateTable[index].description
+          && (maxDescriptionLength < strlen(radioStateTable[index].description)))
+          maxDescriptionLength = strlen(radioStateTable[index].description);
+      }
+    }
+
+    //Bubble sort the entries
+    for (index = 0; index < tableEntries; index++)
+    {
+      for (i = index + 1; i < tableEntries; i++)
+      {
+        if (radioStateTable[order[i]].state < radioStateTable[order[index]].state)
+        {
+          //Swap the two values
+          temp = order[i];
+          order[i] = order[index];
+          order[index] = temp;
+        }
+      }
+    }
+
+    //Determine if there are missing states
+    missing = false;
+    for (index = 0; index < tableEntries; index++)
+    {
+      if (radioStateTable[order[i]].state != index)
+      {
+        missing = true;
+        break;
+      }
+    }
+
+    //Display the request
+    systemPrintln("Please replace radioStateTable in States.ino with the following table:");
+    if (missing)
+      systemPrintln("Please update the table with the missing states");
+    systemPrintln();
+
+    //Display the new table
+    systemPrintln("const RADIO_STATE_ENTRY radioStateTable[] =");
+    systemPrintln("{");
+    systemPrintln("  //    State                                 Name                              Description");
+    expectedState = 0;
+    for (index = 0; index < tableEntries; index++)
+    {
+      //Remove bad states from the table
+      if (radioStateTable[order[index]].state >= RADIO_MAX_STATE)
+        break;
+      if (radioStateTable[order[index]].state > expectedState)
+      {
+        //Print the missing entries
+        systemPrint("Missing state");
+        if ((expectedState + 1) < radioStateTable[order[index]].state)
+        {
+          systemPrint("s ");
+          systemPrint(expectedState);
+          systemPrint(" - ");
+          systemPrintln(radioStateTable[order[index]].state - 1);
+        }
+        else
+        {
+          systemPrint(" ");
+          systemPrintln(expectedState);
+        }
+        while (radioStateTable[order[index]].state > expectedState)
+        {
+          systemPrint("  {");
+          systemPrint(", ");
+          for (i = 0; i < (6 + maxNameLength); i++)
+            systemPrint(" ");
+          systemPrint("\"\", ");
+          for (i = 0; i < maxNameLength; i++)
+            systemPrint(" ");
+          systemPrint("\"\"},");
+          for (i = 0; i < maxDescriptionLength; i++)
+            systemPrint(" ");
+          systemPrint("//");
+          if (expectedState < 10)
+            systemPrint(" ");
+          systemPrintln(expectedState++);
+        }
+      }
+
+      //Print the state
+      systemPrint("  {RADIO_");
+      systemPrint(radioStateTable[order[index]].name);
+      systemPrint(", ");
+
+      //Align the name column
+      for (i = strlen(radioStateTable[order[index]].name); i < maxNameLength; i++)
+        systemPrint(" ");
+
+      //Print the name
+      systemPrint("\"");
+      systemPrint(radioStateTable[order[index]].name);
+      systemPrint("\", ");
+
+      //Align the description column
+      for (i = strlen(radioStateTable[order[index]].name); i < maxNameLength; i++)
+        systemPrint(" ");
+
+      //Print the description
+      if (radioStateTable[order[index]].description)
+      {
+        systemPrint("\"");
+        systemPrint(radioStateTable[order[index]].description);
+        systemPrint("\"},");
+      }
+      else
+        systemPrint("NULL},");
+
+      //Align the comments
+      for (i = radioStateTable[order[index]].description ? strlen(radioStateTable[order[index]].description) : 2;
+           i < maxDescriptionLength; i++)
+        systemPrint(" ");
+
+      //Add the state value comment
+      systemPrint("//");
+      if (expectedState < 10)
+        systemPrint(" ");
+      systemPrintln(expectedState++);
+    }
+    systemPrintln("};");
+    systemFlush();
+
+    //Wait forever
+    while (1);
+  }
+}
+
 //Change states and print the new state
 void changeState(RadioStates newState)
 {
@@ -707,72 +905,17 @@ void changeState(RadioStates newState)
     return;
 
   //Debug print
-  switch (radioState)
+  systemPrint("State: ");
+  if (newState >= RADIO_MAX_STATE)
   {
-    default:
-      systemPrint("Change State Unknown: ");
-      systemPrint(radioState);
-      break;
-
-    case RADIO_RESET:
-      systemPrint("State: RESET");
-      break;
-
-    case (RADIO_NO_LINK_RECEIVING_STANDBY):
-      systemPrint("State: [No Link] Receiving Standby");
-      break;
-    case (RADIO_NO_LINK_RECEIVED_PACKET):
-      systemPrint("State: [No Link] Received Packet");
-      break;
-    case (RADIO_NO_LINK_TRANSMITTING):
-      systemPrint("State: [No Link] Transmitting");
-      break;
-    case (RADIO_NO_LINK_ACK_WAIT):
-      systemPrint("State: [No Link] Ack Wait");
-      break;
-
-    case (RADIO_LINKED_RECEIVING_STANDBY):
-      systemPrint("State: Receiving Standby ");
-      systemPrint(channels[radio.getFHSSChannel()], 3);
-      break;
-    case (RADIO_LINKED_RECEIVED_PACKET):
-      systemPrint("State: Received Packet ");
-      systemPrint(channels[radio.getFHSSChannel()], 3);
-      break;
-    case (RADIO_LINKED_TRANSMITTING):
-      systemPrint("State: Transmitting ");
-      systemPrint(channels[radio.getFHSSChannel()], 3);
-      break;
-    case (RADIO_LINKED_ACK_WAIT):
-      systemPrint("State: Ack Wait ");
-      systemPrint(channels[radio.getFHSSChannel()], 3);
-      break;
-
-    case (RADIO_BROADCASTING_RECEIVING_STANDBY):
-      systemPrint("State: B-Receiving Standby ");
-      systemPrint(channels[radio.getFHSSChannel()], 3);
-      break;
-    case (RADIO_BROADCASTING_RECEIVED_PACKET):
-      systemPrint("State: B-Received Packet ");
-      systemPrint(channels[radio.getFHSSChannel()], 3);
-      break;
-    case (RADIO_BROADCASTING_TRANSMITTING):
-      systemPrint("State: B-Transmitting ");
-      systemPrint(channels[radio.getFHSSChannel()], 3);
-      break;
-
-    case (RADIO_TRAINING_TRANSMITTING):
-      systemPrint("State: [Training] TX");
-      break;
-    case (RADIO_TRAINING_ACK_WAIT):
-      systemPrint("State: [Training] Ack Wait");
-      break;
-    case (RADIO_TRAINING_RECEIVING_HERE_FIRST):
-      systemPrint("State: [Training] RX Here First");
-      break;
-    case (RADIO_TRAINING_RECEIVED_PACKET):
-      systemPrint("State: [Training] RX Packet");
-      break;
+    systemPrint(radioState);
+    systemPrintln(" is Unknown");
   }
-  systemPrintln();
+  else
+  {
+    if (radioStateTable[radioState].description)
+      systemPrintln(radioStateTable[radioState].description);
+    else
+      systemPrintln(radioStateTable[radioState].name);
+  }
 }
