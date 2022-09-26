@@ -31,12 +31,97 @@ void updateRadioState()
       returnToReceiving();
 
       //Start the link between the radios
-      if (settings.pointToPoint == true)
-        changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
+      if (settings.useV2)
+      {
+        if (settings.pointToPoint == true)
+          changeState(RADIO_P2P_LINK_DOWN);
+      }
       else
-        changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
+      {
+        if (settings.pointToPoint == true)
+          changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
+        else
+          changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
+      }
       break;
 
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    //V2 - No Link
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    //Point-To-Point: Bring up the link
+    //
+    //A three way handshake is used to get both systems to agree that data can flow in both
+    //directions.  This handshake is also used to synchronize the HOP timer.
+    /*
+                    System A                 System B
+
+                     RESET                     RESET
+                       |                         |
+             Channel 0 |                         | Channel 0
+                       V                         V
+           .---> P2P_LINK_DOWN              P2P_LINK_DOWN
+           |           | Tx PING                 |
+           | Timeout   |                         |
+           |           V                         |
+           | P2P_WAIT_TX_PING_DONE               |
+           |           |                         |
+           |           | Tx Complete - - - - - > | Rx PING
+           |           |   Start Rx              |
+           |           |   MAX_PACKET_SIZE       |
+           |           V                         V
+           `---- P2P_WAIT_ACK_1                  +<----------------------.
+                       |                         | Tx PING ACK1          |
+                       |                         V                       |
+                       |              P2P_WAIT_TX_ACK_1_DONE             |
+                       |                         |                       |
+          Rx PING ACK1 | < - - - - - - - - - - - | Tx Complete           |
+                       |                         |   Start Rx            |
+                       |                         |   MAX_PACKET_SIZE     |
+                       |                         |                       |
+                       V                         V         Timeout       |
+           .---------->+                   P2P_WAIT_ACK_2 -------------->+
+           |   TX PING |                         |                       ^
+           |      ACK2 |                         |                       |
+           |           V                         |                       |
+           | P2P_WAIT_TX_ACK_2_DONE              |                       |
+           |           | Tx Complete - - - - - > | Rx PING ACK2          |
+           | Stop      |   Start HOP timer       |   Start HOP Timer     | Stop
+           | HOP       |   Start Rx              |   Start Rx            | HOP
+           | Timer     |   MAX_PACKET_SIZE       |   MAX_PACKET_SIZE     | Timer
+           |           |                         |                       |
+           | Rx        |                         |                       |
+           | PING ACK  V                         V         Rx PING       |
+           `----- P2P_LINK_UP               P2P_LINK_UP -----------------’
+                       |                         |
+                       | Rx Data                 | Rx Data
+                       |                         |
+                       V                         V
+    */
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    case RADIO_P2P_LINK_DOWN:
+      break;
+
+    case RADIO_P2P_WAIT_TX_PING_DONE:
+      break;
+
+    case RADIO_P2P_WAIT_ACK_1:
+      break;
+
+    case RADIO_P2P_WAIT_TX_ACK_1_DONE:
+      break;
+
+    case RADIO_P2P_WAIT_ACK_2:
+      break;
+
+    case RADIO_P2P_WAIT_TX_ACK_2_DONE:
+      break;
+
+    case RADIO_P2P_LINK_UP:
+      break;
+
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    //V1 - No Link
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     case RADIO_NO_LINK_RECEIVING_STANDBY:
@@ -153,6 +238,8 @@ void updateRadioState()
       }
       break;
 
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    //V1 - Link
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     case RADIO_LINKED_RECEIVING_STANDBY:
@@ -570,6 +657,8 @@ void updateRadioState()
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    //V1 - Point-to-Point Training
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     /*
           beginTraining                beginDefaultTraining
@@ -719,6 +808,16 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   {RADIO_TRAINING_TRANSMITTING,          "TRAINING_TRANSMITTING",          "[Training] TX"},              //13
   {RADIO_TRAINING_ACK_WAIT,              "TRAINING_ACK_WAIT",              "[Training] Ack Wait"},        //14
   {RADIO_TRAINING_RECEIVED_PACKET,       "TRAINING_RECEIVED_PACKET",       "[Training] RX Packet"},       //15
+
+  //V2
+  //    State                                 Name                              Description
+  {RADIO_P2P_LINK_DOWN,                  "P2P_LINK_DOWN",                  "V2 P2P: [No Link] Waiting for Ping"}, //16
+  {RADIO_P2P_WAIT_TX_PING_DONE,          "P2P_WAIT_TX_PING_DONE",          "V2 P2P: [No Link] Wait Ping TX Done"},//17
+  {RADIO_P2P_WAIT_ACK_1,                 "P2P_WAIT_ACK_1",                 "V2 P2P: [No Link] Waiting for ACK 1"},//18
+  {RADIO_P2P_WAIT_TX_ACK_1_DONE,         "P2P_WAIT_TX_ACK_1_DONE",         "V2 P2P: [No Link] Wait ACK1 TX Done"},//19
+  {RADIO_P2P_WAIT_ACK_2,                 "P2P_WAIT_ACK_2",                 "V2 P2P: [No Link] Waiting for ACK 2"},//20
+  {RADIO_P2P_WAIT_TX_ACK_2_DONE,         "P2P_WAIT_TX_ACK_2_DONE",         "V2 P2P: [No Link] Wait ACK2 TX Done"},//21
+  {RADIO_P2P_LINK_UP,                    "P2P_LINK_UP",                    "V2 P2P: Receiving Standby"},          //22
 };
 
 void verifyRadioStateTable()
