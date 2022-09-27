@@ -20,8 +20,17 @@ typedef enum
   RADIO_TRAINING_TRANSMITTING,
   RADIO_TRAINING_ACK_WAIT,
   RADIO_TRAINING_RECEIVED_PACKET,
+
+  RADIO_MAX_STATE,
 } RadioStates;
 RadioStates radioState = RADIO_NO_LINK_RECEIVING_STANDBY;
+
+typedef struct _RADIO_STATE_ENTRY
+{
+  RadioStates state;
+  const char * name;
+  const char * description;
+} RADIO_STATE_ENTRY;
 
 //Possible types of packets received
 typedef enum
