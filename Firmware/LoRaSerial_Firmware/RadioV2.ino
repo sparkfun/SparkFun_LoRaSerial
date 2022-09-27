@@ -120,6 +120,56 @@ void xmitDatagramP2PAck2()
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Point-to-Point Data Exchange
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+//Send a data packet to the remote system
+void xmitDatagramP2PData()
+{
+  /*
+                       endOfTxData ---.
+                                      |
+                                      V
+      +--------+---------+---  ...  ---+----------+
+      |        |         |             | Optional |
+      | NET ID | Control |    Data     | Trailer  |
+      | 8 bits | 8 bits  |   n bytes   |  8 bits  |
+      +--------+---------+-------------+----------+
+  */
+
+  if (settings.debugTransmit)
+  {
+    systemPrintTimestamp();
+    systemPrintln("TX: Data");
+  }
+  txControl.datagramType = DATAGRAM_DATA;
+  transmitDatagram();
+}
+
+//Create short packet of 2 control bytes - do not expect ack
+void xmitDatagramP2PAck()
+{
+  /*
+          endOfTxData ---.
+                         |
+                         V
+      +--------+---------+----------+
+      |        |         | Optional |
+      | NET ID | Control | Trailer  |
+      | 8 bits | 8 bits  |  8 bits  |
+      +--------+---------+----------+
+  */
+
+  if (settings.debugTransmit)
+  {
+    systemPrintTimestamp();
+    systemPrintln("TX: Ack");
+  }
+  txControl.datagramType = DATAGRAM_DATA_ACK;
+  transmitDatagram();
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Datagram reception
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -608,4 +658,14 @@ void retransmitDatagram()
   }
 
   datagramTimer = millis(); //Move timestamp even if error
+}
+
+void startHopTimer()
+{
+  triggerEvent(TRIGGER_HOP_TIMER_START);
+}
+
+void stopHopTimer()
+{
+  triggerEvent(TRIGGER_HOP_TIMER_STOP);
 }

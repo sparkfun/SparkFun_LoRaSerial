@@ -136,6 +136,10 @@ enum
   TRIGGER_COMMAND_SENT_ACK_PACKET,            //31,  800us
   TRIGGER_COMMAND_PACKET_RESEND,              //32,  825us
   TRIGGER_PACKET_COMMAND_DATA,                //33,  850us
+
+  //V2
+  TRIGGER_HOP_TIMER_START,                    //34,  875us
+  TRIGGER_HOP_TIMER_STOP,                     //35,  900us
 };
 
 //Control where to print command output
