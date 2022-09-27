@@ -174,6 +174,7 @@ typedef struct struct_settings {
   bool debugReceive = false; //Print receive processing
   bool debugTransmit = false; //Print transmit processing
   bool printTxErrors = false; //Print any transmit errors
+  bool useV2 = false; //Use the V2 protocol
 } Settings;
 Settings settings;
 

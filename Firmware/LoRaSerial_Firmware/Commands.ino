@@ -496,6 +496,8 @@ const COMMAND_ENTRY commands[] =
   {43,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &settings.debugTransmit},
   {44,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTxErrors",        &settings.printTxErrors},
 
+  {45,    0,   1,    0, TYPE_BOOL,         valInt,         "UseV2",                &settings.useV2},
+
   //Define any user parameters starting at 255 decrementing towards 0
 };
 
