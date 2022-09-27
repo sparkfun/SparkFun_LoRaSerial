@@ -96,6 +96,29 @@ void xmitDatagramP2PAck1()
   transmitDatagram();
 }
 
+//Last packet in the three way handshake to bring up the link
+void xmitDatagramP2PAck2()
+{
+  /*
+          endOfTxData ---.
+                         |
+                         V
+      +--------+---------+----------+
+      |        |         | Optional |
+      | NET ID | Control | Trailer  |
+      | 8 bits | 8 bits  |  8 bits  |
+      +--------+---------+----------+
+  */
+
+  if (settings.debugDatagrams)
+  {
+    systemPrintTimestamp();
+    systemPrintln("TX: Ack-2");
+  }
+  txControl.datagramType = DATAGRAM_ACK_2;
+  transmitDatagram();
+}
+
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Datagram reception
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

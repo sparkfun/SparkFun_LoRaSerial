@@ -179,6 +179,9 @@ uint8_t commandLength = 0;
 //V2
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+//Constants
+const int pingResponseTimeoutMSec = 5 * 1000;
+
 //Frame size values
 uint8_t headerBytes;
 uint8_t trailerBytes;

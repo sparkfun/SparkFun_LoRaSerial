@@ -166,9 +166,51 @@ void updateRadioState()
       break;
 
     case RADIO_P2P_WAIT_TX_PING_DONE:
+      //Determine if a PING has completed transmission
+      if (transactionComplete)
+      {
+        transactionComplete = false; //Reset ISR flag
+        returnToReceiving();
+        changeState(RADIO_P2P_WAIT_ACK_1);
+      }
       break;
 
     case RADIO_P2P_WAIT_ACK_1:
+      if (transactionComplete)
+      {
+        transactionComplete = false; //Reset ISR flag
+
+        //Decode the received packet
+        PacketType packetType = rcvDatagram();
+        if (packetType == DATAGRAM_PING)
+        {
+          //Received PING
+          xmitDatagramP2PAck1();
+          changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
+        }
+        else if (packetType != DATAGRAM_ACK_1)
+          returnToReceiving();
+        else
+        {
+          //Received ACK 1
+          xmitDatagramP2PAck2();
+          changeState(RADIO_P2P_WAIT_TX_ACK_2_DONE);
+        }
+      }
+      else
+      {
+        if ((millis() - datagramTimer) >= pingResponseTimeoutMSec)
+        {
+          systemPrintTimestamp();
+          systemPrintln("RX: ACK1 Timeout");
+          returnToReceiving();
+
+          //Start the TX timer: time to delay before transmitting the PING
+          datagramTimer = millis();
+          txDelay = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
+          changeState(RADIO_P2P_LINK_DOWN);
+        }
+      }
       break;
 
     case RADIO_P2P_WAIT_TX_ACK_1_DONE:
