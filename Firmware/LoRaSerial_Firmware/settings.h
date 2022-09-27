@@ -46,7 +46,21 @@ typedef struct _RADIO_STATE_ENTRY
 //Possible types of packets received
 typedef enum
 {
-  PACKET_BAD = 0,
+  //V2 packet types must start at zero
+  DATAGRAM_PING = 0,
+  DATAGRAM_ACK_1,
+  DATAGRAM_ACK_2,
+  DATAGRAM_DATA,
+  DATAGRAM_SF6_DATA,
+  DATAGRAM_DATA_ACK,
+  DATAGRAM_REMOTE_COMMAND,
+  DATAGRAM_REMOTE_COMMAND_RESPONSE,
+
+  //Add new V2 datagram types before this line
+  MAX_DATAGRAM_TYPE,
+
+  //V1 packet types are below
+  PACKET_BAD,
   PACKET_NETID_MISMATCH,
   PACKET_ACK, //ack = 1
   PACKET_DUPLICATE,
@@ -62,6 +76,11 @@ typedef enum
   PACKET_TRAINING_PING,
   PACKET_TRAINING_DATA,
 } PacketType;
+
+const char * const v2DatagramType[] =
+{//  0       1        2        3        4           5           6          7
+  "PING", "ACK-1", "ACK-2", "DATA", "SF6-DATA", "DATA-ACK", "RMT-CMD", "RMT_RESP",
+};
 
 //Train button states
 typedef enum
@@ -140,6 +159,13 @@ struct ControlTrailer
 struct ControlTrailer receiveTrailer;
 struct ControlTrailer responseTrailer;
 
+typedef struct _CONTROL_U8
+{
+  uint8_t ackNumber : 2;
+  uint8_t datagramType: 4;
+  uint8_t filler : 2;
+} CONTROL_U8;
+
 //These are all the settings that can be set on Serial Terminal Radio. It's recorded to NVM.
 typedef struct struct_settings {
   uint16_t sizeOfSettings = 0; //sizeOfSettings **must** be the first entry and must be int
@@ -196,6 +222,7 @@ typedef struct struct_settings {
   bool printTxErrors = false; //Print any transmit errors
   bool useV2 = false; //Use the V2 protocol
   bool printTimestamp = false; //Print a timestamp: days hours:minutes:seconds.milliseconds
+  bool debugDatagrams = false; //Print the datagrams
 } Settings;
 Settings settings;
 

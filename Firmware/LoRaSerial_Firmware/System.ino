@@ -104,9 +104,9 @@ void systemPrintTimestamp()
   unsigned int days;
   unsigned int total;
 
+  petWDT();
   if (settings.printTimestamp)
   {
-    petWDT();
     milliseconds = millis();
     seconds = milliseconds / 1000;
     minutes = seconds / 60;

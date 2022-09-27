@@ -176,6 +176,34 @@ uint8_t commandLength = 0;
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+//V2
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+//Frame size values
+uint8_t headerBytes;
+uint8_t trailerBytes;
+uint8_t txDatagramSize;
+
+//Point-to-Point
+unsigned long datagramTimer;
+uint8_t expectedTxAck;
+uint8_t txAckNumber;
+uint16_t txDelay;
+
+//Receive control
+uint8_t minDatagramSize;
+
+//Transmit control
+const int datagramsExpectingAcks = 0
+  | (1 << DATAGRAM_DATA)
+  | (1 << DATAGRAM_SF6_DATA)
+  | (1 << DATAGRAM_REMOTE_COMMAND)
+  | (1 << DATAGRAM_REMOTE_COMMAND_RESPONSE);
+uint8_t * endOfTxData;
+CONTROL_U8 txControl;
+
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 //Global variables
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 long startTime = 0; //Used for air time of TX frames
@@ -205,6 +233,7 @@ void setup()
 
   verifyRadioStateTable(); //Verify that the state table contains all of the states in increasing order
 
+  systemPrintTimestamp();
   systemPrintln("LRS");
 
   beginBoard(); //Determine what hardware platform we are running on
@@ -215,6 +244,7 @@ void setup()
 
   arch.beginWDT(); //Start watchdog timer
 
+  systemPrintTimestamp();
   systemPrintln("LRS Setup Complete");
 }
 

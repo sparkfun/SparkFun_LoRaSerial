@@ -1,5 +1,6 @@
 void updateRadioState()
 {
+  uint8_t * header = outgoingPacket;
   uint8_t radioSeed;
 
   switch (radioState)
@@ -15,6 +16,45 @@ void updateRadioState()
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     case RADIO_RESET:
+      //ConfigureRadio sets the frequency to channel 0
+      //Start the TX timer: time to delay before transmitting the PING
+      datagramTimer = millis();
+      txDelay = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
+
+      //Set all of the ACK numbers to zero
+      *(uint8_t *)(&txControl) = 0;
+      *(uint8_t *)(&expectedTxAck) = 0;
+
+      //Determine the components of the frame header
+      headerBytes = 0;
+
+      //Add the netID to the header
+      if (settings.pointToPoint || settings.verifyRxNetID)
+      {
+        headerBytes += 1;
+        *header++ = settings.netID;
+      }
+
+      //Add the control byte to the header
+      if (settings.pointToPoint)
+      {
+        headerBytes += 1;
+        *header++ = settings.netID;
+      }
+
+      //Determine the maximum frame size
+      if (settings.radioSpreadFactor == 6)
+        headerBytes += 1;
+
+      //Set the beginning of the data portion of the transmit buffer
+      endOfTxData = &outgoingPacket[headerBytes];
+
+      //Determine the size of the trailer
+      trailerBytes = 0;
+
+      //Determine the minimum datagram size
+      minDatagramSize = headerBytes + trailerBytes;
+
       radioSeed = radio.randomByte(); //Puts radio into standy-by state
       randomSeed(radioSeed);
       if ((settings.debug == true) || (settings.debugRadio == true))
@@ -100,6 +140,29 @@ void updateRadioState()
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     case RADIO_P2P_LINK_DOWN:
+      //Is it time to send the PING to the remote system
+      if ((millis() - datagramTimer) >= (100 + txDelay))
+      {
+        //Transmit the PING
+        xmitDatagramP2PPing();
+        changeState(RADIO_P2P_WAIT_TX_PING_DONE);
+      }
+
+      //Determine if a PING was received
+      else if (transactionComplete)
+      {
+        transactionComplete = false; //Reset ISR flag
+
+        //Decode the received packet
+        PacketType packetType = rcvDatagram();
+        if (packetType != DATAGRAM_PING)
+          returnToReceiving();
+        else
+        {
+          xmitDatagramP2PAck1();
+          changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
+        }
+      }
       break;
 
     case RADIO_P2P_WAIT_TX_PING_DONE:
@@ -1004,6 +1067,8 @@ void changeState(RadioStates newState)
     return;
 
   //Debug print
+  if (settings.printTimestamp)
+    systemPrintTimestamp();
   systemPrint("State: ");
   if (newState >= RADIO_MAX_STATE)
   {
