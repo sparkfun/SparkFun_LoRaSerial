@@ -91,10 +91,7 @@ void endTraining(bool newTrainingAvailable)
   setRSSI(0);
   delayWDT(2000);
 
-  if (settings.pointToPoint == true)
-    changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-  else
-    changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
+  changeState(RADIO_RESET);
 
   sentFirstPing = false; //Send ping as soon as we exit
 
