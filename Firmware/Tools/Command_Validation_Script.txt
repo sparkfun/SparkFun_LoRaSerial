@@ -427,9 +427,14 @@ ats45=1
 ats45=2
 ats45=0
 
-# Invalid commands
+# PrintTimestamp
 ats46=1
-ats46?
+ats46=2
+ats46=0
+
+# Invalid commands
+ats47=1
+ats47?
 
 ats255=1
 ats255?
