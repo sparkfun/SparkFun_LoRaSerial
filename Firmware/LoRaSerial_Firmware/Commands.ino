@@ -234,6 +234,8 @@ bool sendRemoteCommand(const char * commandString)
     commandTXBuffer[commandTXHead++] = commandString[x];
     commandTXHead %= sizeof(commandTXBuffer);
   }
+systemPrint("commandTXHead: ");
+systemPrintln(commandTXHead);
   return true;
 }
 

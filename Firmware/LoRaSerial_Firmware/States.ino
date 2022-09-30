@@ -316,6 +316,7 @@ timeToHop = false;
             //Copy the remaining portion of the received datagram into the buffer
             memcpy(&serialTransmitBuffer[txHead], &rxData[length], rxDataBytes - length);
             txHead += rxDataBytes - length;
+            txHead %= sizeof(serialTransmitBuffer);
 
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
@@ -324,9 +325,13 @@ timeToHop = false;
             changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
             break;
 
-          case PACKET_COMMAND_DATA:
+          case DATAGRAM_REMOTE_COMMAND:
             //Determine the number of bytes received
             length = 0;
+systemPrint("commandRXHead: ");
+systemPrintln(commandRXHead);
+systemPrint("rxDataBytes: ");
+systemPrintln(rxDataBytes);
             if ((commandRXHead + rxDataBytes) > sizeof(commandRXBuffer))
             {
               //Copy the first portion of the received datagram into the buffer
@@ -338,6 +343,13 @@ timeToHop = false;
             //Copy the remaining portion of the received datagram into the buffer
             memcpy(&commandRXBuffer[commandRXHead], &rxData[length], rxDataBytes - length);
             commandRXHead += rxDataBytes - length;
+            commandRXHead %= sizeof(commandRXBuffer);
+systemPrint("commandRXHead: ");
+systemPrintln(commandRXHead);
+systemPrint("Cmd: ");
+for (int x = commandRXTail; x != commandRXHead ; x = (x + 1) % sizeof(commandRXBuffer))
+Serial.write(rxData[x]);
+systemPrintln();
 
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
@@ -346,7 +358,7 @@ timeToHop = false;
             changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
             break;
 
-          case PACKET_COMMAND_RESPONSE_DATA:
+          case DATAGRAM_REMOTE_COMMAND_RESPONSE:
             //Print received data. This is blocking but we do not use the serialTransmitBuffer because we're in command mode (and it's not much data to print).
             for (int x = 0 ; x < rxDataBytes ; x++)
               Serial.write(rxData[x]);
@@ -374,6 +386,9 @@ timeToHop = false;
         }
         else if (availableTXCommandBytes()) //If we have command bytes to send out
         {
+systemPrint("availableTXCommandBytes(): ");
+systemPrintln(availableTXCommandBytes());
+
           //Load command bytes into outgoing packet
           readyOutgoingCommandPacket();
 
@@ -1066,11 +1081,10 @@ timeToHop = false;
 //This is used for determining if we can do remote AT commands or not
 bool isLinked()
 {
-  if (radioState == RADIO_LINKED_RECEIVING_STANDBY
-      || radioState == RADIO_LINKED_TRANSMITTING
-      || radioState == RADIO_LINKED_ACK_WAIT
-      || radioState == RADIO_LINKED_RECEIVED_PACKET
-     )
+  if (((radioState >= RADIO_P2P_LINK_UP)
+          && (radioState <= RADIO_P2P_LINK_UP_WAIT_TX_DONE))
+      || ((radioState >= RADIO_LINKED_RECEIVING_STANDBY)
+          && (radioState <= RADIO_LINKED_RECEIVED_PACKET)))
     return (true);
 
   return (false);
