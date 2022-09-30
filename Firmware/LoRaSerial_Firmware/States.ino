@@ -236,14 +236,13 @@ void updateRadioState()
         {
           //Received ACK 2
           startHopTimer();
-          updateRSSI();
           returnToReceiving();
           changeState(RADIO_P2P_LINK_UP);
         }
       }
       else
       {
-        if ((millis() - datagramTimer) >= 0)
+        if ((millis() - datagramTimer) >= txDelay)
         {
           systemPrintTimestamp();
           systemPrintln("RX: ACK2 Timeout");
@@ -262,13 +261,13 @@ void updateRadioState()
       {
         transactionComplete = false; //Reset ISR flag
         startHopTimer();
-        updateRSSI();
         returnToReceiving();
         changeState(RADIO_P2P_LINK_UP);
       }
       break;
 
     case RADIO_P2P_LINK_UP:
+      updateRSSI();
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

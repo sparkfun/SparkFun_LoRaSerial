@@ -619,19 +619,9 @@ void retransmitDatagram()
 
   setRadioFrequency(false); //Return home before every transmission
 
-  if (settings.debugTransmit)
-  {
-    systemPrintTimestamp();
-    systemPrint("TX: Transmitting @ ");
-    systemPrint(channels[radio.getFHSSChannel()], 3);
-    systemPrintln(" MHz");
-  }
-
   int state = radio.startTransmit(outgoingPacket, txDatagramSize);
   if (state == RADIOLIB_ERR_NONE)
   {
-    if (timeToHop) hopChannel();
-
     packetAirTime = calcAirTime(txDatagramSize); //Calculate packet air size while we're transmitting in the background
     uint16_t responseDelay = packetAirTime / settings.responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
     if (settings.debugTransmit)
@@ -647,8 +637,7 @@ void retransmitDatagram()
       systemPrintln(" mSec");
     }
     packetAirTime += responseDelay;
-
-    if (timeToHop) hopChannel();
+    txDelay = settings.maxDwellTime;
   }
   else if (settings.debugTransmit)
   {
