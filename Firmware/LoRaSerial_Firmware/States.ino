@@ -204,8 +204,11 @@ void updateRadioState()
       {
         if ((millis() - datagramTimer) >= pingResponseTimeoutMSec)
         {
-          systemPrintTimestamp();
-          systemPrintln("RX: ACK1 Timeout");
+          if (settings.debugDatagrams)
+          {
+            systemPrintTimestamp();
+            systemPrintln("RX: ACK1 Timeout");
+          }
           returnToReceiving();
 
           //Start the TX timer: time to delay before transmitting the PING
@@ -247,8 +250,11 @@ void updateRadioState()
       {
         if ((millis() - datagramTimer) >= txDelay)
         {
-          systemPrintTimestamp();
-          systemPrintln("RX: ACK2 Timeout");
+          if (settings.debugDatagrams)
+          {
+            systemPrintTimestamp();
+            systemPrintln("RX: ACK2 Timeout");
+          }
 
           //Start the TX timer: time to delay before transmitting the PING
           datagramTimer = millis();
@@ -328,10 +334,6 @@ timeToHop = false;
           case DATAGRAM_REMOTE_COMMAND:
             //Determine the number of bytes received
             length = 0;
-systemPrint("commandRXHead: ");
-systemPrintln(commandRXHead);
-systemPrint("rxDataBytes: ");
-systemPrintln(rxDataBytes);
             if ((commandRXHead + rxDataBytes) > sizeof(commandRXBuffer))
             {
               //Copy the first portion of the received datagram into the buffer
@@ -344,12 +346,6 @@ systemPrintln(rxDataBytes);
             memcpy(&commandRXBuffer[commandRXHead], &rxData[length], rxDataBytes - length);
             commandRXHead += rxDataBytes - length;
             commandRXHead %= sizeof(commandRXBuffer);
-systemPrint("commandRXHead: ");
-systemPrintln(commandRXHead);
-systemPrint("Cmd: ");
-for (int x = commandRXTail; x != commandRXHead ; x = (x + 1) % sizeof(commandRXBuffer))
-Serial.write(rxData[x]);
-systemPrintln();
 
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
@@ -386,28 +382,16 @@ systemPrintln();
         }
         else if (availableTXCommandBytes()) //If we have command bytes to send out
         {
-systemPrint("availableTXCommandBytes(): ");
-systemPrintln(availableTXCommandBytes());
-
           //Load command bytes into outgoing packet
           readyOutgoingCommandPacket();
 
           triggerEvent(TRIGGER_LINK_DATA_PACKET);
 
-          //We now have the commandTXBuffer loaded. But we need to send an remoteCommandResponse if we are pointed at PRINT_TO_RF.
-          if (printerEndpoint == PRINT_TO_RF)
-          {
-            //If printerEndpoint is PRINT_TO_RF we know the last commandTXBuffer was filled with a response to a command
+          //We now have the commandTXBuffer loaded.
+          if (remoteCommandResponse)
             xmitDatagramP2PCommandResponse();
-          }
           else
-          {
-            //This packet was generated with sendRemoteCommand() and is a command packet
             xmitDatagramP2PCommand();
-          }
-
-          if (availableTXCommandBytes() == 0)
-            printerEndpoint = PRINT_TO_SERIAL; //Once the response is received, we need to print it to serial
 
           changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
         }
@@ -607,16 +591,10 @@ systemPrintln(availableTXCommandBytes());
               //Serial.println();
 
               //We now have the commandTXBuffer loaded. But we need to send an remoteCommandResponse if we are pointed at PRINT_TO_RF.
-              if (printerEndpoint == PRINT_TO_RF)
-              {
-                //If printerEndpoint is PRINT_TO_RF we know the last commandTXBuffer was filled with a response to a command
+              if (remoteCommandResponse)
                 sendCommandResponseDataPacket();
-              }
               else
-              {
-                //This packet was generated with sendRemoteCommand() and is a command packet
                 sendCommandDataPacket();
-              }
 
               if (availableTXCommandBytes() == 0)
                 printerEndpoint = PRINT_TO_SERIAL; //Once the response is received, we need to print it to serial
