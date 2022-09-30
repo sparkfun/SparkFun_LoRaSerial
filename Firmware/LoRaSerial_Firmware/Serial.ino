@@ -244,6 +244,7 @@ bool processWaitingSerial()
 //Send a portion of the serialReceiveBuffer to outgoingPacket
 void readyOutgoingPacket()
 {
+  uint16_t length;
   uint16_t bytesToSend = availableRXBytes();
   if (bytesToSend > settings.frameSize) bytesToSend = settings.frameSize;
 
@@ -255,17 +256,25 @@ void readyOutgoingPacket()
 
   packetSize = bytesToSend;
 
-  //Move this portion of the circular buffer into the outgoingPacket
-  for (uint8_t x = 0 ; x < packetSize ; x++)
+  //Determine the number of bytes to send
+  length = 0;
+  if ((rxTail + packetSize) > sizeof(serialReceiveBuffer))
   {
-    outgoingPacket[x] = serialReceiveBuffer[rxTail++];
-    rxTail %= sizeof(serialReceiveBuffer);
+    //Copy the first portion of the buffer
+    length = sizeof(serialReceiveBuffer) - rxTail;
+    memcpy(&outgoingPacket[headerBytes], &serialReceiveBuffer[rxTail], length);
+    rxTail = 0;
   }
+
+  //Copy the remaining portion of the buffer
+  memcpy(&outgoingPacket[headerBytes + length], &serialReceiveBuffer[rxTail], packetSize - length);
+  rxTail += packetSize - length;
 }
 
 //Send a portion of the commandTXBuffer to outgoingPacket
 void readyOutgoingCommandPacket()
 {
+  uint16_t length;
   uint16_t bytesToSend = availableTXCommandBytes();
   if (bytesToSend > settings.frameSize) bytesToSend = settings.frameSize;
 
@@ -277,10 +286,17 @@ void readyOutgoingCommandPacket()
 
   packetSize = bytesToSend;
 
-  //Move this portion of the circular buffer into the outgoingPacket
-  for (uint8_t x = 0 ; x < packetSize ; x++)
+  //Determine the number of bytes to send
+  length = 0;
+  if ((commandTXTail + packetSize) > sizeof(commandTXBuffer))
   {
-    outgoingPacket[x] = commandTXBuffer[commandTXTail++];
-    commandTXTail %= sizeof(commandTXBuffer);
+    //Copy the first portion of the buffer
+    length = sizeof(commandTXBuffer) - commandTXTail;
+    memcpy(&outgoingPacket[headerBytes], &commandTXBuffer[commandTXTail], length);
+    commandTXTail = 0;
   }
+
+  //Copy the remaining portion of the buffer
+  memcpy(&outgoingPacket[headerBytes + length], &commandTXBuffer[commandTXTail], packetSize - length);
+  commandTXTail += packetSize - length;
 }

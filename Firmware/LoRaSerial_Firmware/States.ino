@@ -78,6 +78,8 @@ void updateRadioState()
       }
       else
       {
+        //V1 - SF6 length, netID and control are at the end of the datagram
+        headerBytes = 0;
         if (settings.pointToPoint == true)
           changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
         else
