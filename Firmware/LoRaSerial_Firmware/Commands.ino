@@ -234,6 +234,8 @@ bool sendRemoteCommand(const char * commandString)
     commandTXBuffer[commandTXHead++] = commandString[x];
     commandTXHead %= sizeof(commandTXBuffer);
   }
+systemPrint("commandTXHead: ");
+systemPrintln(commandTXHead);
   return true;
 }
 
@@ -498,6 +500,7 @@ const COMMAND_ENTRY commands[] =
 
   {45,    0,   1,    0, TYPE_BOOL,         valInt,         "UseV2",                &settings.useV2},
   {46,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTimestamp",       &settings.printTimestamp},
+  {47,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &settings.debugDatagrams},
 
   //Define any user parameters starting at 255 decrementing towards 0
 };

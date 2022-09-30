@@ -12,6 +12,8 @@ void systemPrint(const char* value)
       commandTXBuffer[commandTXHead++] = value[x];
       commandTXHead %= sizeof(commandTXBuffer);
     }
+systemPrint("commandTXHead: ");
+systemPrintln(commandTXHead);
   }
 }
 
@@ -104,9 +106,9 @@ void systemPrintTimestamp()
   unsigned int days;
   unsigned int total;
 
+  petWDT();
   if (settings.printTimestamp)
   {
-    petWDT();
     milliseconds = millis();
     seconds = milliseconds / 1000;
     minutes = seconds / 60;

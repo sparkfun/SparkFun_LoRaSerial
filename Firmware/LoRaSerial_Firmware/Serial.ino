@@ -33,6 +33,8 @@ uint16_t availableTXCommandBytes()
 //Scan for escape characters
 void updateSerial()
 {
+  int x;
+
   //Forget printing if there are ISRs to attend to
   if (transactionComplete == false && timeToHop == false)
   {
@@ -188,15 +190,25 @@ void updateSerial()
   if (availableRXCommandBytes() && inCommandMode == false)
   {
     commandLength = availableRXCommandBytes();
+systemPrint("commandLength: ");
+systemPrintln(commandLength);
+systemPrint("commandRXTail: ");
+systemPrintln(commandRXTail);
 
-    for (int x = 0 ; x < commandLength ; x++)
+    for (x = 0 ; x < commandLength ; x++)
     {
       commandBuffer[x] = commandRXBuffer[commandRXTail++];
       commandRXTail %= sizeof(commandRXBuffer);
     }
+systemPrint("commandRXTail: ");
+systemPrintln(commandRXTail);
+commandBuffer[x] = 0;
+systemPrint("Remote command: ");
+systemPrintln(commandBuffer);
 
     if (commandBuffer[0] == 'R') //Error check
     {
+systemPrintln("Processing remote command");
       commandBuffer[0] = 'A'; //Convert this RT command to an AT command for local consumption
       printerEndpoint = PRINT_TO_RF; //Send prints to RF link
       checkCommand(); //Parse the command buffer
@@ -244,6 +256,7 @@ bool processWaitingSerial()
 //Send a portion of the serialReceiveBuffer to outgoingPacket
 void readyOutgoingPacket()
 {
+  uint16_t length;
   uint16_t bytesToSend = availableRXBytes();
   if (bytesToSend > settings.frameSize) bytesToSend = settings.frameSize;
 
@@ -255,17 +268,27 @@ void readyOutgoingPacket()
 
   packetSize = bytesToSend;
 
-  //Move this portion of the circular buffer into the outgoingPacket
-  for (uint8_t x = 0 ; x < packetSize ; x++)
+  //Determine the number of bytes to send
+  length = 0;
+  if ((rxTail + packetSize) > sizeof(serialReceiveBuffer))
   {
-    outgoingPacket[x] = serialReceiveBuffer[rxTail++];
-    rxTail %= sizeof(serialReceiveBuffer);
+    //Copy the first portion of the buffer
+    length = sizeof(serialReceiveBuffer) - rxTail;
+    memcpy(&outgoingPacket[headerBytes], &serialReceiveBuffer[rxTail], length);
+    rxTail = 0;
   }
+
+  //Copy the remaining portion of the buffer
+  memcpy(&outgoingPacket[headerBytes + length], &serialReceiveBuffer[rxTail], packetSize - length);
+  rxTail += packetSize - length;
+  rxTail %= sizeof(serialReceiveBuffer);
+  endOfTxData += packetSize;
 }
 
 //Send a portion of the commandTXBuffer to outgoingPacket
 void readyOutgoingCommandPacket()
 {
+  uint16_t length;
   uint16_t bytesToSend = availableTXCommandBytes();
   if (bytesToSend > settings.frameSize) bytesToSend = settings.frameSize;
 
@@ -277,10 +300,19 @@ void readyOutgoingCommandPacket()
 
   packetSize = bytesToSend;
 
-  //Move this portion of the circular buffer into the outgoingPacket
-  for (uint8_t x = 0 ; x < packetSize ; x++)
+  //Determine the number of bytes to send
+  length = 0;
+  if ((commandTXTail + packetSize) > sizeof(commandTXBuffer))
   {
-    outgoingPacket[x] = commandTXBuffer[commandTXTail++];
-    commandTXTail %= sizeof(commandTXBuffer);
+    //Copy the first portion of the buffer
+    length = sizeof(commandTXBuffer) - commandTXTail;
+    memcpy(&outgoingPacket[headerBytes], &commandTXBuffer[commandTXTail], length);
+    commandTXTail = 0;
   }
+
+  //Copy the remaining portion of the buffer
+  memcpy(&outgoingPacket[headerBytes + length], &commandTXBuffer[commandTXTail], packetSize - length);
+  commandTXTail += packetSize - length;
+  commandTXTail %= sizeof(commandTXBuffer);
+  endOfTxData += packetSize;
 }

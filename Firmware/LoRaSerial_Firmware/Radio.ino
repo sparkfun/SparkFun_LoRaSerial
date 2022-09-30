@@ -491,6 +491,7 @@ void setRadioFrequency(bool rxAdjust)
     frequency -= frequencyCorrection;
   if (settings.printFrequency)
   {
+    systemPrintTimestamp();
     systemPrint(frequency);
     systemPrintln(" MHz");
   }
@@ -1091,19 +1092,34 @@ bool linkLost()
 //at the beginning and during of a transmission or reception
 void hopChannel()
 {
+  float frequency;
+
   radio.clearFHSSInt();
   timeToHop = false;
 
+  //Select the new frequency
   if (settings.autoTuneFrequency == true)
   {
     if (radioState == RADIO_LINKED_RECEIVING_STANDBY || radioState == RADIO_LINKED_ACK_WAIT
         || radioState == RADIO_BROADCASTING_RECEIVING_STANDBY) //Only adjust frequency on RX. Not TX.
-      radio.setFrequency(channels[radio.getFHSSChannel()] - frequencyCorrection);
+      frequency = channels[radio.getFHSSChannel()] - frequencyCorrection;
     else
-      radio.setFrequency(channels[radio.getFHSSChannel()]);
+      frequency = channels[radio.getFHSSChannel()];
   }
   else
-    radio.setFrequency(channels[radio.getFHSSChannel()]);
+    frequency = channels[radio.getFHSSChannel()];
+
+  //Set the frequency
+  radio.setFrequency(channels[radio.getFHSSChannel()]);
+
+  //Print the frequency if requested
+  if (settings.printFrequency)
+  {
+    systemPrintTimestamp();
+    systemPrint(channels[radio.getFHSSChannel()], 3);
+    systemPrintln(" MHz");
+  }
+
 }
 
 //Returns true if the radio indicates we have an ongoing reception

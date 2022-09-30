@@ -2,6 +2,7 @@ typedef enum
 {
   RADIO_RESET = 0,
 
+  // V1
   RADIO_NO_LINK_RECEIVING_STANDBY,
   RADIO_NO_LINK_TRANSMITTING,
   RADIO_NO_LINK_ACK_WAIT,
@@ -21,6 +22,17 @@ typedef enum
   RADIO_TRAINING_ACK_WAIT,
   RADIO_TRAINING_RECEIVED_PACKET,
 
+  // V2
+  // Point-To-Point: Bring up the link
+  RADIO_P2P_LINK_DOWN,
+  RADIO_P2P_WAIT_TX_PING_DONE,
+  RADIO_P2P_WAIT_ACK_1,
+  RADIO_P2P_WAIT_TX_ACK_1_DONE,
+  RADIO_P2P_WAIT_ACK_2,
+  RADIO_P2P_WAIT_TX_ACK_2_DONE,
+  RADIO_P2P_LINK_UP,
+  RADIO_P2P_LINK_UP_WAIT_TX_DONE,
+
   RADIO_MAX_STATE,
 } RadioStates;
 RadioStates radioState = RADIO_NO_LINK_RECEIVING_STANDBY;
@@ -35,7 +47,21 @@ typedef struct _RADIO_STATE_ENTRY
 //Possible types of packets received
 typedef enum
 {
-  PACKET_BAD = 0,
+  //V2 packet types must start at zero
+  DATAGRAM_PING = 0,
+  DATAGRAM_ACK_1,
+  DATAGRAM_ACK_2,
+  DATAGRAM_DATA,
+  DATAGRAM_SF6_DATA,
+  DATAGRAM_DATA_ACK,
+  DATAGRAM_REMOTE_COMMAND,
+  DATAGRAM_REMOTE_COMMAND_RESPONSE,
+
+  //Add new V2 datagram types before this line
+  MAX_DATAGRAM_TYPE,
+
+  //V1 packet types are below
+  PACKET_BAD,
   PACKET_NETID_MISMATCH,
   PACKET_ACK, //ack = 1
   PACKET_DUPLICATE,
@@ -51,6 +77,11 @@ typedef enum
   PACKET_TRAINING_PING,
   PACKET_TRAINING_DATA,
 } PacketType;
+
+const char * const v2DatagramType[] =
+{//  0       1        2        3        4           5           6          7
+  "PING", "ACK-1", "ACK-2", "DATA", "SF6-DATA", "DATA-ACK", "RMT-CMD", "RMT_RESP",
+};
 
 //Train button states
 typedef enum
@@ -106,6 +137,10 @@ enum
   TRIGGER_COMMAND_SENT_ACK_PACKET,            //31,  800us
   TRIGGER_COMMAND_PACKET_RESEND,              //32,  825us
   TRIGGER_PACKET_COMMAND_DATA,                //33,  850us
+
+  //V2
+  TRIGGER_HOP_TIMER_START,                    //34,  875us
+  TRIGGER_HOP_TIMER_STOP,                     //35,  900us
 };
 
 //Control where to print command output
@@ -128,6 +163,13 @@ struct ControlTrailer
 };
 struct ControlTrailer receiveTrailer;
 struct ControlTrailer responseTrailer;
+
+typedef struct _CONTROL_U8
+{
+  uint8_t ackNumber : 2;
+  uint8_t datagramType: 4;
+  uint8_t filler : 2;
+} CONTROL_U8;
 
 //These are all the settings that can be set on Serial Terminal Radio. It's recorded to NVM.
 typedef struct struct_settings {
@@ -185,6 +227,7 @@ typedef struct struct_settings {
   bool printTxErrors = false; //Print any transmit errors
   bool useV2 = false; //Use the V2 protocol
   bool printTimestamp = false; //Print a timestamp: days hours:minutes:seconds.milliseconds
+  bool debugDatagrams = false; //Print the datagrams
 } Settings;
 Settings settings;
 
