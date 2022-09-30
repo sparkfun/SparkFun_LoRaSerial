@@ -673,7 +673,7 @@ void retransmitDatagram()
       systemPrintln(" mSec");
     }
     packetAirTime += responseDelay;
-    txDelay = settings.maxDwellTime;
+    txDelay = settings.heartbeatTimeout + random(0, 1000);
   }
   else if (settings.debugTransmit)
   {
