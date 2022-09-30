@@ -1,6 +1,7 @@
 void updateRadioState()
 {
   uint8_t * header = outgoingPacket;
+  uint16_t length;
   uint8_t radioSeed;
 
   switch (radioState)
@@ -270,6 +271,142 @@ void updateRadioState()
 
     case RADIO_P2P_LINK_UP:
       updateRSSI();
+timeToHop = false;
+
+      //Check for a received datagram
+      if (transactionComplete == true)
+      {
+        transactionComplete = false; //Reset ISR flag
+
+        //Decode the received datagram
+        PacketType packetType = rcvDatagram();
+
+        //Process the received datagram
+        switch (packetType)
+        {
+          default:
+            returnToReceiving();
+            changeState(RADIO_P2P_LINK_UP);
+            break;
+
+          case DATAGRAM_DATA:
+            //Display the signal strength
+            if (settings.displayPacketQuality == true)
+            {
+              systemPrintln();
+              systemPrint("R:");
+              systemPrint(radio.getRSSI());
+              systemPrint("\tS:");
+              systemPrint(radio.getSNR());
+              systemPrint("\tfE:");
+              systemPrint(radio.getFrequencyError());
+              systemPrintln();
+            }
+
+            //Determine the number of bytes received
+            length = 0;
+            if ((txHead + rxDataBytes) > sizeof(serialTransmitBuffer))
+            {
+              //Copy the first portion of the received datagram into the buffer
+              length = sizeof(serialTransmitBuffer) - txHead;
+              memcpy(&serialTransmitBuffer[txHead], rxData, length);
+              txHead = 0;
+            }
+
+            //Copy the remaining portion of the received datagram into the buffer
+            memcpy(&serialTransmitBuffer[txHead], &rxData[length], rxDataBytes - length);
+            txHead += rxDataBytes - length;
+
+            packetsLost = 0; //Reset, used for linkLost testing
+            updateRSSI(); //Adjust LEDs to RSSI level
+            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+            xmitDatagramP2PAck(); //Transmit ACK
+            changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+            break;
+
+          case PACKET_COMMAND_DATA:
+            //Determine the number of bytes received
+            length = 0;
+            if ((commandRXHead + rxDataBytes) > sizeof(commandRXBuffer))
+            {
+              //Copy the first portion of the received datagram into the buffer
+              length = sizeof(commandRXBuffer) - commandRXHead;
+              memcpy(&commandRXBuffer[commandRXHead], rxData, length);
+              commandRXHead = 0;
+            }
+
+            //Copy the remaining portion of the received datagram into the buffer
+            memcpy(&commandRXBuffer[commandRXHead], &rxData[length], rxDataBytes - length);
+            commandRXHead += rxDataBytes - length;
+
+            packetsLost = 0; //Reset, used for linkLost testing
+            updateRSSI(); //Adjust LEDs to RSSI level
+            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+            xmitDatagramP2PAck(); //Transmit ACK
+            changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+            break;
+
+          case PACKET_COMMAND_RESPONSE_DATA:
+            //Print received data. This is blocking but we do not use the serialTransmitBuffer because we're in command mode (and it's not much data to print).
+            for (int x = 0 ; x < rxDataBytes ; x++)
+              Serial.write(rxData[x]);
+
+            packetsLost = 0; //Reset, used for linkLost testing
+            updateRSSI(); //Adjust LEDs to RSSI level
+            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+            xmitDatagramP2PAck(); //Transmit ACK
+            changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+            break;
+        }
+      }
+
+      //If the radio is available, send any data in the serial buffer over the radio
+      else if (receiveInProcess() == false)
+      {
+        if (availableRXBytes()) //If we have bytes
+        {
+          if (processWaitingSerial() == true) //If we've hit a frame size or frame-timed-out
+          {
+            triggerEvent(TRIGGER_LINK_DATA_PACKET);
+            xmitDatagramP2PData();
+            changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+          }
+        }
+        else if (availableTXCommandBytes()) //If we have command bytes to send out
+        {
+          //Load command bytes into outgoing packet
+          readyOutgoingCommandPacket();
+
+          triggerEvent(TRIGGER_LINK_DATA_PACKET);
+
+          //We now have the commandTXBuffer loaded. But we need to send an remoteCommandResponse if we are pointed at PRINT_TO_RF.
+          if (printerEndpoint == PRINT_TO_RF)
+          {
+            //If printerEndpoint is PRINT_TO_RF we know the last commandTXBuffer was filled with a response to a command
+            xmitDatagramP2PCommandResponse();
+          }
+          else
+          {
+            //This packet was generated with sendRemoteCommand() and is a command packet
+            xmitDatagramP2PCommand();
+          }
+
+          if (availableTXCommandBytes() == 0)
+            printerEndpoint = PRINT_TO_SERIAL; //Once the response is received, we need to print it to serial
+
+          changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+        }
+      }
+      break;
+
+    case RADIO_P2P_LINK_UP_WAIT_TX_DONE:
+      //Determine if a ACK 2 has completed transmission
+      if (transactionComplete)
+      {
+        transactionComplete = false; //Reset ISR flag
+        returnToReceiving();
+        changeState(RADIO_P2P_LINK_UP);
+      }
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -970,6 +1107,7 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   {RADIO_P2P_WAIT_ACK_2,                 "P2P_WAIT_ACK_2",                 "V2 P2P: [No Link] Waiting for ACK 2"},//20
   {RADIO_P2P_WAIT_TX_ACK_2_DONE,         "P2P_WAIT_TX_ACK_2_DONE",         "V2 P2P: [No Link] Wait ACK2 TX Done"},//21
   {RADIO_P2P_LINK_UP,                    "P2P_LINK_UP",                    "V2 P2P: Receiving Standby"},          //22
+  {RADIO_P2P_LINK_UP_WAIT_TX_DONE,       "P2P_LINK_UP_WAIT_TX_DONE",       "V2 P2P: Waiting TX done"},            //23
 };
 
 void verifyRadioStateTable()

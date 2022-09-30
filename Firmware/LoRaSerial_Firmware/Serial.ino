@@ -269,6 +269,7 @@ void readyOutgoingPacket()
   //Copy the remaining portion of the buffer
   memcpy(&outgoingPacket[headerBytes + length], &serialReceiveBuffer[rxTail], packetSize - length);
   rxTail += packetSize - length;
+  endOfTxData += packetSize;
 }
 
 //Send a portion of the commandTXBuffer to outgoingPacket
@@ -299,4 +300,5 @@ void readyOutgoingCommandPacket()
   //Copy the remaining portion of the buffer
   memcpy(&outgoingPacket[headerBytes + length], &commandTXBuffer[commandTXTail], packetSize - length);
   commandTXTail += packetSize - length;
+  endOfTxData += packetSize;
 }

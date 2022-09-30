@@ -70,6 +70,7 @@ void xmitDatagramP2PPing()
     systemPrintln("TX: Ping");
   }
   txControl.datagramType = DATAGRAM_PING;
+  txControl.ackNumber = 0;
   transmitDatagram();
 }
 
@@ -93,6 +94,7 @@ void xmitDatagramP2PAck1()
     systemPrintln("TX: Ack-1");
   }
   txControl.datagramType = DATAGRAM_ACK_1;
+  txControl.ackNumber = 0;
   transmitDatagram();
 }
 
@@ -116,6 +118,7 @@ void xmitDatagramP2PAck2()
     systemPrintln("TX: Ack-2");
   }
   txControl.datagramType = DATAGRAM_ACK_2;
+  txControl.ackNumber = 0;
   transmitDatagram();
 }
 
@@ -123,7 +126,57 @@ void xmitDatagramP2PAck2()
 // Point-to-Point Data Exchange
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-//Send a data packet to the remote system
+//Send a command datagram to the remote system
+void xmitDatagramP2PCommand()
+{
+  /*
+                       endOfTxData ---.
+                                      |
+                                      V
+      +--------+---------+---  ...  ---+----------+
+      |        |         |             | Optional |
+      | NET ID | Control |    Data     | Trailer  |
+      | 8 bits | 8 bits  |   n bytes   |  8 bits  |
+      +--------+---------+-------------+----------+
+  */
+
+  if (settings.debugTransmit)
+  {
+    systemPrintTimestamp();
+    systemPrintln("TX: Data");
+  }
+  txControl.datagramType = DATAGRAM_REMOTE_COMMAND;
+  txControl.ackNumber = txAckNumber;
+  txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
+  transmitDatagram();
+}
+
+//Send a command response datagram to the remote system
+void xmitDatagramP2PCommandResponse()
+{
+  /*
+                       endOfTxData ---.
+                                      |
+                                      V
+      +--------+---------+---  ...  ---+----------+
+      |        |         |             | Optional |
+      | NET ID | Control |    Data     | Trailer  |
+      | 8 bits | 8 bits  |   n bytes   |  8 bits  |
+      +--------+---------+-------------+----------+
+  */
+
+  if (settings.debugTransmit)
+  {
+    systemPrintTimestamp();
+    systemPrintln("TX: Data");
+  }
+  txControl.datagramType = DATAGRAM_REMOTE_COMMAND_RESPONSE;
+  txControl.ackNumber = txAckNumber;
+  txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
+  transmitDatagram();
+}
+
+//Send a data datagram to the remote system
 void xmitDatagramP2PData()
 {
   /*
@@ -143,6 +196,8 @@ void xmitDatagramP2PData()
     systemPrintln("TX: Data");
   }
   txControl.datagramType = DATAGRAM_DATA;
+  txControl.ackNumber = txAckNumber;
+  txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
   transmitDatagram();
 }
 
@@ -166,6 +221,7 @@ void xmitDatagramP2PAck()
     systemPrintln("TX: Ack");
   }
   txControl.datagramType = DATAGRAM_DATA_ACK;
+  txControl.ackNumber = rxAckNumber;
   transmitDatagram();
 }
 
@@ -176,20 +232,18 @@ void xmitDatagramP2PAck()
 //Determine the type of datagram received
 PacketType rcvDatagram()
 {
-  uint8_t ackNumber;
   CONTROL_U8 * control;
-  uint8_t * data;
   PacketType datagramType;
   uint8_t incomingBuffer[MAX_PACKET_SIZE];
   uint8_t receivedNetID;
 
   //Get the received datagram
   radio.readData(incomingBuffer, MAX_PACKET_SIZE);
-  uint8_t receivedBytes = radio.getPacketLength();
-  data = incomingBuffer;
+  rxDataBytes = radio.getPacketLength();
+  rxData = incomingBuffer;
 
   /*
-      |<--------------------- receivedBytes --------------------->|
+      |<---------------------- rxDataBytes ---------------------->|
       |                                                           |
       +----------+----------+------------+---  ...  ---+----------+
       | Optional | Optional |  Optional  |             | Optional |
@@ -198,7 +252,7 @@ PacketType rcvDatagram()
       +----------+----------+------------+-------------+----------+
       ^
       |
-      '---- data
+      '---- rxData
   */
 
   //Display the received data bytes
@@ -207,42 +261,42 @@ PacketType rcvDatagram()
     systemPrintln("----------");
     systemPrintTimestamp();
     systemPrint("RX: Data ");
-    systemPrint(receivedBytes);
+    systemPrint(rxDataBytes);
     systemPrint(" (0x");
-    systemPrint(receivedBytes, HEX);
+    systemPrint(rxDataBytes, HEX);
     systemPrintln(") bytes");
     petWDT();
-    if (settings.printRfData && receivedBytes)
-      dumpBuffer(incomingBuffer, receivedBytes);
+    if (settings.printRfData && rxDataBytes)
+      dumpBuffer(incomingBuffer, rxDataBytes);
   }
 
   if (settings.dataScrambling == true)
-    radioComputeWhitening(incomingBuffer, receivedBytes);
+    radioComputeWhitening(incomingBuffer, rxDataBytes);
 
   if (settings.encryptData == true)
-    decryptBuffer(incomingBuffer, receivedBytes);
+    decryptBuffer(incomingBuffer, rxDataBytes);
 
   //All packets must include the 2-byte control header
-  if (receivedBytes < minDatagramSize)
+  if (rxDataBytes < minDatagramSize)
   {
     //Display the packet contents
     if (settings.printPktData || settings.debugReceive)
     {
       systemPrintTimestamp();
       systemPrint("RX: Bad packet");
-      systemPrint(receivedBytes);
+      systemPrint(rxDataBytes);
       systemPrint(" (0x");
-      systemPrint(receivedBytes, HEX);
+      systemPrint(rxDataBytes, HEX);
       systemPrintln(") bytes");
       petWDT();
-      if (settings.printRfData && receivedBytes)
-          dumpBuffer(incomingBuffer, receivedBytes);
+      if (settings.printRfData && rxDataBytes)
+          dumpBuffer(incomingBuffer, rxDataBytes);
     }
     return (PACKET_BAD);
   }
 
   /*
-      |<--------------------- receivedBytes --------------------->|
+      |<---------------------- rxDataBytes ---------------------->|
       |                                                           |
       +----------+----------+------------+---  ...  ---+----------+
       | Optional | Optional |  Optional  |             | Optional |
@@ -251,7 +305,7 @@ PacketType rcvDatagram()
       +----------+----------+------------+-------------+----------+
       ^
       |
-      '---- data
+      '---- rxData
   */
 
   //Process the trailer
@@ -259,7 +313,7 @@ PacketType rcvDatagram()
   //Verify the netID if necessary
   if (settings.pointToPoint || settings.verifyRxNetID)
   {
-    receivedNetID = *data++;
+    receivedNetID = *rxData++;
     if (settings.debugReceive)
     {
       systemPrintTimestamp();
@@ -273,8 +327,8 @@ PacketType rcvDatagram()
         systemPrint(" expecting ");
         systemPrintln(settings.netID);
         petWDT();
-        if (settings.printPktData && receivedBytes)
-          dumpBuffer(incomingBuffer, receivedBytes);
+        if (settings.printPktData && rxDataBytes)
+          dumpBuffer(incomingBuffer, rxDataBytes);
         return (PACKET_NETID_MISMATCH);
       }
       systemPrintln();
@@ -282,7 +336,7 @@ PacketType rcvDatagram()
   }
 
   /*
-      |<--------------------- receivedBytes --------------------->|
+      |<---------------------- rxDataBytes ---------------------->|
       |                                                           |
       +----------+----------+------------+---  ...  ---+----------+
       | Optional | Optional |  Optional  |             | Optional |
@@ -291,40 +345,24 @@ PacketType rcvDatagram()
       +----------+----------+------------+-------------+----------+
                  ^
                  |
-                 '---- data
+                 '---- rxData
   */
 
   //Get the control byte
   datagramType = DATAGRAM_DATA;
   if (settings.pointToPoint)
   {
-    control = (CONTROL_U8 *)data++;
+    control = (CONTROL_U8 *)rxData++;
     datagramType = (PacketType)control->datagramType;
+    rxAckNumber = control->ackNumber;
     if (settings.debugReceive)
       printControl(*(uint8_t *)control);
     if (datagramType >= MAX_DATAGRAM_TYPE)
       return (PACKET_BAD);
-
-    //Verify the ACK number
-    //                     txAckNumber ----> rxAckNumber == expectedTxAck
-    //    expectedTxAck == rxAckNumber <---- txAckNumber
-    ackNumber = control->ackNumber;
-    if (expectedTxAck != ackNumber)
-    {
-      if (settings.debugReceive)
-      {
-        systemPrintTimestamp();
-        systemPrint("Invalid ACK number, received ");
-        systemPrint(ackNumber);
-        systemPrint(" expecting ");
-        systemPrintln(expectedTxAck);
-      }
-      return (PACKET_BAD);
-    }
   }
 
   /*
-      |<--------------------- receivedBytes --------------------->|
+      |<---------------------- rxDataBytes ---------------------->|
       |                                                           |
       +----------+----------+------------+---  ...  ---+----------+
       | Optional | Optional |  Optional  |             | Optional |
@@ -333,42 +371,42 @@ PacketType rcvDatagram()
       +----------+----------+------------+-------------+----------+
                             ^
                             |
-                            '---- data
+                            '---- rxData
   */
 
   //Get the spread factor 6 length
   if (datagramType == DATAGRAM_SF6_DATA)
   {
-    if (receivedBytes >= (*data + minDatagramSize))
-      receivedBytes = *data++;
+    if (rxDataBytes >= (*rxData + minDatagramSize))
+      rxDataBytes = *rxData++;
     else
     {
       if (settings.debugReceive)
       {
         systemPrintTimestamp();
         systemPrint("Invalid SF6 length, received SF6 length");
-        systemPrint(*data);
+        systemPrint(*rxData);
         systemPrint(" > ");
-        systemPrint((int)receivedBytes - minDatagramSize);
+        systemPrint((int)rxDataBytes - minDatagramSize);
         systemPrintln(" received bytes");
       }
       return (PACKET_BAD);
     }
   }
-  receivedBytes -= minDatagramSize;
+  rxDataBytes -= minDatagramSize;
 
   //Verify the ACK number last so that the expected ACK number can be updated
   //                     txAckNumber ----> rxAckNumber == expectedTxAck
   //    expectedTxAck == rxAckNumber <---- txAckNumber
   if (settings.pointToPoint)
   {
-    if (expectedTxAck != ackNumber)
+    if (expectedTxAck != rxAckNumber)
     {
       if (settings.debugReceive)
       {
         systemPrintTimestamp();
         systemPrint("Invalid ACK number, received ");
-        systemPrint(ackNumber);
+        systemPrint(rxAckNumber);
         systemPrint(" expecting ");
         systemPrintln(expectedTxAck);
       }
@@ -380,7 +418,7 @@ PacketType rcvDatagram()
   }
 
   /*
-                                         |<- receivedBytes ->|
+                                         |<-- rxDataBytes -->|
                                          |                   |
       +----------+----------+------------+------  ...  ------+----------+
       | Optional | Optional |  Optional  |                   | Optional |
@@ -389,7 +427,7 @@ PacketType rcvDatagram()
       +----------+----------+------------+-------------------+----------+
                                          ^
                                          |
-                                         '---- data
+                                         '---- rxData
   */
 
   //Display the packet contents
@@ -397,13 +435,13 @@ PacketType rcvDatagram()
   {
     systemPrintTimestamp();
     systemPrint("RX: Packet data ");
-    systemPrint(receivedBytes);
+    systemPrint(rxDataBytes);
     systemPrint(" (0x");
-    systemPrint(receivedBytes, HEX);
+    systemPrint(rxDataBytes, HEX);
     systemPrintln(") bytes");
     petWDT();
-    if (settings.printPktData && receivedBytes)
-      dumpBuffer(incomingBuffer, receivedBytes);
+    if (settings.printPktData && rxDataBytes)
+      dumpBuffer(rxData, rxDataBytes);
   }
 
   //Process the packet
@@ -493,8 +531,6 @@ void transmitDatagram()
   if (settings.pointToPoint)
   {
     control = *(uint8_t *)&txControl;
-    txControl.ackNumber = txAckNumber;
-    txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
     *header++ = control;
 
     //Display the control value
