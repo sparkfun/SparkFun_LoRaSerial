@@ -120,8 +120,9 @@ uint16_t txTail = 0;
 uint16_t rxHead = 0;
 uint16_t rxTail = 0;
 
-uint8_t commandRXBuffer[700]; //Bytes received from remote, waiting for printing or AT parsing
-uint8_t commandTXBuffer[700]; //Bytes waiting to be transmitted to the remote unit
+char commandBuffer[100]; //Received serial gets stored into buffer until \r or \n is received
+uint8_t commandRXBuffer[100]; //Bytes received from remote, waiting for printing or AT parsing
+uint8_t commandTXBuffer[1024 * 4]; //Bytes waiting to be transmitted to the remote unit
 uint16_t commandTXHead = 0;
 uint16_t commandTXTail = 0;
 uint16_t commandRXHead = 0;
@@ -171,7 +172,6 @@ uint8_t trainNetID; //New netID passed during training
 uint8_t trainEncryptionKey[16]; //New AES key passed during training
 
 bool inCommandMode = false; //Normal data is prevented from entering serial output when in command mode
-char commandBuffer[100]; //Received serial gets stored into buffer until \r or \n is received
 uint8_t commandLength = 0;
 bool remoteCommandResponse;
 
