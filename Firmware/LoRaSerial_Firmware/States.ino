@@ -8,7 +8,8 @@ void updateRadioState()
   {
     default:
       {
-        systemPrintln("Unknown state");
+        systemPrint("Unknown state: ");
+        systemPrintln(radioState);
       }
       break;
 
@@ -244,6 +245,8 @@ void updateRadioState()
           startHopTimer();
           returnToReceiving();
           changeState(RADIO_P2P_LINK_UP);
+          if (settings.debugDatagrams)
+            systemPrintln("========== Link UP ==========");
         }
       }
       else
@@ -272,6 +275,8 @@ void updateRadioState()
         startHopTimer();
         returnToReceiving();
         changeState(RADIO_P2P_LINK_UP);
+        if (settings.debugDatagrams)
+          systemPrintln("========== Link UP ==========");
       }
       break;
 
@@ -293,6 +298,32 @@ timeToHop = false;
           default:
             returnToReceiving();
             changeState(RADIO_P2P_LINK_UP);
+            break;
+
+          case DATAGRAM_PING:
+            xmitDatagramP2PAck1();
+            changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
+            break;
+
+          case PACKET_DUPLICATE:
+            //Display the signal strength
+            if (settings.displayPacketQuality == true)
+            {
+              systemPrintln();
+              systemPrint("R:");
+              systemPrint(radio.getRSSI());
+              systemPrint("\tS:");
+              systemPrint(radio.getSNR());
+              systemPrint("\tfE:");
+              systemPrint(radio.getFrequencyError());
+              systemPrintln();
+            }
+
+            packetsLost = 0; //Reset, used for linkLost testing
+            updateRSSI(); //Adjust LEDs to RSSI level
+            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+            xmitDatagramP2PAck(); //Transmit ACK
+            changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
             break;
 
           case DATAGRAM_DATA:
@@ -328,7 +359,7 @@ timeToHop = false;
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
             xmitDatagramP2PAck(); //Transmit ACK
-            changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+            changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
             break;
 
           case DATAGRAM_REMOTE_COMMAND:
@@ -351,7 +382,7 @@ timeToHop = false;
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
             xmitDatagramP2PAck(); //Transmit ACK
-            changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+            changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
             break;
 
           case DATAGRAM_REMOTE_COMMAND_RESPONSE:
@@ -363,7 +394,7 @@ timeToHop = false;
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
             xmitDatagramP2PAck(); //Transmit ACK
-            changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+            changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
             break;
         }
       }
@@ -387,7 +418,7 @@ timeToHop = false;
 
           triggerEvent(TRIGGER_LINK_DATA_PACKET);
 
-          //We now have the commandTXBuffer loaded.
+          //We now have the commandTXBuffer loaded
           if (remoteCommandResponse)
             xmitDatagramP2PCommandResponse();
           else
@@ -398,13 +429,73 @@ timeToHop = false;
       }
       break;
 
-    case RADIO_P2P_LINK_UP_WAIT_TX_DONE:
-      //Determine if a ACK 2 has completed transmission
+    //Wait for the ACK to finish transmission
+    case RADIO_P2P_LINK_UP_WAIT_ACK_DONE:
       if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
         changeState(RADIO_P2P_LINK_UP);
+      }
+      break;
+
+    //Wait for the data transmission to complete
+    case RADIO_P2P_LINK_UP_WAIT_TX_DONE:
+      if (transactionComplete)
+      {
+        transactionComplete = false; //Reset ISR flag
+        returnToReceiving();
+        changeState(RADIO_P2P_LINK_UP_WAIT_ACK);
+      }
+      break;
+
+    //Wait for the ACK to be received
+    case RADIO_P2P_LINK_UP_WAIT_ACK:
+      if (transactionComplete)
+      {
+        transactionComplete = false; //Reset ISR flag
+
+        //Decode the received datagram
+        PacketType packetType = rcvDatagram();
+
+        //Process the received datagram
+        switch (packetType)
+        {
+          default:
+            returnToReceiving();
+            break;
+
+          case DATAGRAM_DATA_ACK:
+            returnToReceiving();
+            changeState(RADIO_P2P_LINK_UP);
+            break;
+        }
+      }
+
+      //Check for ACK timeout
+      else if ((millis() - datagramTimer) >= txDelay)
+      {
+        if (settings.debugDatagrams)
+        {
+          systemPrintTimestamp();
+          systemPrintln("RX: ACK Timeout");
+        }
+
+        //Retransmit the packet
+        if (packetSent++ < settings.maxResends)
+        {
+          retransmitDatagram();
+          changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+        }
+        else
+        {
+          //Failed to reach the other system, break the link
+          datagramTimer = millis();
+          txDelay = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
+          if (settings.debugDatagrams)
+            systemPrintln("---------- Link DOWN ----------");
+          changeState(RADIO_P2P_LINK_DOWN);
+        }
       }
       break;
 
@@ -1060,7 +1151,7 @@ timeToHop = false;
 bool isLinked()
 {
   if (((radioState >= RADIO_P2P_LINK_UP)
-          && (radioState <= RADIO_P2P_LINK_UP_WAIT_TX_DONE))
+          && (radioState <= RADIO_P2P_LINK_UP_WAIT_ACK))
       || ((radioState >= RADIO_LINKED_RECEIVING_STANDBY)
           && (radioState <= RADIO_LINKED_RECEIVED_PACKET)))
     return (true);
@@ -1094,12 +1185,14 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   //    State                                 Name                              Description
   {RADIO_P2P_LINK_DOWN,                  "P2P_LINK_DOWN",                  "V2 P2P: [No Link] Waiting for Ping"}, //16
   {RADIO_P2P_WAIT_TX_PING_DONE,          "P2P_WAIT_TX_PING_DONE",          "V2 P2P: [No Link] Wait Ping TX Done"},//17
-  {RADIO_P2P_WAIT_ACK_1,                 "P2P_WAIT_ACK_1",                 "V2 P2P: [No Link] Waiting for ACK 1"},//18
+  {RADIO_P2P_WAIT_ACK_1,                 "P2P_WAIT_ACK_1",                 "V2 P2P: [No Link] Waiting for ACK1"}, //18
   {RADIO_P2P_WAIT_TX_ACK_1_DONE,         "P2P_WAIT_TX_ACK_1_DONE",         "V2 P2P: [No Link] Wait ACK1 TX Done"},//19
-  {RADIO_P2P_WAIT_ACK_2,                 "P2P_WAIT_ACK_2",                 "V2 P2P: [No Link] Waiting for ACK 2"},//20
+  {RADIO_P2P_WAIT_ACK_2,                 "P2P_WAIT_ACK_2",                 "V2 P2P: [No Link] Waiting for ACK2"}, //20
   {RADIO_P2P_WAIT_TX_ACK_2_DONE,         "P2P_WAIT_TX_ACK_2_DONE",         "V2 P2P: [No Link] Wait ACK2 TX Done"},//21
   {RADIO_P2P_LINK_UP,                    "P2P_LINK_UP",                    "V2 P2P: Receiving Standby"},          //22
-  {RADIO_P2P_LINK_UP_WAIT_TX_DONE,       "P2P_LINK_UP_WAIT_TX_DONE",       "V2 P2P: Waiting TX done"},            //23
+  {RADIO_P2P_LINK_UP_WAIT_ACK_DONE,      "P2P_LINK_UP_WAIT_ACK_DONE",      "V2 P2P: Waiting ACK TX Done"},        //23
+  {RADIO_P2P_LINK_UP_WAIT_TX_DONE,       "P2P_LINK_UP_WAIT_TX_DONE",       "V2 P2P: Waiting TX done"},            //24
+  {RADIO_P2P_LINK_UP_WAIT_ACK,           "P2P_LINK_UP_WAIT_ACK",           "V2 P2P: Waiting for ACK"},            //25
 };
 
 void verifyRadioStateTable()
