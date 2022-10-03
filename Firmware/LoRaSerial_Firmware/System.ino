@@ -107,7 +107,14 @@ void systemPrintTimestamp()
   petWDT();
   if (settings.printTimestamp)
   {
+    //Get the clock value
     milliseconds = millis();
+
+    //Offset the value for display
+    if (!settings.displayRealMillis)
+      milliseconds += clockDisplayOffset;
+
+    //Compute the values for display
     seconds = milliseconds / 1000;
     minutes = seconds / 60;
     hours = minutes / 60;

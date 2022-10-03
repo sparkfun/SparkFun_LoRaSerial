@@ -442,9 +442,14 @@ ats48=1
 ats48=2
 ats48=0
 
-# Invalid commands
+# displayRealMillis
 ats49=1
-ats49?
+ats49=2
+ats49=0
+
+# Invalid commands
+ats50=1
+ats50?
 
 ats255=1
 ats255?

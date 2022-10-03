@@ -1,5 +1,7 @@
 void updateRadioState()
 {
+  unsigned long clockOffset;
+  unsigned long currentMillis;
   uint8_t * header = outgoingPacket;
   bool heartbeatTimeout;
   uint16_t length;
@@ -168,6 +170,16 @@ void updateRadioState()
           returnToReceiving();
         else
         {
+          //Received PING
+          //Compute the common clock
+          currentMillis = millis();
+          memcpy(&clockOffset, rxData, sizeof(currentMillis));
+          clockOffset += currentMillis + rcvTimeMillis - xmitTimeMillis;
+          clockOffset >>= 1;
+          clockOffset -= currentMillis;
+          clockDisplayOffset = clockOffset;
+
+          //Acknowledge the PING
           xmitDatagramP2PAck1();
           changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
         }
@@ -194,6 +206,15 @@ void updateRadioState()
         if (packetType == DATAGRAM_PING)
         {
           //Received PING
+          //Compute the common clock
+          currentMillis = millis();
+          memcpy(&clockOffset, rxData, sizeof(currentMillis));
+          clockOffset += currentMillis + rcvTimeMillis - xmitTimeMillis;
+          clockOffset >>= 1;
+          clockOffset -= currentMillis;
+          clockDisplayOffset = clockOffset;
+
+          //Acknowledge the PING
           xmitDatagramP2PAck1();
           changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
         }
@@ -202,6 +223,15 @@ void updateRadioState()
         else
         {
           //Received ACK 1
+          //Compute the common clock
+          currentMillis = millis();
+          memcpy(&clockOffset, rxData, sizeof(currentMillis));
+          clockOffset += currentMillis + rcvTimeMillis - xmitTimeMillis;
+          clockOffset >>= 1;
+          clockOffset -= currentMillis;
+          clockDisplayOffset = clockOffset;
+
+          //Acknowledge the ACK1
           xmitDatagramP2PAck2();
           changeState(RADIO_P2P_WAIT_TX_ACK_2_DONE);
         }
@@ -247,6 +277,15 @@ void updateRadioState()
         else
         {
           //Received ACK 2
+          //Compute the common clock
+          currentMillis = millis();
+          memcpy(&clockOffset, rxData, sizeof(currentMillis));
+          clockOffset += currentMillis + rcvTimeMillis - xmitTimeMillis;
+          clockOffset >>= 1;
+          clockOffset -= currentMillis;
+          clockDisplayOffset = clockOffset;
+
+          //Bring up the link
           startHopTimer();
           returnToReceiving();
           changeState(RADIO_P2P_LINK_UP);
@@ -344,6 +383,16 @@ timeToHop = false;
             break;
 
           case DATAGRAM_PING:
+            //Received PING
+            //Compute the common clock
+            currentMillis = millis();
+            memcpy(&clockOffset, rxData, sizeof(currentMillis));
+            clockOffset += currentMillis + rcvTimeMillis - xmitTimeMillis;
+            clockOffset >>= 1;
+            clockOffset -= currentMillis;
+            clockDisplayOffset = clockOffset;
+
+            //Acknowledge the PING
             xmitDatagramP2PAck1();
             changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
             break;
