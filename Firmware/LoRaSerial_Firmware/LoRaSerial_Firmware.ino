@@ -210,10 +210,10 @@ unsigned long clockDisplayOffset;
 
 //Transmit control
 const int datagramsExpectingAcks = 0
-  | (1 << DATAGRAM_DATA)
-  | (1 << DATAGRAM_SF6_DATA)
-  | (1 << DATAGRAM_REMOTE_COMMAND)
-  | (1 << DATAGRAM_REMOTE_COMMAND_RESPONSE);
+                                   | (1 << DATAGRAM_DATA)
+                                   | (1 << DATAGRAM_SF6_DATA)
+                                   | (1 << DATAGRAM_REMOTE_COMMAND)
+                                   | (1 << DATAGRAM_REMOTE_COMMAND_RESPONSE);
 uint8_t * endOfTxData;
 CONTROL_U8 txControl;
 

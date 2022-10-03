@@ -48,7 +48,7 @@
                        |                         |
                        V                         V
 
-Two timers are in use:
+  Two timers are in use:
     datagramTimer:  Set at end of transmit, measures ACK timeout
     heartbeatTimer: Set upon entry to P2P_NO_LINK, measures time to send next PING
 */
@@ -299,7 +299,7 @@ PacketType rcvDatagram()
       systemPrintln(") bytes");
       petWDT();
       if (settings.printRfData && rxDataBytes)
-          dumpBuffer(incomingBuffer, rxDataBytes);
+        dumpBuffer(incomingBuffer, rxDataBytes);
     }
     return (PACKET_BAD);
   }

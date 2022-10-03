@@ -328,15 +328,15 @@ bool valBandwidth (void * value, uint32_t valMin, uint32_t valMax)
 
   //Some doubles get rounded incorrectly
   return ((settings.airSpeed != 0)
-         || ((doubleSettingValue * 100) == 1040)
-         || (doubleSettingValue == 15.6)
-         || ((doubleSettingValue * 100) == 2080)
-         || (doubleSettingValue == 31.25)
-         || (doubleSettingValue == 41.7)
-         || (doubleSettingValue == 62.5)
-         || (doubleSettingValue == 125.0)
-         || (doubleSettingValue == 250.0)
-         || (doubleSettingValue == 500.0));
+          || ((doubleSettingValue * 100) == 1040)
+          || (doubleSettingValue == 15.6)
+          || ((doubleSettingValue * 100) == 2080)
+          || (doubleSettingValue == 31.25)
+          || (doubleSettingValue == 41.7)
+          || (doubleSettingValue == 62.5)
+          || (doubleSettingValue == 125.0)
+          || (doubleSettingValue == 250.0)
+          || (doubleSettingValue == 500.0));
 }
 
 bool valFreqMax (void * value, uint32_t valMin, uint32_t valMax)
@@ -406,19 +406,19 @@ bool valSpeedAir (void * value, uint32_t valMin, uint32_t valMax)
   uint32_t settingValue = *(uint32_t *)value;
 
   valid = ((settingValue == 0)
-            || (settingValue == 40)
-            || (settingValue == 150)
-            || (settingValue == 400)
-            || (settingValue == 1200)
-            || (settingValue == 2400)
-            || (settingValue == 4800)
-            || (settingValue == 9600)
-            || (settingValue == 19200)
-            || (settingValue == 28800)
-            || (settingValue == 38400));
-    if (valid && (settings.airSpeed == 0) && (settingValue != 0))
-      systemPrintln("Warning: AirSpeed override of bandwidth, spread factor, and coding rate");
-    return valid;
+           || (settingValue == 40)
+           || (settingValue == 150)
+           || (settingValue == 400)
+           || (settingValue == 1200)
+           || (settingValue == 2400)
+           || (settingValue == 4800)
+           || (settingValue == 9600)
+           || (settingValue == 19200)
+           || (settingValue == 28800)
+           || (settingValue == 38400));
+  if (valid && (settings.airSpeed == 0) && (settingValue != 0))
+    systemPrintln("Warning: AirSpeed override of bandwidth, spread factor, and coding rate");
+  return valid;
 }
 
 bool valSpeedSerial (void * value, uint32_t valMin, uint32_t valMax)
@@ -440,7 +440,7 @@ bool valSpeedSerial (void * value, uint32_t valMin, uint32_t valMax)
 //----------------------------------------
 
 const COMMAND_ENTRY commands[] =
-{//#, min, max, digits,   type,            validation,        name,                setting addr
+{ //#, min, max, digits,   type,            validation,        name,                setting addr
   {0,   0,   0,      0, TYPE_SPEED_SERIAL, valSpeedSerial, "SerialSpeed",          &settings.serialSpeed},
   {1,   0,   0,      0, TYPE_SPEED_AIR,    valSpeedAir,    "AirSpeed",             &settings.airSpeed},
   {2,   0, 255,      0, TYPE_U8,           valInt,         "netID",                &settings.netID},
@@ -628,7 +628,7 @@ bool commandSet(const char * commandString)
       case TYPE_FLOAT:
         valid = command->validate((void *)&doubleSettingValue, command->minValue, command->maxValue);
         if (valid)
-        *((float *)(command->setting)) = doubleSettingValue;
+          *((float *)(command->setting)) = doubleSettingValue;
         break;
       case TYPE_KEY:
         valid = command->validate((void *)buffer, command->minValue, command->maxValue);

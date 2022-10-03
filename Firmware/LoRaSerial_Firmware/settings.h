@@ -82,7 +82,7 @@ typedef enum
 } PacketType;
 
 const char * const v2DatagramType[] =
-{//  0       1        2        3        4           5           6            7          8
+{ //  0       1        2        3        4           5           6            7          8
   "PING", "ACK-1", "ACK-2", "DATA", "SF6-DATA", "DATA-ACK", "HEARTBEAT", "RMT-CMD", "RMT_RESP",
 };
 
@@ -96,10 +96,10 @@ typedef enum
 TrainStates trainState = TRAIN_NO_PRESS;
 
 enum
-{                                             //#, Width - Computed with:
-                                              //        triggerWidth = 25
-                                              //        triggerUseWidthAsMultiplier = true
-                                              //        triggerEnable = 0xffffffff
+{ //#, Width - Computed with:
+  //        triggerWidth = 25
+  //        triggerUseWidthAsMultiplier = true
+  //        triggerEnable = 0xffffffff
   TRIGGER_ACK_PROCESSED = 0,                  // 0,   25us
   TRIGGER_DATA_SEND,                          // 1,   50us
   TRIGGER_RTR_2BYTE,                          // 2,   75us

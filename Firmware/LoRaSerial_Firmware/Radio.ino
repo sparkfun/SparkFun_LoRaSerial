@@ -55,7 +55,7 @@ PacketType identifyPacketType()
       systemPrintln(") bytes");
       petWDT();
       if (settings.printRfData && receivedBytes)
-          dumpBuffer(incomingBuffer, receivedBytes);
+        dumpBuffer(incomingBuffer, receivedBytes);
     }
     return (PACKET_BAD);
   }
@@ -146,7 +146,7 @@ PacketType identifyPacketType()
   }
 
   if ((receivedNetID != settings.netID)
-    && ((settings.pointToPoint == true) || (settings.verifyRxNetID == true)))
+      && ((settings.pointToPoint == true) || (settings.verifyRxNetID == true)))
   {
     if (settings.debugReceive)
     {
@@ -164,8 +164,8 @@ PacketType identifyPacketType()
   //----------
 
   if ((receiveTrailer.ack == 1)
-    && (receiveTrailer.remoteCommand == 0)
-    && (receiveTrailer.remoteCommandResponse == 0))
+      && (receiveTrailer.remoteCommand == 0)
+      && (receiveTrailer.remoteCommandResponse == 0))
   {
     if (settings.debugReceive)
     {

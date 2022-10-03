@@ -153,7 +153,7 @@ void updateRadioState()
                        |                         |
                        V                         V
 
-    Two timers are in use:
+      Two timers are in use:
         datagramTimer:  Set at end of transmit, measures ACK timeout
         heartbeatTimer: Set upon entry to P2P_NO_LINK, measures time to send next PING
     */
@@ -365,7 +365,7 @@ void updateRadioState()
          '-------------------'                         |                       |
                                                        '-----------------------'
 
-    Three timers are in use:
+      Three timers are in use:
         datagramTimer:  Set at end of transmit, measures ACK timeout
         heartbeatTimer: Set upon entry to P2P_LINK_UP, reset upon HEARTBEAT transmit,
                         measures time to send next HEARTBEAT
@@ -373,7 +373,7 @@ void updateRadioState()
 
     case RADIO_P2P_LINK_UP:
       updateRSSI();
-timeToHop = false;
+      timeToHop = false;
 
       //Check for a received datagram
       if (transactionComplete == true)
@@ -1322,7 +1322,7 @@ timeToHop = false;
 bool isLinked()
 {
   if (((radioState >= RADIO_P2P_LINK_UP)
-          && (radioState <= RADIO_P2P_LINK_UP_WAIT_ACK))
+       && (radioState <= RADIO_P2P_LINK_UP_WAIT_ACK))
       || ((radioState >= RADIO_LINKED_RECEIVING_STANDBY)
           && (radioState <= RADIO_LINKED_RECEIVED_PACKET)))
     return (true);
@@ -1412,7 +1412,7 @@ void verifyRadioStateTable()
         if (maxNameLength < strlen(radioStateTable[index].name))
           maxNameLength = strlen(radioStateTable[index].name);
         if (radioStateTable[index].description
-          && (maxDescriptionLength < strlen(radioStateTable[index].description)))
+            && (maxDescriptionLength < strlen(radioStateTable[index].description)))
           maxDescriptionLength = strlen(radioStateTable[index].description);
       }
     }
