@@ -106,6 +106,7 @@ void updateSerial()
       if (incoming == '\r' && commandLength > 0)
       {
         printerEndpoint = PRINT_TO_SERIAL;
+        systemPrintln();
         checkCommand(); //Process command buffer
       }
       else if (incoming == '\n')
