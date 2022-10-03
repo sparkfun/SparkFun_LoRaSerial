@@ -263,7 +263,7 @@ void readyOutgoingPacket()
   //SF6 requires an implicit header which means there is no dataLength in the header
   if (settings.radioSpreadFactor == 6)
   {
-    if (bytesToSend > 255 - 3) bytesToSend = 255 - 3; //We are going to transmit 255 bytes no matter what
+    if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize; //We are going to transmit 255 bytes no matter what
   }
 
   packetSize = bytesToSend;
@@ -295,7 +295,7 @@ void readyOutgoingCommandPacket()
   //SF6 requires an implicit header which means there is no dataLength in the header
   if (settings.radioSpreadFactor == 6)
   {
-    if (bytesToSend > 255 - 3) bytesToSend = 255 - 3; //We are going to transmit 255 bytes no matter what
+    if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize; //We are going to transmit 255 bytes no matter what
   }
 
   packetSize = bytesToSend;

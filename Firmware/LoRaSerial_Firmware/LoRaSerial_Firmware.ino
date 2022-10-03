@@ -195,6 +195,7 @@ uint16_t txDelay;
 
 //Receive control
 uint8_t minDatagramSize;
+uint8_t maxDatagramSize;
 uint8_t rxAckNumber;
 uint8_t * rxData;
 uint8_t rxDataBytes;
