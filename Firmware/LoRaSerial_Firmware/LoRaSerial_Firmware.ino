@@ -203,6 +203,11 @@ uint8_t rxDataBytes;
 unsigned long heartbeatTimer;
 unsigned long linkDownTimer;
 
+//Clock synchronization
+unsigned long rcvTimeMillis;
+unsigned long xmitTimeMillis;
+unsigned long clockDisplayOffset;
+
 //Transmit control
 const int datagramsExpectingAcks = 0
   | (1 << DATAGRAM_DATA)

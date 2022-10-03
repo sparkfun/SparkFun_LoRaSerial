@@ -57,15 +57,21 @@ Two timers are in use:
 //First packet in the three way handshake to bring up the link
 void xmitDatagramP2PPing()
 {
+  unsigned long currentMillis;
+
+  currentMillis = millis();
+  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
+  endOfTxData += sizeof(unsigned long);
+
   /*
-          endOfTxData ---.
-                         |
-                         V
-      +--------+---------+----------+
-      |        |         | Optional |
-      | NET ID | Control | Trailer  |
-      | 8 bits | 8 bits  |  8 bits  |
-      +--------+---------+----------+
+                     endOfTxData ---.
+                                    |
+                                    V
+      +--------+---------+----------+----------+
+      |        |         |          | Optional |
+      | NET ID | Control |  Millis  | Trailer  |
+      | 8 bits | 8 bits  | 4 bytes  |  8 bits  |
+      +--------+---------+----------+----------+
   */
 
   txControl.datagramType = DATAGRAM_PING;
@@ -76,15 +82,21 @@ void xmitDatagramP2PPing()
 //Second packet in the three way handshake to bring up the link
 void xmitDatagramP2PAck1()
 {
+  unsigned long currentMillis;
+
+  currentMillis = millis();
+  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
+  endOfTxData += sizeof(unsigned long);
+
   /*
-          endOfTxData ---.
-                         |
-                         V
-      +--------+---------+----------+
-      |        |         | Optional |
-      | NET ID | Control | Trailer  |
-      | 8 bits | 8 bits  |  8 bits  |
-      +--------+---------+----------+
+                     endOfTxData ---.
+                                    |
+                                    V
+      +--------+---------+----------+----------+
+      |        |         |          | Optional |
+      | NET ID | Control |  Millis  | Trailer  |
+      | 8 bits | 8 bits  | 4 bytes  |  8 bits  |
+      +--------+---------+----------+----------+
   */
 
   txControl.datagramType = DATAGRAM_ACK_1;
@@ -95,15 +107,21 @@ void xmitDatagramP2PAck1()
 //Last packet in the three way handshake to bring up the link
 void xmitDatagramP2PAck2()
 {
+  unsigned long currentMillis;
+
+  currentMillis = millis();
+  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
+  endOfTxData += sizeof(unsigned long);
+
   /*
-          endOfTxData ---.
-                         |
-                         V
-      +--------+---------+----------+
-      |        |         | Optional |
-      | NET ID | Control | Trailer  |
-      | 8 bits | 8 bits  |  8 bits  |
-      +--------+---------+----------+
+                     endOfTxData ---.
+                                    |
+                                    V
+      +--------+---------+----------+----------+
+      |        |         |          | Optional |
+      | NET ID | Control |  Millis  | Trailer  |
+      | 8 bits | 8 bits  | 4 bytes  |  8 bits  |
+      +--------+---------+----------+----------+
   */
 
   txControl.datagramType = DATAGRAM_ACK_2;
@@ -224,6 +242,9 @@ PacketType rcvDatagram()
   PacketType datagramType;
   static uint8_t expectedRxAck;
   uint8_t receivedNetID;
+
+  //Save the receive time
+  rcvTimeMillis = millis();
 
   //Get the received datagram
   radio.readData(incomingBuffer, MAX_PACKET_SIZE);
@@ -729,6 +750,7 @@ void retransmitDatagram()
   int state = radio.startTransmit(outgoingPacket, txDatagramSize);
   if (state == RADIOLIB_ERR_NONE)
   {
+    xmitTimeMillis = millis();
     packetAirTime = calcAirTime(txDatagramSize); //Calculate packet air size while we're transmitting in the background
     uint16_t responseDelay = packetAirTime / settings.responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
     if (settings.debugTransmit)
