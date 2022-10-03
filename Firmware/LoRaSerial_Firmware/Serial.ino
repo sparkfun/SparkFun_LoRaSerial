@@ -223,7 +223,7 @@ bool isCTS()
 
 //If we have data to send, get the packet ready
 //Return true if new data is ready to be sent
-bool processWaitingSerial()
+bool processWaitingSerial(bool sendNow)
 {
   //Push any available data out
   if (availableRXBytes() >= settings.frameSize)
@@ -234,7 +234,7 @@ bool processWaitingSerial()
   }
 
   //Check if we should send out a partial frame
-  else if (availableRXBytes() > 0 && (millis() - lastByteReceived_ms) >= settings.serialTimeoutBeforeSendingFrame_ms)
+  else if (sendNow || (availableRXBytes() > 0 && (millis() - lastByteReceived_ms) >= settings.serialTimeoutBeforeSendingFrame_ms))
   {
     LRS_DEBUG_PRINTLN("Sending partial frame");
     readyOutgoingPacket();

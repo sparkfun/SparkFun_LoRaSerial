@@ -56,6 +56,7 @@ typedef enum
   DATAGRAM_DATA,
   DATAGRAM_SF6_DATA,
   DATAGRAM_DATA_ACK,
+  DATAGRAM_HEARTBEAT,
   DATAGRAM_REMOTE_COMMAND,
   DATAGRAM_REMOTE_COMMAND_RESPONSE,
 
@@ -81,8 +82,8 @@ typedef enum
 } PacketType;
 
 const char * const v2DatagramType[] =
-{//  0       1        2        3        4           5           6          7
-  "PING", "ACK-1", "ACK-2", "DATA", "SF6-DATA", "DATA-ACK", "RMT-CMD", "RMT_RESP",
+{//  0       1        2        3        4           5           6            7          8
+  "PING", "ACK-1", "ACK-2", "DATA", "SF6-DATA", "DATA-ACK", "HEARTBEAT", "RMT-CMD", "RMT_RESP",
 };
 
 //Train button states
@@ -143,6 +144,7 @@ enum
   //V2
   TRIGGER_HOP_TIMER_START,                    //34,  875us
   TRIGGER_HOP_TIMER_STOP,                     //35,  900us
+  TRIGGER_HEARTBEAT,                          //36,  925us
 };
 
 //Control where to print command output
@@ -230,6 +232,7 @@ typedef struct struct_settings {
   bool useV2 = false; //Use the V2 protocol
   bool printTimestamp = false; //Print a timestamp: days hours:minutes:seconds.milliseconds
   bool debugDatagrams = false; //Print the datagrams
+  uint16_t txAckMillis = 100; //Number of milliseconds to delay for ACK
 } Settings;
 Settings settings;
 

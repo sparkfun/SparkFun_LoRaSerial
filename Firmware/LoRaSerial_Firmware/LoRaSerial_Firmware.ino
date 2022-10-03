@@ -180,9 +180,6 @@ bool remoteCommandResponse;
 //V2
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-//Constants
-const int pingResponseTimeoutMSec = 5 * 1000;
-
 //Frame size values
 uint8_t headerBytes;
 uint8_t trailerBytes;
@@ -200,6 +197,8 @@ uint8_t minDatagramSize;
 uint8_t rxAckNumber;
 uint8_t * rxData;
 uint8_t rxDataBytes;
+unsigned long heartbeatTimer;
+unsigned long linkDownTimer;
 
 //Transmit control
 const int datagramsExpectingAcks = 0

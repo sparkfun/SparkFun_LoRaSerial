@@ -47,6 +47,10 @@
                        | Rx Data                 | Rx Data
                        |                         |
                        V                         V
+
+Two timers are in use:
+    datagramTimer:  Set at end of transmit, measures ACK timeout
+    heartbeatTimer: Set upon entry to P2P_NO_LINK, measures time to send next PING
 */
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -168,6 +172,25 @@ void xmitDatagramP2PData()
   txControl.datagramType = DATAGRAM_DATA;
   txControl.ackNumber = txAckNumber;
   txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
+  transmitDatagram();
+}
+
+//Heartbeat packet to keep the link up
+void xmitDatagramP2PHeartbeat()
+{
+  /*
+          endOfTxData ---.
+                         |
+                         V
+      +--------+---------+----------+
+      |        |         | Optional |
+      | NET ID | Control | Trailer  |
+      | 8 bits | 8 bits  |  8 bits  |
+      +--------+---------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_HEARTBEAT;
+  txControl.ackNumber = 0;
   transmitDatagram();
 }
 
@@ -393,7 +416,10 @@ PacketType rcvDatagram()
         {
           //Determine if this is a duplicate datagram
           if (rxAckNumber == ((expectedRxAck - 1) & 3))
+          {
+            linkDownTimer = millis();
             return PACKET_DUPLICATE;
+          }
 
           //Not a duplicate
           return PACKET_BAD;
@@ -432,7 +458,7 @@ PacketType rcvDatagram()
       dumpBuffer(rxData, rxDataBytes);
   }
 
-  //Process the packet
+  //Display the datagram type
   if (settings.debugDatagrams)
   {
     systemPrintTimestamp();
@@ -459,6 +485,9 @@ PacketType rcvDatagram()
         break;
     }
   }
+
+  //Process the packet
+  linkDownTimer = millis();
   return datagramType;
 }
 
@@ -640,9 +669,9 @@ void transmitDatagram()
 
   //Compute the delay for the ACK datagram
   if (datagramsExpectingAcks & (1 << txControl.datagramType))
-    txDelay = 100;
+    txDelay = settings.txAckMillis;
   else
-    txDelay = settings.heartbeatTimeout + random(0, 1000);
+    txDelay = random(0, 1000);
 
   //Transmit this datagram
   retransmitDatagram();
