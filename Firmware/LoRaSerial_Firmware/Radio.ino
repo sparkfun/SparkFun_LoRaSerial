@@ -511,8 +511,9 @@ void returnToReceiving()
   {
     if (expectingAck && settings.pointToPoint == true)
     {
-      radio.implicitHeader(2);
-      state = radio.startReceive(2); //Expect a control packet
+      uint8_t ackLength = settings.useV2 ? 3 : 2;
+      radio.implicitHeader(ackLength);
+      state = radio.startReceive(ackLength); //Expect a control packet
       triggerEvent(TRIGGER_RTR_2BYTE);
       expectingAck = false; //Do not return to this receiving configuration if something goes wrong
     }

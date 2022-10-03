@@ -64,7 +64,6 @@ typedef enum
 
   //V2: Point-to-Point data exchange
   DATAGRAM_DATA,
-  DATAGRAM_SF6_DATA,
   DATAGRAM_DATA_ACK,
   DATAGRAM_HEARTBEAT,
   DATAGRAM_REMOTE_COMMAND,
@@ -95,9 +94,9 @@ typedef enum
 } PacketType;
 
 const char * const v2DatagramType[] =
-{//  0       1        2        3        4           5           6
-  "PING", "ACK-1", "ACK-2", "DATA", "SF6-DATA", "DATA-ACK", "HEARTBEAT",
-  //  7          8                9
+{//  0       1        2        3        4           5
+  "PING", "ACK-1", "ACK-2", "DATA", "DATA-ACK", "HEARTBEAT",
+  //  6          7                8
   "RMT-CMD", "RMT_RESP", "DATAGRAM_DATAGRAM"
 };
 
@@ -187,7 +186,8 @@ typedef struct _CONTROL_U8
 {
   uint8_t ackNumber : 2;
   PacketType datagramType: 4;
-  uint8_t filler : 2;
+  bool sf6_data : 1;
+  uint8_t filler : 1;
 } CONTROL_U8;
 
 //These are all the settings that can be set on Serial Terminal Radio. It's recorded to NVM.

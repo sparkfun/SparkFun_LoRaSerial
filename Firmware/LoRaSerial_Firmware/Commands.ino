@@ -498,7 +498,7 @@ const COMMAND_ENTRY commands[] =
   {45,    0,   1,    0, TYPE_BOOL,         valInt,         "UseV2",                &settings.useV2},
   {46,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTimestamp",       &settings.printTimestamp},
   {47,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &settings.debugDatagrams},
-  {48,    5, 1000,   0, TYPE_U16,          valInt,         "TxAckMillis",          &settings.txAckMillis},
+  {48,    5, 5000,   0, TYPE_U16,          valInt,         "TxAckMillis",          &settings.txAckMillis},
   {49,    0,   1,    0, TYPE_BOOL,         valInt,         "DisplayRealMillis",    &settings.displayRealMillis},
 
   //Define any user parameters starting at 255 decrementing towards 0

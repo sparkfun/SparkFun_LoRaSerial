@@ -76,6 +76,7 @@ void xmitDatagramP2PPing()
 
   txControl.datagramType = DATAGRAM_PING;
   txControl.ackNumber = 0;
+  txControl.sf6_data = (settings.radioSpreadFactor == 6);
   transmitDatagram();
 }
 
@@ -101,6 +102,7 @@ void xmitDatagramP2PAck1()
 
   txControl.datagramType = DATAGRAM_ACK_1;
   txControl.ackNumber = 0;
+  txControl.sf6_data = (settings.radioSpreadFactor == 6);
   transmitDatagram();
 }
 
@@ -126,6 +128,7 @@ void xmitDatagramP2PAck2()
 
   txControl.datagramType = DATAGRAM_ACK_2;
   txControl.ackNumber = 0;
+  txControl.sf6_data = (settings.radioSpreadFactor == 6);
   transmitDatagram();
 }
 
@@ -149,6 +152,7 @@ void xmitDatagramP2PCommand()
 
   txControl.datagramType = DATAGRAM_REMOTE_COMMAND;
   txControl.ackNumber = txAckNumber;
+  txControl.sf6_data = (settings.radioSpreadFactor == 6);
   txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
   transmitDatagram();
 }
@@ -169,6 +173,7 @@ void xmitDatagramP2PCommandResponse()
 
   txControl.datagramType = DATAGRAM_REMOTE_COMMAND_RESPONSE;
   txControl.ackNumber = txAckNumber;
+  txControl.sf6_data = (settings.radioSpreadFactor == 6);
   txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
   transmitDatagram();
 }
@@ -189,6 +194,7 @@ void xmitDatagramP2PData()
 
   txControl.datagramType = DATAGRAM_DATA;
   txControl.ackNumber = txAckNumber;
+  txControl.sf6_data = (settings.radioSpreadFactor == 6);
   txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
   transmitDatagram();
 }
@@ -209,6 +215,7 @@ void xmitDatagramP2PHeartbeat()
 
   txControl.datagramType = DATAGRAM_HEARTBEAT;
   txControl.ackNumber = 0;
+  txControl.sf6_data = (settings.radioSpreadFactor == 6);
   transmitDatagram();
 }
 
@@ -228,6 +235,7 @@ void xmitDatagramP2PAck()
 
   txControl.datagramType = DATAGRAM_DATA_ACK;
   txControl.ackNumber = rxAckNumber;
+  txControl.sf6_data = (settings.radioSpreadFactor == 6);
   transmitDatagram();
 }
 
@@ -251,6 +259,7 @@ void xmitDatagramMpDatagram()
 
   txControl.datagramType = DATAGRAM_DATAGRAM;
   txControl.ackNumber = 0;
+  txControl.sf6_data = (settings.radioSpreadFactor == 6);
   transmitDatagram();
 }
 
@@ -403,10 +412,19 @@ PacketType rcvDatagram()
   */
 
   //Get the spread factor 6 length
-  if (datagramType == DATAGRAM_SF6_DATA)
+  if (rxControl.sf6_data)
   {
+    //Validate that there are enough data bytes
     if (rxDataBytes >= (*rxData + minDatagramSize))
+    {
       rxDataBytes = *rxData++;
+      if (settings.debugReceive)
+      {
+        systemPrintTimestamp();
+        systemPrint("    SF6 Length: ");
+        systemPrintln(rxDataBytes);
+      }
+    }
     else
     {
       if (settings.debugReceive)
@@ -421,7 +439,8 @@ PacketType rcvDatagram()
       return (PACKET_BAD);
     }
   }
-  rxDataBytes -= minDatagramSize;
+  else
+    rxDataBytes -= minDatagramSize;
 
   //Verify the ACK number last so that the expected ACK number can be updated
   //                     txAckNumber ----> rxAckNumber == expectedTxAck
@@ -449,7 +468,6 @@ PacketType rcvDatagram()
         break;
 
       case DATAGRAM_DATA:
-      case DATAGRAM_SF6_DATA:
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
         if (rxAckNumber != expectedRxAck)
@@ -512,7 +530,6 @@ PacketType rcvDatagram()
 
       case DATAGRAM_DATA:
       case DATAGRAM_DATA_ACK:
-      case DATAGRAM_SF6_DATA:
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
         if (settings.pointToPoint)
@@ -560,7 +577,6 @@ void transmitDatagram()
 
       case DATAGRAM_DATA:
       case DATAGRAM_DATA_ACK:
-      case DATAGRAM_SF6_DATA:
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
         if (settings.pointToPoint)
@@ -641,10 +657,13 @@ void transmitDatagram()
     printControl(control);
 
   //Add the spread factor 6 length is required
-  if (txControl.datagramType == DATAGRAM_SF6_DATA)
+  if (txControl.sf6_data)
   {
     *header++ = length;
     txDatagramSize = MAX_PACKET_SIZE - trailerBytes; //We're now going to transmit a full size datagram
+
+    //Zero fill the extra bytes
+    memset(endOfTxData, 0, maxDatagramSize - length);
     if (settings.debugTransmit)
     {
       systemPrintTimestamp();
@@ -728,6 +747,11 @@ void printControl(uint8_t value)
   systemPrintTimestamp();
   systemPrint("        datagramType ");
   systemPrintln(v2DatagramType[control->datagramType]);
+  if (control->sf6_data)
+  {
+    systemPrintTimestamp();
+    systemPrintln("        SF6 Data");
+  }
   petWDT();
 }
 

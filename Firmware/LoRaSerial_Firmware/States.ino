@@ -26,6 +26,18 @@ void updateRadioState()
       heartbeatTimer = millis();
       txDelay = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
 
+      radioSeed = radio.randomByte(); //Puts radio into standy-by state
+      randomSeed(radioSeed);
+      if ((settings.debug == true) || (settings.debugRadio == true))
+      {
+        systemPrint("RadioSeed: ");
+        systemPrintln(radioSeed);
+      }
+
+      generateHopTable(); //Generate frequency table based on randomByte
+
+      configureRadio(); //Generate freq table, setup radio, go to receiving, change state to standby
+
       //Set all of the ACK numbers to zero
       *(uint8_t *)(&txControl) = 0;
       *(uint8_t *)(&expectedTxAck) = 0;
@@ -50,19 +62,8 @@ void updateRadioState()
       //Determine the size of the trailer
       trailerBytes = 0;
 
-      radioSeed = radio.randomByte(); //Puts radio into standy-by state
-      randomSeed(radioSeed);
-      if ((settings.debug == true) || (settings.debugRadio == true))
-      {
-        systemPrint("RadioSeed: ");
-        systemPrintln(radioSeed);
-      }
-
-      generateHopTable(); //Generate frequency table based on randomByte
-
-      configureRadio(); //Generate freq table, setup radio, go to receiving, change state to standby
-
       //Start receiving
+      expectingAck = false;
       returnToReceiving();
 
       //Start the link between the radios
@@ -254,6 +255,7 @@ void updateRadioState()
           //Start the TX timer: time to delay before transmitting the PING
           heartbeatTimer = millis();
           txDelay = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
+          expectingAck = false;
           changeState(RADIO_P2P_LINK_DOWN);
         }
       }
@@ -310,6 +312,7 @@ void updateRadioState()
           //Start the TX timer: time to delay before transmitting the PING
           heartbeatTimer = millis();
           txDelay = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
+          expectingAck = false;
           changeState(RADIO_P2P_LINK_DOWN);
         }
       }
@@ -569,6 +572,7 @@ timeToHop = false;
       if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
+        expectingAck = false;
         returnToReceiving();
         changeState(RADIO_P2P_LINK_UP);
       }
@@ -579,6 +583,7 @@ timeToHop = false;
       if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
+        expectingAck = true;
         returnToReceiving();
         changeState(RADIO_P2P_LINK_UP_WAIT_ACK);
       }
@@ -665,6 +670,7 @@ timeToHop = false;
             systemPrintln("---------- Link DOWN ----------");
           heartbeatTimer = millis();
           txDelay = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
+          expectingAck = false;
           changeState(RADIO_P2P_LINK_DOWN);
         }
       }
@@ -1678,6 +1684,15 @@ void verifyRadioStateTable()
     }
     systemPrintln("};");
     systemFlush();
+
+    //Wait forever
+    while (1);
+  }
+
+  //Validate v2DatagramType
+  if (MAX_DATAGRAM_TYPE != (sizeof(v2DatagramType) / sizeof(v2DatagramType[0])))
+  {
+    systemPrint("ERROR - Please fix v2DatagramType in settings.h!");
 
     //Wait forever
     while (1);
