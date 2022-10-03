@@ -190,30 +190,20 @@ void updateSerial()
   if (availableRXCommandBytes() && inCommandMode == false)
   {
     commandLength = availableRXCommandBytes();
-systemPrint("commandLength: ");
-systemPrintln(commandLength);
-systemPrint("commandRXTail: ");
-systemPrintln(commandRXTail);
 
     for (x = 0 ; x < commandLength ; x++)
     {
       commandBuffer[x] = commandRXBuffer[commandRXTail++];
       commandRXTail %= sizeof(commandRXBuffer);
     }
-systemPrint("commandRXTail: ");
-systemPrintln(commandRXTail);
-commandBuffer[x] = 0;
-systemPrint("Remote command: ");
-systemPrintln(commandBuffer);
 
     if (commandBuffer[0] == 'R') //Error check
     {
-systemPrintln("Processing remote command");
       commandBuffer[0] = 'A'; //Convert this RT command to an AT command for local consumption
       printerEndpoint = PRINT_TO_RF; //Send prints to RF link
       checkCommand(); //Parse the command buffer
-
-      //We now have the commandTXBuffer loaded. But we need to send an remoteCommandResponse. Use the printerEndpoint within the State machine.
+      printerEndpoint = PRINT_TO_SERIAL;
+      remoteCommandResponse = true;
     }
     else
     {

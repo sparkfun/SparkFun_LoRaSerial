@@ -234,7 +234,6 @@ PacketType rcvDatagram()
 {
   CONTROL_U8 * control;
   PacketType datagramType;
-  uint8_t incomingBuffer[MAX_PACKET_SIZE];
   uint8_t receivedNetID;
 
   //Get the received datagram

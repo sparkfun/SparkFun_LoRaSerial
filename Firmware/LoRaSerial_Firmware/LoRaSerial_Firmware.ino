@@ -173,6 +173,7 @@ uint8_t trainEncryptionKey[16]; //New AES key passed during training
 bool inCommandMode = false; //Normal data is prevented from entering serial output when in command mode
 char commandBuffer[100]; //Received serial gets stored into buffer until \r or \n is received
 uint8_t commandLength = 0;
+bool remoteCommandResponse;
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -194,6 +195,7 @@ uint8_t txAckNumber;
 uint16_t txDelay;
 
 //Receive control
+uint8_t incomingBuffer[MAX_PACKET_SIZE];
 uint8_t minDatagramSize;
 uint8_t rxAckNumber;
 uint8_t * rxData;

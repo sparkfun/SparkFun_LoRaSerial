@@ -6,8 +6,6 @@
 //Move any data to incomingPacket buffer
 PacketType identifyPacketType()
 {
-  uint8_t incomingBuffer[MAX_PACKET_SIZE];
-
   //Receive the data packet
   radio.readData(incomingBuffer, MAX_PACKET_SIZE);
   uint8_t receivedBytes = radio.getPacketLength();

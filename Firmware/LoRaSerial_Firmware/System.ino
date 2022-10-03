@@ -12,8 +12,6 @@ void systemPrint(const char* value)
       commandTXBuffer[commandTXHead++] = value[x];
       commandTXHead %= sizeof(commandTXBuffer);
     }
-systemPrint("commandTXHead: ");
-systemPrintln(commandTXHead);
   }
 }
 
