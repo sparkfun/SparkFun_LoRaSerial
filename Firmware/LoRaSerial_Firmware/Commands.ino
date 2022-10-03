@@ -489,8 +489,8 @@ const COMMAND_ENTRY commands[] =
   {38,    1, 255,    0, TYPE_U8,           valInt,         "TriggerWidth",         &settings.triggerWidth},
   {39,    0,   1,    0, TYPE_BOOL,         valInt,         "TriggerWidthIsMultiplier", &settings.triggerWidthIsMultiplier},
 
-  {40,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable: 31-0",  &settings.triggerEnable},
-  {41,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable: 63-32", &settings.triggerEnable},
+  {40,    0, (uint32_t)0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable: 31-0",  &settings.triggerEnable},
+  {41,    0, (uint32_t)0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable: 63-32", &settings.triggerEnable},
   {42,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugReceive",         &settings.debugReceive},
   {43,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &settings.debugTransmit},
   {44,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTxErrors",        &settings.printTxErrors},
