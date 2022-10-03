@@ -421,7 +421,7 @@ void configureRadio()
   //SF6 requires an implicit header. We will transmit 255 bytes for most packets and 2 bytes for ACK packets.
   if (settings.radioSpreadFactor == 6)
   {
-    if (radio.implicitHeader(255) != RADIOLIB_ERR_NONE)
+    if (radio.implicitHeader(MAX_PACKET_SIZE) != RADIOLIB_ERR_NONE)
       success = false;
   }
   else
@@ -518,8 +518,8 @@ void returnToReceiving()
     }
     else
     {
-      radio.implicitHeader(255);
-      state = radio.startReceive(255); //Expect a full data packet
+      radio.implicitHeader(MAX_PACKET_SIZE);
+      state = radio.startReceive(MAX_PACKET_SIZE); //Expect a full data packet
       triggerEvent(TRIGGER_RTR_255BYTE);
     }
   }
@@ -559,8 +559,8 @@ void sendPingPacket()
   {
     //Manually store actual data length 3 bytes from the end (before NetID)
     //Manual packet size is whatever has been processed + 1 for the manual packetSize byte
-    outgoingPacket[255 - 3] = packetSize + 1;
-    packetSize = 255; //We're now going to transmit 255 bytes
+    outgoingPacket[maxDatagramSize] = packetSize + 1;
+    packetSize = MAX_PACKET_SIZE; //We're now going to transmit 255 bytes
   }
 
   expectingAck = true; //We expect destination to ack
@@ -594,8 +594,8 @@ void sendDataPacket()
   {
     //Manually store actual data length 3 bytes from the end (before NetID)
     //Manual packet size is whatever has been processed + 1 for the manual packetSize byte
-    outgoingPacket[255 - 3] = packetSize + 1;
-    packetSize = 255; //We're now going to transmit 255 bytes
+    outgoingPacket[maxDatagramSize] = packetSize + 1;
+    packetSize = MAX_PACKET_SIZE; //We're now going to transmit 255 bytes
   }
 
   expectingAck = true; //We expect destination to ack
@@ -766,8 +766,8 @@ void sendCommandDataPacket()
   {
     //Manually store actual data length 3 bytes from the end (before NetID)
     //Manual packet size is whatever has been processed + 1 for the manual packetSize byte
-    outgoingPacket[255 - 3] = packetSize + 1;
-    packetSize = 255; //We're now going to transmit 255 bytes
+    outgoingPacket[maxDatagramSize] = packetSize + 1;
+    packetSize = MAX_PACKET_SIZE; //We're now going to transmit 255 bytes
   }
 
   expectingAck = true; //We expect destination to ack
@@ -826,8 +826,8 @@ void sendCommandResponseDataPacket()
   {
     //Manually store actual data length 3 bytes from the end (before NetID)
     //Manual packet size is whatever has been processed + 1 for the manual packetSize byte
-    outgoingPacket[255 - 3] = packetSize + 1;
-    packetSize = 255; //We're now going to transmit 255 bytes
+    outgoingPacket[maxDatagramSize] = packetSize + 1;
+    packetSize = MAX_PACKET_SIZE; //We're now going to transmit 255 bytes
   }
 
   expectingAck = true; //We expect destination to ack

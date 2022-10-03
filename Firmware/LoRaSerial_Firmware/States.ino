@@ -55,9 +55,6 @@ void updateRadioState()
       //Determine the size of the trailer
       trailerBytes = 0;
 
-      //Determine the minimum datagram size
-      minDatagramSize = headerBytes + trailerBytes;
-
       radioSeed = radio.randomByte(); //Puts radio into standy-by state
       randomSeed(radioSeed);
       if ((settings.debug == true) || (settings.debugRadio == true))
@@ -76,13 +73,25 @@ void updateRadioState()
       //Start the link between the radios
       if (settings.useV2)
       {
+        //Determine the minimum and maximum datagram sizes
+        minDatagramSize = headerBytes + trailerBytes;
+        maxDatagramSize = sizeof(outgoingPacket) - minDatagramSize;
+
+        //Start the V2 protocol
         if (settings.pointToPoint == true)
           changeState(RADIO_P2P_LINK_DOWN);
       }
       else
       {
         //V1 - SF6 length, netID and control are at the end of the datagram
+        trailerBytes = headerBytes;
         headerBytes = 0;
+
+        //Determine the minimum and maximum datagram sizes
+        minDatagramSize = headerBytes + trailerBytes;
+        maxDatagramSize = sizeof(outgoingPacket) - minDatagramSize;
+
+        //Start the V1 protocol
         if (settings.pointToPoint == true)
           changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
         else
