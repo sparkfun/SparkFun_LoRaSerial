@@ -262,8 +262,6 @@ void checkCommand()
   int prefixLength;
   bool success;
 
-  systemPrintln();
-
   //Verify the command length
   commandString = trimCommand(); //Remove any leading whitespace
   commandString[commandLength] = '\0'; //Terminate buffer
