@@ -396,6 +396,8 @@ void configureRadio()
   if (radio.setFrequency(channels[0]) == RADIOLIB_ERR_INVALID_FREQUENCY)
     success = false;
 
+  channelNumber = 0;
+
   //The SX1276 and RadioLib accepts a value of 2 to 17, with 20 enabling the power amplifier
   //Measuring actual power output the radio will output 14dBm (25mW) to 27.9dBm (617mW) in constant transmission
   //So we use a lookup to convert between the user's chosen power and the radio setting
@@ -484,7 +486,7 @@ void setRadioFrequency(bool rxAdjust)
 {
   float frequency;
 
-  frequency = channels[radio.getFHSSChannel()];
+  frequency = channels[channelNumber];
   if (rxAdjust)
     frequency -= frequencyCorrection;
   if (settings.printFrequency)
@@ -498,10 +500,6 @@ void setRadioFrequency(bool rxAdjust)
 
 void returnToReceiving()
 {
-  setRadioFrequency(settings.autoTuneFrequency);
-
-  timeToHop = false;
-
   int state;
   if (settings.radioSpreadFactor > 6)
   {
@@ -911,7 +909,7 @@ void sendPacket()
   if (settings.debugTransmit)
   {
     systemPrint("TX: Transmitting @ ");
-    systemPrint(channels[radio.getFHSSChannel()], 3);
+    systemPrint(channels[channelNumber], 3);
     systemPrintln(" MHz");
   }
 
@@ -954,9 +952,10 @@ void dio0ISR(void)
 
 //ISR when DIO1 goes low
 //Called when FhssChangeChannel interrupt occurs (at regular HoppingPeriods)
+//We do not use SX based channel hopping, and instead use a synchronized hardware timer
 void dio1ISR(void)
 {
-  timeToHop = true;
+  clearDIO1 = true;
 }
 
 //Given spread factor, bandwidth, coding rate and number of bytes, return total Air Time in ms for packet
@@ -1090,34 +1089,34 @@ bool linkLost()
 //at the beginning and during of a transmission or reception
 void hopChannel()
 {
-  float frequency;
-
-  radio.clearFHSSInt();
   timeToHop = false;
+  triggerEvent(TRIGGER_HOPPING);
+
+  channelNumber++;
+  channelNumber %= settings.numberOfChannels;
 
   //Select the new frequency
+  float frequency;
   if (settings.autoTuneFrequency == true)
   {
     if (radioState == RADIO_LINKED_RECEIVING_STANDBY || radioState == RADIO_LINKED_ACK_WAIT
         || radioState == RADIO_BROADCASTING_RECEIVING_STANDBY) //Only adjust frequency on RX. Not TX.
-      frequency = channels[radio.getFHSSChannel()] - frequencyCorrection;
+      frequency = channels[channelNumber] - frequencyCorrection;
     else
-      frequency = channels[radio.getFHSSChannel()];
+      frequency = channels[channelNumber];
   }
   else
-    frequency = channels[radio.getFHSSChannel()];
+    frequency = channels[channelNumber];
 
-  //Set the frequency
-  radio.setFrequency(channels[radio.getFHSSChannel()]);
+  radio.setFrequency(frequency);
 
   //Print the frequency if requested
   if (settings.printFrequency)
   {
     systemPrintTimestamp();
-    systemPrint(channels[radio.getFHSSChannel()], 3);
+    systemPrint(frequency, 3);
     systemPrintln(" MHz");
   }
-
 }
 
 //Returns true if the radio indicates we have an ongoing reception
@@ -1137,7 +1136,7 @@ bool receiveInProcess()
   //If radio has jumped back to channel 0 then we can confirm a transaction is complete.
   if (settings.frequencyHop == true)
   {
-    if (radio.getFHSSChannel() == 0)
+    if (channelNumber == 0)
       return (false); //Receive not in process
 
     if (transactionComplete == false)

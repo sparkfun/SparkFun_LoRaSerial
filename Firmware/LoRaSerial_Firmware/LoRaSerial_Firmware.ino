@@ -39,11 +39,11 @@
   Compiled with Arduino v1.8.15
 */
 
-const int FIRMWARE_VERSION_MAJOR = 1;
-const int FIRMWARE_VERSION_MINOR = 1;
+const int FIRMWARE_VERSION_MAJOR = 2;
+const int FIRMWARE_VERSION_MINOR = 0;
 
 #define RADIOLIB_LOW_LEVEL  //Enable access to the module functions
-//#define ENABLE_DEVELOPER //Uncomment this line to enable special developer modes
+#define ENABLE_DEVELOPER //Uncomment this line to enable special developer modes
 
 //Define the LoRaSerial board identifier:
 //  This is an int which is unique to this variant of the LoRaSerial hardware which allows us
@@ -90,6 +90,7 @@ uint8_t pin_trigger = PIN_UNDEFINED;
 SX1276 radio = NULL; //We can't instantiate here because we don't yet know what pin numbers to use
 
 float *channels;
+uint8_t channelNumber = 0;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Encryption
@@ -110,6 +111,12 @@ Button *trainBtn = NULL; //We can't instantiate the button here because we don't
 const int trainButtonTime = 2000; //ms press and hold before entering training
 const int trainWithDefaultsButtonTime = 5000; //ms press and hold before entering training
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+//Hardware Timers
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#include "SAMDTimerInterrupt.h" //http://librarymanager/All#SAMD_TimerInterrupt v1.9.0 (currently) by Koi Hang
+SAMDTimer ChannelTimer(TIMER_TCC); //Available: TC3, TC4, TC5, TCC, TCC1 or TCC2
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Global variables - Serial
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -162,7 +169,7 @@ unsigned long lastLinkBlink = 0; //Controls link LED in broadcast mode
 bool sentFirstPing = false; //Force a ping to link at POR
 
 volatile bool transactionComplete = false; //Used in dio0ISR
-volatile bool timeToHop = true; //Used in dio1ISR
+volatile bool timeToHop = false; //Used in dio1ISR
 bool expectingAck = false; //Used by various send packet functions
 
 float frequencyCorrection = 0; //Adjust receive freq based on the last packet received freqError
@@ -217,6 +224,8 @@ const int datagramsExpectingAcks = 0
 uint8_t * endOfTxData;
 CONTROL_U8 txControl;
 
+volatile bool clearDIO1 = true; //Clear the DIO1 hop ISR when possible
+
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables
@@ -257,6 +266,8 @@ void setup()
 
   beginButton(); //Start watching the train button
 
+  beginChannelTimer(); //Setup (but do not start) hardware timer for channel hopping
+
   arch.beginWDT(); //Start watchdog timer
 
   systemPrintTimestamp();
@@ -272,4 +283,10 @@ void loop()
   updateSerial(); //Store incoming and print outgoing
 
   updateRadioState(); //Ping/ack/send packets as needed
+
+  if(clearDIO1) //Allow DIO1 hop ISR but use it only for debug
+  {
+    clearDIO1 = false;
+    radio.clearFHSSInt(); //Clear the interrupt
+  }
 }

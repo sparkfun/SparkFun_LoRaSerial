@@ -83,3 +83,18 @@ void petWDT()
     arch.petWDT();
   }
 }
+
+void beginChannelTimer()
+{
+  if (ChannelTimer.attachInterruptInterval_MS(settings.maxDwellTime, ChannelTimerHandler) == false)
+    Serial.println(F("Error starting ChannelTimer!"));
+
+  stopChannelTimer(); //Start timer only after link is up
+}
+
+//ISR that fires when channel timer expires
+void ChannelTimerHandler()
+{
+  triggerEvent(TRIGGER_HOP);
+  timeToHop = true;
+}

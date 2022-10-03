@@ -433,9 +433,6 @@ void updateRSSI()
 
   int rssi = radio.getRSSI();
 
-  LRS_DEBUG_PRINT("RSSI: ");
-  LRS_DEBUG_PRINTLN(rssi);
-
   //Set LEDs according to RSSI level
   if (rssi > rssiLevelLow)
     setRSSI(0b0001);

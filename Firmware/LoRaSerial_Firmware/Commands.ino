@@ -167,7 +167,7 @@ bool commandAT(const char * commandString)
         systemPrintln();
         break;
       case ('7'): //ATI7 - Show current FHSS channel
-        systemPrintln(radio.getFHSSChannel());
+        systemPrintln(channelNumber);
         break;
       case ('8'): //ATI8 - Display the unique ID
         arch.uniqueID(uniqueID);

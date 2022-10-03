@@ -21,7 +21,6 @@ void updateRadioState()
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     case RADIO_RESET:
-      //ConfigureRadio sets the frequency to channel 0
       //Start the TX timer: time to delay before transmitting the PING
       heartbeatTimer = millis();
       txDelay = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
@@ -65,12 +64,13 @@ void updateRadioState()
         systemPrintln(radioSeed);
       }
 
-      generateHopTable(); //Generate frequency table based on randomByte
+      generateHopTable(); //Generate frequency table based on user settings
 
-      configureRadio(); //Generate freq table, setup radio, go to receiving, change state to standby
+      stopChannelTimer(); //Prevent radio from frequency hopping
 
-      //Start receiving
-      returnToReceiving();
+      configureRadio(); //Setup radio, set freq to channel 0
+
+      returnToReceiving(); //Start receiving
 
       //Start the link between the radios
       if (settings.useV2)
@@ -164,6 +164,7 @@ void updateRadioState()
       if ((millis() - heartbeatTimer) >= (settings.txAckMillis + txDelay))
       {
         //Transmit the PING
+        triggerEvent(TRIGGER_P2P_WAIT_TX_PING_DONE);
         xmitDatagramP2PPing();
         changeState(RADIO_P2P_WAIT_TX_PING_DONE);
       }
@@ -189,6 +190,7 @@ void updateRadioState()
           clockDisplayOffset = clockOffset;
 
           //Acknowledge the PING
+          triggerEvent(TRIGGER_P2P_WAIT_TX_ACK_1_DONE);
           xmitDatagramP2PAck1();
           changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
         }
@@ -199,6 +201,7 @@ void updateRadioState()
       //Determine if a PING has completed transmission
       if (transactionComplete)
       {
+        triggerEvent(TRIGGER_P2P_WAIT_ACK_1);
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
         changeState(RADIO_P2P_WAIT_ACK_1);
@@ -224,6 +227,7 @@ void updateRadioState()
           clockDisplayOffset = clockOffset;
 
           //Acknowledge the PING
+          triggerEvent(TRIGGER_P2P_WAIT_TX_ACK_1_DONE);
           xmitDatagramP2PAck1();
           changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
         }
@@ -241,6 +245,7 @@ void updateRadioState()
           clockDisplayOffset = clockOffset;
 
           //Acknowledge the ACK1
+          triggerEvent(TRIGGER_P2P_WAIT_TX_ACK_2_DONE);
           xmitDatagramP2PAck2();
           changeState(RADIO_P2P_WAIT_TX_ACK_2_DONE);
         }
@@ -257,6 +262,7 @@ void updateRadioState()
           returnToReceiving();
 
           //Start the TX timer: time to delay before transmitting the PING
+          triggerEvent(TRIGGER_P2P_LINK_DOWN);
           heartbeatTimer = millis();
           txDelay = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
           changeState(RADIO_P2P_LINK_DOWN);
@@ -268,6 +274,7 @@ void updateRadioState()
       //Determine if a ACK 1 has completed transmission
       if (transactionComplete)
       {
+        triggerEvent(TRIGGER_P2P_WAIT_ACK_2);
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
         changeState(RADIO_P2P_WAIT_ACK_2);
@@ -295,7 +302,9 @@ void updateRadioState()
           clockDisplayOffset = clockOffset;
 
           //Bring up the link
-          startHopTimer();
+          triggerEvent(TRIGGER_P2P_LINK_UP);
+          startChannelTimer();
+          hopChannel(); //Leave home
           returnToReceiving();
           changeState(RADIO_P2P_LINK_UP);
           if (settings.debugDatagrams)
@@ -313,6 +322,7 @@ void updateRadioState()
           }
 
           //Start the TX timer: time to delay before transmitting the PING
+          triggerEvent(TRIGGER_P2P_LINK_DOWN);
           heartbeatTimer = millis();
           txDelay = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
           changeState(RADIO_P2P_LINK_DOWN);
@@ -324,8 +334,10 @@ void updateRadioState()
       //Determine if a ACK 2 has completed transmission
       if (transactionComplete)
       {
+        triggerEvent(TRIGGER_P2P_LINK_UP);
         transactionComplete = false; //Reset ISR flag
-        startHopTimer();
+        startChannelTimer();
+        hopChannel(); //Leave home
         returnToReceiving();
         changeState(RADIO_P2P_LINK_UP);
         if (settings.debugDatagrams)
@@ -373,7 +385,9 @@ void updateRadioState()
 
     case RADIO_P2P_LINK_UP:
       updateRSSI();
-      timeToHop = false;
+
+      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+        hopChannel();
 
       //Check for a received datagram
       if (transactionComplete == true)
@@ -402,6 +416,7 @@ void updateRadioState()
             clockDisplayOffset = clockOffset;
 
             //Acknowledge the PING
+            triggerEvent(TRIGGER_P2P_WAIT_TX_ACK_1_DONE);
             xmitDatagramP2PAck1();
             changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
             break;
@@ -420,6 +435,7 @@ void updateRadioState()
               systemPrintln();
             }
 
+            triggerEvent(TRIGGER_P2P_LINK_UP_WAIT_ACK_DONE);
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
@@ -441,6 +457,7 @@ void updateRadioState()
               systemPrintln();
             }
 
+            triggerEvent(TRIGGER_P2P_LINK_UP);
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
@@ -477,6 +494,7 @@ void updateRadioState()
             txHead += rxDataBytes - length;
             txHead %= sizeof(serialTransmitBuffer);
 
+            triggerEvent(TRIGGER_P2P_LINK_UP_WAIT_ACK_DONE);
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
@@ -521,6 +539,7 @@ void updateRadioState()
         }
       }
 
+
       //If the radio is available, send any data in the serial buffer over the radio
       else if (receiveInProcess() == false)
       {
@@ -528,7 +547,7 @@ void updateRadioState()
         //Check for time to send serial data
         if (availableRXBytes() && (processWaitingSerial(heartbeatTimeout) == true))
         {
-          triggerEvent(TRIGGER_LINK_DATA_PACKET);
+          triggerEvent(TRIGGER_P2P_LINK_UP_WAIT_TX_DONE);
           xmitDatagramP2PData();
           changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
         }
@@ -537,7 +556,7 @@ void updateRadioState()
           //Load command bytes into outgoing packet
           readyOutgoingCommandPacket();
 
-          triggerEvent(TRIGGER_LINK_DATA_PACKET);
+          triggerEvent(TRIGGER_P2P_LINK_UP_WAIT_TX_DONE);
 
           //We now have the commandTXBuffer loaded
           if (remoteCommandResponse)
@@ -557,6 +576,7 @@ void updateRadioState()
         else if ((millis() - linkDownTimer) >= (3 * settings.heartbeatTimeout))
         {
           //Break the link
+          triggerEvent(TRIGGER_RADIO_RESET);
           if (settings.debugDatagrams)
             systemPrintln("---------- Link DOWN ----------");
           changeState(RADIO_RESET);
@@ -568,6 +588,7 @@ void updateRadioState()
     case RADIO_P2P_LINK_UP_WAIT_ACK_DONE:
       if (transactionComplete)
       {
+        triggerEvent(TRIGGER_P2P_LINK_UP);
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
         changeState(RADIO_P2P_LINK_UP);
@@ -578,6 +599,7 @@ void updateRadioState()
     case RADIO_P2P_LINK_UP_WAIT_TX_DONE:
       if (transactionComplete)
       {
+        triggerEvent(TRIGGER_P2P_LINK_UP_WAIT_ACK);
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
         changeState(RADIO_P2P_LINK_UP_WAIT_ACK);
@@ -614,6 +636,7 @@ void updateRadioState()
               systemPrintln();
             }
 
+            triggerEvent(TRIGGER_P2P_LINK_UP);
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
@@ -655,12 +678,14 @@ void updateRadioState()
         //Retransmit the packet
         if (packetSent++ < settings.maxResends)
         {
+          triggerEvent(TRIGGER_P2P_LINK_UP_WAIT_TX_DONE);
           retransmitDatagram();
           changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
         }
         else
         {
           //Failed to reach the other system, break the link
+          triggerEvent(TRIGGER_P2P_LINK_DOWN);
           if (settings.debugDatagrams)
             systemPrintln("---------- Link DOWN ----------");
           heartbeatTimer = millis();

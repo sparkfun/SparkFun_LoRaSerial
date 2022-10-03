@@ -745,8 +745,6 @@ void retransmitDatagram()
       dumpBuffer(outgoingPacket, txDatagramSize);
   }
 
-  setRadioFrequency(false); //Return home before every transmission
-
   int state = radio.startTransmit(outgoingPacket, txDatagramSize);
   if (state == RADIOLIB_ERR_NONE)
   {
@@ -777,12 +775,15 @@ void retransmitDatagram()
   datagramTimer = millis(); //Move timestamp even if error
 }
 
-void startHopTimer()
+void startChannelTimer()
 {
+  ChannelTimer.enableTimer();
   triggerEvent(TRIGGER_HOP_TIMER_START);
+
 }
 
-void stopHopTimer()
+void stopChannelTimer()
 {
+  ChannelTimer.disableTimer();
   triggerEvent(TRIGGER_HOP_TIMER_STOP);
 }
