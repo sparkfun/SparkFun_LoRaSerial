@@ -303,10 +303,10 @@ void triggerEvent(uint8_t triggerNumber)
   }
 
   //Determine if the trigger is enabled
-  if ((pin_trigger != 255) && (triggerEnable & (1 << triggerBitNumber)))
+  if ((pin_trigger != PIN_UNDEFINED) && (triggerEnable & (1 << triggerBitNumber)))
   {
     //Determine if the trigger pin is enabled
-    if (pin_trigger != 255)
+    if (pin_trigger != PIN_UNDEFINED)
     {
       if ((settings.debug == true) || (settings.debugTrigger == true))
       {
@@ -465,7 +465,7 @@ void setRSSI(uint8_t ledBits)
 
 void txLED(bool illuminate)
 {
-  if (pin_txLED != 255)
+  if (pin_txLED != PIN_UNDEFINED)
   {
     if (illuminate == true)
       digitalWrite(pin_txLED, HIGH);
@@ -476,7 +476,7 @@ void txLED(bool illuminate)
 
 void rxLED(bool illuminate)
 {
-  if (pin_rxLED != 255)
+  if (pin_rxLED != PIN_UNDEFINED)
   {
     if (illuminate == true)
       digitalWrite(pin_rxLED, HIGH);

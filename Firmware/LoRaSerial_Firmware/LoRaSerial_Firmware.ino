@@ -62,24 +62,26 @@ const int FIRMWARE_VERSION_MINOR = 1;
 //Hardware connections
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //These pins are set in beginBoard()
-uint8_t pin_rst = 255;
-uint8_t pin_cs = 255;
-uint8_t pin_txen = 255;
-uint8_t pin_rxen = 255;
-uint8_t pin_dio0 = 255;
-uint8_t pin_dio1 = 255;
-uint8_t pin_rts = 255;
-uint8_t pin_cts = 255;
-uint8_t pin_txLED = 255;
-uint8_t pin_rxLED = 255;
-uint8_t pin_trainButton = 255;
-uint8_t pin_rssi1LED = 255;
-uint8_t pin_rssi2LED = 255;
-uint8_t pin_rssi3LED = 255;
-uint8_t pin_rssi4LED = 255;
-uint8_t pin_boardID = 255;
+#define PIN_UNDEFINED   255
 
-uint8_t pin_trigger = 255;
+uint8_t pin_rst = PIN_UNDEFINED;
+uint8_t pin_cs = PIN_UNDEFINED;
+uint8_t pin_txen = PIN_UNDEFINED;
+uint8_t pin_rxen = PIN_UNDEFINED;
+uint8_t pin_dio0 = PIN_UNDEFINED;
+uint8_t pin_dio1 = PIN_UNDEFINED;
+uint8_t pin_rts = PIN_UNDEFINED;
+uint8_t pin_cts = PIN_UNDEFINED;
+uint8_t pin_txLED = PIN_UNDEFINED;
+uint8_t pin_rxLED = PIN_UNDEFINED;
+uint8_t pin_trainButton = PIN_UNDEFINED;
+uint8_t pin_rssi1LED = PIN_UNDEFINED;
+uint8_t pin_rssi2LED = PIN_UNDEFINED;
+uint8_t pin_rssi3LED = PIN_UNDEFINED;
+uint8_t pin_rssi4LED = PIN_UNDEFINED;
+uint8_t pin_boardID = PIN_UNDEFINED;
+
+uint8_t pin_trigger = PIN_UNDEFINED;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Radio Library

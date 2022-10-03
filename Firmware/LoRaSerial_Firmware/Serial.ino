@@ -89,12 +89,12 @@ void updateSerial()
     if (availableRXBytes() == sizeof(serialReceiveBuffer) - 1)
     {
       //Buffer full!
-      if (pin_rts != 255 && settings.flowControl == true)
+      if (pin_rts != PIN_UNDEFINED && settings.flowControl == true)
         digitalWrite(pin_rts, LOW); //Don't give me more
     }
     else
     {
-      if (pin_rts != 255 && settings.flowControl == true)
+      if (pin_rts != PIN_UNDEFINED && settings.flowControl == true)
         digitalWrite(pin_rts, HIGH); //Ok to send more
     }
 
@@ -216,7 +216,7 @@ void updateSerial()
 //Returns true if CTS is asserted (high = host says it's ok to send data)
 bool isCTS()
 {
-  if (pin_cts == 255) return (true); //CTS not implmented on this board
+  if (pin_cts == PIN_UNDEFINED) return (true); //CTS not implmented on this board
   if (settings.flowControl == false) return (true); //CTS turned off
   if (digitalRead(pin_cts) == HIGH) return (true);
   return (false);

@@ -433,7 +433,7 @@ void configureRadio()
   radio.setDio0Action(dio0ISR); //Called when transmission is finished
   radio.setDio1Action(dio1ISR); //Called after a transmission has started, so we can move to next freq
 
-  if (pin_rxen != 255)
+  if (pin_rxen != PIN_UNDEFINED)
     radio.setRfSwitchPins(pin_rxen, pin_txen);
 
   // HoppingPeriod = Tsym * FreqHoppingPeriod

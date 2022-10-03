@@ -49,7 +49,7 @@ void beginLoRa()
 
 void beginButton()
 {
-  if (pin_trainButton != 255)
+  if (pin_trainButton != PIN_UNDEFINED)
   {
     trainBtn = new Button(pin_trainButton); //Create the button
     trainBtn->begin();
