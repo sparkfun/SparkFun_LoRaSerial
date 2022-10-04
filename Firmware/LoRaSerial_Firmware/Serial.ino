@@ -141,14 +141,14 @@ void updateSerial()
     else
     {
       //Check general serial stream for command characters
-      if (incoming == settings.escapeCharacter)
+      if (incoming == escapeCharacter)
       {
         //Ignore escape characters received within 2 seconds of serial traffic
         //Allow escape characters received within first 2 seconds of power on
         if (millis() - lastByteReceived_ms > minEscapeTime_ms || millis() < minEscapeTime_ms)
         {
           escapeCharsReceived++;
-          if (escapeCharsReceived == settings.maxEscapeCharacters)
+          if (escapeCharsReceived == maxEscapeCharacters)
           {
             if (settings.echo == true)
               systemWrite(incoming);

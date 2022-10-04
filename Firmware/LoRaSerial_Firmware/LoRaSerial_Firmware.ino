@@ -120,6 +120,9 @@ SAMDTimer ChannelTimer(TIMER_TCC); //Available: TC3, TC4, TC5, TCC, TCC1 or TCC2
 
 //Global variables - Serial
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+const uint8_t escapeCharacter = '+';
+const uint8_t maxEscapeCharacters = 3; //Number of characters needed to enter command mode
+
 //Buffer to store bytes incoming from serial before broadcasting over LoRa
 uint8_t serialReceiveBuffer[1024 * 4]; //Bytes received from UART waiting to be RF transmitted. Buffer up to 1s of bytes at 4k
 uint8_t serialTransmitBuffer[1024 * 4]; //Bytes received from RF waiting to be printed out UART. Buffer up to 1s of bytes at 4k
