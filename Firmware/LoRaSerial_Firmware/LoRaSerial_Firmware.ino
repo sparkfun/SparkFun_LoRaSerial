@@ -115,6 +115,7 @@ const int trainWithDefaultsButtonTime = 5000; //ms press and hold before enterin
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint8_t escapeCharacter = '+';
 const uint8_t maxEscapeCharacters = 3; //Number of characters needed to enter command mode
+const uint8_t responseDelayDivisor = 4; //Add on to max response time after packet has been sent. Factor of 2. 8 is ok. 4 is good. A smaller number increases the delay.
 
 //Buffer to store bytes incoming from serial before broadcasting over LoRa
 uint8_t serialReceiveBuffer[1024 * 4]; //Bytes received from UART waiting to be RF transmitted. Buffer up to 1s of bytes at 4k

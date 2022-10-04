@@ -446,7 +446,7 @@ void configureRadio()
     success = false;
 
   controlPacketAirTime = calcAirTime(2); //Used for response timeout during RADIO_LINKED_ACK_WAIT
-  uint16_t responseDelay = controlPacketAirTime / settings.responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
+  uint16_t responseDelay = controlPacketAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
   controlPacketAirTime += responseDelay;
 
   if ((settings.debug == true) || (settings.debugRadio == true))
@@ -921,7 +921,7 @@ void sendPacket()
     if (timeToHop) hopChannel();
 
     packetAirTime = calcAirTime(packetSize); //Calculate packet air size while we're transmitting in the background
-    uint16_t responseDelay = packetAirTime / settings.responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
+    uint16_t responseDelay = packetAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
     packetAirTime += responseDelay;
 
     packetSent++;
