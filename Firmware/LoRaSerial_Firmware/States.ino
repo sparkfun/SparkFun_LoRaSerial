@@ -107,7 +107,7 @@ void updateRadioState()
     //Point-To-Point: Bring up the link
     //
     //A three way handshake is used to get both systems to agree that data can flow in both
-    //directions.  This handshake is also used to synchronize the HOP timer.
+    //directions. This handshake is also used to synchronize the HOP timer.
     /*
                     System A                 System B
 
@@ -160,6 +160,14 @@ void updateRadioState()
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     case RADIO_P2P_LINK_DOWN:
+      //If we are on the wrong channel, go home
+      if (channelNumber != 0)
+      {
+        stopChannelTimer();
+        channelNumber = 0;
+        radio.setFrequency(channels[channelNumber]);
+      }
+
       //Is it time to send the PING to the remote system
       if ((millis() - heartbeatTimer) >= (settings.txAckMillis + txDelay))
       {
@@ -236,13 +244,14 @@ void updateRadioState()
         else
         {
           //Received ACK 1
+
           //Compute the common clock
-          currentMillis = millis();
-          memcpy(&clockOffset, rxData, sizeof(currentMillis));
-          clockOffset += currentMillis + rcvTimeMillis - xmitTimeMillis;
-          clockOffset >>= 1;
-          clockOffset -= currentMillis;
-          clockDisplayOffset = clockOffset;
+          //          currentMillis = millis();
+          //          memcpy(&clockOffset, rxData, sizeof(currentMillis));
+          //          clockOffset += currentMillis + rcvTimeMillis - xmitTimeMillis;
+          //          clockOffset >>= 1;
+          //          clockOffset -= currentMillis;
+          //          clockDisplayOffset = clockOffset;
 
           //Acknowledge the ACK1
           triggerEvent(TRIGGER_P2P_WAIT_TX_ACK_2_DONE);
@@ -444,6 +453,8 @@ void updateRadioState()
             break;
 
           case DATAGRAM_HEARTBEAT:
+            //Received heartbeat while link was idle. Send ack to sync clocks.
+
             //Display the signal strength
             if (settings.displayPacketQuality == true)
             {
@@ -457,12 +468,19 @@ void updateRadioState()
               systemPrintln();
             }
 
-            triggerEvent(TRIGGER_P2P_LINK_UP);
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-            returnToReceiving();
-            changeState(RADIO_P2P_LINK_UP);
+
+            //Orig
+            //triggerEvent(TRIGGER_P2P_LINK_UP);
+            //returnToReceiving();
+            //changeState(RADIO_P2P_LINK_UP);
+
+            triggerEvent(TRIGGER_P2P_LINK_UP_ACK_HB);
+            xmitDatagramP2PAck(); //Transmit ACK
+            changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
+
             break;
 
           case DATAGRAM_DATA:
@@ -571,7 +589,12 @@ void updateRadioState()
           triggerEvent(TRIGGER_HEARTBEAT);
           xmitDatagramP2PHeartbeat();
           heartbeatTimer = millis();
-          changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
+
+          //Orig
+          //changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
+
+          //Wait for heartbeat to transmit
+          changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
         }
         else if ((millis() - linkDownTimer) >= (3 * settings.heartbeatTimeout))
         {
@@ -623,6 +646,9 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DATA_ACK:
+            //Synchronize channel timer
+            syncChannelTimer(3); //TODO remove hardcoded size of datagram
+
             //Display the signal strength
             if (settings.displayPacketQuality == true)
             {
@@ -645,6 +671,8 @@ void updateRadioState()
             break;
 
           case DATAGRAM_HEARTBEAT:
+            //Received heartbeat while waiting for ack. Don't send ack.
+
             //Display the signal strength
             if (settings.displayPacketQuality == true)
             {
@@ -658,10 +686,16 @@ void updateRadioState()
               systemPrintln();
             }
 
+            triggerEvent(TRIGGER_P2P_LINK_UP_HB_DO_NOTHING);
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+
             returnToReceiving();
+
+            //xmitDatagramP2PAck(); //Transmit ACK
+            //changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
+
             break;
         }
       }

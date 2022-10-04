@@ -86,15 +86,24 @@ void petWDT()
 
 void beginChannelTimer()
 {
-  if (ChannelTimer.attachInterruptInterval_MS(settings.maxDwellTime, ChannelTimerHandler) == false)
+  if (channelTimer.attachInterruptInterval_MS(settings.maxDwellTime, channelTimerHandler) == false)
     Serial.println(F("Error starting ChannelTimer!"));
 
   stopChannelTimer(); //Start timer only after link is up
 }
 
 //ISR that fires when channel timer expires
-void ChannelTimerHandler()
+void channelTimerHandler()
 {
+  timerStart = millis(); //Record when this ISR happened. Used for calculating clock sync.
+
+  //If the last timer was used to sync clocks, restore full timer interval
+  if (partialTimer == true)
+  {
+    partialTimer = false;
+    channelTimer.setInterval_MS(settings.maxDwellTime, channelTimerHandler);
+  }
+
   triggerEvent(TRIGGER_HOP);
   timeToHop = true;
 }

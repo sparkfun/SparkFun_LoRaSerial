@@ -115,7 +115,11 @@ const int trainWithDefaultsButtonTime = 5000; //ms press and hold before enterin
 //Hardware Timers
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "SAMDTimerInterrupt.h" //http://librarymanager/All#SAMD_TimerInterrupt v1.9.0 (currently) by Koi Hang
-SAMDTimer ChannelTimer(TIMER_TCC); //Available: TC3, TC4, TC5, TCC, TCC1 or TCC2
+SAMDTimer channelTimer(TIMER_TCC); //Available: TC3, TC4, TC5, TCC, TCC1 or TCC2
+unsigned long timerStart = 0; //Tracks how long our timer has been running since last hop
+bool partialTimer = false; //After an ACK we reset and run a partial timer to sync units
+const uint8_t SYNC_PROCESSING_OVERHEAD = 3; //Number of milliseconds it takes to compute clock deltas before sync'ing clocks
+const uint8_t CHANNEL_TIMER_DIVISOR = 4; //If the max dwell time can be up to 1000ms, we need to reduce this 4x to fit into uint8_t
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Global variables - Serial
@@ -220,7 +224,8 @@ const int datagramsExpectingAcks = 0
                                    | (1 << DATAGRAM_DATA)
                                    | (1 << DATAGRAM_SF6_DATA)
                                    | (1 << DATAGRAM_REMOTE_COMMAND)
-                                   | (1 << DATAGRAM_REMOTE_COMMAND_RESPONSE);
+                                   | (1 << DATAGRAM_REMOTE_COMMAND_RESPONSE)
+                                   | (1 << DATAGRAM_HEARTBEAT);
 uint8_t * endOfTxData;
 CONTROL_U8 txControl;
 
@@ -272,6 +277,19 @@ void setup()
 
   systemPrintTimestamp();
   systemPrintln("LRS Setup Complete");
+
+  //Testing
+  settings.triggerEnable = 0xFFFFFFFF; //Enable all
+  settings.debug = true;
+  settings.debugTrigger = true;
+  settings.printFrequency = true;
+  //settings.debugTransmit = true;
+  settings.debugReceive = true;
+  settings.triggerWidth = 25;
+  settings.useV2 = true;
+  settings.printTimestamp = true;
+
+  triggerEvent(TRIGGER_P2P_LINK_DOWN);
 }
 
 void loop()

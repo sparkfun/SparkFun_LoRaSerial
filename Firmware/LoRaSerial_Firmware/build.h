@@ -5,7 +5,7 @@
 #endif
 
 #if !defined(LRS_DEBUG_PORT)
-#define LRS_DEBUG_PORT   Serial
+#define LRS_DEBUG_PORT   SerialUSB
 #endif
 
 #if defined(LRS_DEBUG)
