@@ -68,6 +68,8 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATT - Enter training mode");
         systemPrintln("  ATX - Stop the training server");
         systemPrintln("  ATZ - Reboot the radio");
+        systemPrintln("  AT&F - Restore factory settings");
+        systemPrintln("  AT&W - Save current settings to NVM");
         break;
       case ('F'): //Enter training mode and return to factory defaults
         reportOK();
@@ -182,7 +184,7 @@ bool commandAT(const char * commandString)
   //AT&x commands
   else if (commandString[2] == '&')
   {
-    //&W, &F, &T, and &T=RSSI/TDM
+    //&W and &F
     if (commandLength == 4)
     {
       switch (commandString[3])
@@ -203,17 +205,6 @@ bool commandAT(const char * commandString)
         default:
           return false;
       }
-    }
-    else
-    {
-      //RSSI
-      if (strcmp_P(commandString, PSTR("AT&T=RSSI")) == 0) //Enable packet quality reporting
-      {
-        settings.displayPacketQuality = true;
-        reportOK();
-      }
-      else
-        return false;
     }
   }
   else
