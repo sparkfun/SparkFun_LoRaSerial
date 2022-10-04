@@ -180,8 +180,6 @@ typedef struct struct_settings {
   uint16_t sizeOfSettings = 0; //sizeOfSettings **must** be the first entry and must be int
   uint16_t strIdentifier = LRS_IDENTIFIER; // strIdentifier **must** be the second entry
 
-  uint8_t escapeCharacter = '+';
-  uint8_t maxEscapeCharacters = 3; //Number of characters needed to enter command mode
   uint8_t responseDelayDivisor = 4; //Add on to max response time after packet has been sent. Factor of 2. 8 is ok. 4 is good. A smaller number increases the delay.
 
   uint32_t serialSpeed = 57600; //Default to 57600bps to match RTK Surveyor default firmware
