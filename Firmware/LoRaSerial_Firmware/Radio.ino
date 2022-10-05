@@ -1090,7 +1090,7 @@ bool linkLost()
 void hopChannel()
 {
   timeToHop = false;
-  triggerEvent(TRIGGER_HOPPING);
+  triggerEvent(TRIGGER_FREQ_CHANGE);
 
   channelNumber++;
   channelNumber %= settings.numberOfChannels;

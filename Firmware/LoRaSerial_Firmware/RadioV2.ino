@@ -57,21 +57,15 @@
 //First packet in the three way handshake to bring up the link
 void xmitDatagramP2PPing()
 {
-  unsigned long currentMillis;
-
-  currentMillis = millis();
-  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
-  endOfTxData += sizeof(unsigned long);
-
   /*
-                     endOfTxData ---.
-                                    |
-                                    V
-      +--------+---------+----------+----------+
-      |        |         |          | Optional |
-      | NET ID | Control |  Millis  | Trailer  |
-      | 8 bits | 8 bits  | 4 bytes  |  8 bits  |
-      +--------+---------+----------+----------+
+          endOfTxData ---.
+                         |
+                         V
+      +--------+---------+----------+
+      |        |         |          |
+      | NET ID | Control | Trailer  |
+      | 8 bits | 8 bits  |  8 bits  |
+      +--------+---------+----------+
   */
 
   txControl.datagramType = DATAGRAM_PING;
@@ -82,20 +76,18 @@ void xmitDatagramP2PPing()
 //Second packet in the three way handshake to bring up the link
 void xmitDatagramP2PAck1()
 {
-  unsigned long currentMillis;
-
-  currentMillis = millis();
-  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
-  endOfTxData += sizeof(unsigned long);
+  uint16_t channelTimerElapsed = millis() - timerStart;
+  memcpy(endOfTxData, &channelTimerElapsed, sizeof(channelTimerElapsed));
+  endOfTxData += sizeof(channelTimerElapsed);
 
   /*
                      endOfTxData ---.
                                     |
                                     V
       +--------+---------+----------+----------+
-      |        |         |          | Optional |
-      | NET ID | Control |  Millis  | Trailer  |
-      | 8 bits | 8 bits  | 4 bytes  |  8 bits  |
+      |        |         | Channel  | Optional |
+      | NET ID | Control |  Timer   | Trailer  |
+      | 8 bits | 8 bits  | 2 bytes  |  8 bits  |
       +--------+---------+----------+----------+
   */
 
@@ -107,21 +99,15 @@ void xmitDatagramP2PAck1()
 //Last packet in the three way handshake to bring up the link
 void xmitDatagramP2PAck2()
 {
-  unsigned long currentMillis;
-
-  currentMillis = millis();
-  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
-  endOfTxData += sizeof(unsigned long);
-
   /*
-                     endOfTxData ---.
-                                    |
-                                    V
-      +--------+---------+----------+----------+
-      |        |         |          | Optional |
-      | NET ID | Control |  Millis  | Trailer  |
-      | 8 bits | 8 bits  | 4 bytes  |  8 bits  |
-      +--------+---------+----------+----------+
+          endOfTxData ---.
+                         |
+                         V
+      +--------+---------+----------+
+      |        |         |          |
+      | NET ID | Control | Trailer  |
+      | 8 bits | 8 bits  |  8 bits  |
+      +--------+---------+----------+
   */
 
   txControl.datagramType = DATAGRAM_ACK_2;
@@ -208,22 +194,28 @@ void xmitDatagramP2PHeartbeat()
   */
 
   txControl.datagramType = DATAGRAM_HEARTBEAT;
-  txControl.ackNumber = 0;
+  txControl.ackNumber = txAckNumber;
+  txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
+
   transmitDatagram();
 }
 
 //Create short packet of 2 control bytes - do not expect ack
 void xmitDatagramP2PAck()
 {
+  uint16_t channelTimerElapsed = millis() - timerStart;
+  memcpy(endOfTxData, &channelTimerElapsed, sizeof(channelTimerElapsed));
+  endOfTxData += sizeof(channelTimerElapsed);
+
   /*
-          endOfTxData ---.
-                         |
-                         V
-      +--------+---------+----------+
-      |        |         | Optional |
-      | NET ID | Control | Trailer  |
-      | 8 bits | 8 bits  |  8 bits  |
-      +--------+---------+----------+
+                     endOfTxData ---.
+                                    |
+                                    V
+      +--------+---------+----------+----------+
+      |        |         | Channel  | Optional |
+      | NET ID | Control |  Timer   | Trailer  |
+      | 8 bits | 8 bits  | 2 bytes  |  8 bits  |
+      +--------+---------+----------+----------+
   */
 
   txControl.datagramType = DATAGRAM_DATA_ACK;
@@ -433,6 +425,7 @@ PacketType rcvDatagram()
       case DATAGRAM_SF6_DATA:
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
+      case DATAGRAM_HEARTBEAT:
         if (rxAckNumber != expectedRxAck)
         {
           //Determine if this is a duplicate datagram
@@ -496,6 +489,7 @@ PacketType rcvDatagram()
       case DATAGRAM_SF6_DATA:
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
+      case DATAGRAM_HEARTBEAT:
         if (settings.pointToPoint)
         {
           systemPrint(" (ACK #");
@@ -777,13 +771,34 @@ void retransmitDatagram()
 
 void startChannelTimer()
 {
-  ChannelTimer.enableTimer();
+  channelTimer.enableTimer();
+  timerStart = millis(); //ISR normally takes care of this but allow for correct ACK sync before first ISR
   triggerEvent(TRIGGER_HOP_TIMER_START);
-
 }
 
 void stopChannelTimer()
 {
-  ChannelTimer.disableTimer();
+  channelTimer.disableTimer();
   triggerEvent(TRIGGER_HOP_TIMER_STOP);
+}
+
+//Given the remote unit's amount of channelTimer that has elapsed, and size of the ack received
+//Adjust our own channelTimer interrupt to be synchronized with the remote unit
+void syncChannelTimer(uint8_t sizeOfDatagram)
+{
+  triggerEvent(TRIGGER_SYNC_CHANNEL);
+
+  uint16_t datagramAirTime = calcAirTime(sizeOfDatagram); //Calculate how much time it took for the datagram to be transmitted
+
+  uint16_t channelTimerElapsed;
+  memcpy(&channelTimerElapsed, rxData, sizeof(channelTimerElapsed));
+  channelTimerElapsed += datagramAirTime;
+  channelTimerElapsed += SYNC_PROCESSING_OVERHEAD;
+
+  if(channelTimerElapsed > settings.maxDwellTime) channelTimerElapsed -= settings.maxDwellTime;
+
+  partialTimer = true;
+  channelTimer.disableTimer();
+  channelTimer.setInterval_MS(settings.maxDwellTime - channelTimerElapsed, channelTimerHandler); //Shorten our hardware timer to match our mate's
+  channelTimer.enableTimer();
 }
