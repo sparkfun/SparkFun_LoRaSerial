@@ -257,7 +257,6 @@ typedef struct struct_settings {
   bool printTimestamp = false; //Print a timestamp: days hours:minutes:seconds.milliseconds
   bool debugDatagrams = false; //Print the datagrams
   uint16_t txAckMillis = 100; //Number of milliseconds to delay for ACK
-  bool displayRealMillis = false; //true = Display the millis value without offset, false = use offset
 } Settings;
 Settings settings;
 

@@ -256,9 +256,6 @@ void setup()
 
   loadSettings(); //Load settings from EEPROM
 
-  settings.triggerEnable = 0xFFFFFFFF; //Enable all
-  settings.debugTrigger = true;
-
   beginSerial(settings.serialSpeed);
 
   verifyRadioStateTable(); //Verify that the state table contains all of the states in increasing order
@@ -278,17 +275,6 @@ void setup()
 
   systemPrintTimestamp();
   systemPrintln("LRS Setup Complete");
-
-  //Testing
-  settings.triggerEnable = 0xFFFFFFFF; //Enable all
-  settings.debugTrigger = true;
-  settings.debug = true;
-  //settings.printFrequency = true;
-  //settings.debugTransmit = true;
-  //settings.debugReceive = true;
-  settings.triggerWidth = 25;
-  settings.useV2 = true;
-  //settings.printTimestamp = true;
 
   triggerEvent(TRIGGER_RADIO_RESET);
 }
