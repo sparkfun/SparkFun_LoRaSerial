@@ -188,15 +188,6 @@ void updateRadioState()
           returnToReceiving();
         else
         {
-          //Received PING
-          //Compute the common clock
-          currentMillis = millis();
-          memcpy(&clockOffset, rxData, sizeof(currentMillis));
-          clockOffset += currentMillis + rcvTimeMillis - xmitTimeMillis;
-          clockOffset >>= 1;
-          clockOffset -= currentMillis;
-          clockDisplayOffset = clockOffset;
-
           //Acknowledge the PING
           triggerEvent(TRIGGER_SEND_ACK1);
           xmitDatagramP2PAck1();
@@ -225,15 +216,6 @@ void updateRadioState()
         PacketType packetType = rcvDatagram();
         if (packetType == DATAGRAM_PING)
         {
-          //Received PING
-          //Compute the common clock
-          currentMillis = millis();
-          memcpy(&clockOffset, rxData, sizeof(currentMillis));
-          clockOffset += currentMillis + rcvTimeMillis - xmitTimeMillis;
-          clockOffset >>= 1;
-          clockOffset -= currentMillis;
-          clockDisplayOffset = clockOffset;
-
           //Acknowledge the PING
           triggerEvent(TRIGGER_SEND_ACK1);
           xmitDatagramP2PAck1();
@@ -243,16 +225,6 @@ void updateRadioState()
           returnToReceiving();
         else
         {
-          //Received ACK 1
-
-          //Compute the common clock
-          //          currentMillis = millis();
-          //          memcpy(&clockOffset, rxData, sizeof(currentMillis));
-          //          clockOffset += currentMillis + rcvTimeMillis - xmitTimeMillis;
-          //          clockOffset >>= 1;
-          //          clockOffset -= currentMillis;
-          //          clockDisplayOffset = clockOffset;
-
           //Acknowledge the ACK1
           triggerEvent(TRIGGER_SEND_ACK2);
           xmitDatagramP2PAck2();
@@ -301,15 +273,6 @@ void updateRadioState()
           returnToReceiving();
         else
         {
-          //Received ACK 2
-          //Compute the common clock
-          currentMillis = millis();
-          memcpy(&clockOffset, rxData, sizeof(currentMillis));
-          clockOffset += currentMillis + rcvTimeMillis - xmitTimeMillis;
-          clockOffset >>= 1;
-          clockOffset -= currentMillis;
-          clockDisplayOffset = clockOffset;
-
           //Bring up the link
           triggerEvent(TRIGGER_HANDSHAKE_COMPLETE);
           startChannelTimer();
@@ -415,15 +378,6 @@ void updateRadioState()
             break;
 
           case DATAGRAM_PING:
-            //Received PING
-            //Compute the common clock
-            currentMillis = millis();
-            memcpy(&clockOffset, rxData, sizeof(currentMillis));
-            clockOffset += currentMillis + rcvTimeMillis - xmitTimeMillis;
-            clockOffset >>= 1;
-            clockOffset -= currentMillis;
-            clockDisplayOffset = clockOffset;
-
             //Acknowledge the PING
             triggerEvent(TRIGGER_SEND_ACK1);
             xmitDatagramP2PAck1();

@@ -57,21 +57,15 @@
 //First packet in the three way handshake to bring up the link
 void xmitDatagramP2PPing()
 {
-  unsigned long currentMillis;
-
-  currentMillis = millis();
-  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
-  endOfTxData += sizeof(unsigned long);
-
   /*
-                     endOfTxData ---.
-                                    |
-                                    V
-      +--------+---------+----------+----------+
-      |        |         |          | Optional |
-      | NET ID | Control |  Millis  | Trailer  |
-      | 8 bits | 8 bits  | 4 bytes  |  8 bits  |
-      +--------+---------+----------+----------+
+          endOfTxData ---.
+                         |
+                         V
+      +--------+---------+----------+
+      |        |         |          |
+      | NET ID | Control | Trailer  |
+      | 8 bits | 8 bits  |  8 bits  |
+      +--------+---------+----------+
   */
 
   txControl.datagramType = DATAGRAM_PING;
@@ -82,12 +76,6 @@ void xmitDatagramP2PPing()
 //Second packet in the three way handshake to bring up the link
 void xmitDatagramP2PAck1()
 {
-  //  unsigned long currentMillis;
-  //
-  //  currentMillis = millis();
-  //  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
-  //  endOfTxData += sizeof(unsigned long);
-
   uint16_t channelTimerElapsed = millis() - timerStart;
   memcpy(endOfTxData, &channelTimerElapsed, sizeof(channelTimerElapsed));
   endOfTxData += sizeof(channelTimerElapsed);
@@ -97,9 +85,9 @@ void xmitDatagramP2PAck1()
                                     |
                                     V
       +--------+---------+----------+----------+
-      |        |         |          | Optional |
-      | NET ID | Control |  Millis  | Trailer  |
-      | 8 bits | 8 bits  | 4 bytes  |  8 bits  |
+      |        |         | Channel  | Optional |
+      | NET ID | Control |  Timer   | Trailer  |
+      | 8 bits | 8 bits  | 2 bytes  |  8 bits  |
       +--------+---------+----------+----------+
   */
 
@@ -111,22 +99,15 @@ void xmitDatagramP2PAck1()
 //Last packet in the three way handshake to bring up the link
 void xmitDatagramP2PAck2()
 {
-  //  unsigned long currentMillis;
-  //
-  //  currentMillis = millis();
-  //  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
-  //  endOfTxData += sizeof(unsigned long);
-
-
   /*
-                     endOfTxData ---.
-                                    |
-                                    V
-      +--------+---------+----------+----------+
-      |        |         |          | Optional |
-      | NET ID | Control |  Millis  | Trailer  |
-      | 8 bits | 8 bits  | 4 bytes  |  8 bits  |
-      +--------+---------+----------+----------+
+          endOfTxData ---.
+                         |
+                         V
+      +--------+---------+----------+
+      |        |         |          |
+      | NET ID | Control | Trailer  |
+      | 8 bits | 8 bits  |  8 bits  |
+      +--------+---------+----------+
   */
 
   txControl.datagramType = DATAGRAM_ACK_2;
@@ -213,10 +194,6 @@ void xmitDatagramP2PHeartbeat()
   */
 
   txControl.datagramType = DATAGRAM_HEARTBEAT;
-
-  //Orig
-  //txControl.ackNumber = 0;
-
   txControl.ackNumber = txAckNumber;
   txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
 
@@ -226,23 +203,19 @@ void xmitDatagramP2PHeartbeat()
 //Create short packet of 2 control bytes - do not expect ack
 void xmitDatagramP2PAck()
 {
-  //  unsigned long currentMillis = millis();
-  //  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
-  //  endOfTxData += sizeof(unsigned long);
-
   uint16_t channelTimerElapsed = millis() - timerStart;
   memcpy(endOfTxData, &channelTimerElapsed, sizeof(channelTimerElapsed));
   endOfTxData += sizeof(channelTimerElapsed);
 
   /*
-          endOfTxData ---.
-                         |
-                         V
-      +--------+---------+----------+
-      |        |         | Optional |
-      | NET ID | Control | Trailer  |
-      | 8 bits | 8 bits  |  8 bits  |
-      +--------+---------+----------+
+                     endOfTxData ---.
+                                    |
+                                    V
+      +--------+---------+----------+----------+
+      |        |         | Channel  | Optional |
+      | NET ID | Control |  Timer   | Trailer  |
+      | 8 bits | 8 bits  | 2 bytes  |  8 bits  |
+      +--------+---------+----------+----------+
   */
 
   txControl.datagramType = DATAGRAM_DATA_ACK;

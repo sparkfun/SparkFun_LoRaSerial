@@ -216,7 +216,6 @@ unsigned long linkDownTimer;
 //Clock synchronization
 unsigned long rcvTimeMillis;
 unsigned long xmitTimeMillis;
-unsigned long clockDisplayOffset;
 
 //Transmit control
 const int datagramsExpectingAcks = 0
