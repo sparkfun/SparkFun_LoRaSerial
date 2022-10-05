@@ -4,7 +4,7 @@ void beginBoard()
   //Initialize the board specific hardware
   arch.beginBoard();
 
-  //Dashbord Blink LEDs
+  //Dashboard Blink LEDs
   for (int x = 0 ; x < 3 ; x++)
   {
     digitalWrite(pin_rssi1LED, HIGH);
@@ -104,6 +104,6 @@ void channelTimerHandler()
     channelTimer.setInterval_MS(settings.maxDwellTime, channelTimerHandler);
   }
 
-  triggerEvent(TRIGGER_HOP);
+  triggerEvent(TRIGGER_CHANNEL_TIMER_ISR);
   timeToHop = true;
 }

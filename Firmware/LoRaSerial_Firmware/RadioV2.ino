@@ -88,9 +88,9 @@ void xmitDatagramP2PAck1()
   //  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   //  endOfTxData += sizeof(unsigned long);
 
-  uint8_t channelTimerElapsed = (millis() - timerStart) / CHANNEL_TIMER_DIVISOR;
+  uint16_t channelTimerElapsed = millis() - timerStart;
   memcpy(endOfTxData, &channelTimerElapsed, sizeof(channelTimerElapsed));
-  endOfTxData += sizeof(uint8_t);
+  endOfTxData += sizeof(channelTimerElapsed);
 
   /*
                      endOfTxData ---.
@@ -117,9 +117,6 @@ void xmitDatagramP2PAck2()
   //  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   //  endOfTxData += sizeof(unsigned long);
 
-  //  uint8_t channelTimerElapsed = (millis() - timerStart) / CHANNEL_TIMER_DIVISOR;
-  //  memcpy(endOfTxData, &channelTimerElapsed, sizeof(channelTimerElapsed));
-  //  endOfTxData += sizeof(uint8_t);
 
   /*
                      endOfTxData ---.
@@ -233,17 +230,9 @@ void xmitDatagramP2PAck()
   //  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   //  endOfTxData += sizeof(unsigned long);
 
-  uint8_t channelTimerElapsed = millis() - timerStart;
-  systemPrint("channelTimerElapsedPure: ");
-  systemPrintln(channelTimerElapsed);
-  channelTimerElapsed /= CHANNEL_TIMER_DIVISOR;
-  systemPrint("channelTimerElapsedDiv: ");
-  systemPrintln(channelTimerElapsed);
-
-  //uint8_t channelTimerElapsed = (millis() - timerStart) / CHANNEL_TIMER_DIVISOR;
+  uint16_t channelTimerElapsed = millis() - timerStart;
   memcpy(endOfTxData, &channelTimerElapsed, sizeof(channelTimerElapsed));
-  endOfTxData += sizeof(uint8_t);
-
+  endOfTxData += sizeof(channelTimerElapsed);
 
   /*
           endOfTxData ---.
@@ -810,8 +799,8 @@ void retransmitDatagram()
 void startChannelTimer()
 {
   channelTimer.enableTimer();
+  timerStart = millis(); //ISR normally takes care of this but allow for correct ACK sync before first ISR
   triggerEvent(TRIGGER_HOP_TIMER_START);
-
 }
 
 void stopChannelTimer()
@@ -828,21 +817,15 @@ void syncChannelTimer(uint8_t sizeOfDatagram)
 
   uint16_t datagramAirTime = calcAirTime(sizeOfDatagram); //Calculate how much time it took for the datagram to be transmitted
 
-  uint8_t channelTimerElapsed;
+  uint16_t channelTimerElapsed;
   memcpy(&channelTimerElapsed, rxData, sizeof(channelTimerElapsed));
-  channelTimerElapsed *= CHANNEL_TIMER_DIVISOR;
-  systemPrint("channelTimerElapsedPure: ");
-  systemPrintln(channelTimerElapsed);
   channelTimerElapsed += datagramAirTime;
   channelTimerElapsed += SYNC_PROCESSING_OVERHEAD;
+
+  if(channelTimerElapsed > settings.maxDwellTime) channelTimerElapsed -= settings.maxDwellTime;
 
   partialTimer = true;
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(settings.maxDwellTime - channelTimerElapsed, channelTimerHandler); //Shorten our hardware timer to match our mate's
   channelTimer.enableTimer();
-
-  systemPrint("channelTimerElapsed: ");
-  systemPrintln(channelTimerElapsed);
-  systemPrint("partialTimerDuration: ");
-  systemPrintln(settings.maxDwellTime - channelTimerElapsed);
 }

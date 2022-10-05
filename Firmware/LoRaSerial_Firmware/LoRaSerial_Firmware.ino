@@ -118,8 +118,7 @@ const int trainWithDefaultsButtonTime = 5000; //ms press and hold before enterin
 SAMDTimer channelTimer(TIMER_TCC); //Available: TC3, TC4, TC5, TCC, TCC1 or TCC2
 unsigned long timerStart = 0; //Tracks how long our timer has been running since last hop
 bool partialTimer = false; //After an ACK we reset and run a partial timer to sync units
-const uint8_t SYNC_PROCESSING_OVERHEAD = 3; //Number of milliseconds it takes to compute clock deltas before sync'ing clocks
-const uint8_t CHANNEL_TIMER_DIVISOR = 4; //If the max dwell time can be up to 1000ms, we need to reduce this 4x to fit into uint8_t
+const int SYNC_PROCESSING_OVERHEAD = 4; //Number of milliseconds it takes to compute clock deltas before sync'ing clocks
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Global variables - Serial
@@ -258,6 +257,9 @@ void setup()
 
   loadSettings(); //Load settings from EEPROM
 
+  settings.triggerEnable = 0xFFFFFFFF; //Enable all
+  settings.debugTrigger = true;
+
   beginSerial(settings.serialSpeed);
 
   verifyRadioStateTable(); //Verify that the state table contains all of the states in increasing order
@@ -265,7 +267,7 @@ void setup()
   systemPrintTimestamp();
   systemPrintln("LRS");
 
-  beginBoard(); //Determine what hardware platform we are running on
+  beginBoard(); //Determine what hardware platform we are running on.
 
   beginLoRa(); //Start radio
 
@@ -280,16 +282,16 @@ void setup()
 
   //Testing
   settings.triggerEnable = 0xFFFFFFFF; //Enable all
-  settings.debug = true;
   settings.debugTrigger = true;
-  settings.printFrequency = true;
+  settings.debug = true;
+  //settings.printFrequency = true;
   //settings.debugTransmit = true;
-  settings.debugReceive = true;
+  //settings.debugReceive = true;
   settings.triggerWidth = 25;
   settings.useV2 = true;
-  settings.printTimestamp = true;
+  //settings.printTimestamp = true;
 
-  triggerEvent(TRIGGER_P2P_LINK_DOWN);
+  triggerEvent(TRIGGER_RADIO_RESET);
 }
 
 void loop()
@@ -302,7 +304,7 @@ void loop()
 
   updateRadioState(); //Ping/ack/send packets as needed
 
-  if(clearDIO1) //Allow DIO1 hop ISR but use it only for debug
+  if (clearDIO1) //Allow DIO1 hop ISR but use it only for debug
   {
     clearDIO1 = false;
     radio.clearFHSSInt(); //Clear the interrupt
