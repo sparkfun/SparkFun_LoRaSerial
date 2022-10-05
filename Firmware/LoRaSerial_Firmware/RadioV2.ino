@@ -224,16 +224,39 @@ void xmitDatagramP2PAck()
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Multi-Point Data Exchange
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+//Send a data datagram to the remote system
+void xmitDatagramMpDatagram()
+{
+  /*
+                          endOfTxData ---.
+                                         |
+                                         V
+      +----------+---------+---  ...  ---+----------+
+      | Optional |         |             | Optional |
+      |  NET ID  | Control |    Data     | Trailer  |
+      |  8 bits  | 8 bits  |   n bytes   |  8 bits  |
+      +----------+---------+-------------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_DATAGRAM;
+  txControl.ackNumber = 0;
+  transmitDatagram();
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Datagram reception
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Determine the type of datagram received
 PacketType rcvDatagram()
 {
-  CONTROL_U8 * control;
   PacketType datagramType;
   static uint8_t expectedRxAck;
   uint8_t receivedNetID;
+  CONTROL_U8 rxControl;
 
   //Save the receive time
   rcvTimeMillis = millis();
@@ -247,7 +270,7 @@ PacketType rcvDatagram()
       |<---------------------- rxDataBytes ---------------------->|
       |                                                           |
       +----------+----------+------------+---  ...  ---+----------+
-      | Optional | Optional |  Optional  |             | Optional |
+      | Optional |          |  Optional  |             | Optional |
       |  NET ID  | Control  | SF6 Length |    Data     | Trailer  |
       |  8 bits  |  8 bits  |   8 bits   |   n bytes   |  8 bits  |
       +----------+----------+------------+-------------+----------+
@@ -284,7 +307,7 @@ PacketType rcvDatagram()
     if (settings.printPktData || settings.debugReceive)
     {
       systemPrintTimestamp();
-      systemPrint("RX: Bad packet");
+      systemPrint("RX: Bad packet ");
       systemPrint(rxDataBytes);
       systemPrint(" (0x");
       systemPrint(rxDataBytes, HEX);
@@ -300,7 +323,7 @@ PacketType rcvDatagram()
       |<---------------------- rxDataBytes ---------------------->|
       |                                                           |
       +----------+----------+------------+---  ...  ---+----------+
-      | Optional | Optional |  Optional  |             | Optional |
+      | Optional |          |  Optional  |             | Optional |
       |  NET ID  | Control  | SF6 Length |    Data     | Trailer  |
       |  8 bits  |  8 bits  |   8 bits   |   n bytes   |  8 bits  |
       +----------+----------+------------+-------------+----------+
@@ -340,7 +363,7 @@ PacketType rcvDatagram()
       |<---------------------- rxDataBytes ---------------------->|
       |                                                           |
       +----------+----------+------------+---  ...  ---+----------+
-      | Optional | Optional |  Optional  |             | Optional |
+      | Optional |          |  Optional  |             | Optional |
       |  NET ID  | Control  | SF6 Length |    Data     | Trailer  |
       |  8 bits  |  8 bits  |   8 bits   |   n bytes   |  8 bits  |
       +----------+----------+------------+-------------+----------+
@@ -350,23 +373,19 @@ PacketType rcvDatagram()
   */
 
   //Get the control byte
-  datagramType = DATAGRAM_DATA;
-  if (settings.pointToPoint)
-  {
-    control = (CONTROL_U8 *)rxData++;
-    datagramType = (PacketType)control->datagramType;
-    rxAckNumber = control->ackNumber;
-    if (settings.debugReceive)
-      printControl(*(uint8_t *)control);
-    if (datagramType >= MAX_DATAGRAM_TYPE)
-      return (PACKET_BAD);
-  }
+  rxControl = *((CONTROL_U8 *)rxData++);
+  datagramType = rxControl.datagramType;
+  rxAckNumber = rxControl.ackNumber;
+  if (settings.debugReceive)
+    printControl(*((uint8_t *)&rxControl));
+  if (datagramType >= MAX_DATAGRAM_TYPE)
+    return (PACKET_BAD);
 
   /*
       |<---------------------- rxDataBytes ---------------------->|
       |                                                           |
       +----------+----------+------------+---  ...  ---+----------+
-      | Optional | Optional |  Optional  |             | Optional |
+      | Optional |          |  Optional  |             | Optional |
       |  NET ID  | Control  | SF6 Length |    Data     | Trailer  |
       |  8 bits  |  8 bits  |   8 bits   |   n bytes   |  8 bits  |
       +----------+----------+------------+-------------+----------+
@@ -449,7 +468,7 @@ PacketType rcvDatagram()
                                          |<-- rxDataBytes -->|
                                          |                   |
       +----------+----------+------------+------  ...  ------+----------+
-      | Optional | Optional |  Optional  |                   | Optional |
+      | Optional |          |  Optional  |                   | Optional |
       |  NET ID  | Control  | SF6 Length |       Data        | Trailer  |
       |  8 bits  |  8 bits  |   8 bits   |      n bytes      |  8 bits  |
       +----------+----------+------------+-------------------+----------+
@@ -554,7 +573,7 @@ void transmitDatagram()
                                                        |
                                                        V
       +----------+----------+------------+---  ...  ---+----------+
-      | Optional | Optional |  Optional  |             | Optional |
+      | Optional |          |  Optional  |             | Optional |
       |  NET ID  | Control  | SF6 Length |    Data     | Trailer  |
       |  8 bits  |  8 bits  |   8 bits   |   n bytes   |  8 bits  |
       +----------+----------+------------+-------------+----------+
@@ -607,16 +626,13 @@ void transmitDatagram()
     }
   }
 
-  //Add the control byte if needed
-  if (settings.pointToPoint)
-  {
-    control = *(uint8_t *)&txControl;
-    *header++ = control;
+  //Add the control byte
+  control = *(uint8_t *)&txControl;
+  *header++ = control;
 
-    //Display the control value
-    if (settings.debugTransmit)
-      printControl(control);
-  }
+  //Display the control value
+  if (settings.debugTransmit)
+    printControl(control);
 
   //Add the spread factor 6 length is required
   if (txControl.datagramType == DATAGRAM_SF6_DATA)
@@ -633,7 +649,7 @@ void transmitDatagram()
 
   /*
       +----------+----------+------------+---  ...  ---+
-      | Optional | Optional |  Optional  |             |
+      | Optional |          |  Optional  |             |
       |  NET ID  | Control  | SF6 Length |    Data     |
       |  8 bits  |  8 bits  |   8 bits   |   n bytes   |
       +----------+----------+------------+-------------+
@@ -657,7 +673,7 @@ void transmitDatagram()
 
   /*
       +----------+----------+------------+---  ...  ---+----------+
-      | Optional | Optional |  Optional  |             | Optional |
+      | Optional |          |  Optional  |             | Optional |
       |  NET ID  | Control  | SF6 Length |    Data     | Trailer  |
       |  8 bits  |  8 bits  |   8 bits   |   n bytes   |  8 bits  |
       +----------+----------+------------+-------------+----------+
@@ -714,7 +730,7 @@ void retransmitDatagram()
 {
   /*
       +----------+----------+------------+---  ...  ---+----------+
-      | Optional | Optional |  Optional  |             | Optional |
+      | Optional |          |  Optional  |             | Optional |
       |  NET ID  | Control  | SF6 Length |    Data     | Trailer  |
       |  8 bits  |  8 bits  |   8 bits   |   n bytes   |  8 bits  |
       +----------+----------+------------+-------------+----------+
