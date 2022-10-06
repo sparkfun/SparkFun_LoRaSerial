@@ -270,16 +270,8 @@ void updateRadioState()
         if (packetType != DATAGRAM_ACK_2)
           returnToReceiving();
         else
-        {
           //Bring up the link
-          triggerEvent(TRIGGER_HANDSHAKE_COMPLETE);
-          startChannelTimer();
-          hopChannel(); //Leave home
-          returnToReceiving();
-          changeState(RADIO_P2P_LINK_UP);
-          if (settings.debugDatagrams)
-            systemPrintln("========== Link UP ==========");
-        }
+          v2EnterLinkUp();
       }
       else
       {
@@ -304,14 +296,10 @@ void updateRadioState()
       //Determine if a ACK 2 has completed transmission
       if (transactionComplete)
       {
-        triggerEvent(TRIGGER_HANDSHAKE_COMPLETE);
         transactionComplete = false; //Reset ISR flag
-        startChannelTimer();
-        hopChannel(); //Leave home
-        returnToReceiving();
-        changeState(RADIO_P2P_LINK_UP);
-        if (settings.debugDatagrams)
-          systemPrintln("========== Link UP ==========");
+
+        //Bring up the link
+        v2EnterLinkUp();
       }
       break;
 
@@ -549,13 +537,8 @@ void updateRadioState()
           changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
         }
         else if ((millis() - linkDownTimer) >= (3 * settings.heartbeatTimeout))
-        {
           //Break the link
-          triggerEvent(TRIGGER_RADIO_RESET);
-          if (settings.debugDatagrams)
-            systemPrintln("---------- Link DOWN ----------");
-          changeState(RADIO_RESET);
-        }
+          v2BreakLink();
       }
       break;
 
@@ -606,6 +589,11 @@ void updateRadioState()
             returnToReceiving();
             break;
 
+          case DATAGRAM_PING:
+            //Break the link
+            v2BreakLink();
+            break;
+
           case DATAGRAM_DATA_ACK:
             //Synchronize channel timer
             syncChannelTimer(3); //TODO remove hardcoded size of datagram
@@ -651,12 +639,7 @@ void updateRadioState()
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-
             returnToReceiving();
-
-            //xmitDatagramP2PAck(); //Transmit ACK
-            //changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
-
             break;
         }
       }
@@ -681,11 +664,9 @@ void updateRadioState()
         {
           //Failed to reach the other system, break the link
           triggerEvent(TRIGGER_LINK_RETRANSMIT_FAIL);
-          if (settings.debugDatagrams)
-            systemPrintln("---------- Link DOWN ----------");
-          heartbeatTimer = millis();
-          txDelay = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
-          changeState(RADIO_P2P_LINK_DOWN);
+
+          //Break the link
+          v2BreakLink();
         }
       }
       break;
@@ -1587,4 +1568,34 @@ void changeState(RadioStates newState)
     else
       systemPrintln(radioStateTable[radioState].name);
   }
+}
+
+void v2BreakLink()
+{
+  //Break the link
+  systemPrintln("--------- Link DOWN ---------");
+  triggerEvent(TRIGGER_RADIO_RESET);
+  changeState(RADIO_RESET);
+}
+
+void v2EnterLinkUp()
+{
+  //Bring up the link
+  triggerEvent(TRIGGER_HANDSHAKE_COMPLETE);
+  startChannelTimer();
+  hopChannel(); //Leave home
+
+  //Synchronize the ACK numbers
+  expectedTxAck = txControl.ackNumber;
+
+  //Discard any previous data
+  rxTail = rxHead;
+  txTail = txHead;
+  commandRXTail = commandRXHead;
+  commandTXTail = commandTXHead;
+
+  //Start the receiver
+  returnToReceiving();
+  changeState(RADIO_P2P_LINK_UP);
+  systemPrintln("========== Link UP ==========");
 }
