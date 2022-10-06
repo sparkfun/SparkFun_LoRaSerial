@@ -19,6 +19,8 @@ void updateRadioState()
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     case RADIO_RESET:
+      petWDT();
+
       //Start the TX timer: time to delay before transmitting the PING
       heartbeatTimer = millis();
       txDelay = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
@@ -66,6 +68,7 @@ void updateRadioState()
 
       stopChannelTimer(); //Prevent radio from frequency hopping
 
+      petWDT();
       configureRadio(); //Setup radio, set freq to channel 0
 
       returnToReceiving(); //Start receiving
