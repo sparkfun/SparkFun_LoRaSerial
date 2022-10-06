@@ -136,6 +136,7 @@ void xmitDatagramP2PCommand()
   txControl.datagramType = DATAGRAM_REMOTE_COMMAND;
   txControl.ackNumber = txAckNumber;
   txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
+  packetSent = 0; //This is the first time this packet is being sent
   transmitDatagram();
 }
 
@@ -156,6 +157,7 @@ void xmitDatagramP2PCommandResponse()
   txControl.datagramType = DATAGRAM_REMOTE_COMMAND_RESPONSE;
   txControl.ackNumber = txAckNumber;
   txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
+  packetSent = 0; //This is the first time this packet is being sent
   transmitDatagram();
 }
 
@@ -176,6 +178,7 @@ void xmitDatagramP2PData()
   txControl.datagramType = DATAGRAM_DATA;
   txControl.ackNumber = txAckNumber;
   txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
+  packetSent = 0; //This is the first time this packet is being sent
   transmitDatagram();
 }
 
@@ -196,7 +199,7 @@ void xmitDatagramP2PHeartbeat()
   txControl.datagramType = DATAGRAM_HEARTBEAT;
   txControl.ackNumber = txAckNumber;
   txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
-
+  packetSent = 0; //This is the first time this packet is being sent
   transmitDatagram();
 }
 
@@ -541,6 +544,7 @@ void transmitDatagram()
       case DATAGRAM_SF6_DATA:
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
+      case DATAGRAM_HEARTBEAT:
         if (settings.pointToPoint)
         {
           systemPrint(" (ACK #");
@@ -675,8 +679,6 @@ void transmitDatagram()
   //Scramble the datagram
   if (settings.dataScrambling == true)
     radioComputeWhitening(outgoingPacket, txDatagramSize);
-
-  packetSent = 0; //This is the first time this packet is being sent
 
   //If we are trainsmitting at high data rates the receiver is often not ready for new data. Pause for a few ms (measured with logic analyzer).
   if (settings.airSpeed == 28800 || settings.airSpeed == 38400)
