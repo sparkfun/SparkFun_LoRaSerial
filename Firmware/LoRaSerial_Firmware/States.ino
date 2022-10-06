@@ -4,6 +4,8 @@ void updateRadioState()
   bool heartbeatTimeout;
   uint16_t length;
   uint8_t radioSeed;
+  static uint8_t rexmtBuffer[MAX_PACKET_SIZE];
+  static CONTROL_U8 rexmtControl;
 
   switch (radioState)
   {
@@ -414,16 +416,9 @@ void updateRadioState()
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-
-            //Orig
-            //triggerEvent(TRIGGER_P2P_LINK_UP);
-            //returnToReceiving();
-            //changeState(RADIO_P2P_LINK_UP);
-
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
             xmitDatagramP2PAck(); //Transmit ACK
             changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
-
             break;
 
           case DATAGRAM_DATA:
@@ -533,9 +528,6 @@ void updateRadioState()
           xmitDatagramP2PHeartbeat();
           heartbeatTimer = millis();
 
-          //Orig
-          //changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
-
           //Wait for heartbeat to transmit
           changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
         }
@@ -642,7 +634,16 @@ void updateRadioState()
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-            returnToReceiving();
+
+            //An ACK was expected for a previous transmission that must have been
+            //lost.  Save the current transmit buffer for later retransmission
+            //and ACK the heartbeat.  Later perform the retransmission for the
+            //datagram that was lost.
+            petWDT();
+            memcpy(rexmtBuffer, outgoingPacket, MAX_PACKET_SIZE);
+            rexmtControl = txControl;
+            xmitDatagramP2PAck(); //Transmit ACK
+            changeState(RADIO_P2P_LINK_UP_HB_ACK_REXMT);
             break;
         }
       }
@@ -660,6 +661,32 @@ void updateRadioState()
         if (packetSent++ < settings.maxResends)
         {
           triggerEvent(TRIGGER_LINK_RETRANSMIT);
+          if (settings.debugDatagrams)
+          {
+            systemPrintTimestamp();
+            systemPrint("TX: Retransmit ");
+            systemPrint(packetSent);
+            systemPrint(", ");
+            systemPrint(v2DatagramType[txControl.datagramType]);
+            switch (txControl.datagramType)
+            {
+              default:
+                systemPrintln();
+                break;
+
+              case DATAGRAM_DATA:
+              case DATAGRAM_DATA_ACK:
+              case DATAGRAM_SF6_DATA:
+              case DATAGRAM_REMOTE_COMMAND:
+              case DATAGRAM_REMOTE_COMMAND_RESPONSE:
+              case DATAGRAM_HEARTBEAT:
+                systemPrint(" (ACK #");
+                systemPrint(txControl.ackNumber);
+                systemPrint(")");
+                systemPrintln();
+                break;
+            }
+          }
           retransmitDatagram();
           changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
         }
@@ -670,6 +697,63 @@ void updateRadioState()
 
           //Break the link
           v2BreakLink();
+        }
+      }
+      break;
+
+    case RADIO_P2P_LINK_UP_HB_ACK_REXMT:
+      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+        hopChannel();
+
+      //An ACK was expected for a previous transmission that must have been
+      //lost.  A heartbeat was received instead which was ACKed.  Once the ACK
+      //completes transmission, retransmit the previously lost datagram.
+      if (transactionComplete)
+      {
+        transactionComplete = false; //Reset ISR flag
+
+        //Retransmit the packet
+        if (packetSent++ < settings.maxResends)
+        {
+          memcpy(outgoingPacket, rexmtBuffer, MAX_PACKET_SIZE);
+          txControl = rexmtControl;
+          if (settings.debugDatagrams)
+          {
+            systemPrintTimestamp();
+            systemPrint("TX: Retransmit ");
+            systemPrint(packetSent);
+            systemPrint(", ");
+            systemPrint(v2DatagramType[txControl.datagramType]);
+            switch (txControl.datagramType)
+            {
+              default:
+                systemPrintln();
+                break;
+
+              case DATAGRAM_DATA:
+              case DATAGRAM_DATA_ACK:
+              case DATAGRAM_SF6_DATA:
+              case DATAGRAM_REMOTE_COMMAND:
+              case DATAGRAM_REMOTE_COMMAND_RESPONSE:
+              case DATAGRAM_HEARTBEAT:
+                systemPrint(" (ACK #");
+                systemPrint(txControl.ackNumber);
+                systemPrint(")");
+                systemPrintln();
+                break;
+            }
+          }
+          retransmitDatagram();
+          changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+        }
+        else
+        {
+          //Failed to reach the other system, break the link
+          if (settings.debugDatagrams)
+            systemPrintln("---------- Link DOWN ----------");
+          heartbeatTimer = millis();
+          txDelay = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
+          changeState(RADIO_P2P_LINK_DOWN);
         }
       }
       break;
