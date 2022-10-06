@@ -30,11 +30,18 @@ typedef enum
   RADIO_P2P_WAIT_TX_ACK_1_DONE,
   RADIO_P2P_WAIT_ACK_2,
   RADIO_P2P_WAIT_TX_ACK_2_DONE,
+
+  // Point-to-Point: Link up, data exchange
   RADIO_P2P_LINK_UP,
   RADIO_P2P_LINK_UP_WAIT_ACK_DONE,
   RADIO_P2P_LINK_UP_WAIT_TX_DONE,
   RADIO_P2P_LINK_UP_WAIT_ACK,
   RADIO_P2P_LINK_UP_HB_ACK_REXMT,
+
+  // Multi-Point: Datagrams
+  RADIO_MP_STANDBY,
+  RADIO_MP_WAIT_TX_DONE,
+  RADIO_MP_RECEIVE,
 
   RADIO_MAX_STATE,
 } RadioStates;
@@ -51,15 +58,21 @@ typedef struct _RADIO_STATE_ENTRY
 typedef enum
 {
   //V2 packet types must start at zero
+  //V2: Link establishment handshake
   DATAGRAM_PING = 0,
   DATAGRAM_ACK_1,
   DATAGRAM_ACK_2,
+
+  //V2: Point-to-Point data exchange
   DATAGRAM_DATA,
   DATAGRAM_SF6_DATA,
   DATAGRAM_DATA_ACK,
   DATAGRAM_HEARTBEAT,
   DATAGRAM_REMOTE_COMMAND,
   DATAGRAM_REMOTE_COMMAND_RESPONSE,
+
+  //V2: Multi-Point data exchange
+  DATAGRAM_DATAGRAM,
 
   //Add new V2 datagram types before this line
   MAX_DATAGRAM_TYPE,
@@ -83,8 +96,10 @@ typedef enum
 } PacketType;
 
 const char * const v2DatagramType[] =
-{ //  0       1        2        3        4           5           6            7          8
-  "PING", "ACK-1", "ACK-2", "DATA", "SF6-DATA", "DATA-ACK", "HEARTBEAT", "RMT-CMD", "RMT_RESP",
+{//  0       1        2        3        4           5           6
+  "PING", "ACK-1", "ACK-2", "DATA", "SF6-DATA", "DATA-ACK", "HEARTBEAT",
+  //  7          8                9
+  "RMT-CMD", "RMT_RESP", "DATAGRAM_DATAGRAM"
 };
 
 //Train button states
@@ -196,7 +211,7 @@ struct ControlTrailer responseTrailer;
 typedef struct _CONTROL_U8
 {
   uint8_t ackNumber : 2;
-  uint8_t datagramType: 4;
+  PacketType datagramType: 4;
   uint8_t filler : 2;
 } CONTROL_U8;
 
