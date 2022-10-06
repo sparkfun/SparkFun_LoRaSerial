@@ -796,17 +796,15 @@ void stopChannelTimer()
   triggerEvent(TRIGGER_HOP_TIMER_STOP);
 }
 
-//Given the remote unit's amount of channelTimer that has elapsed, and size of the ack received
-//Adjust our own channelTimer interrupt to be synchronized with the remote unit
-void syncChannelTimer(uint8_t sizeOfDatagram)
+//Given the remote unit's amount of channelTimer that has elapsed,
+//adjust our own channelTimer interrupt to be synchronized with the remote unit
+void syncChannelTimer()
 {
   triggerEvent(TRIGGER_SYNC_CHANNEL);
 
-  uint16_t datagramAirTime = calcAirTime(sizeOfDatagram); //Calculate how much time it took for the datagram to be transmitted
-
   uint16_t channelTimerElapsed;
   memcpy(&channelTimerElapsed, rxData, sizeof(channelTimerElapsed));
-  channelTimerElapsed += datagramAirTime;
+  channelTimerElapsed += ackAirTime;
   channelTimerElapsed += SYNC_PROCESSING_OVERHEAD;
 
   if (channelTimerElapsed > settings.maxDwellTime) channelTimerElapsed -= settings.maxDwellTime;

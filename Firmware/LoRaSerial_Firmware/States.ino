@@ -597,8 +597,7 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DATA_ACK:
-            //Synchronize channel timer
-            syncChannelTimer(3); //TODO remove hardcoded size of datagram
+            syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
 
             //Display the signal strength
             if (settings.displayPacketQuality == true)
