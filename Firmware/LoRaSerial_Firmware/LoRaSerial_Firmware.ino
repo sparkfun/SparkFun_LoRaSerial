@@ -210,6 +210,7 @@ uint16_t ackAirTime;
 uint16_t datagramAirTime;
 uint16_t overheadTime = 10; //ms added to ack and datagram times before ACK timeout occurs
 uint16_t pingRandomTime;
+uint16_t heartbeatRandomTime;
 
 //Receive control
 uint8_t incomingBuffer[MAX_PACKET_SIZE];

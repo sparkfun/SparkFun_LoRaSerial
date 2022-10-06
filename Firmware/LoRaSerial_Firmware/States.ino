@@ -503,7 +503,7 @@ void updateRadioState()
       //If the radio is available, send any data in the serial buffer over the radio
       else if (receiveInProcess() == false)
       {
-        heartbeatTimeout = ((millis() - heartbeatTimer) > settings.heartbeatTimeout);
+        heartbeatTimeout = ((millis() - heartbeatTimer) > heartbeatRandomTime);
 
         //Check for time to send serial data
         if (availableRXBytes() && (processWaitingSerial(heartbeatTimeout) == true))
@@ -533,6 +533,7 @@ void updateRadioState()
           xmitDatagramP2PHeartbeat();
 
           heartbeatTimer = millis();
+          heartbeatRandomTime = random(settings.heartbeatTimeout * 8 / 10, settings.heartbeatTimeout); //80-100%
 
           //Wait for heartbeat to transmit
           changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
