@@ -17,15 +17,15 @@ enum {
   TYPE_U8,
   TYPE_U16,
   TYPE_U32,
-} TYPES;
+};
 
 typedef bool (* VALIDATION_ROUTINE)(void * value, uint32_t valMin, uint32_t valMax);
 
 typedef struct _COMMAND_ENTRY
 {
   uint8_t number;
-  int32_t minValue;
-  int32_t maxValue;
+  uint32_t minValue;
+  uint32_t maxValue;
   uint8_t digits;
   uint8_t type;
   VALIDATION_ROUTINE validate;
@@ -311,6 +311,9 @@ bool valBandwidth (void * value, uint32_t valMin, uint32_t valMax)
 {
   double doubleSettingValue = *(double *)value;
 
+  UNUSED(valMin);
+  UNUSED(valMax);
+
   if ((settings.airSpeed != 0) && (doubleSettingValue != 0))
   {
     systemPrintln("AirSpeed is overriding");
@@ -334,6 +337,8 @@ bool valFreqMax (void * value, uint32_t valMin, uint32_t valMax)
 {
   double doubleSettingValue = *(double *)value;
 
+  UNUSED(valMin);
+
   return ((doubleSettingValue >= settings.frequencyMin) && (doubleSettingValue <= (double)valMax));
 }
 
@@ -341,21 +346,26 @@ bool valFreqMin (void * value, uint32_t valMin, uint32_t valMax)
 {
   double doubleSettingValue = *(double *)value;
 
+  UNUSED(valMax);
+
   return ((doubleSettingValue >= (double)valMin) && (doubleSettingValue <= settings.frequencyMax));
 }
 
 bool valInt (void * value, uint32_t valMin, uint32_t valMax)
 {
-  int settingValue = *(uint32_t *)value;
+  uint32_t settingValue = *(uint32_t *)value;
 
   return ((settingValue >= valMin) && (settingValue <= valMax));
 }
 
 bool valKey (void * value, uint32_t valMin, uint32_t valMax)
 {
-  int length;
+  unsigned int length;
   char * str = (char *)value;
   char * strEnd;
+
+  UNUSED(valMin);
+  UNUSED(valMax);
 
   //Validate the length of the encryption key
   length = strlen(str);
@@ -380,7 +390,7 @@ bool valKey (void * value, uint32_t valMin, uint32_t valMax)
 
 bool valOverride (void * value, uint32_t valMin, uint32_t valMax)
 {
-  int settingValue = *(uint32_t *)value;
+  uint32_t settingValue = *(uint32_t *)value;
 
   if (settings.airSpeed != 0)
   {
@@ -395,6 +405,9 @@ bool valSpeedAir (void * value, uint32_t valMin, uint32_t valMax)
 {
   bool valid;
   uint32_t settingValue = *(uint32_t *)value;
+
+  UNUSED(valMin);
+  UNUSED(valMax);
 
   valid = ((settingValue == 0)
            || (settingValue == 40)
@@ -415,6 +428,9 @@ bool valSpeedAir (void * value, uint32_t valMin, uint32_t valMax)
 bool valSpeedSerial (void * value, uint32_t valMin, uint32_t valMax)
 {
   uint32_t settingValue = *(uint32_t *)value;
+
+  UNUSED(valMin);
+  UNUSED(valMax);
 
   return ((settingValue == 2400)
           || (settingValue == 4800)
@@ -480,8 +496,8 @@ const COMMAND_ENTRY commands[] =
   {38,    1, 255,    0, TYPE_U8,           valInt,         "TriggerWidth",         &settings.triggerWidth},
   {39,    0,   1,    0, TYPE_BOOL,         valInt,         "TriggerWidthIsMultiplier", &settings.triggerWidthIsMultiplier},
 
-  {40,    0, (int32_t)0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable: 31-0",  &settings.triggerEnable},
-  {41,    0, (int32_t)0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable: 63-32", &settings.triggerEnable},
+  {40,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable: 31-0",  &settings.triggerEnable},
+  {41,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable: 63-32", &settings.triggerEnable},
   {42,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugReceive",         &settings.debugReceive},
   {43,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &settings.debugTransmit},
   {44,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTxErrors",        &settings.printTxErrors},
@@ -608,6 +624,7 @@ bool commandSet(const char * commandString)
     settingValue = doubleSettingValue;
 
     //Validate and set the value
+    valid = false;
     switch (command->type)
     {
       case TYPE_BOOL:
@@ -623,7 +640,7 @@ bool commandSet(const char * commandString)
       case TYPE_KEY:
         valid = command->validate((void *)buffer, command->minValue, command->maxValue);
         if (valid)
-          for (int x = 0; x < (2 * sizeof(settings.encryptionKey)); x += 2)
+          for (uint32_t x = 0; x < (2 * sizeof(settings.encryptionKey)); x += 2)
             settings.encryptionKey[x / 2] = charHexToDec(buffer[x], buffer[x + 1]);
         break;
       case TYPE_SPEED_AIR:

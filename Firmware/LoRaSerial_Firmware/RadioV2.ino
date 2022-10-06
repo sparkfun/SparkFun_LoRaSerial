@@ -403,6 +403,9 @@ PacketType rcvDatagram()
   {
     switch (datagramType)
     {
+      default:
+        break;
+
       case DATAGRAM_DATA_ACK:
         if (rxAckNumber != expectedTxAck)
         {

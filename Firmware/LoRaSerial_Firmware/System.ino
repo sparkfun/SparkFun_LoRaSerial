@@ -79,7 +79,7 @@ void systemPrintln(float value, uint8_t decimals)
 
 void systemPrint(double value, uint8_t decimals)
 {
-  char temp[20];
+  char temp[300];
   sprintf(temp, "%.*g", decimals, value);
   systemPrint(temp);
 }

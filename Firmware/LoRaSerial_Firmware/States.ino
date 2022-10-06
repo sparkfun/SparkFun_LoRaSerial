@@ -1,7 +1,5 @@
 void updateRadioState()
 {
-  unsigned long clockOffset;
-  unsigned long currentMillis;
   uint8_t * header = outgoingPacket;
   bool heartbeatTimeout;
   uint16_t length;
@@ -1395,15 +1393,13 @@ const RADIO_STATE_ENTRY radioStateTable[] =
 void verifyRadioStateTable()
 {
   int expectedState;
-  int i;
-  int index;
-  int j;
-  unsigned int lastPrint;
-  int maxDescriptionLength;
-  int maxNameLength;
+  unsigned int i;
+  unsigned int index;
+  unsigned int maxDescriptionLength;
+  unsigned int maxNameLength;
   bool missing;
   int * order;
-  int tableEntries;
+  unsigned int tableEntries;
   int temp;
 
   //Verify that all the entries are in the state table

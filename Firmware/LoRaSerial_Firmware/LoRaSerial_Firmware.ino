@@ -45,6 +45,8 @@ const int FIRMWARE_VERSION_MINOR = 0;
 #define RADIOLIB_LOW_LEVEL  //Enable access to the module functions
 #define ENABLE_DEVELOPER //Uncomment this line to enable special developer modes
 
+#define UNUSED(x) (void)(x)
+
 //Define the LoRaSerial board identifier:
 //  This is an int which is unique to this variant of the LoRaSerial hardware which allows us
 //  to make sure that the settings in EEPROM are correct for this version of the LoRaSerial
