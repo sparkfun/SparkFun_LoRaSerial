@@ -357,8 +357,6 @@ void updateRadioState()
       {
         transactionComplete = false; //Reset ISR flag
 
-        triggerEvent(TRIGGER_SOMETHING_RECEIVED);
-
         //Decode the received datagram
         PacketType packetType = rcvDatagram();
 
@@ -582,12 +580,8 @@ void updateRadioState()
       {
         transactionComplete = false; //Reset ISR flag
 
-        settings.debugReceive = true; //TODO remove Debug
-
         //Decode the received datagram
         PacketType packetType = rcvDatagram();
-
-        settings.debugReceive = false; //TODO remove Debug
 
         //Process the received datagram
         switch (packetType)
@@ -710,9 +704,12 @@ void updateRadioState()
                 break;
             }
           }
+          if (receiveInProcess() == false)
+          {
           retransmitDatagram();
           packetSent++;
           changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+          }
         }
         else
         {

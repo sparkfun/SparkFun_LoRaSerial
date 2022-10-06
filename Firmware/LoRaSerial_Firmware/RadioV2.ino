@@ -261,9 +261,6 @@ PacketType rcvDatagram()
   uint8_t receivedNetID;
   CONTROL_U8 rxControl;
 
-  //Save the receive time
-  rcvTimeMillis = millis();
-
   //Get the received datagram
   radio.readData(incomingBuffer, MAX_PACKET_SIZE);
   rxDataBytes = radio.getPacketLength();
@@ -760,7 +757,6 @@ void retransmitDatagram()
   int state = radio.startTransmit(outgoingPacket, txDatagramSize);
   if (state == RADIOLIB_ERR_NONE)
   {
-    xmitTimeMillis = millis();
     packetAirTime = calcAirTime(txDatagramSize); //Calculate packet air size while we're transmitting in the background
     uint16_t responseDelay = packetAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
     if (settings.debugTransmit)
