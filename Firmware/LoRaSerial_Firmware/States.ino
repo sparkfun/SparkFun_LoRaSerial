@@ -1593,12 +1593,13 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   {RADIO_P2P_LINK_UP_WAIT_ACK_DONE,      "P2P_LINK_UP_WAIT_ACK_DONE",      "V2 P2P: Waiting ACK TX Done"},        //23
   {RADIO_P2P_LINK_UP_WAIT_TX_DONE,       "P2P_LINK_UP_WAIT_TX_DONE",       "V2 P2P: Waiting TX done"},            //24
   {RADIO_P2P_LINK_UP_WAIT_ACK,           "P2P_LINK_UP_WAIT_ACK",           "V2 P2P: Waiting for ACK"},            //25
+  {RADIO_P2P_LINK_UP_HB_ACK_REXMT,       "P2P_LINK_UP_HB_ACK_REXMT",       "V2 P2P: Heartbeat ACK ReXmt"},            //26
 
   //V2 - Multi Point data exchange
   //    State                                 Name                              Description
-  {RADIO_MP_STANDBY,                     "MP_STANDBY",                     "V2 MP: Wait for TX or RX"},           //26
-  {RADIO_MP_WAIT_TX_DONE,                "MP_WAIT_TX_DONE",                "V2 MP: Waiting for TX done"},         //27
-  {RADIO_MP_RECEIVE,                     "MP_RECEIVE",                     "V2 MP: Received datagram"},           //28
+  {RADIO_MP_STANDBY,                     "MP_STANDBY",                     "V2 MP: Wait for TX or RX"},           //27
+  {RADIO_MP_WAIT_TX_DONE,                "MP_WAIT_TX_DONE",                "V2 MP: Waiting for TX done"},         //28
+  {RADIO_MP_RECEIVE,                     "MP_RECEIVE",                     "V2 MP: Received datagram"},           //29
 };
 
 void verifyRadioStateTable()
