@@ -703,11 +703,8 @@ void transmitDatagram()
   //Reset the buffer data pointer for the next transmit operation
   endOfTxData = &outgoingPacket[headerBytes];
 
-  //Compute the delay for the ACK datagram
-  if (datagramsExpectingAcks & (1 << txControl.datagramType))
-    txDelay = settings.txAckMillis;
-  else
-    txDelay = random(0, 1000);
+  //Compute the time needed for this packet. Part of ACK timeout.
+  datagramAirTime = calcAirTime(txDatagramSize);
 
   //Transmit this datagram
   retransmitDatagram();
@@ -816,7 +813,7 @@ void syncChannelTimer(uint8_t sizeOfDatagram)
   channelTimerElapsed += datagramAirTime;
   channelTimerElapsed += SYNC_PROCESSING_OVERHEAD;
 
-  if(channelTimerElapsed > settings.maxDwellTime) channelTimerElapsed -= settings.maxDwellTime;
+  if (channelTimerElapsed > settings.maxDwellTime) channelTimerElapsed -= settings.maxDwellTime;
 
   partialTimer = true;
   channelTimer.disableTimer();

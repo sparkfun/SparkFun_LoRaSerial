@@ -206,7 +206,10 @@ uint8_t txDatagramSize;
 unsigned long datagramTimer;
 uint8_t expectedTxAck;
 uint8_t txAckNumber;
-uint16_t txDelay;
+uint16_t ackAirTime;
+uint16_t datagramAirTime;
+uint16_t overheadTime = 10; //ms added to ack and datagram times before ACK timeout occurs
+uint16_t pingRandomTime;
 
 //Receive control
 uint8_t incomingBuffer[MAX_PACKET_SIZE];
@@ -281,6 +284,17 @@ void setup()
   systemPrintTimestamp();
   systemPrintln("LRS Setup Complete");
 
+  //Testing
+  settings.triggerEnable = 0xFFFFFFFF; //Enable all
+  settings.debugTrigger = true;
+  settings.debug = true;
+  //settings.printFrequency = true;
+  //settings.debugTransmit = true;
+  //settings.debugReceive = true;
+  settings.triggerWidth = 25;
+  settings.useV2 = true;
+  //settings.printTimestamp = true;
+  
   triggerEvent(TRIGGER_RADIO_RESET);
 }
 

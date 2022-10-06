@@ -451,6 +451,9 @@ void configureRadio()
   uint16_t responseDelay = controlPacketAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
   controlPacketAirTime += responseDelay;
 
+  //Precalculate the ACK packet time
+  ackAirTime = calcAirTime(4); //We assume all ACKs have max of 4 bytes
+
   if ((settings.debug == true) || (settings.debugRadio == true))
   {
     systemPrint("Freq: ");
@@ -1139,22 +1142,26 @@ void hopChannel()
 //Bit 3: Header Info Valid toggles high when a valid Header (with correct CRC) is detected
 bool receiveInProcess()
 {
+  //triggerEvent(TRIGGER_RECEIVE_IN_PROCESS_START);
+  
   uint8_t radioStatus = radio.getModemStatus();
-  if ((radioStatus & 0b1) == 1) return (true); //If bit 0 is set, forget the other bits, there is a receive in progress
-
+  if (radioStatus & 0b1011) return (true); //If any bits are set there is a receive in progress
+  return false;
+  
   //A remote unit may have started transmitting but this unit has not received enough preamble to detect it.
-  //Wait 5 * symbol time for clear air.
+  //Wait X * symbol time for clear air.
   //This was found by sending two nearly simultaneous packets and using a logic analyzer to establish the point at which
   //the 'Signal Detected' bit goes high.
-  uint8_t clearAirDelay = calcSymbolTime() * 5;
+  uint8_t clearAirDelay = calcSymbolTime() * 18;
   while (clearAirDelay-- > 0)
   {
     radioStatus = radio.getModemStatus();
-    if ((radioStatus & 0b1) == 1) return (true); //If bit 0 is set, forget the other bits, there is a receive in progress
+    if (radioStatus & 0b1011) return (true); //If any bits are set there is a receive in progress
     if (timeToHop) hopChannel(); //If the channelTimer has expired, move to next frequency
     delay(1);
   }
 
+  //triggerEvent(TRIGGER_RECEIVE_IN_PROCESS_END);
   return (false); //No receive in process
 }
 
