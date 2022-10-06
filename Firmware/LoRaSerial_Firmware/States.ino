@@ -719,8 +719,8 @@ void updateRadioState()
             transactionComplete = false; //Reset ISR flag
             changeState(RADIO_NO_LINK_TRANSMITTING);
           }
-          else
-            LRS_DEBUG_PRINTLN("NO_LINK_RECEIVING_STANDBY: RX In Progress");
+          else if (settings.debugRadio)
+            systemPrintln("NO_LINK_RECEIVING_STANDBY: RX In Progress");
         }
       }
       break;
@@ -844,8 +844,8 @@ void updateRadioState()
             sendPingPacket();
             changeState(RADIO_LINKED_TRANSMITTING);
           }
-          else
-            LRS_DEBUG_PRINTLN("RECEIVING_STANDBY: RX In Progress");
+          else if (settings.debugRadio)
+            systemPrintln("RECEIVING_STANDBY: RX In Progress");
         }
 
         else //Process any waiting serial or commands
@@ -929,7 +929,8 @@ void updateRadioState()
         {
           if (packetSent > settings.maxResends)
           {
-            LRS_DEBUG_PRINTLN("Packet Lost");
+            if (settings.debugRadio)
+              systemPrintln("Packet Lost");
             packetsLost++;
             totalPacketsLost++;
             returnToReceiving();
@@ -946,7 +947,8 @@ void updateRadioState()
             }
             else
             {
-              LRS_DEBUG_PRINTLN("ACK_WAIT: RX In Progress");
+              if (settings.debugRadio)
+                systemPrintln("ACK_WAIT: RX In Progress");
               triggerEvent(TRIGGER_RX_IN_PROGRESS);
             }
           }
@@ -1309,11 +1311,13 @@ void updateRadioState()
           {
             if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response
             {
-              LRS_DEBUG_PRINTLN("Timeout");
+              if (settings.debugRadio)
+                systemPrintln("Timeout");
               break;
             }
           }
-          LRS_DEBUG_PRINTLN("Ending Training");
+          if (settings.debugRadio)
+            systemPrintln("Ending Training");
 
           endTraining(false); //We do not have data to apply to settings
         }

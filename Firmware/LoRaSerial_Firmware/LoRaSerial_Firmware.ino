@@ -57,7 +57,6 @@ const int FIRMWARE_VERSION_MINOR = 0;
 #define MAX_PACKET_SIZE 255 //Limited by SX127x
 
 #include "settings.h"
-#include "build.h"
 
 //Hardware connections
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

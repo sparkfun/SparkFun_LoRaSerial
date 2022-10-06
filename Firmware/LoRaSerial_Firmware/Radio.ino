@@ -478,7 +478,8 @@ void configureRadio()
     reportERROR();
     systemPrintln("Radio init failed. Check settings.");
   }
-  LRS_DEBUG_PRINTLN("Radio configured");
+  if ((settings.debug == true) || (settings.debugRadio == true))
+    systemPrintln("Radio configured");
 }
 
 //Set radio frequency
@@ -523,8 +524,11 @@ void returnToReceiving()
   }
 
   if (state != RADIOLIB_ERR_NONE) {
-    LRS_DEBUG_PRINT("Receive failed: ");
-    LRS_DEBUG_PRINTLN(state);
+  if ((settings.debug == true) || (settings.debugRadio == true))
+    {
+      systemPrint("Receive failed: ");
+      systemPrintln(state);
+    }
   }
 }
 
@@ -540,7 +544,8 @@ void sendPingPacket()
       |<-- packetSize -->|
   */
 
-  LRS_DEBUG_PRINT("TX: Ping ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Ping ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -577,7 +582,8 @@ void sendDataPacket()
       |<--------- packetSize --------->|
   */
 
-  LRS_DEBUG_PRINT("TX: Data ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Data ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -612,7 +618,8 @@ void sendResendPacket()
       |<--------- packetSize --------->|
   */
 
-  LRS_DEBUG_PRINT("TX: Resend ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Resend ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 1; //This is a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -637,7 +644,8 @@ void sendAckPacket()
       |<-- packetSize -->|
   */
 
-  LRS_DEBUG_PRINT("TX: Ack ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Ack ");
   responseTrailer.ack = 1; //This is an ACK to a previous reception
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -662,7 +670,8 @@ void sendTrainingPingPacket()
       |<-- packetSize -->|
   */
 
-  LRS_DEBUG_PRINT("TX: Training Ping ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Training Ping ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 1; //This is a training packet
@@ -690,7 +699,8 @@ void sendTrainingDataPacket()
       |<----------------- packetSize ----------------->|
   */
 
-  LRS_DEBUG_PRINT("TX: Training Data ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Training Data ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 1; //This is training packet
@@ -724,7 +734,8 @@ void sendCommandAckPacket()
       |<-- packetSize -->|
   */
 
-  LRS_DEBUG_PRINT("TX: Command Ack ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Command Ack ");
   responseTrailer.ack = 1; //This is an ACK to a previous reception
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -749,7 +760,8 @@ void sendCommandDataPacket()
       |<------- packetSize ------->|
   */
 
-  LRS_DEBUG_PRINT("TX: Command Data ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Command Data ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission.
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not training packet
@@ -784,7 +796,8 @@ void sendCommandResponseAckPacket()
       |<-- packetSize -->|
   */
 
-  LRS_DEBUG_PRINT("TX: Command Response Ack ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Command Response Ack ");
   responseTrailer.ack = 1; //This is an ACK to a previous reception
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -809,7 +822,8 @@ void sendCommandResponseDataPacket()
       |<-------- packetSize ------->|
   */
 
-  LRS_DEBUG_PRINT("TX: Command Response Data ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Command Response Data ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission.
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not training packet
