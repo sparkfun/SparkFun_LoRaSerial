@@ -29,7 +29,6 @@ void updateRadioState()
 
       //Set all of the ACK numbers to zero
       *(uint8_t *)(&txControl) = 0;
-      *(uint8_t *)(&expectedTxAck) = 0;
 
       //Determine the components of the frame header
       headerBytes = 0;
@@ -399,7 +398,11 @@ void updateRadioState()
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DUP);
+
+            if (expectedAckNumber == 0) expectedAckNumber = 3; //Reduce eAN by one to align with remote's count
+            else expectedAckNumber--;
             xmitDatagramP2PAck(); //Transmit ACK
+            
             changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
             break;
 
@@ -715,9 +718,9 @@ void updateRadioState()
           }
           if (receiveInProcess() == false)
           {
-          retransmitDatagram();
-          packetSent++;
-          changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+            retransmitDatagram();
+            packetSent++;
+            changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
           }
         }
         else
@@ -793,7 +796,7 @@ void updateRadioState()
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     case RADIO_MP_STANDBY:
-timeToHop = false;
+      timeToHop = false;
       if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
       {
         triggerEvent(TRIGGER_BROADCAST_PACKET_RECEIVED);
@@ -843,7 +846,7 @@ timeToHop = false;
       break;
 
     case RADIO_MP_WAIT_TX_DONE:
-timeToHop = false;
+      timeToHop = false;
       if (transactionComplete == true) //If dio0ISR has fired, we are done transmitting
       {
         transactionComplete = false; //Reset ISR flag
@@ -857,7 +860,7 @@ timeToHop = false;
 
     case RADIO_MP_RECEIVE:
       {
-timeToHop = false;
+        timeToHop = false;
         //Decode the received datagram
         PacketType packetType = rcvDatagram();
 
@@ -1845,9 +1848,12 @@ void v2EnterLinkUp()
   triggerEvent(TRIGGER_HANDSHAKE_COMPLETE);
   startChannelTimer();
   hopChannel(); //Leave home
+  heartbeatRandomTime = random(settings.heartbeatTimeout * 8 / 10, settings.heartbeatTimeout); //80-100%
 
   //Synchronize the ACK numbers
-  expectedTxAck = txControl.ackNumber;
+  txControl.ackNumber = 0;
+  expectedAckNumber = 0;
+  expectedDatagramNumber = 0;
 
   //Discard any previous data
   rxTail = rxHead;

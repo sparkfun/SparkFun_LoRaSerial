@@ -134,8 +134,8 @@ void xmitDatagramP2PCommand()
   */
 
   txControl.datagramType = DATAGRAM_REMOTE_COMMAND;
-  txControl.ackNumber = txAckNumber;
-  txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
+  txControl.ackNumber = expectedDatagramNumber;
+  expectedDatagramNumber = (expectedDatagramNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
   packetSent = 0; //This is the first time this packet is being sent
   transmitDatagram();
 }
@@ -155,8 +155,8 @@ void xmitDatagramP2PCommandResponse()
   */
 
   txControl.datagramType = DATAGRAM_REMOTE_COMMAND_RESPONSE;
-  txControl.ackNumber = txAckNumber;
-  txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
+  txControl.ackNumber = expectedDatagramNumber;
+  expectedDatagramNumber = (expectedDatagramNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
   packetSent = 0; //This is the first time this packet is being sent
   transmitDatagram();
 }
@@ -176,8 +176,8 @@ void xmitDatagramP2PData()
   */
 
   txControl.datagramType = DATAGRAM_DATA;
-  txControl.ackNumber = txAckNumber;
-  txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
+  txControl.ackNumber = expectedDatagramNumber;
+  expectedDatagramNumber = (expectedDatagramNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
   packetSent = 0; //This is the first time this packet is being sent
   transmitDatagram();
 }
@@ -197,8 +197,8 @@ void xmitDatagramP2PHeartbeat()
   */
 
   txControl.datagramType = DATAGRAM_HEARTBEAT;
-  txControl.ackNumber = txAckNumber;
-  txAckNumber = (txAckNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
+  txControl.ackNumber = expectedDatagramNumber;
+  expectedDatagramNumber = (expectedDatagramNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
   packetSent = 0; //This is the first time this packet is being sent
   transmitDatagram();
 }
@@ -222,7 +222,8 @@ void xmitDatagramP2PAck()
   */
 
   txControl.datagramType = DATAGRAM_DATA_ACK;
-  txControl.ackNumber = rxAckNumber;
+  txControl.ackNumber = expectedAckNumber;
+  expectedAckNumber = (expectedAckNumber + 1) & 3;
   transmitDatagram();
 }
 
@@ -257,7 +258,6 @@ void xmitDatagramMpDatagram()
 PacketType rcvDatagram()
 {
   PacketType datagramType;
-  static uint8_t expectedRxAck;
   uint8_t receivedNetID;
   CONTROL_U8 rxControl;
 
@@ -375,7 +375,7 @@ PacketType rcvDatagram()
   //Get the control byte
   rxControl = *((CONTROL_U8 *)rxData++);
   datagramType = rxControl.datagramType;
-  rxAckNumber = rxControl.ackNumber;
+  uint8_t packetNumber = rxControl.ackNumber;
   if (settings.debugReceive)
     printControl(*((uint8_t *)&rxControl));
   if (datagramType >= MAX_DATAGRAM_TYPE)
@@ -415,9 +415,7 @@ PacketType rcvDatagram()
   }
   rxDataBytes -= minDatagramSize;
 
-  //Verify the ACK number last so that the expected ACK number can be updated
-  //                     txAckNumber ----> rxAckNumber == expectedTxAck
-  //    expectedTxAck == rxAckNumber <---- txAckNumber
+  //Verify the packet number last so that the expected datagram or ACK number can be updated
   if (settings.pointToPoint)
   {
     switch (datagramType)
@@ -426,21 +424,21 @@ PacketType rcvDatagram()
         break;
 
       case DATAGRAM_DATA_ACK:
-        if (rxAckNumber != expectedTxAck)
+        if (packetNumber != expectedAckNumber)
         {
           if (settings.debugReceive)
           {
             systemPrintTimestamp();
             systemPrint("Invalid ACK number, received ");
-            systemPrint(rxAckNumber);
+            systemPrint(packetNumber);
             systemPrint(" expecting ");
-            systemPrintln(expectedTxAck);
+            systemPrintln(expectedAckNumber);
           }
           return (PACKET_BAD);
         }
 
         //Increment the expected ACK number
-        expectedTxAck = (expectedTxAck + 1) & 3;
+        expectedAckNumber = (expectedAckNumber + 1) & 3;
         break;
 
       case DATAGRAM_DATA:
@@ -448,21 +446,29 @@ PacketType rcvDatagram()
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
       case DATAGRAM_HEARTBEAT:
-        if (rxAckNumber != expectedRxAck)
+        if (packetNumber != expectedDatagramNumber)
         {
           //Determine if this is a duplicate datagram
-          if (rxAckNumber == ((expectedRxAck - 1) & 3))
+          if (packetNumber == ((expectedDatagramNumber - 1) & 3))
           {
             linkDownTimer = millis();
             return PACKET_DUPLICATE;
           }
 
           //Not a duplicate
+          if (settings.debugReceive)
+          {
+            systemPrintTimestamp();
+            systemPrint("Invalid datagram number, received ");
+            systemPrint(packetNumber);
+            systemPrint(" expecting ");
+            systemPrintln(expectedDatagramNumber);
+          }
           return PACKET_BAD;
         }
 
-        //Receive this data packet and set the next expected RX ACK number
-        expectedRxAck = (expectedRxAck + 1) & 3;
+        //Receive this data packet and set the next expected datagram number
+        expectedDatagramNumber = (expectedDatagramNumber + 1) & 3;
         break;
     }
   }
@@ -515,7 +521,7 @@ PacketType rcvDatagram()
         if (settings.pointToPoint)
         {
           systemPrint(" (ACK #");
-          systemPrint(rxAckNumber);
+          systemPrint(packetNumber);
           systemPrint(")");
         }
         systemPrintln();
