@@ -39,13 +39,11 @@
   Compiled with Arduino v1.8.15
 */
 
-const int FIRMWARE_VERSION_MAJOR = 2;
-const int FIRMWARE_VERSION_MINOR = 0;
+const int FIRMWARE_VERSION_MAJOR = 1;
+const int FIRMWARE_VERSION_MINOR = 1;
 
 #define RADIOLIB_LOW_LEVEL  //Enable access to the module functions
-#define ENABLE_DEVELOPER //Uncomment this line to enable special developer modes
-
-#define UNUSED(x) (void)(x)
+//#define ENABLE_DEVELOPER //Uncomment this line to enable special developer modes
 
 //Define the LoRaSerial board identifier:
 //  This is an int which is unique to this variant of the LoRaSerial hardware which allows us
@@ -59,30 +57,29 @@ const int FIRMWARE_VERSION_MINOR = 0;
 #define MAX_PACKET_SIZE 255 //Limited by SX127x
 
 #include "settings.h"
+#include "build.h"
 
 //Hardware connections
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //These pins are set in beginBoard()
-#define PIN_UNDEFINED   255
+uint8_t pin_rst = 255;
+uint8_t pin_cs = 255;
+uint8_t pin_txen = 255;
+uint8_t pin_rxen = 255;
+uint8_t pin_dio0 = 255;
+uint8_t pin_dio1 = 255;
+uint8_t pin_rts = 255;
+uint8_t pin_cts = 255;
+uint8_t pin_txLED = 255;
+uint8_t pin_rxLED = 255;
+uint8_t pin_trainButton = 255;
+uint8_t pin_rssi1LED = 255;
+uint8_t pin_rssi2LED = 255;
+uint8_t pin_rssi3LED = 255;
+uint8_t pin_rssi4LED = 255;
+uint8_t pin_boardID = 255;
 
-uint8_t pin_rst = PIN_UNDEFINED;
-uint8_t pin_cs = PIN_UNDEFINED;
-uint8_t pin_txen = PIN_UNDEFINED;
-uint8_t pin_rxen = PIN_UNDEFINED;
-uint8_t pin_dio0 = PIN_UNDEFINED;
-uint8_t pin_dio1 = PIN_UNDEFINED;
-uint8_t pin_rts = PIN_UNDEFINED;
-uint8_t pin_cts = PIN_UNDEFINED;
-uint8_t pin_txLED = PIN_UNDEFINED;
-uint8_t pin_rxLED = PIN_UNDEFINED;
-uint8_t pin_trainButton = PIN_UNDEFINED;
-uint8_t pin_rssi1LED = PIN_UNDEFINED;
-uint8_t pin_rssi2LED = PIN_UNDEFINED;
-uint8_t pin_rssi3LED = PIN_UNDEFINED;
-uint8_t pin_rssi4LED = PIN_UNDEFINED;
-uint8_t pin_boardID = PIN_UNDEFINED;
-
-uint8_t pin_trigger = PIN_UNDEFINED;
+uint8_t pin_trigger = 255;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Radio Library
@@ -91,7 +88,6 @@ uint8_t pin_trigger = PIN_UNDEFINED;
 SX1276 radio = NULL; //We can't instantiate here because we don't yet know what pin numbers to use
 
 float *channels;
-uint8_t channelNumber = 0;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Encryption
@@ -113,21 +109,8 @@ const int trainButtonTime = 2000; //ms press and hold before entering training
 const int trainWithDefaultsButtonTime = 5000; //ms press and hold before entering training
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-//Hardware Timers
-//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#include "SAMDTimerInterrupt.h" //http://librarymanager/All#SAMD_TimerInterrupt v1.9.0 (currently) by Koi Hang
-SAMDTimer channelTimer(TIMER_TCC); //Available: TC3, TC4, TC5, TCC, TCC1 or TCC2
-unsigned long timerStart = 0; //Tracks how long our timer has been running since last hop
-bool partialTimer = false; //After an ACK we reset and run a partial timer to sync units
-const int SYNC_PROCESSING_OVERHEAD = 4; //Number of milliseconds it takes to compute clock deltas before sync'ing clocks
-//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
 //Global variables - Serial
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint8_t escapeCharacter = '+';
-const uint8_t maxEscapeCharacters = 3; //Number of characters needed to enter command mode
-const uint8_t responseDelayDivisor = 4; //Add on to max response time after packet has been sent. Factor of 2. 8 is ok. 4 is good. A smaller number increases the delay.
-
 //Buffer to store bytes incoming from serial before broadcasting over LoRa
 uint8_t serialReceiveBuffer[1024 * 4]; //Bytes received from UART waiting to be RF transmitted. Buffer up to 1s of bytes at 4k
 uint8_t serialTransmitBuffer[1024 * 4]; //Bytes received from RF waiting to be printed out UART. Buffer up to 1s of bytes at 4k
@@ -137,9 +120,8 @@ uint16_t txTail = 0;
 uint16_t rxHead = 0;
 uint16_t rxTail = 0;
 
-char commandBuffer[100]; //Received serial gets stored into buffer until \r or \n is received
-uint8_t commandRXBuffer[100]; //Bytes received from remote, waiting for printing or AT parsing
-uint8_t commandTXBuffer[1024 * 4]; //Bytes waiting to be transmitted to the remote unit
+uint8_t commandRXBuffer[700]; //Bytes received from remote, waiting for printing or AT parsing
+uint8_t commandTXBuffer[700]; //Bytes waiting to be transmitted to the remote unit
 uint16_t commandTXHead = 0;
 uint16_t commandTXTail = 0;
 uint16_t commandRXHead = 0;
@@ -177,7 +159,7 @@ unsigned long lastLinkBlink = 0; //Controls link LED in broadcast mode
 bool sentFirstPing = false; //Force a ping to link at POR
 
 volatile bool transactionComplete = false; //Used in dio0ISR
-volatile bool timeToHop = false; //Used in dio1ISR
+volatile bool timeToHop = true; //Used in dio1ISR
 bool expectingAck = false; //Used by various send packet functions
 
 float frequencyCorrection = 0; //Adjust receive freq based on the last packet received freqError
@@ -189,50 +171,8 @@ uint8_t trainNetID; //New netID passed during training
 uint8_t trainEncryptionKey[16]; //New AES key passed during training
 
 bool inCommandMode = false; //Normal data is prevented from entering serial output when in command mode
+char commandBuffer[100]; //Received serial gets stored into buffer until \r or \n is received
 uint8_t commandLength = 0;
-bool remoteCommandResponse;
-
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-//V2
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-//Frame size values
-uint8_t headerBytes;
-uint8_t trailerBytes;
-uint8_t txDatagramSize;
-
-//Point-to-Point
-unsigned long datagramTimer;
-uint8_t expectedTxAck;
-uint8_t txAckNumber;
-uint16_t ackAirTime;
-uint16_t datagramAirTime;
-uint16_t overheadTime = 10; //ms added to ack and datagram times before ACK timeout occurs
-uint16_t pingRandomTime;
-uint16_t heartbeatRandomTime;
-
-//Receive control
-uint8_t incomingBuffer[MAX_PACKET_SIZE];
-uint8_t minDatagramSize;
-uint8_t maxDatagramSize;
-uint8_t rxAckNumber;
-uint8_t * rxData;
-uint8_t rxDataBytes;
-unsigned long heartbeatTimer;
-unsigned long linkDownTimer;
-
-//Transmit control
-const int datagramsExpectingAcks = 0
-                                   | (1 << DATAGRAM_DATA)
-                                   | (1 << DATAGRAM_SF6_DATA)
-                                   | (1 << DATAGRAM_REMOTE_COMMAND)
-                                   | (1 << DATAGRAM_REMOTE_COMMAND_RESPONSE)
-                                   | (1 << DATAGRAM_HEARTBEAT);
-uint8_t * endOfTxData;
-CONTROL_U8 txControl;
-
-volatile bool clearDIO1 = true; //Clear the DIO1 hop ISR when possible
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -265,34 +205,17 @@ void setup()
 
   verifyRadioStateTable(); //Verify that the state table contains all of the states in increasing order
 
-  systemPrintTimestamp();
   systemPrintln("LRS");
 
-  beginBoard(); //Determine what hardware platform we are running on.
+  beginBoard(); //Determine what hardware platform we are running on
 
   beginLoRa(); //Start radio
 
   beginButton(); //Start watching the train button
 
-  beginChannelTimer(); //Setup (but do not start) hardware timer for channel hopping
-
   arch.beginWDT(); //Start watchdog timer
 
-  systemPrintTimestamp();
   systemPrintln("LRS Setup Complete");
-
-  //Testing
-  settings.triggerEnable = 0xFFFFFFFF; //Enable all
-  settings.debugTrigger = true;
-  settings.debug = true;
-  //settings.printFrequency = true;
-  //settings.debugTransmit = true;
-  //settings.debugReceive = true;
-  settings.triggerWidth = 25;
-  settings.useV2 = true;
-  //settings.printTimestamp = true;
-  
-  triggerEvent(TRIGGER_RADIO_RESET);
 }
 
 void loop()
@@ -304,10 +227,4 @@ void loop()
   updateSerial(); //Store incoming and print outgoing
 
   updateRadioState(); //Ping/ack/send packets as needed
-
-  if (clearDIO1) //Allow DIO1 hop ISR but use it only for debug
-  {
-    clearDIO1 = false;
-    radio.clearFHSSInt(); //Clear the interrupt
-  }
 }

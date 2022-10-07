@@ -4,7 +4,7 @@ void beginBoard()
   //Initialize the board specific hardware
   arch.beginBoard();
 
-  //Dashboard Blink LEDs
+  //Dashbord Blink LEDs
   for (int x = 0 ; x < 3 ; x++)
   {
     digitalWrite(pin_rssi1LED, HIGH);
@@ -49,7 +49,7 @@ void beginLoRa()
 
 void beginButton()
 {
-  if (pin_trainButton != PIN_UNDEFINED)
+  if (pin_trainButton != 255)
   {
     trainBtn = new Button(pin_trainButton); //Create the button
     trainBtn->begin();
@@ -82,28 +82,4 @@ void petWDT()
     lastPet = millis();
     arch.petWDT();
   }
-}
-
-void beginChannelTimer()
-{
-  if (channelTimer.attachInterruptInterval_MS(settings.maxDwellTime, channelTimerHandler) == false)
-    Serial.println(F("Error starting ChannelTimer!"));
-
-  stopChannelTimer(); //Start timer only after link is up
-}
-
-//ISR that fires when channel timer expires
-void channelTimerHandler()
-{
-  timerStart = millis(); //Record when this ISR happened. Used for calculating clock sync.
-
-  //If the last timer was used to sync clocks, restore full timer interval
-  if (partialTimer == true)
-  {
-    partialTimer = false;
-    channelTimer.setInterval_MS(settings.maxDwellTime, channelTimerHandler);
-  }
-
-  triggerEvent(TRIGGER_CHANNEL_TIMER_ISR);
-  timeToHop = true;
 }
