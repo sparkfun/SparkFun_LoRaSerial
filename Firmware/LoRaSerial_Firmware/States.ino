@@ -230,7 +230,7 @@ void updateRadioState()
       }
       else
       {
-        if ((millis() - datagramTimer) >= (datagramAirTime + ackAirTime + overheadTime))
+        if ((millis() - datagramTimer) >= (datagramAirTime + ackAirTime + settings.overheadTime))
         {
           if (settings.debugDatagrams)
           {
@@ -274,7 +274,7 @@ void updateRadioState()
       }
       else
       {
-        if ((millis() - datagramTimer) >= (datagramAirTime +  ackAirTime + overheadTime))
+        if ((millis() - datagramTimer) >= (datagramAirTime +  ackAirTime + settings.overheadTime))
         {
           if (settings.debugDatagrams)
           {
@@ -402,7 +402,7 @@ void updateRadioState()
             if (expectedAckNumber == 0) expectedAckNumber = 3; //Reduce eAN by one to align with remote's count
             else expectedAckNumber--;
             xmitDatagramP2PAck(); //Transmit ACK
-            
+
             changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
             break;
 
@@ -671,7 +671,7 @@ void updateRadioState()
       }
 
       //Check for ACK timeout
-      else if ((millis() - datagramTimer) >= (datagramAirTime + ackAirTime + overheadTime))
+      else if ((millis() - datagramTimer) >= (datagramAirTime + ackAirTime + settings.overheadTime))
         //Set at end of transmit, measures ACK timeout
       {
         //        systemPrint("millis: ");
