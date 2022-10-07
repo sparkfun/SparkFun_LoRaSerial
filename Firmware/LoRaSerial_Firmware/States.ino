@@ -402,7 +402,7 @@ void updateRadioState()
             if (expectedAckNumber == 0) expectedAckNumber = 3; //Reduce eAN by one to align with remote's count
             else expectedAckNumber--;
             xmitDatagramP2PAck(); //Transmit ACK
-            
+
             changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
             break;
 
@@ -537,13 +537,16 @@ void updateRadioState()
         else if (heartbeatTimeout)
         {
           triggerEvent(TRIGGER_HEARTBEAT);
-          xmitDatagramP2PHeartbeat();
+          if (receiveInProcess() == false)
+          {
+            xmitDatagramP2PHeartbeat();
 
-          heartbeatTimer = millis();
-          heartbeatRandomTime = random(settings.heartbeatTimeout * 8 / 10, settings.heartbeatTimeout); //80-100%
+            heartbeatTimer = millis();
+            heartbeatRandomTime = random(settings.heartbeatTimeout * 8 / 10, settings.heartbeatTimeout); //80-100%
 
-          //Wait for heartbeat to transmit
-          changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+            //Wait for heartbeat to transmit
+            changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+          }
         }
         else if ((millis() - linkDownTimer) >= (3 * settings.heartbeatTimeout))
           //Break the link
