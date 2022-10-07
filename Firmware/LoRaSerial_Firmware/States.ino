@@ -6,6 +6,7 @@ void updateRadioState()
   uint8_t radioSeed;
   static uint8_t rexmtBuffer[MAX_PACKET_SIZE];
   static CONTROL_U8 rexmtControl;
+  static uint8_t rexmtLength;
 
   switch (radioState)
   {
@@ -661,6 +662,7 @@ void updateRadioState()
             petWDT();
             memcpy(rexmtBuffer, outgoingPacket, MAX_PACKET_SIZE);
             rexmtControl = txControl;
+            rexmtLength = txDatagramSize;
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
             xmitDatagramP2PAck(); //Transmit ACK
@@ -674,13 +676,6 @@ void updateRadioState()
       else if ((millis() - datagramTimer) >= (datagramAirTime + ackAirTime + overheadTime))
         //Set at end of transmit, measures ACK timeout
       {
-        //        systemPrint("millis: ");
-        //        systemPrintln(millis());
-        //        systemPrint("datagramTimer: ");
-        //        systemPrintln(datagramTimer);
-        //        systemPrint("ackAirTime: ");
-        //        systemPrintln(ackAirTime);
-
         if (settings.debugDatagrams)
         {
           systemPrintTimestamp();
@@ -751,6 +746,7 @@ void updateRadioState()
         {
           memcpy(outgoingPacket, rexmtBuffer, MAX_PACKET_SIZE);
           txControl = rexmtControl;
+          txDatagramSize = rexmtLength;
           if (settings.debugDatagrams)
           {
             systemPrintTimestamp();
