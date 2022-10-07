@@ -366,7 +366,11 @@ void updateRadioState()
           default:
             triggerEvent(TRIGGER_UNKNOWN_PACKET);
             returnToReceiving();
-            changeState(RADIO_P2P_LINK_UP);
+            break;
+
+          case PACKET_BAD:
+            triggerEvent(TRIGGER_BAD_PACKET);
+            returnToReceiving();
             break;
 
           case DATAGRAM_PING:
@@ -589,6 +593,11 @@ void updateRadioState()
         {
           default:
             triggerEvent(TRIGGER_UNKNOWN_PACKET);
+            returnToReceiving();
+            break;
+
+          case PACKET_BAD:
+            triggerEvent(TRIGGER_BAD_PACKET);
             returnToReceiving();
             break;
 
