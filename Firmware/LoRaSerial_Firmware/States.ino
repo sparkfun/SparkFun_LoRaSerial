@@ -625,10 +625,11 @@ void updateRadioState()
               systemPrintln();
             }
 
-            triggerEvent(TRIGGER_LINK_ACK_RECEIVED);
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+
+            triggerEvent(TRIGGER_LINK_ACK_RECEIVED);
             returnToReceiving();
             changeState(RADIO_P2P_LINK_UP);
             break;
