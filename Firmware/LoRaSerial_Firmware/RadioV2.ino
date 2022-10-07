@@ -821,7 +821,12 @@ void syncChannelTimer()
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(settings.maxDwellTime - channelTimerElapsed, channelTimerHandler); //Shorten our hardware timer to match our mate's
   channelTimer.enableTimer();
+}
 
-  //Extend time before next heartbeat
-  heartbeatRandomTime = random(settings.heartbeatTimeout * 8 / 10, settings.heartbeatTimeout); //80-100%
+//This function resets the heartbeat time and re-rolls the random time
+//Call when something has happened (ACK received, etc) where clocks have been sync'd
+void resetHeartbeat()
+{
+  heartbeatTimer = millis();
+  heartbeatRandomTime = random(settings.heartbeatTimeout * 8 / 10, settings.heartbeatTimeout); //20-100%
 }
