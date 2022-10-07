@@ -791,6 +791,8 @@ void retransmitDatagram()
 
 void startChannelTimer()
 {
+  channelTimer.disableTimer();
+  channelTimer.setInterval_MS(settings.maxDwellTime, channelTimerHandler);
   channelTimer.enableTimer();
   timerStart = millis(); //ISR normally takes care of this but allow for correct ACK sync before first ISR
   triggerEvent(TRIGGER_HOP_TIMER_START);
