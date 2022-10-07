@@ -402,7 +402,7 @@ void updateRadioState()
             if (expectedAckNumber == 0) expectedAckNumber = 3; //Reduce eAN by one to align with remote's count
             else expectedAckNumber--;
             xmitDatagramP2PAck(); //Transmit ACK
-            
+
             changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
             break;
 
@@ -425,6 +425,9 @@ void updateRadioState()
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+
+            resetHeartbeat();
+
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
             xmitDatagramP2PAck(); //Transmit ACK
             changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
@@ -459,10 +462,13 @@ void updateRadioState()
             txHead += rxDataBytes - length;
             txHead %= sizeof(serialTransmitBuffer);
 
-            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DATA);
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+
+            resetHeartbeat();
+
+            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DATA);
             xmitDatagramP2PAck(); //Transmit ACK
             changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
             break;
@@ -537,13 +543,15 @@ void updateRadioState()
         else if (heartbeatTimeout)
         {
           triggerEvent(TRIGGER_HEARTBEAT);
-          xmitDatagramP2PHeartbeat();
+          if (receiveInProcess() == false && transactionComplete == false) //Avoid race condition
+          {
+            xmitDatagramP2PHeartbeat();
 
-          heartbeatTimer = millis();
-          heartbeatRandomTime = random(settings.heartbeatTimeout * 8 / 10, settings.heartbeatTimeout); //80-100%
+            resetHeartbeat();
 
-          //Wait for heartbeat to transmit
-          changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+            //Wait for heartbeat to transmit
+            changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+          }
         }
         else if ((millis() - linkDownTimer) >= (3 * settings.heartbeatTimeout))
           //Break the link
@@ -611,6 +619,8 @@ void updateRadioState()
 
           case DATAGRAM_DATA_ACK:
             syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
+
+            resetHeartbeat(); //Extend time before next heartbeat
 
             //Display the signal strength
             if (settings.displayPacketQuality == true)
@@ -1849,7 +1859,7 @@ void v2EnterLinkUp()
   triggerEvent(TRIGGER_HANDSHAKE_COMPLETE);
   startChannelTimer();
   hopChannel(); //Leave home
-  heartbeatRandomTime = random(settings.heartbeatTimeout * 8 / 10, settings.heartbeatTimeout); //80-100%
+  resetHeartbeat();
 
   //Synchronize the ACK numbers
   txControl.ackNumber = 0;

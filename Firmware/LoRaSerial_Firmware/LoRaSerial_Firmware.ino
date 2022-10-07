@@ -119,7 +119,7 @@ const int trainWithDefaultsButtonTime = 5000; //ms press and hold before enterin
 SAMDTimer channelTimer(TIMER_TCC); //Available: TC3, TC4, TC5, TCC, TCC1 or TCC2
 unsigned long timerStart = 0; //Tracks how long our timer has been running since last hop
 bool partialTimer = false; //After an ACK we reset and run a partial timer to sync units
-const int SYNC_PROCESSING_OVERHEAD = 4; //Number of milliseconds it takes to compute clock deltas before sync'ing clocks
+const int SYNC_PROCESSING_OVERHEAD = -5; //Number of milliseconds it takes to compute clock deltas before sync'ing clocks
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Global variables - Serial
