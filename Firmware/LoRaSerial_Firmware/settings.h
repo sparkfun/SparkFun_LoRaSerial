@@ -149,7 +149,7 @@ enum
   TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND,
   TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND_RESPONSE,
   TRIGGER_BAD_PACKET,
-  
+
 
   TRIGGER_ACK_PROCESSED,
   TRIGGER_DATA_SEND,
@@ -274,7 +274,7 @@ typedef struct struct_settings {
   bool useV2 = false; //Use the V2 protocol
   bool printTimestamp = false; //Print a timestamp: days hours:minutes:seconds.milliseconds
   bool debugDatagrams = false; //Print the datagrams
-  uint16_t txAckMillis = 100; //Number of milliseconds to delay for ACK
+  uint16_t overheadTime = 10; ////ms added to ack and datagram times before ACK timeout occurs
 } Settings;
 Settings settings;
 

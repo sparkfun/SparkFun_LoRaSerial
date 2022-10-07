@@ -231,7 +231,7 @@ void updateRadioState()
       }
       else
       {
-        if ((millis() - datagramTimer) >= (datagramAirTime + ackAirTime + overheadTime))
+        if ((millis() - datagramTimer) >= (datagramAirTime + ackAirTime + settings.overheadTime))
         {
           if (settings.debugDatagrams)
           {
@@ -275,7 +275,7 @@ void updateRadioState()
       }
       else
       {
-        if ((millis() - datagramTimer) >= (datagramAirTime +  ackAirTime + overheadTime))
+        if ((millis() - datagramTimer) >= (datagramAirTime +  ackAirTime + settings.overheadTime))
         {
           if (settings.debugDatagrams)
           {
@@ -683,7 +683,7 @@ void updateRadioState()
       }
 
       //Check for ACK timeout
-      else if ((millis() - datagramTimer) >= (datagramAirTime + ackAirTime + overheadTime))
+      else if ((millis() - datagramTimer) >= (datagramAirTime + ackAirTime + settings.overheadTime))
         //Set at end of transmit, measures ACK timeout
       {
         if (settings.debugDatagrams)
