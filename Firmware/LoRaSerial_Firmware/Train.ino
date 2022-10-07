@@ -1,8 +1,7 @@
 
 void beginTraining()
 {
-  if ((settings.debug == true) || (settings.debugTraining == true))
-    systemPrintln("Begin training");
+  LRS_DEBUG_PRINTLN("Begin training");
 
   originalSettings = settings; //Make copy of current settings
 
@@ -11,8 +10,7 @@ void beginTraining()
 
 void beginDefaultTraining()
 {
-  if ((settings.debug == true) || (settings.debugTraining == true))
-    systemPrintln("Begin default training");
+  LRS_DEBUG_PRINTLN("Begin default training");
 
   originalSettings = defaultSettings; //Upon completion we will return to default settings
 
@@ -200,8 +198,7 @@ void moveToTrainingFreq()
 //but need to be on a different netID/AES key.
 void generateTrainingSettings()
 {
-  if ((settings.debug == true) || (settings.debugTraining == true))
-    systemPrintln("Generate New Training Settings");
+  LRS_DEBUG_PRINTLN("Generate New Training Settings");
 
   //Seed random number based on RF noise. We use Arduino random() because platform specific generation does not matter
   randomSeed(radio.randomByte());

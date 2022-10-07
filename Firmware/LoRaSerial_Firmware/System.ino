@@ -79,7 +79,7 @@ void systemPrintln(float value, uint8_t decimals)
 
 void systemPrint(double value, uint8_t decimals)
 {
-  char temp[300];
+  char temp[20];
   sprintf(temp, "%.*g", decimals, value);
   systemPrint(temp);
 }
@@ -104,13 +104,10 @@ void systemPrintTimestamp()
   unsigned int days;
   unsigned int total;
 
-  petWDT();
   if (settings.printTimestamp)
   {
-    //Get the clock value
+    petWDT();
     milliseconds = millis();
-
-    //Compute the values for display
     seconds = milliseconds / 1000;
     minutes = seconds / 60;
     hours = minutes / 60;
@@ -306,10 +303,10 @@ void triggerEvent(uint8_t triggerNumber)
   }
 
   //Determine if the trigger is enabled
-  if ((pin_trigger != PIN_UNDEFINED) && (triggerEnable & (1 << triggerBitNumber)))
+  if ((pin_trigger != 255) && (triggerEnable & (1 << triggerBitNumber)))
   {
     //Determine if the trigger pin is enabled
-    if (pin_trigger != PIN_UNDEFINED)
+    if (pin_trigger != 255)
     {
       if ((settings.debug == true) || (settings.debugTrigger == true))
       {
@@ -429,6 +426,9 @@ void updateRSSI()
 
   int rssi = radio.getRSSI();
 
+  LRS_DEBUG_PRINT("RSSI: ");
+  LRS_DEBUG_PRINTLN(rssi);
+
   //Set LEDs according to RSSI level
   if (rssi > rssiLevelLow)
     setRSSI(0b0001);
@@ -465,7 +465,7 @@ void setRSSI(uint8_t ledBits)
 
 void txLED(bool illuminate)
 {
-  if (pin_txLED != PIN_UNDEFINED)
+  if (pin_txLED != 255)
   {
     if (illuminate == true)
       digitalWrite(pin_txLED, HIGH);
@@ -476,7 +476,7 @@ void txLED(bool illuminate)
 
 void rxLED(bool illuminate)
 {
-  if (pin_rxLED != PIN_UNDEFINED)
+  if (pin_rxLED != 255)
   {
     if (illuminate == true)
       digitalWrite(pin_rxLED, HIGH);

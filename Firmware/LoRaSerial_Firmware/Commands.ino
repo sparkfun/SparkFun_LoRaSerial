@@ -17,15 +17,15 @@ enum {
   TYPE_U8,
   TYPE_U16,
   TYPE_U32,
-};
+} TYPES;
 
 typedef bool (* VALIDATION_ROUTINE)(void * value, uint32_t valMin, uint32_t valMax);
 
 typedef struct _COMMAND_ENTRY
 {
   uint8_t number;
-  uint32_t minValue;
-  uint32_t maxValue;
+  int32_t minValue;
+  int32_t maxValue;
   uint8_t digits;
   uint8_t type;
   VALIDATION_ROUTINE validate;
@@ -68,8 +68,6 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATT - Enter training mode");
         systemPrintln("  ATX - Stop the training server");
         systemPrintln("  ATZ - Reboot the radio");
-        systemPrintln("  AT&F - Restore factory settings");
-        systemPrintln("  AT&W - Save current settings to NVM");
         break;
       case ('F'): //Enter training mode and return to factory defaults
         reportOK();
@@ -169,7 +167,7 @@ bool commandAT(const char * commandString)
         systemPrintln();
         break;
       case ('7'): //ATI7 - Show current FHSS channel
-        systemPrintln(channelNumber);
+        systemPrintln(radio.getFHSSChannel());
         break;
       case ('8'): //ATI8 - Display the unique ID
         arch.uniqueID(uniqueID);
@@ -184,7 +182,7 @@ bool commandAT(const char * commandString)
   //AT&x commands
   else if (commandString[2] == '&')
   {
-    //&W and &F
+    //&W, &F, &T, and &T=RSSI/TDM
     if (commandLength == 4)
     {
       switch (commandString[3])
@@ -206,6 +204,17 @@ bool commandAT(const char * commandString)
           return false;
       }
     }
+    else
+    {
+      //RSSI
+      if (strcmp_P(commandString, PSTR("AT&T=RSSI")) == 0) //Enable packet quality reporting
+      {
+        settings.displayPacketQuality = true;
+        reportOK();
+      }
+      else
+        return false;
+    }
   }
   else
     return false;
@@ -225,7 +234,6 @@ bool sendRemoteCommand(const char * commandString)
     commandTXBuffer[commandTXHead++] = commandString[x];
     commandTXHead %= sizeof(commandTXBuffer);
   }
-  remoteCommandResponse = false;
   return true;
 }
 
@@ -252,6 +260,8 @@ void checkCommand()
   int index;
   int prefixLength;
   bool success;
+
+  systemPrintln();
 
   //Verify the command length
   commandString = trimCommand(); //Remove any leading whitespace
@@ -311,9 +321,6 @@ bool valBandwidth (void * value, uint32_t valMin, uint32_t valMax)
 {
   double doubleSettingValue = *(double *)value;
 
-  UNUSED(valMin);
-  UNUSED(valMax);
-
   if ((settings.airSpeed != 0) && (doubleSettingValue != 0))
   {
     systemPrintln("AirSpeed is overriding");
@@ -322,22 +329,20 @@ bool valBandwidth (void * value, uint32_t valMin, uint32_t valMax)
 
   //Some doubles get rounded incorrectly
   return ((settings.airSpeed != 0)
-          || ((doubleSettingValue * 100) == 1040)
-          || (doubleSettingValue == 15.6)
-          || ((doubleSettingValue * 100) == 2080)
-          || (doubleSettingValue == 31.25)
-          || (doubleSettingValue == 41.7)
-          || (doubleSettingValue == 62.5)
-          || (doubleSettingValue == 125.0)
-          || (doubleSettingValue == 250.0)
-          || (doubleSettingValue == 500.0));
+         || ((doubleSettingValue * 100) == 1040)
+         || (doubleSettingValue == 15.6)
+         || ((doubleSettingValue * 100) == 2080)
+         || (doubleSettingValue == 31.25)
+         || (doubleSettingValue == 41.7)
+         || (doubleSettingValue == 62.5)
+         || (doubleSettingValue == 125.0)
+         || (doubleSettingValue == 250.0)
+         || (doubleSettingValue == 500.0));
 }
 
 bool valFreqMax (void * value, uint32_t valMin, uint32_t valMax)
 {
   double doubleSettingValue = *(double *)value;
-
-  UNUSED(valMin);
 
   return ((doubleSettingValue >= settings.frequencyMin) && (doubleSettingValue <= (double)valMax));
 }
@@ -346,26 +351,21 @@ bool valFreqMin (void * value, uint32_t valMin, uint32_t valMax)
 {
   double doubleSettingValue = *(double *)value;
 
-  UNUSED(valMax);
-
   return ((doubleSettingValue >= (double)valMin) && (doubleSettingValue <= settings.frequencyMax));
 }
 
 bool valInt (void * value, uint32_t valMin, uint32_t valMax)
 {
-  uint32_t settingValue = *(uint32_t *)value;
+  int settingValue = *(uint32_t *)value;
 
   return ((settingValue >= valMin) && (settingValue <= valMax));
 }
 
 bool valKey (void * value, uint32_t valMin, uint32_t valMax)
 {
-  unsigned int length;
+  int length;
   char * str = (char *)value;
   char * strEnd;
-
-  UNUSED(valMin);
-  UNUSED(valMax);
 
   //Validate the length of the encryption key
   length = strlen(str);
@@ -390,7 +390,7 @@ bool valKey (void * value, uint32_t valMin, uint32_t valMax)
 
 bool valOverride (void * value, uint32_t valMin, uint32_t valMax)
 {
-  uint32_t settingValue = *(uint32_t *)value;
+  int settingValue = *(uint32_t *)value;
 
   if (settings.airSpeed != 0)
   {
@@ -406,31 +406,25 @@ bool valSpeedAir (void * value, uint32_t valMin, uint32_t valMax)
   bool valid;
   uint32_t settingValue = *(uint32_t *)value;
 
-  UNUSED(valMin);
-  UNUSED(valMax);
-
   valid = ((settingValue == 0)
-           || (settingValue == 40)
-           || (settingValue == 150)
-           || (settingValue == 400)
-           || (settingValue == 1200)
-           || (settingValue == 2400)
-           || (settingValue == 4800)
-           || (settingValue == 9600)
-           || (settingValue == 19200)
-           || (settingValue == 28800)
-           || (settingValue == 38400));
-  if (valid && (settings.airSpeed == 0) && (settingValue != 0))
-    systemPrintln("Warning: AirSpeed override of bandwidth, spread factor, and coding rate");
-  return valid;
+            || (settingValue == 40)
+            || (settingValue == 150)
+            || (settingValue == 400)
+            || (settingValue == 1200)
+            || (settingValue == 2400)
+            || (settingValue == 4800)
+            || (settingValue == 9600)
+            || (settingValue == 19200)
+            || (settingValue == 28800)
+            || (settingValue == 38400));
+    if (valid && (settings.airSpeed == 0) && (settingValue != 0))
+      systemPrintln("Warning: AirSpeed override of bandwidth, spread factor, and coding rate");
+    return valid;
 }
 
 bool valSpeedSerial (void * value, uint32_t valMin, uint32_t valMax)
 {
   uint32_t settingValue = *(uint32_t *)value;
-
-  UNUSED(valMin);
-  UNUSED(valMax);
 
   return ((settingValue == 2400)
           || (settingValue == 4800)
@@ -447,7 +441,7 @@ bool valSpeedSerial (void * value, uint32_t valMin, uint32_t valMax)
 //----------------------------------------
 
 const COMMAND_ENTRY commands[] =
-{ //#, min, max, digits,   type,            validation,        name,                setting addr
+{//#, min, max, digits,   type,            validation,        name,                setting addr
   {0,   0,   0,      0, TYPE_SPEED_SERIAL, valSpeedSerial, "SerialSpeed",          &settings.serialSpeed},
   {1,   0,   0,      0, TYPE_SPEED_AIR,    valSpeedAir,    "AirSpeed",             &settings.airSpeed},
   {2,   0, 255,      0, TYPE_U8,           valInt,         "netID",                &settings.netID},
@@ -504,8 +498,6 @@ const COMMAND_ENTRY commands[] =
 
   {45,    0,   1,    0, TYPE_BOOL,         valInt,         "UseV2",                &settings.useV2},
   {46,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTimestamp",       &settings.printTimestamp},
-  {47,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &settings.debugDatagrams},
-  {48,    5, 1000,   0, TYPE_U16,          valInt,         "TxAckMillis",          &settings.txAckMillis},
 
   //Define any user parameters starting at 255 decrementing towards 0
 };
@@ -624,7 +616,6 @@ bool commandSet(const char * commandString)
     settingValue = doubleSettingValue;
 
     //Validate and set the value
-    valid = false;
     switch (command->type)
     {
       case TYPE_BOOL:
@@ -635,12 +626,12 @@ bool commandSet(const char * commandString)
       case TYPE_FLOAT:
         valid = command->validate((void *)&doubleSettingValue, command->minValue, command->maxValue);
         if (valid)
-          *((float *)(command->setting)) = doubleSettingValue;
+        *((float *)(command->setting)) = doubleSettingValue;
         break;
       case TYPE_KEY:
         valid = command->validate((void *)buffer, command->minValue, command->maxValue);
         if (valid)
-          for (uint32_t x = 0; x < (2 * sizeof(settings.encryptionKey)); x += 2)
+          for (int x = 0; x < (2 * sizeof(settings.encryptionKey)); x += 2)
             settings.encryptionKey[x / 2] = charHexToDec(buffer[x], buffer[x + 1]);
         break;
       case TYPE_SPEED_AIR:
