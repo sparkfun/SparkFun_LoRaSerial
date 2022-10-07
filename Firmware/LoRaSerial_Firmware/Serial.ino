@@ -33,6 +33,8 @@ uint16_t availableTXCommandBytes()
 //Scan for escape characters
 void updateSerial()
 {
+  int x;
+
   //Forget printing if there are ISRs to attend to
   if (transactionComplete == false && timeToHop == false)
   {
@@ -87,12 +89,12 @@ void updateSerial()
     if (availableRXBytes() == sizeof(serialReceiveBuffer) - 1)
     {
       //Buffer full!
-      if (pin_rts != 255 && settings.flowControl == true)
+      if (pin_rts != PIN_UNDEFINED && settings.flowControl == true)
         digitalWrite(pin_rts, LOW); //Don't give me more
     }
     else
     {
-      if (pin_rts != 255 && settings.flowControl == true)
+      if (pin_rts != PIN_UNDEFINED && settings.flowControl == true)
         digitalWrite(pin_rts, HIGH); //Ok to send more
     }
 
@@ -104,6 +106,7 @@ void updateSerial()
       if (incoming == '\r' && commandLength > 0)
       {
         printerEndpoint = PRINT_TO_SERIAL;
+        systemPrintln();
         checkCommand(); //Process command buffer
       }
       else if (incoming == '\n')
@@ -138,14 +141,14 @@ void updateSerial()
     else
     {
       //Check general serial stream for command characters
-      if (incoming == settings.escapeCharacter)
+      if (incoming == escapeCharacter)
       {
         //Ignore escape characters received within 2 seconds of serial traffic
         //Allow escape characters received within first 2 seconds of power on
         if (millis() - lastByteReceived_ms > minEscapeTime_ms || millis() < minEscapeTime_ms)
         {
           escapeCharsReceived++;
-          if (escapeCharsReceived == settings.maxEscapeCharacters)
+          if (escapeCharsReceived == maxEscapeCharacters)
           {
             if (settings.echo == true)
               systemWrite(incoming);
@@ -189,7 +192,7 @@ void updateSerial()
   {
     commandLength = availableRXCommandBytes();
 
-    for (int x = 0 ; x < commandLength ; x++)
+    for (x = 0 ; x < commandLength ; x++)
     {
       commandBuffer[x] = commandRXBuffer[commandRXTail++];
       commandRXTail %= sizeof(commandRXBuffer);
@@ -200,12 +203,13 @@ void updateSerial()
       commandBuffer[0] = 'A'; //Convert this RT command to an AT command for local consumption
       printerEndpoint = PRINT_TO_RF; //Send prints to RF link
       checkCommand(); //Parse the command buffer
-
-      //We now have the commandTXBuffer loaded. But we need to send an remoteCommandResponse. Use the printerEndpoint within the State machine.
+      printerEndpoint = PRINT_TO_SERIAL;
+      remoteCommandResponse = true;
     }
     else
     {
-      LRS_DEBUG_PRINT("Corrupt remote command received");
+      if (settings.debugRadio)
+        systemPrintln("Corrupt remote command received");
     }
   }
 }
@@ -213,7 +217,7 @@ void updateSerial()
 //Returns true if CTS is asserted (high = host says it's ok to send data)
 bool isCTS()
 {
-  if (pin_cts == 255) return (true); //CTS not implmented on this board
+  if (pin_cts == PIN_UNDEFINED) return (true); //CTS not implmented on this board
   if (settings.flowControl == false) return (true); //CTS turned off
   if (digitalRead(pin_cts) == HIGH) return (true);
   return (false);
@@ -221,20 +225,22 @@ bool isCTS()
 
 //If we have data to send, get the packet ready
 //Return true if new data is ready to be sent
-bool processWaitingSerial()
+bool processWaitingSerial(bool sendNow)
 {
   //Push any available data out
   if (availableRXBytes() >= settings.frameSize)
   {
-    LRS_DEBUG_PRINTLN("Sending max frame");
+    if (settings.debugRadio)
+      systemPrintln("Sending max frame");
     readyOutgoingPacket();
     return (true);
   }
 
   //Check if we should send out a partial frame
-  else if (availableRXBytes() > 0 && (millis() - lastByteReceived_ms) >= settings.serialTimeoutBeforeSendingFrame_ms)
+  else if (sendNow || (availableRXBytes() > 0 && (millis() - lastByteReceived_ms) >= settings.serialTimeoutBeforeSendingFrame_ms))
   {
-    LRS_DEBUG_PRINTLN("Sending partial frame");
+    if (settings.debugRadio)
+      systemPrintln("Sending partial frame");
     readyOutgoingPacket();
     return (true);
   }
@@ -244,43 +250,63 @@ bool processWaitingSerial()
 //Send a portion of the serialReceiveBuffer to outgoingPacket
 void readyOutgoingPacket()
 {
+  uint16_t length;
   uint16_t bytesToSend = availableRXBytes();
   if (bytesToSend > settings.frameSize) bytesToSend = settings.frameSize;
 
   //SF6 requires an implicit header which means there is no dataLength in the header
   if (settings.radioSpreadFactor == 6)
   {
-    if (bytesToSend > 255 - 3) bytesToSend = 255 - 3; //We are going to transmit 255 bytes no matter what
+    if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize; //We are going to transmit 255 bytes no matter what
   }
 
   packetSize = bytesToSend;
 
-  //Move this portion of the circular buffer into the outgoingPacket
-  for (uint8_t x = 0 ; x < packetSize ; x++)
+  //Determine the number of bytes to send
+  length = 0;
+  if ((rxTail + packetSize) > sizeof(serialReceiveBuffer))
   {
-    outgoingPacket[x] = serialReceiveBuffer[rxTail++];
-    rxTail %= sizeof(serialReceiveBuffer);
+    //Copy the first portion of the buffer
+    length = sizeof(serialReceiveBuffer) - rxTail;
+    memcpy(&outgoingPacket[headerBytes], &serialReceiveBuffer[rxTail], length);
+    rxTail = 0;
   }
+
+  //Copy the remaining portion of the buffer
+  memcpy(&outgoingPacket[headerBytes + length], &serialReceiveBuffer[rxTail], packetSize - length);
+  rxTail += packetSize - length;
+  rxTail %= sizeof(serialReceiveBuffer);
+  endOfTxData += packetSize;
 }
 
 //Send a portion of the commandTXBuffer to outgoingPacket
 void readyOutgoingCommandPacket()
 {
+  uint16_t length;
   uint16_t bytesToSend = availableTXCommandBytes();
   if (bytesToSend > settings.frameSize) bytesToSend = settings.frameSize;
 
   //SF6 requires an implicit header which means there is no dataLength in the header
   if (settings.radioSpreadFactor == 6)
   {
-    if (bytesToSend > 255 - 3) bytesToSend = 255 - 3; //We are going to transmit 255 bytes no matter what
+    if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize; //We are going to transmit 255 bytes no matter what
   }
 
   packetSize = bytesToSend;
 
-  //Move this portion of the circular buffer into the outgoingPacket
-  for (uint8_t x = 0 ; x < packetSize ; x++)
+  //Determine the number of bytes to send
+  length = 0;
+  if ((commandTXTail + packetSize) > sizeof(commandTXBuffer))
   {
-    outgoingPacket[x] = commandTXBuffer[commandTXTail++];
-    commandTXTail %= sizeof(commandTXBuffer);
+    //Copy the first portion of the buffer
+    length = sizeof(commandTXBuffer) - commandTXTail;
+    memcpy(&outgoingPacket[headerBytes], &commandTXBuffer[commandTXTail], length);
+    commandTXTail = 0;
   }
+
+  //Copy the remaining portion of the buffer
+  memcpy(&outgoingPacket[headerBytes + length], &commandTXBuffer[commandTXTail], packetSize - length);
+  commandTXTail += packetSize - length;
+  commandTXTail %= sizeof(commandTXBuffer);
+  endOfTxData += packetSize;
 }

@@ -2,6 +2,7 @@ typedef enum
 {
   RADIO_RESET = 0,
 
+  // V1
   RADIO_NO_LINK_RECEIVING_STANDBY,
   RADIO_NO_LINK_TRANSMITTING,
   RADIO_NO_LINK_ACK_WAIT,
@@ -21,6 +22,27 @@ typedef enum
   RADIO_TRAINING_ACK_WAIT,
   RADIO_TRAINING_RECEIVED_PACKET,
 
+  // V2
+  // Point-To-Point: Bring up the link
+  RADIO_P2P_LINK_DOWN,
+  RADIO_P2P_WAIT_TX_PING_DONE,
+  RADIO_P2P_WAIT_ACK_1,
+  RADIO_P2P_WAIT_TX_ACK_1_DONE,
+  RADIO_P2P_WAIT_ACK_2,
+  RADIO_P2P_WAIT_TX_ACK_2_DONE,
+
+  // Point-to-Point: Link up, data exchange
+  RADIO_P2P_LINK_UP,
+  RADIO_P2P_LINK_UP_WAIT_ACK_DONE,
+  RADIO_P2P_LINK_UP_WAIT_TX_DONE,
+  RADIO_P2P_LINK_UP_WAIT_ACK,
+  RADIO_P2P_LINK_UP_HB_ACK_REXMT,
+
+  // Multi-Point: Datagrams
+  RADIO_MP_STANDBY,
+  RADIO_MP_WAIT_TX_DONE,
+  RADIO_MP_RECEIVE,
+
   RADIO_MAX_STATE,
 } RadioStates;
 RadioStates radioState = RADIO_NO_LINK_RECEIVING_STANDBY;
@@ -35,7 +57,28 @@ typedef struct _RADIO_STATE_ENTRY
 //Possible types of packets received
 typedef enum
 {
-  PACKET_BAD = 0,
+  //V2 packet types must start at zero
+  //V2: Link establishment handshake
+  DATAGRAM_PING = 0,
+  DATAGRAM_ACK_1,
+  DATAGRAM_ACK_2,
+
+  //V2: Point-to-Point data exchange
+  DATAGRAM_DATA,
+  DATAGRAM_SF6_DATA,
+  DATAGRAM_DATA_ACK,
+  DATAGRAM_HEARTBEAT,
+  DATAGRAM_REMOTE_COMMAND,
+  DATAGRAM_REMOTE_COMMAND_RESPONSE,
+
+  //V2: Multi-Point data exchange
+  DATAGRAM_DATAGRAM,
+
+  //Add new V2 datagram types before this line
+  MAX_DATAGRAM_TYPE,
+
+  //V1 packet types are below
+  PACKET_BAD,
   PACKET_NETID_MISMATCH,
   PACKET_ACK, //ack = 1
   PACKET_DUPLICATE,
@@ -52,6 +95,13 @@ typedef enum
   PACKET_TRAINING_DATA,
 } PacketType;
 
+const char * const v2DatagramType[] =
+{//  0       1        2        3        4           5           6
+  "PING", "ACK-1", "ACK-2", "DATA", "SF6-DATA", "DATA-ACK", "HEARTBEAT",
+  //  7          8                9
+  "RMT-CMD", "RMT_RESP", "DATAGRAM_DATAGRAM"
+};
+
 //Train button states
 typedef enum
 {
@@ -62,50 +112,84 @@ typedef enum
 TrainStates trainState = TRAIN_NO_PRESS;
 
 enum
-{                                             //#, Width - Computed with:
-                                              //        triggerWidth = 25
-                                              //        triggerUseWidthAsMultiplier = true
-                                              //        triggerEnable = 0xffffffff
-  TRIGGER_ACK_PROCESSED = 0,                  // 0,   25us
-  TRIGGER_DATA_SEND,                          // 1,   50us
-  TRIGGER_RTR_2BYTE,                          // 2,   75us
-  TRIGGER_RTR_255BYTE,                        // 3,  100us
+{ //#, Width - Computed with:
+  //        triggerWidth = 25
+  //        triggerUseWidthAsMultiplier = true
+  //        triggerEnable = 0xffffffff
 
-  TRIGGER_LINK_SEND_PING,                     // 4,  125us
-  TRIGGER_LINK_SENT_ACK_PACKET,               // 5,  150 us
-  TRIGGER_LINK_NOISE_TRIGGERED_HOP,           // 6,  175us
-  TRIGGER_LINK_NOISE_TRIGGERED_HOP_ACK_WAIT,  // 7,  200us
-  TRIGGER_LINK_NO_ACK_GIVEUP,                 // 8,  225us
-  TRIGGER_LINK_PACKET_RESEND,                 // 9,  250us
-  TRIGGER_LINK_DATA_PACKET,                   //10,  275us
-  TRIGGER_LINK_PACKET_RECEIVED,               //11,  300us
+  TRIGGER_CHANNEL_TIMER_ISR, //0
+  TRIGGER_COMPLETE,
+  TRIGGER_RADIO_RESET,
+  TRIGGER_HOP_TIMER_START,
+  TRIGGER_HOP_TIMER_STOP,
+  TRIGGER_HEARTBEAT,
+  TRIGGER_FREQ_CHANGE,
+  TRIGGER_SYNC_CHANNEL,
+  TRIGGER_LINK_HEARTBEAT_DO_NOTHING,
+  TRIGGER_LINK_SEND_ACK_FOR_DATA,
+  TRIGGER_LINK_SEND_ACK_FOR_DUP,
+  TRIGGER_LINK_RETRANSMIT,
+  TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT,
+  TRIGGER_LINK_WAIT_FOR_ACK,
+  TRIGGER_LINK_DATA_XMIT,
+  TRIGGER_LINK_RETRANSMIT_FAIL,
+  TRIGGER_HANDSHAKE_ACK1_TIMEOUT,
+  TRIGGER_HANDSHAKE_SEND_PING,
+  TRIGGER_HANDSHAKE_SEND_PING_COMPLETE,
+  TRIGGER_HANDSHAKE_SEND_ACK1_COMPLETE,
+  TRIGGER_SEND_ACK1,
+  TRIGGER_SEND_ACK2,
+  TRIGGER_HANDSHAKE_COMPLETE,
+  TRIGGER_LINK_ACK_SENT,
+  TRIGGER_LINK_ACK_RECEIVED,
+  TRIGGER_HANDSHAKE_ACK2_TIMEOUT,
+  TRIGGER_RECEIVE_IN_PROCESS_START,
+  TRIGGER_RECEIVE_IN_PROCESS_END,
+  TRIGGER_UNKNOWN_PACKET,
+  TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND,
+  TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND_RESPONSE,
+  
 
-  TRIGGER_NOLINK_SEND_PING,                   //12,  325us
-  TRIGGER_NOLINK_SEND_ACK_PACKET,             //13,  350us
-  TRIGGER_NOLINK_NOISE_TRIGGERED_HOP,         //14,  375us
-  TRIGGER_NOLINK_NO_ACK_GIVEUP,               //15,  400us
-  TRIGGER_NOLINK_IDENT_PACKET,                //16,  425us
+  TRIGGER_ACK_PROCESSED,
+  TRIGGER_DATA_SEND,
+  TRIGGER_RTR_2BYTE,
+  TRIGGER_RTR_255BYTE,
 
-  TRIGGER_BROADCAST_DATA_PACKET,              //17,  450us
-  TRIGGER_BROADCAST_PACKET_RECEIVED,          //18,  475us
+  TRIGGER_LINK_SEND_PING,
+  TRIGGER_LINK_SENT_ACK_PACKET,
+  TRIGGER_LINK_NOISE_TRIGGERED_HOP,
+  TRIGGER_LINK_NOISE_TRIGGERED_HOP_ACK_WAIT,
+  TRIGGER_LINK_NO_ACK_GIVEUP,
+  TRIGGER_LINK_PACKET_RESEND,
+  TRIGGER_LINK_DATA_PACKET,
+  TRIGGER_LINK_PACKET_RECEIVED,
 
-  TRIGGER_RX_IN_PROGRESS,                     //19,  500us
-  TRIGGER_LINK_BAD_PACKET,                    //20,  525us
-  TRIGGER_LINK_DUPLICATE_PACKET,              //21,  550us
-  TRIGGER_LINK_CONTROL_PACKET,                //22,  575us
+  TRIGGER_NOLINK_SEND_PING,
+  TRIGGER_NOLINK_SEND_ACK_PACKET,
+  TRIGGER_NOLINK_NOISE_TRIGGERED_HOP,
+  TRIGGER_NOLINK_NO_ACK_GIVEUP,
+  TRIGGER_NOLINK_IDENT_PACKET,
 
-  TRIGGER_TRAINING_BAD_PACKET,                //23,  600us
-  TRIGGER_TRAINING_CONTROL_PACKET,            //24,  625us
-  TRIGGER_TRAINING_DATA_PACKET,               //25,  650us
-  TRIGGER_TRAINING_NO_ACK,                    //26,  675us
+  TRIGGER_BROADCAST_DATA_PACKET,
+  TRIGGER_BROADCAST_PACKET_RECEIVED,
 
-  TRIGGER_COMMAND_CONTROL_PACKET,             //27,  700us
-  TRIGGER_COMMAND_CONTROL_PACKET_ACK,         //28,  725us
-  TRIGGER_COMMAND_DATA_PACKET_ACK,            //29,  750us
-  TRIGGER_COMMAND_PACKET_RECEIVED,            //30,  775us
-  TRIGGER_COMMAND_SENT_ACK_PACKET,            //31,  800us
-  TRIGGER_COMMAND_PACKET_RESEND,              //32,  825us
-  TRIGGER_PACKET_COMMAND_DATA,                //33,  850us
+  TRIGGER_RX_IN_PROGRESS,
+  TRIGGER_LINK_BAD_PACKET,
+  TRIGGER_LINK_DUPLICATE_PACKET,
+  TRIGGER_LINK_CONTROL_PACKET,
+
+  TRIGGER_TRAINING_BAD_PACKET,
+  TRIGGER_TRAINING_CONTROL_PACKET,
+  TRIGGER_TRAINING_DATA_PACKET,
+  TRIGGER_TRAINING_NO_ACK,
+
+  TRIGGER_COMMAND_CONTROL_PACKET,
+  TRIGGER_COMMAND_CONTROL_PACKET_ACK,
+  TRIGGER_COMMAND_DATA_PACKET_ACK,
+  TRIGGER_COMMAND_PACKET_RECEIVED,
+  TRIGGER_COMMAND_SENT_ACK_PACKET,
+  TRIGGER_COMMAND_PACKET_RESEND,
+  TRIGGER_PACKET_COMMAND_DATA,
 };
 
 //Control where to print command output
@@ -129,14 +213,17 @@ struct ControlTrailer
 struct ControlTrailer receiveTrailer;
 struct ControlTrailer responseTrailer;
 
+typedef struct _CONTROL_U8
+{
+  uint8_t ackNumber : 2;
+  PacketType datagramType: 4;
+  uint8_t filler : 2;
+} CONTROL_U8;
+
 //These are all the settings that can be set on Serial Terminal Radio. It's recorded to NVM.
 typedef struct struct_settings {
   uint16_t sizeOfSettings = 0; //sizeOfSettings **must** be the first entry and must be int
   uint16_t strIdentifier = LRS_IDENTIFIER; // strIdentifier **must** be the second entry
-
-  uint8_t escapeCharacter = '+';
-  uint8_t maxEscapeCharacters = 3; //Number of characters needed to enter command mode
-  uint8_t responseDelayDivisor = 4; //Add on to max response time after packet has been sent. Factor of 2. 8 is ok. 4 is good. A smaller number increases the delay.
 
   uint32_t serialSpeed = 57600; //Default to 57600bps to match RTK Surveyor default firmware
   uint32_t airSpeed = 4800; //Default to ~523 bytes per second to support RTCM. Overrides spread, bandwidth, and coding
@@ -185,6 +272,8 @@ typedef struct struct_settings {
   bool printTxErrors = false; //Print any transmit errors
   bool useV2 = false; //Use the V2 protocol
   bool printTimestamp = false; //Print a timestamp: days hours:minutes:seconds.milliseconds
+  bool debugDatagrams = false; //Print the datagrams
+  uint16_t txAckMillis = 100; //Number of milliseconds to delay for ACK
 } Settings;
 Settings settings;
 

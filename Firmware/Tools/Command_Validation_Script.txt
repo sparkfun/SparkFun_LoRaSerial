@@ -432,9 +432,24 @@ ats46=1
 ats46=2
 ats46=0
 
-# Invalid commands
+# debugDatagrams
 ats47=1
-ats47?
+ats47=2
+ats47=0
+
+# txAckMillis
+ats48=1
+ats48=2
+ats48=0
+
+# displayRealMillis
+ats49=1
+ats49=2
+ats49=0
+
+# Invalid commands
+ats50=1
+ats50?
 
 ats255=1
 ats255?

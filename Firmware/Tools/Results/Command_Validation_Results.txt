@@ -40,7 +40,7 @@ SparkFun LoRaSerial SAMD21 1W 915MHz
 ati3
 -157
 ati4
-227
+109
 ati5
 506
 ati6
@@ -48,7 +48,7 @@ ati6
 ati7
 0
 ati8
-75E1FA5B4A34555020312E340F2715FF
+B2A99BF24A34555020312E34162815FF
 ati9
 ERROR
 ati0
@@ -99,6 +99,9 @@ ATS43:DebugTransmit=0
 ATS44:PrintTxErrors=0
 ATS45:UseV2=0
 ATS46:PrintTimestamp=0
+ATS47:DebugDatagrams=0
+ATS48:TxAckMillis=100
+ATS49:DisplayRealMillis=0
 ats28=0
 OK
 # SerialSpeed
@@ -872,11 +875,39 @@ ERROR
 ats46=0
 PrintTimestamp=0
 OK
-# Invalid commands
+# debugDatagrams
 ERROR
 ats47=1
+DebugDatagrams=1
+OK
+ats47=2
 ERROR
-ats47?
+ats47=0
+DebugDatagrams=0
+OK
+# txAckMillis
+ERROR
+ats48=1
+ERROR
+ats48=2
+ERROR
+ats48=0
+ERROR
+# displayRealMillis
+ERROR
+ats49=1
+DisplayRealMillis=1
+OK
+ats49=2
+ERROR
+ats49=0
+DisplayRealMillis=0
+OK
+# Invalid commands
+ERROR
+ats50=1
+ERROR
+ats50?
 ERROR
 ats255=1
 ERROR
@@ -889,6 +920,7 @@ ATS13:Bandwidth=500.00
 ATS15:CodingRate=8
 ATS6:DataScrambling=0
 ATS20:Debug=0
+ATS47:DebugDatagrams=0
 ATS30:DebugRadio=0
 ATS42:DebugReceive=0
 ATS31:DebugStates=0
@@ -896,6 +928,7 @@ ATS32:DebugTraining=0
 ATS43:DebugTransmit=0
 ATS33:DebugTrigger=0
 ATS25:DisplayPacketQuality=0
+ATS49:DisplayRealMillis=0
 ATS21:Echo=0
 ATS4:EncryptData=1
 ATS5:EncryptionKey=37782141A665734E4475672AE6308308
@@ -926,6 +959,7 @@ ATS40:TriggerEnable: 31-0=-1
 ATS41:TriggerEnable: 63-32=-1
 ATS38:TriggerWidth=25
 ATS39:TriggerWidthIsMultiplier=1
+ATS48:TxAckMillis=100
 ATS7:TxPower=30
 ATS34:UsbSerialWait=0
 ATS45:UseV2=0

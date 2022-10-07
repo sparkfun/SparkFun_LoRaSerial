@@ -6,8 +6,6 @@
 //Move any data to incomingPacket buffer
 PacketType identifyPacketType()
 {
-  uint8_t incomingBuffer[MAX_PACKET_SIZE];
-
   //Receive the data packet
   radio.readData(incomingBuffer, MAX_PACKET_SIZE);
   uint8_t receivedBytes = radio.getPacketLength();
@@ -57,7 +55,7 @@ PacketType identifyPacketType()
       systemPrintln(") bytes");
       petWDT();
       if (settings.printRfData && receivedBytes)
-          dumpBuffer(incomingBuffer, receivedBytes);
+        dumpBuffer(incomingBuffer, receivedBytes);
     }
     return (PACKET_BAD);
   }
@@ -148,7 +146,7 @@ PacketType identifyPacketType()
   }
 
   if ((receivedNetID != settings.netID)
-    && ((settings.pointToPoint == true) || (settings.verifyRxNetID == true)))
+      && ((settings.pointToPoint == true) || (settings.verifyRxNetID == true)))
   {
     if (settings.debugReceive)
     {
@@ -166,8 +164,8 @@ PacketType identifyPacketType()
   //----------
 
   if ((receiveTrailer.ack == 1)
-    && (receiveTrailer.remoteCommand == 0)
-    && (receiveTrailer.remoteCommandResponse == 0))
+      && (receiveTrailer.remoteCommand == 0)
+      && (receiveTrailer.remoteCommandResponse == 0))
   {
     if (settings.debugReceive)
     {
@@ -398,6 +396,8 @@ void configureRadio()
   if (radio.setFrequency(channels[0]) == RADIOLIB_ERR_INVALID_FREQUENCY)
     success = false;
 
+  channelNumber = 0;
+
   //The SX1276 and RadioLib accepts a value of 2 to 17, with 20 enabling the power amplifier
   //Measuring actual power output the radio will output 14dBm (25mW) to 27.9dBm (617mW) in constant transmission
   //So we use a lookup to convert between the user's chosen power and the radio setting
@@ -423,7 +423,7 @@ void configureRadio()
   //SF6 requires an implicit header. We will transmit 255 bytes for most packets and 2 bytes for ACK packets.
   if (settings.radioSpreadFactor == 6)
   {
-    if (radio.implicitHeader(255) != RADIOLIB_ERR_NONE)
+    if (radio.implicitHeader(MAX_PACKET_SIZE) != RADIOLIB_ERR_NONE)
       success = false;
   }
   else
@@ -435,7 +435,7 @@ void configureRadio()
   radio.setDio0Action(dio0ISR); //Called when transmission is finished
   radio.setDio1Action(dio1ISR); //Called after a transmission has started, so we can move to next freq
 
-  if (pin_rxen != 255)
+  if (pin_rxen != PIN_UNDEFINED)
     radio.setRfSwitchPins(pin_rxen, pin_txen);
 
   // HoppingPeriod = Tsym * FreqHoppingPeriod
@@ -448,8 +448,11 @@ void configureRadio()
     success = false;
 
   controlPacketAirTime = calcAirTime(2); //Used for response timeout during RADIO_LINKED_ACK_WAIT
-  uint16_t responseDelay = controlPacketAirTime / settings.responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
+  uint16_t responseDelay = controlPacketAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
   controlPacketAirTime += responseDelay;
+
+  //Precalculate the ACK packet time
+  ackAirTime = calcAirTime(4); //We assume all ACKs have max of 4 bytes
 
   if ((settings.debug == true) || (settings.debugRadio == true))
   {
@@ -478,7 +481,8 @@ void configureRadio()
     reportERROR();
     systemPrintln("Radio init failed. Check settings.");
   }
-  LRS_DEBUG_PRINTLN("Radio configured");
+  if ((settings.debug == true) || (settings.debugRadio == true))
+    systemPrintln("Radio configured");
 }
 
 //Set radio frequency
@@ -486,11 +490,12 @@ void setRadioFrequency(bool rxAdjust)
 {
   float frequency;
 
-  frequency = channels[radio.getFHSSChannel()];
+  frequency = channels[channelNumber];
   if (rxAdjust)
     frequency -= frequencyCorrection;
   if (settings.printFrequency)
   {
+    systemPrintTimestamp();
     systemPrint(frequency);
     systemPrintln(" MHz");
   }
@@ -499,10 +504,6 @@ void setRadioFrequency(bool rxAdjust)
 
 void returnToReceiving()
 {
-  setRadioFrequency(settings.autoTuneFrequency);
-
-  timeToHop = false;
-
   int state;
   if (settings.radioSpreadFactor > 6)
   {
@@ -519,15 +520,18 @@ void returnToReceiving()
     }
     else
     {
-      radio.implicitHeader(255);
-      state = radio.startReceive(255); //Expect a full data packet
+      radio.implicitHeader(MAX_PACKET_SIZE);
+      state = radio.startReceive(MAX_PACKET_SIZE); //Expect a full data packet
       triggerEvent(TRIGGER_RTR_255BYTE);
     }
   }
 
   if (state != RADIOLIB_ERR_NONE) {
-    LRS_DEBUG_PRINT("Receive failed: ");
-    LRS_DEBUG_PRINTLN(state);
+  if ((settings.debug == true) || (settings.debugRadio == true))
+    {
+      systemPrint("Receive failed: ");
+      systemPrintln(state);
+    }
   }
 }
 
@@ -543,7 +547,8 @@ void sendPingPacket()
       |<-- packetSize -->|
   */
 
-  LRS_DEBUG_PRINT("TX: Ping ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Ping ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -560,8 +565,8 @@ void sendPingPacket()
   {
     //Manually store actual data length 3 bytes from the end (before NetID)
     //Manual packet size is whatever has been processed + 1 for the manual packetSize byte
-    outgoingPacket[255 - 3] = packetSize + 1;
-    packetSize = 255; //We're now going to transmit 255 bytes
+    outgoingPacket[maxDatagramSize] = packetSize + 1;
+    packetSize = MAX_PACKET_SIZE; //We're now going to transmit 255 bytes
   }
 
   expectingAck = true; //We expect destination to ack
@@ -580,7 +585,8 @@ void sendDataPacket()
       |<--------- packetSize --------->|
   */
 
-  LRS_DEBUG_PRINT("TX: Data ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Data ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -595,8 +601,8 @@ void sendDataPacket()
   {
     //Manually store actual data length 3 bytes from the end (before NetID)
     //Manual packet size is whatever has been processed + 1 for the manual packetSize byte
-    outgoingPacket[255 - 3] = packetSize + 1;
-    packetSize = 255; //We're now going to transmit 255 bytes
+    outgoingPacket[maxDatagramSize] = packetSize + 1;
+    packetSize = MAX_PACKET_SIZE; //We're now going to transmit 255 bytes
   }
 
   expectingAck = true; //We expect destination to ack
@@ -615,7 +621,8 @@ void sendResendPacket()
       |<--------- packetSize --------->|
   */
 
-  LRS_DEBUG_PRINT("TX: Resend ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Resend ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 1; //This is a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -640,7 +647,8 @@ void sendAckPacket()
       |<-- packetSize -->|
   */
 
-  LRS_DEBUG_PRINT("TX: Ack ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Ack ");
   responseTrailer.ack = 1; //This is an ACK to a previous reception
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -665,7 +673,8 @@ void sendTrainingPingPacket()
       |<-- packetSize -->|
   */
 
-  LRS_DEBUG_PRINT("TX: Training Ping ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Training Ping ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 1; //This is a training packet
@@ -693,7 +702,8 @@ void sendTrainingDataPacket()
       |<----------------- packetSize ----------------->|
   */
 
-  LRS_DEBUG_PRINT("TX: Training Data ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Training Data ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 1; //This is training packet
@@ -727,7 +737,8 @@ void sendCommandAckPacket()
       |<-- packetSize -->|
   */
 
-  LRS_DEBUG_PRINT("TX: Command Ack ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Command Ack ");
   responseTrailer.ack = 1; //This is an ACK to a previous reception
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -752,7 +763,8 @@ void sendCommandDataPacket()
       |<------- packetSize ------->|
   */
 
-  LRS_DEBUG_PRINT("TX: Command Data ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Command Data ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission.
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not training packet
@@ -767,8 +779,8 @@ void sendCommandDataPacket()
   {
     //Manually store actual data length 3 bytes from the end (before NetID)
     //Manual packet size is whatever has been processed + 1 for the manual packetSize byte
-    outgoingPacket[255 - 3] = packetSize + 1;
-    packetSize = 255; //We're now going to transmit 255 bytes
+    outgoingPacket[maxDatagramSize] = packetSize + 1;
+    packetSize = MAX_PACKET_SIZE; //We're now going to transmit 255 bytes
   }
 
   expectingAck = true; //We expect destination to ack
@@ -787,7 +799,8 @@ void sendCommandResponseAckPacket()
       |<-- packetSize -->|
   */
 
-  LRS_DEBUG_PRINT("TX: Command Response Ack ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Command Response Ack ");
   responseTrailer.ack = 1; //This is an ACK to a previous reception
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not a training packet
@@ -812,7 +825,8 @@ void sendCommandResponseDataPacket()
       |<-------- packetSize ------->|
   */
 
-  LRS_DEBUG_PRINT("TX: Command Response Data ");
+  if (settings.debugDatagrams)
+    systemPrintln("TX: Command Response Data ");
   responseTrailer.ack = 0; //This is not an ACK to a previous transmission.
   responseTrailer.resend = 0; //This is not a resend
   responseTrailer.train = 0; //This is not training packet
@@ -827,8 +841,8 @@ void sendCommandResponseDataPacket()
   {
     //Manually store actual data length 3 bytes from the end (before NetID)
     //Manual packet size is whatever has been processed + 1 for the manual packetSize byte
-    outgoingPacket[255 - 3] = packetSize + 1;
-    packetSize = 255; //We're now going to transmit 255 bytes
+    outgoingPacket[maxDatagramSize] = packetSize + 1;
+    packetSize = MAX_PACKET_SIZE; //We're now going to transmit 255 bytes
   }
 
   expectingAck = true; //We expect destination to ack
@@ -912,7 +926,7 @@ void sendPacket()
   if (settings.debugTransmit)
   {
     systemPrint("TX: Transmitting @ ");
-    systemPrint(channels[radio.getFHSSChannel()], 3);
+    systemPrint(channels[channelNumber], 3);
     systemPrintln(" MHz");
   }
 
@@ -922,7 +936,7 @@ void sendPacket()
     if (timeToHop) hopChannel();
 
     packetAirTime = calcAirTime(packetSize); //Calculate packet air size while we're transmitting in the background
-    uint16_t responseDelay = packetAirTime / settings.responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
+    uint16_t responseDelay = packetAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
     packetAirTime += responseDelay;
 
     packetSent++;
@@ -955,9 +969,10 @@ void dio0ISR(void)
 
 //ISR when DIO1 goes low
 //Called when FhssChangeChannel interrupt occurs (at regular HoppingPeriods)
+//We do not use SX based channel hopping, and instead use a synchronized hardware timer
 void dio1ISR(void)
 {
-  timeToHop = true;
+  clearDIO1 = true;
 }
 
 //Given spread factor, bandwidth, coding rate and number of bytes, return total Air Time in ms for packet
@@ -1091,19 +1106,34 @@ bool linkLost()
 //at the beginning and during of a transmission or reception
 void hopChannel()
 {
-  radio.clearFHSSInt();
   timeToHop = false;
+  triggerEvent(TRIGGER_FREQ_CHANGE);
 
+  channelNumber++;
+  channelNumber %= settings.numberOfChannels;
+
+  //Select the new frequency
+  float frequency;
   if (settings.autoTuneFrequency == true)
   {
     if (radioState == RADIO_LINKED_RECEIVING_STANDBY || radioState == RADIO_LINKED_ACK_WAIT
         || radioState == RADIO_BROADCASTING_RECEIVING_STANDBY) //Only adjust frequency on RX. Not TX.
-      radio.setFrequency(channels[radio.getFHSSChannel()] - frequencyCorrection);
+      frequency = channels[channelNumber] - frequencyCorrection;
     else
-      radio.setFrequency(channels[radio.getFHSSChannel()]);
+      frequency = channels[channelNumber];
   }
   else
-    radio.setFrequency(channels[radio.getFHSSChannel()]);
+    frequency = channels[channelNumber];
+
+  radio.setFrequency(frequency);
+
+  //Print the frequency if requested
+  if (settings.printFrequency)
+  {
+    systemPrintTimestamp();
+    systemPrint(frequency, 3);
+    systemPrintln(" MHz");
+  }
 }
 
 //Returns true if the radio indicates we have an ongoing reception
@@ -1112,35 +1142,27 @@ void hopChannel()
 //Bit 3: Header Info Valid toggles high when a valid Header (with correct CRC) is detected
 bool receiveInProcess()
 {
+  //triggerEvent(TRIGGER_RECEIVE_IN_PROCESS_START);
+  
   uint8_t radioStatus = radio.getModemStatus();
-  if ((radioStatus & 0b1) == 1) return (true); //If bit 0 is set, forget the other bits, there is a receive in progress
-  return (false); //No receive in process
-
-  //If bit 0 is cleared, there is likely no receive in progress, but we need to confirm it
-  //The radio will clear this bit before the radio triggers the receiveComplete ISR so we often have a race condition.
-
-  //If we are using FHSS then check channel freq. This is reset to 0 upon receive completion.
-  //If radio has jumped back to channel 0 then we can confirm a transaction is complete.
-  if (settings.frequencyHop == true)
+  if (radioStatus & 0b1011) return (true); //If any bits are set there is a receive in progress
+  return false;
+  
+  //A remote unit may have started transmitting but this unit has not received enough preamble to detect it.
+  //Wait X * symbol time for clear air.
+  //This was found by sending two nearly simultaneous packets and using a logic analyzer to establish the point at which
+  //the 'Signal Detected' bit goes high.
+  uint8_t clearAirDelay = calcSymbolTime() * 18;
+  while (clearAirDelay-- > 0)
   {
-    if (radio.getFHSSChannel() == 0)
-      return (false); //Receive not in process
-
-    if (transactionComplete == false)
-      return (true); //Receive still in process
-  }
-  else
-  {
-    //If we're not using FHSS, use small delay.
-    delay(5); //Small wait before checking RX complete ISR again
-    if (transactionComplete == false)
-      return (true); //Receive still in process
+    radioStatus = radio.getModemStatus();
+    if (radioStatus & 0b1011) return (true); //If any bits are set there is a receive in progress
+    if (timeToHop) hopChannel(); //If the channelTimer has expired, move to next frequency
+    delay(1);
   }
 
+  //triggerEvent(TRIGGER_RECEIVE_IN_PROCESS_END);
   return (false); //No receive in process
-
-  //if ((radioStatus & 0b1) == 0) return (false); //If bit 0 is cleared, there is no receive in progress
-  //return (true); //If bit 0 is set, forget the other bits, there is a receive in progress
 }
 
 //Convert the user's requested dBm to what the radio should be set to, to hit that power level
