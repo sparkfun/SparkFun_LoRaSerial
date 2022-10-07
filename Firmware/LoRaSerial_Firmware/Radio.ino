@@ -451,6 +451,9 @@ void configureRadio()
   uint16_t responseDelay = controlPacketAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
   controlPacketAirTime += responseDelay;
 
+  //Precalculate the ACK packet time
+  ackAirTime = calcAirTime(4); //We assume all ACKs have max of 4 bytes
+
   if ((settings.debug == true) || (settings.debugRadio == true))
   {
     systemPrint("Freq: ");
@@ -1139,35 +1142,27 @@ void hopChannel()
 //Bit 3: Header Info Valid toggles high when a valid Header (with correct CRC) is detected
 bool receiveInProcess()
 {
+  //triggerEvent(TRIGGER_RECEIVE_IN_PROCESS_START);
+  
   uint8_t radioStatus = radio.getModemStatus();
-  if ((radioStatus & 0b1) == 1) return (true); //If bit 0 is set, forget the other bits, there is a receive in progress
-  return (false); //No receive in process
-
-  //If bit 0 is cleared, there is likely no receive in progress, but we need to confirm it
-  //The radio will clear this bit before the radio triggers the receiveComplete ISR so we often have a race condition.
-
-  //If we are using FHSS then check channel freq. This is reset to 0 upon receive completion.
-  //If radio has jumped back to channel 0 then we can confirm a transaction is complete.
-  if (settings.frequencyHop == true)
+  if (radioStatus & 0b1011) return (true); //If any bits are set there is a receive in progress
+  return false;
+  
+  //A remote unit may have started transmitting but this unit has not received enough preamble to detect it.
+  //Wait X * symbol time for clear air.
+  //This was found by sending two nearly simultaneous packets and using a logic analyzer to establish the point at which
+  //the 'Signal Detected' bit goes high.
+  uint8_t clearAirDelay = calcSymbolTime() * 18;
+  while (clearAirDelay-- > 0)
   {
-    if (channelNumber == 0)
-      return (false); //Receive not in process
-
-    if (transactionComplete == false)
-      return (true); //Receive still in process
-  }
-  else
-  {
-    //If we're not using FHSS, use small delay.
-    delay(5); //Small wait before checking RX complete ISR again
-    if (transactionComplete == false)
-      return (true); //Receive still in process
+    radioStatus = radio.getModemStatus();
+    if (radioStatus & 0b1011) return (true); //If any bits are set there is a receive in progress
+    if (timeToHop) hopChannel(); //If the channelTimer has expired, move to next frequency
+    delay(1);
   }
 
+  //triggerEvent(TRIGGER_RECEIVE_IN_PROCESS_END);
   return (false); //No receive in process
-
-  //if ((radioStatus & 0b1) == 0) return (false); //If bit 0 is cleared, there is no receive in progress
-  //return (true); //If bit 0 is set, forget the other bits, there is a receive in progress
 }
 
 //Convert the user's requested dBm to what the radio should be set to, to hit that power level

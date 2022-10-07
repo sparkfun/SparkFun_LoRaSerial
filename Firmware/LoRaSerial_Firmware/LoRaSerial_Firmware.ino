@@ -206,7 +206,11 @@ uint8_t txDatagramSize;
 unsigned long datagramTimer;
 uint8_t expectedTxAck;
 uint8_t txAckNumber;
-uint16_t txDelay;
+uint16_t ackAirTime;
+uint16_t datagramAirTime;
+uint16_t overheadTime = 10; //ms added to ack and datagram times before ACK timeout occurs
+uint16_t pingRandomTime;
+uint16_t heartbeatRandomTime;
 
 //Receive control
 uint8_t incomingBuffer[MAX_PACKET_SIZE];
@@ -217,10 +221,6 @@ uint8_t * rxData;
 uint8_t rxDataBytes;
 unsigned long heartbeatTimer;
 unsigned long linkDownTimer;
-
-//Clock synchronization
-unsigned long rcvTimeMillis;
-unsigned long xmitTimeMillis;
 
 //Transmit control
 const int datagramsExpectingAcks = 0
@@ -281,6 +281,17 @@ void setup()
   systemPrintTimestamp();
   systemPrintln("LRS Setup Complete");
 
+  //Testing
+  settings.triggerEnable = 0xFFFFFFFF; //Enable all
+  settings.debugTrigger = true;
+  settings.debug = true;
+  //settings.printFrequency = true;
+  //settings.debugTransmit = true;
+  //settings.debugReceive = true;
+  settings.triggerWidth = 25;
+  settings.useV2 = true;
+  //settings.printTimestamp = true;
+  
   triggerEvent(TRIGGER_RADIO_RESET);
 }
 

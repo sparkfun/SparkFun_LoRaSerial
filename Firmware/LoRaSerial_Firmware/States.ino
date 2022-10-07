@@ -25,7 +25,7 @@ void updateRadioState()
 
       //Start the TX timer: time to delay before transmitting the PING
       heartbeatTimer = millis();
-      txDelay = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
+      pingRandomTime = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
 
       //Set all of the ACK numbers to zero
       *(uint8_t *)(&txControl) = 0;
@@ -167,7 +167,7 @@ void updateRadioState()
       }
 
       //Is it time to send the PING to the remote system
-      if ((millis() - heartbeatTimer) >= (settings.txAckMillis + txDelay))
+      if ((millis() - heartbeatTimer) >= pingRandomTime)
       {
         //Transmit the PING
         triggerEvent(TRIGGER_HANDSHAKE_SEND_PING);
@@ -231,7 +231,7 @@ void updateRadioState()
       }
       else
       {
-        if ((millis() - datagramTimer) >= txDelay)
+        if ((millis() - datagramTimer) >= (datagramAirTime + ackAirTime + overheadTime))
         {
           if (settings.debugDatagrams)
           {
@@ -243,7 +243,7 @@ void updateRadioState()
           //Start the TX timer: time to delay before transmitting the PING
           triggerEvent(TRIGGER_HANDSHAKE_ACK1_TIMEOUT);
           heartbeatTimer = millis();
-          txDelay = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
+          pingRandomTime = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
           changeState(RADIO_P2P_LINK_DOWN);
         }
       }
@@ -275,7 +275,7 @@ void updateRadioState()
       }
       else
       {
-        if ((millis() - datagramTimer) >= txDelay)
+        if ((millis() - datagramTimer) >= (datagramAirTime +  ackAirTime + overheadTime))
         {
           if (settings.debugDatagrams)
           {
@@ -286,7 +286,7 @@ void updateRadioState()
           //Start the TX timer: time to delay before transmitting the PING
           triggerEvent(TRIGGER_HANDSHAKE_ACK2_TIMEOUT);
           heartbeatTimer = millis();
-          txDelay = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
+          pingRandomTime = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
           changeState(RADIO_P2P_LINK_DOWN);
         }
       }
@@ -364,6 +364,7 @@ void updateRadioState()
         switch (packetType)
         {
           default:
+            triggerEvent(TRIGGER_UNKNOWN_PACKET);
             returnToReceiving();
             changeState(RADIO_P2P_LINK_UP);
             break;
@@ -389,10 +390,11 @@ void updateRadioState()
               systemPrintln();
             }
 
-            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DUP);
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+
+            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DUP);
             xmitDatagramP2PAck(); //Transmit ACK
             changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
             break;
@@ -477,6 +479,7 @@ void updateRadioState()
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND);
             xmitDatagramP2PAck(); //Transmit ACK
             changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
             break;
@@ -489,17 +492,19 @@ void updateRadioState()
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+
+            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND_RESPONSE);
             xmitDatagramP2PAck(); //Transmit ACK
             changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
             break;
         }
       }
 
-
       //If the radio is available, send any data in the serial buffer over the radio
       else if (receiveInProcess() == false)
       {
-        heartbeatTimeout = ((millis() - heartbeatTimer) > settings.heartbeatTimeout);
+        heartbeatTimeout = ((millis() - heartbeatTimer) > heartbeatRandomTime);
+
         //Check for time to send serial data
         if (availableRXBytes() && (processWaitingSerial(heartbeatTimeout) == true))
         {
@@ -526,7 +531,9 @@ void updateRadioState()
         {
           triggerEvent(TRIGGER_HEARTBEAT);
           xmitDatagramP2PHeartbeat();
+
           heartbeatTimer = millis();
+          heartbeatRandomTime = random(settings.heartbeatTimeout * 8 / 10, settings.heartbeatTimeout); //80-100%
 
           //Wait for heartbeat to transmit
           changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
@@ -581,6 +588,7 @@ void updateRadioState()
         switch (packetType)
         {
           default:
+            triggerEvent(TRIGGER_UNKNOWN_PACKET);
             returnToReceiving();
             break;
 
@@ -590,8 +598,7 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DATA_ACK:
-            //Synchronize channel timer
-            syncChannelTimer(3); //TODO remove hardcoded size of datagram
+            syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
 
             //Display the signal strength
             if (settings.displayPacketQuality == true)
@@ -615,7 +622,7 @@ void updateRadioState()
             break;
 
           case DATAGRAM_HEARTBEAT:
-            //Received heartbeat while waiting for ack. Don't send ack.
+            //Received heartbeat while waiting for ack.
 
             //Display the signal strength
             if (settings.displayPacketQuality == true)
@@ -630,7 +637,6 @@ void updateRadioState()
               systemPrintln();
             }
 
-            triggerEvent(TRIGGER_LINK_HEARTBEAT_DO_NOTHING);
             packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
@@ -642,15 +648,26 @@ void updateRadioState()
             petWDT();
             memcpy(rexmtBuffer, outgoingPacket, MAX_PACKET_SIZE);
             rexmtControl = txControl;
+
+            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
             xmitDatagramP2PAck(); //Transmit ACK
             changeState(RADIO_P2P_LINK_UP_HB_ACK_REXMT);
+
             break;
         }
       }
 
       //Check for ACK timeout
-      else if ((millis() - datagramTimer) >= txDelay)
+      else if ((millis() - datagramTimer) >= (datagramAirTime + ackAirTime + overheadTime))
+        //Set at end of transmit, measures ACK timeout
       {
+        //        systemPrint("millis: ");
+        //        systemPrintln(millis());
+        //        systemPrint("datagramTimer: ");
+        //        systemPrintln(datagramTimer);
+        //        systemPrint("ackAirTime: ");
+        //        systemPrintln(ackAirTime);
+
         if (settings.debugDatagrams)
         {
           systemPrintTimestamp();
@@ -658,7 +675,7 @@ void updateRadioState()
         }
 
         //Retransmit the packet
-        if (packetSent++ < settings.maxResends)
+        if (packetSent < settings.maxResends)
         {
           triggerEvent(TRIGGER_LINK_RETRANSMIT);
           if (settings.debugDatagrams)
@@ -687,8 +704,12 @@ void updateRadioState()
                 break;
             }
           }
+          if (receiveInProcess() == false)
+          {
           retransmitDatagram();
+          packetSent++;
           changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+          }
         }
         else
         {
@@ -752,7 +773,7 @@ void updateRadioState()
           if (settings.debugDatagrams)
             systemPrintln("---------- Link DOWN ----------");
           heartbeatTimer = millis();
-          txDelay = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
+          pingRandomTime = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2);
           changeState(RADIO_P2P_LINK_DOWN);
         }
       }

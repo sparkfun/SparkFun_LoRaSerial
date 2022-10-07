@@ -261,9 +261,6 @@ PacketType rcvDatagram()
   uint8_t receivedNetID;
   CONTROL_U8 rxControl;
 
-  //Save the receive time
-  rcvTimeMillis = millis();
-
   //Get the received datagram
   radio.readData(incomingBuffer, MAX_PACKET_SIZE);
   rxDataBytes = radio.getPacketLength();
@@ -703,11 +700,8 @@ void transmitDatagram()
   //Reset the buffer data pointer for the next transmit operation
   endOfTxData = &outgoingPacket[headerBytes];
 
-  //Compute the delay for the ACK datagram
-  if (datagramsExpectingAcks & (1 << txControl.datagramType))
-    txDelay = settings.txAckMillis;
-  else
-    txDelay = random(0, 1000);
+  //Compute the time needed for this packet. Part of ACK timeout.
+  datagramAirTime = calcAirTime(txDatagramSize);
 
   //Transmit this datagram
   retransmitDatagram();
@@ -763,7 +757,6 @@ void retransmitDatagram()
   int state = radio.startTransmit(outgoingPacket, txDatagramSize);
   if (state == RADIOLIB_ERR_NONE)
   {
-    xmitTimeMillis = millis();
     packetAirTime = calcAirTime(txDatagramSize); //Calculate packet air size while we're transmitting in the background
     uint16_t responseDelay = packetAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
     if (settings.debugTransmit)
@@ -803,20 +796,18 @@ void stopChannelTimer()
   triggerEvent(TRIGGER_HOP_TIMER_STOP);
 }
 
-//Given the remote unit's amount of channelTimer that has elapsed, and size of the ack received
-//Adjust our own channelTimer interrupt to be synchronized with the remote unit
-void syncChannelTimer(uint8_t sizeOfDatagram)
+//Given the remote unit's amount of channelTimer that has elapsed,
+//adjust our own channelTimer interrupt to be synchronized with the remote unit
+void syncChannelTimer()
 {
   triggerEvent(TRIGGER_SYNC_CHANNEL);
 
-  uint16_t datagramAirTime = calcAirTime(sizeOfDatagram); //Calculate how much time it took for the datagram to be transmitted
-
   uint16_t channelTimerElapsed;
   memcpy(&channelTimerElapsed, rxData, sizeof(channelTimerElapsed));
-  channelTimerElapsed += datagramAirTime;
+  channelTimerElapsed += ackAirTime;
   channelTimerElapsed += SYNC_PROCESSING_OVERHEAD;
 
-  if(channelTimerElapsed > settings.maxDwellTime) channelTimerElapsed -= settings.maxDwellTime;
+  if (channelTimerElapsed > settings.maxDwellTime) channelTimerElapsed -= settings.maxDwellTime;
 
   partialTimer = true;
   channelTimer.disableTimer();
