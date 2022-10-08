@@ -1,5 +1,8 @@
 void updateRadioState()
 {
+  unsigned long clockOffset;
+  unsigned long currentMillis;
+  unsigned long deltaMillis;
   uint8_t * header = outgoingPacket;
   bool heartbeatTimeout;
   uint16_t length;
@@ -186,6 +189,16 @@ void updateRadioState()
           returnToReceiving();
         else
         {
+          //Received PING
+          //Compute the common clock
+          currentMillis = millis();
+          memcpy(&clockOffset, rxData, sizeof(currentMillis));
+          roundTripMillis = rcvTimeMillis - xmitTimeMillis;
+          clockOffset += currentMillis + roundTripMillis;
+          clockOffset >>= 1;
+          clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
+          timestampOffset = clockOffset;
+
           //Acknowledge the PING
           triggerEvent(TRIGGER_SEND_ACK1);
           xmitDatagramP2PAck1();
@@ -214,6 +227,16 @@ void updateRadioState()
         PacketType packetType = rcvDatagram();
         if (packetType == DATAGRAM_PING)
         {
+          //Received PING
+          //Compute the common clock
+          currentMillis = millis();
+          memcpy(&clockOffset, rxData, sizeof(currentMillis));
+          roundTripMillis = rcvTimeMillis - xmitTimeMillis;
+          clockOffset += currentMillis + roundTripMillis;
+          clockOffset >>= 1;
+          clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
+          timestampOffset = clockOffset;
+
           //Acknowledge the PING
           triggerEvent(TRIGGER_SEND_ACK1);
           xmitDatagramP2PAck1();
@@ -223,6 +246,16 @@ void updateRadioState()
           returnToReceiving();
         else
         {
+          //Received ACK 1
+          //Compute the common clock
+          currentMillis = millis();
+          memcpy(&clockOffset, rxData, sizeof(currentMillis));
+          roundTripMillis = rcvTimeMillis - xmitTimeMillis;
+          clockOffset += currentMillis + roundTripMillis;
+          clockOffset >>= 1;
+          clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
+          timestampOffset = clockOffset;
+
           //Acknowledge the ACK1
           triggerEvent(TRIGGER_SEND_ACK2);
           xmitDatagramP2PAck2();
@@ -270,8 +303,20 @@ void updateRadioState()
         if (packetType != DATAGRAM_ACK_2)
           returnToReceiving();
         else
+        {
+          //Received ACK 2
+          //Compute the common clock
+          currentMillis = millis();
+          memcpy(&clockOffset, rxData, sizeof(currentMillis));
+          roundTripMillis = rcvTimeMillis - xmitTimeMillis;
+          clockOffset += currentMillis + roundTripMillis;
+          clockOffset >>= 1;
+          clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
+          timestampOffset = clockOffset;
+
           //Bring up the link
           v2EnterLinkUp();
+        }
       }
       else
       {
@@ -344,6 +389,26 @@ void updateRadioState()
         datagramTimer:  Set at end of transmit, measures ACK timeout
         heartbeatTimer: Set upon entry to P2P_LINK_UP, reset upon HEARTBEAT transmit,
                         measures time to send next HEARTBEAT
+
+      Timestamp offset synchronization:
+
+                      System A       System B
+
+                          PING ----> Update timestampOffset
+
+        Update timestampOffset <---- ACK 1
+
+                         ACK 2 ----> Update timestampOffset
+
+                   HEARTBEAT 0 ----> Update timestampOffset
+
+        Update timestampOffset <---- HEARTBEAT 0
+
+                   HEARTBEAT 1 --X
+
+        Update timestampOffset <---- HEARTBEAT 1
+
+                   HEARTBEAT 1 ----> Update timestampOffset
     */
 
     case RADIO_P2P_LINK_UP:
@@ -409,6 +474,13 @@ void updateRadioState()
 
           case DATAGRAM_HEARTBEAT:
             //Received heartbeat while link was idle. Send ack to sync clocks.
+            //Adjust the timestamp offset
+            currentMillis = millis();
+            memcpy(&clockOffset, rxData, sizeof(currentMillis));
+            clockOffset += currentMillis + roundTripMillis;
+            clockOffset >>= 1;
+            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
+            timestampOffset = clockOffset;
 
             //Display the signal strength
             if (settings.displayPacketQuality == true)
@@ -647,6 +719,13 @@ void updateRadioState()
 
           case DATAGRAM_HEARTBEAT:
             //Received heartbeat while waiting for ack.
+            //Adjust the timestamp offset
+            currentMillis = millis();
+            memcpy(&clockOffset, rxData, sizeof(currentMillis));
+            clockOffset += currentMillis + roundTripMillis;
+            clockOffset >>= 1;
+            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
+            timestampOffset = clockOffset;
 
             //Display the signal strength
             if (settings.displayPacketQuality == true)
