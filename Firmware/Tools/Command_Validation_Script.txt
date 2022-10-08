@@ -442,7 +442,7 @@ ats48=1
 ats48=2
 ats48=0
 
-# displayRealMillis
+# enableCRC16
 ats49=1
 ats49=2
 ats49=0

@@ -49,7 +49,7 @@ void updateRadioState()
       endOfTxData = &outgoingPacket[headerBytes];
 
       //Determine the size of the trailer
-      trailerBytes = 0;
+      trailerBytes = (settings.enableCRC16 ? 2 : 0);
 
       radioSeed = radio.randomByte(); //Puts radio into standy-by state
       randomSeed(radioSeed);
