@@ -299,7 +299,7 @@ typedef void (* ARCH_SERIAL_PRINT)(const char * value);
 typedef uint8_t (* ARCH_SERIAL_READ)();
 typedef void (* ARCH_SERIAL_WRITE)(uint8_t value);
 typedef void (* ARCH_SYSTEM_RESET)();
-typedef void (* ARCH_UNIQUE_ID)(uint32_t * unique128_BitID);
+typedef void (* ARCH_UNIQUE_ID)(uint8_t * unique128_BitID);
 
 typedef struct _ARCH_TABLE
 {

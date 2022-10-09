@@ -107,13 +107,10 @@ void esp32SystemReset()
   ESP.restart();
 }
 
-void esp32UniqueID(uint32_t * unique128_BitID)
+void esp32UniqueID(uint8_t * unique128_BitID)
 {
-  unique128_BitID[0] = 0;
-  unique128_BitID[1] = 0;
-  unique128_BitID[2] = 0;
-  unique128_BitID[3] = 0;
-  esp_read_mac((uint8_t *)unique128_BitID, ESP_MAC_WIFI_STA);
+  memset(unique128_BitID, 0, UNIQUE_ID_BYTES);
+  esp_read_mac(unique128_BitID, ESP_MAC_WIFI_STA);
 }
 
 const ARCH_TABLE arch = {

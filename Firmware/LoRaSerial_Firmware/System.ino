@@ -154,14 +154,13 @@ void systemPrintTimestamp()
   }
 }
 
-void systemPrintUniqueID(uint32_t * uniqueID)
+void systemPrintUniqueID(uint8_t * uniqueID)
 {
-  uint8_t * id = (uint8_t *)uniqueID;
   int index;
 
   //Display in the same byte order as dump output
-  for (index = 0; index < 16; index++)
-    systemPrint(id[index], HEX);
+  for (index = 0; index < UNIQUE_ID_BYTES; index++)
+    systemPrint(uniqueID[index], HEX);
 }
 
 void systemWrite(uint8_t value)
