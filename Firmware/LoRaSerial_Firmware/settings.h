@@ -274,6 +274,7 @@ typedef struct struct_settings {
   bool debugDatagrams = false; //Print the datagrams
   uint16_t overheadTime = 10; ////ms added to ack and datagram times before ACK timeout occurs
   bool enableCRC16 = false; //Append CRC-16 to packet, check CRC-16 upon receive
+  bool displayRealMillis = false; //true = Display the millis value without offset, false = use offset
 } Settings;
 Settings settings;
 

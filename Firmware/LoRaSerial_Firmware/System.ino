@@ -128,6 +128,10 @@ void systemPrintTimestamp()
     //Get the clock value
     milliseconds = millis();
 
+    //Offset the value for display
+    if (!settings.displayRealMillis)
+      milliseconds += timestampOffset;
+
     //Compute the values for display
     seconds = milliseconds / 1000;
     minutes = seconds / 60;
