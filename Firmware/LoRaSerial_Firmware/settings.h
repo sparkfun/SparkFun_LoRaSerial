@@ -41,7 +41,6 @@ typedef enum
   // Multi-Point: Datagrams
   RADIO_MP_STANDBY,
   RADIO_MP_WAIT_TX_DONE,
-  RADIO_MP_RECEIVE,
 
   RADIO_MAX_STATE,
 } RadioStates;
