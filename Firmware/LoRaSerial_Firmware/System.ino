@@ -430,7 +430,7 @@ void dumpBuffer(uint8_t * data, int length)
     data -= bytes;
     for (index = 0; index < bytes; index++) {
       byte[0] = *data++;
-      systemPrint(((byte[0] <= ' ') || (byte[0] >= 0x7f)) ? "." : byte);
+      systemPrint(((byte[0] < ' ') || (byte[0] >= 0x7f)) ? "." : byte);
     }
     systemPrintln();
     petWDT();
