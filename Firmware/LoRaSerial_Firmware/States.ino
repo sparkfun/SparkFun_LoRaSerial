@@ -35,26 +35,10 @@ void updateRadioState()
       //Set all of the ACK numbers to zero
       *(uint8_t *)(&txControl) = 0;
 
-      //Determine the components of the frame header
-      headerBytes = 0;
+      //Determine the components of the frame header and trailer
+      selectHeaderAndTrailerBytes();
 
-      //Add the netID to the header
-      if (settings.pointToPoint || settings.verifyRxNetID)
-        headerBytes += 1;
-
-      //Add the control byte to the header
-      headerBytes += 1;
-
-      //Determine the maximum frame size
-      if (settings.radioSpreadFactor == 6)
-        headerBytes += 1;
-
-      //Set the beginning of the data portion of the transmit buffer
-      endOfTxData = &outgoingPacket[headerBytes];
-
-      //Determine the size of the trailer
-      trailerBytes = (settings.enableCRC16 ? 2 : 0);
-
+      //Initialize the radio
       radioSeed = radio.randomByte(); //Puts radio into standy-by state
       randomSeed(radioSeed);
       if ((settings.debug == true) || (settings.debugRadio == true))
@@ -75,10 +59,6 @@ void updateRadioState()
       //Start the link between the radios
       if (settings.useV2)
       {
-        //Determine the minimum and maximum datagram sizes
-        minDatagramSize = headerBytes + trailerBytes;
-        maxDatagramSize = sizeof(outgoingPacket) - minDatagramSize;
-
         //Start the V2 protocol
         if (settings.pointToPoint == true)
           changeState(RADIO_P2P_LINK_DOWN);
@@ -1660,6 +1640,34 @@ void updateRadioState()
       }
       break;
   }
+}
+
+//Compute the number of header and trailer bytes
+void selectHeaderAndTrailerBytes()
+{
+  //Determine the components of the frame header
+  headerBytes = 0;
+
+  //Add the netID to the header
+  if (settings.pointToPoint || settings.verifyRxNetID)
+    headerBytes += 1;
+
+  //Add the control byte to the header
+  headerBytes += 1;
+
+  //Determine the maximum frame size
+  if (settings.radioSpreadFactor == 6)
+    headerBytes += 1;
+
+  //Set the beginning of the data portion of the transmit buffer
+  endOfTxData = &outgoingPacket[headerBytes];
+
+  //Determine the size of the trailer
+  trailerBytes = (settings.enableCRC16 ? 2 : 0);
+
+  //Determine the minimum and maximum datagram sizes
+  minDatagramSize = headerBytes + trailerBytes;
+  maxDatagramSize = sizeof(outgoingPacket) - minDatagramSize;
 }
 
 //Return true if the radio is in a linked state
