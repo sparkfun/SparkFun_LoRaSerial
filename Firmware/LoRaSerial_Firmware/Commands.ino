@@ -531,6 +531,7 @@ const COMMAND_ENTRY commands[] =
   {54,    0,   1,    0, TYPE_BOOL,         valInt,         "CopySerial",           &settings.copySerial},
 
   {55,    0,   1,    0, TYPE_BOOL,         valInt,         "CopyTriggers",         &settings.copyTriggers},
+  {56,    0,   0,    0, TYPE_KEY,          valKey,         "TrainingKey",          &settings.trainingKey},
 
   //Define any user parameters starting at 255 decrementing towards 0
 };
@@ -665,8 +666,8 @@ bool commandSet(const char * commandString)
       case TYPE_KEY:
         valid = command->validate((void *)buffer, command->minValue, command->maxValue);
         if (valid)
-          for (uint32_t x = 0; x < (2 * sizeof(settings.encryptionKey)); x += 2)
-            settings.encryptionKey[x / 2] = charHexToDec(buffer[x], buffer[x + 1]);
+          for (uint32_t x = 0; x < (2 * AES_KEY_BYTES); x += 2)
+            ((uint8_t *)command->setting)[x / 2] = charHexToDec(buffer[x], buffer[x + 1]);
         break;
       case TYPE_SPEED_AIR:
       case TYPE_SPEED_SERIAL:

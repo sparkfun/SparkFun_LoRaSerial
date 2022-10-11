@@ -284,12 +284,13 @@ void beginTrainingServer()
   systemPrintln("Using:");
   systemPrint("  netID: ");
   systemPrintln(settings.netID);
-  systemPrint("  Encryption key: ");
-  displayEncryptionKey(settings.encryptionKey);
+  systemPrint("  Training key: ");
+  displayEncryptionKey(settings.trainingKey);
   systemPrintln();
 
   //Common initialization
   commonTrainingInitialization();
+  memcpy(&settings.trainingKey, &originalSettings.trainingKey, AES_KEY_BYTES);
   settings.trainingServer = true;         //52: Operate as the training server
 
   //Start the receive operation
