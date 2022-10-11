@@ -208,13 +208,17 @@ void samdSystemReset()
   NVIC_SystemReset();
 }
 
-void samdUniqueID(uint32_t * unique128_BitID)
+void samdUniqueID(uint8_t * unique128_BitID)
 {
+  uint32_t id[UNIQUE_ID_BYTES/4];
+
   //Read the CPU's unique ID value
-  unique128_BitID[0] = *(uint32_t *)0x0080a00c;
-  unique128_BitID[1] = *(uint32_t *)0x0080a040;
-  unique128_BitID[2] = *(uint32_t *)0x0080a044;
-  unique128_BitID[3] = *(uint32_t *)0x0080a048;
+  id[0] = *(uint32_t *)0x0080a00c;
+  id[1] = *(uint32_t *)0x0080a040;
+  id[2] = *(uint32_t *)0x0080a044;
+  id[3] = *(uint32_t *)0x0080a048;
+
+  memcpy(unique128_BitID, id, UNIQUE_ID_BYTES);
 }
 
 const ARCH_TABLE arch = {

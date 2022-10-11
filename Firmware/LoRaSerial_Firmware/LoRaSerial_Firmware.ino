@@ -57,6 +57,7 @@ const int FIRMWARE_VERSION_MINOR = 0;
 #define LRS_IDENTIFIER (FIRMWARE_VERSION_MAJOR * 0x10 + FIRMWARE_VERSION_MINOR)
 
 #define MAX_PACKET_SIZE 255 //Limited by SX127x
+#define UNIQUE_ID_BYTES 16 //Number of bytes in the unique ID
 
 #include "settings.h"
 

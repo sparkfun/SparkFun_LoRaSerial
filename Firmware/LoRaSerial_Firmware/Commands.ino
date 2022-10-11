@@ -126,7 +126,7 @@ bool commandAT(const char * commandString)
   //ATIx commands
   else if (commandString[2] == 'I' && commandLength == 4)
   {
-    uint32_t uniqueID[4];
+    uint8_t uniqueID[UNIQUE_ID_BYTES];
 
     switch (commandString[3])
     {
