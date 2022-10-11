@@ -231,6 +231,8 @@ const int datagramsExpectingAcks = 0
 uint8_t * endOfTxData;
 CONTROL_U8 txControl;
 
+uint8_t myUniqueId[UNIQUE_ID_BYTES]; // Unique ID of this system
+
 volatile bool clearDIO1 = true; //Clear the DIO1 hop ISR when possible
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -262,10 +264,12 @@ void setup()
 
   beginSerial(settings.serialSpeed);
 
-  verifyRadioStateTable(); //Verify that the state table contains all of the states in increasing order
-
   systemPrintTimestamp();
   systemPrintln("LRS");
+
+  verifyRadioStateTable(); //Verify that the state table contains all of the states in increasing order
+
+  arch.uniqueID(myUniqueId); //Get the unique ID
 
   beginBoard(); //Determine what hardware platform we are running on.
 

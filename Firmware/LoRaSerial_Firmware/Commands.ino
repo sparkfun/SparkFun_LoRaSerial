@@ -172,8 +172,7 @@ bool commandAT(const char * commandString)
         systemPrintln(channelNumber);
         break;
       case ('8'): //ATI8 - Display the unique ID
-        arch.uniqueID(uniqueID);
-        systemPrintUniqueID(uniqueID);
+        systemPrintUniqueID(myUniqueId);
         systemPrintln();
         break;
       default:
