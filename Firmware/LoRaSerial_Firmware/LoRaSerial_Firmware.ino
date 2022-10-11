@@ -57,7 +57,9 @@ const int FIRMWARE_VERSION_MINOR = 0;
 #define LRS_IDENTIFIER (FIRMWARE_VERSION_MAJOR * 0x10 + FIRMWARE_VERSION_MINOR)
 
 #define MAX_PACKET_SIZE 255 //Limited by SX127x
-#define UNIQUE_ID_BYTES 16 //Number of bytes in the unique ID
+#define AES_IV_BYTES    12  //Number of bytes for AESiv
+#define AES_KEY_BYTES   16  //Number of bytes in the encryption key
+#define UNIQUE_ID_BYTES 16  //Number of bytes in the unique ID
 
 #include "settings.h"
 
@@ -102,7 +104,7 @@ uint8_t channelNumber = 0;
 #include <GCM.h>
 GCM <AES128> gcm;
 
-uint8_t AESiv[12] = {0}; //Set during hop table generation
+uint8_t AESiv[AES_IV_BYTES] = {0}; //Set during hop table generation
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Buttons - Interrupt driven and debounce
@@ -187,7 +189,7 @@ unsigned long lastTrainBlink = 0; //Controls LED during training
 
 Settings originalSettings; //Create a duplicate of settings during training so that we can resort as needed
 uint8_t trainNetID; //New netID passed during training
-uint8_t trainEncryptionKey[16]; //New AES key passed during training
+uint8_t trainEncryptionKey[AES_KEY_BYTES]; //New AES key passed during training
 
 bool inCommandMode = false; //Normal data is prevented from entering serial output when in command mode
 uint8_t commandLength = 0;

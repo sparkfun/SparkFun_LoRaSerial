@@ -269,7 +269,7 @@ void systemReset()
 //Encrypt a given array in place
 void encryptBuffer(uint8_t *bufferToEncrypt, uint8_t arraySize)
 {
-  gcm.setKey(settings.encryptionKey, gcm.keySize());
+  gcm.setKey(settings.encryptionKey, sizeof(settings.encryptionKey));
   gcm.setIV(AESiv, sizeof(AESiv));
 
   gcm.encrypt(bufferToEncrypt, bufferToEncrypt, arraySize);
@@ -278,7 +278,7 @@ void encryptBuffer(uint8_t *bufferToEncrypt, uint8_t arraySize)
 //Decrypt a given array in place
 void decryptBuffer(uint8_t *bufferToDecrypt, uint8_t arraySize)
 {
-  gcm.setKey(settings.encryptionKey, gcm.keySize());
+  gcm.setKey(settings.encryptionKey, sizeof(settings.encryptionKey));
   gcm.setIV(AESiv, sizeof(AESiv));
 
   gcm.decrypt(bufferToDecrypt, bufferToDecrypt, arraySize);

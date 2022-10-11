@@ -1042,8 +1042,26 @@ void generateHopTable()
   //'Randomly' shuffle list based on our specific seed
   shuffle(channels, settings.numberOfChannels);
 
+  //Verify the AES IV length
+  if (AES_IV_BYTES != gcm.ivSize())
+  {
+    systemPrint("ERROR - Wrong AES IV size in bytes, please set AES_IV_BYTES = ");
+    systemPrintln(gcm.ivSize());
+    while (1)
+      petWDT();
+  }
+
+  //Verify the AES key length
+  if (AES_KEY_BYTES != gcm.keySize())
+  {
+    systemPrint("ERROR - Wrong AES key size in bytes, please set AES_KEY_BYTES = ");
+    systemPrintln(gcm.keySize());
+    while (1)
+      petWDT();
+  }
+
   //Set new initial values for AES using settings based random seed
-  for (uint8_t x = 0 ; x < 12 ; x++)
+  for (uint8_t x = 0 ; x < sizeof(AESiv) ; x++)
     AESiv[x] = myRand();
 
   if ((settings.debug == true) || (settings.debugRadio == true))
@@ -1061,7 +1079,7 @@ void generateHopTable()
     }
 
     systemPrint("AES IV:");
-    for (uint8_t i = 0 ; i < 12 ; i++)
+    for (uint8_t i = 0 ; i < sizeof(AESiv) ; i++)
     {
       systemPrint(" 0x");
       systemPrint(AESiv[i], HEX);
@@ -1143,11 +1161,11 @@ void hopChannel()
 bool receiveInProcess()
 {
   //triggerEvent(TRIGGER_RECEIVE_IN_PROCESS_START);
-  
+
   uint8_t radioStatus = radio.getModemStatus();
   if (radioStatus & 0b1011) return (true); //If any bits are set there is a receive in progress
   return false;
-  
+
   //A remote unit may have started transmitting but this unit has not received enough preamble to detect it.
   //Wait X * symbol time for clear air.
   //This was found by sending two nearly simultaneous packets and using a logic analyzer to establish the point at which
