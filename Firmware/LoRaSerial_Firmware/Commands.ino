@@ -111,7 +111,24 @@ bool commandAT(const char * commandString)
         break;
       case ('T'): //Enter training mode
         reportOK();
-        beginTraining();
+        if (settings.useV2 && (!settings.pointToPoint))
+        {
+          if (settings.trainingServer)
+            beginTrainingServer();
+          else
+            beginTrainingClient();
+        }
+        else
+          beginTraining();
+        break;
+      case ('X'): //Stop the training server
+        if (trainingServerRunning && (!settings.pointToPoint) && settings.trainingServer)
+        {
+          endClientServerTraining(TRIGGER_TRAINING_SERVER_STOPPED);
+          reportOK();
+        }
+        else
+          reportERROR();
         break;
       case ('Z'): //Reboots the radio
         reportOK();
@@ -508,6 +525,12 @@ const COMMAND_ENTRY commands[] =
   {49,    0,   1,    0, TYPE_BOOL,         valInt,         "EnableCRC16",          &settings.enableCRC16},
 
   {50,    0,   1,    0, TYPE_BOOL,         valInt,         "DisplayRealMillis",    &settings.displayRealMillis},
+  {51,    0,   1,    0, TYPE_BOOL,         valInt,         "TrainingServer",       &settings.trainingServer},
+  {52,    1, 255,    0, TYPE_U8,           valInt,         "ClientRetryInterval",  &settings.clientPingRetryInterval},
+  {53,    0,   1,    0, TYPE_BOOL,         valInt,         "CopyDebug",            &settings.copyDebug},
+  {54,    0,   1,    0, TYPE_BOOL,         valInt,         "CopySerial",           &settings.copySerial},
+
+  {55,    0,   1,    0, TYPE_BOOL,         valInt,         "CopyTriggers",         &settings.copyTriggers},
 
   //Define any user parameters starting at 255 decrementing towards 0
 };

@@ -992,6 +992,234 @@ void updateRadioState()
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    //V2 - Multi-Point Client Training
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    /*
+       beginTrainingClient
+                |
+                | Save current settings
+                |
+                V
+                +<--------------------------------.
+                |                                 |
+                | Send client ping                |
+                |                                 |
+                V                                 |
+        RADIO_MP_WAIT_TX_TRAINING_PING_DONE       |
+                |                                 |
+                V                                 | Timeout
+        RADIO_MP_WAIT_RX_RADIO_PARAMETERS --------'
+                |
+                | Update settings
+                | Send client ACK
+                |
+                V
+        RADIO_MP_WAIT_TX_PARAM_ACK_DONE
+                |
+                V
+     endTrainingClientServer
+                |
+                | Restore settings
+                |
+                V
+    */
+
+    case RADIO_MP_WAIT_TX_TRAINING_PING_DONE:
+      updateCylonLEDs();
+
+      //If dio0ISR has fired, we are done transmitting
+      if (transactionComplete == true)
+      {
+        transactionComplete = false;
+
+        //Indicate that the receive is complete
+        triggerEvent(TRIGGER_TRAINING_CLIENT_TX_PING_DONE);
+
+        //Start the receive operation
+        returnToReceiving();
+
+        //Set the next state
+        changeState(RADIO_MP_WAIT_RX_RADIO_PARAMETERS);
+      }
+      break;
+
+    case RADIO_MP_WAIT_RX_RADIO_PARAMETERS:
+      updateCylonLEDs();
+
+      //If dio0ISR has fired, a packet has arrived
+      if (transactionComplete == true)
+      {
+        transactionComplete = false;
+        trainingPreviousRxInProgress = false;
+
+        //Decode the received datagram
+        PacketType packetType = rcvDatagram();
+
+        //Process the received datagram
+        switch (packetType)
+        {
+          default:
+            triggerEvent(TRIGGER_BAD_PACKET);
+            returnToReceiving();
+            break;
+
+          case DATAGRAM_TRAINING_PARAMS:
+            //Verify the IDs
+            if ((memcmp(rxData, myUniqueId, UNIQUE_ID_BYTES) != 0)
+              && (memcmp(rxData, myUniqueId, UNIQUE_ID_BYTES) != 0))
+            {
+              triggerEvent(TRIGGER_BAD_PACKET);
+              returnToReceiving();
+              break;
+            }
+
+            //Save the training partner ID
+            memcpy(trainingPartnerID, &rxData[UNIQUE_ID_BYTES], UNIQUE_ID_BYTES);
+
+            //Get the radio parameters
+            updateRadioParameters(&rxData[UNIQUE_ID_BYTES * 2]);
+
+            //Acknowledge the radio parameters
+            xmitDatagramTrainingAck(&rxData[UNIQUE_ID_BYTES]);
+            changeState(RADIO_MP_WAIT_TX_PARAM_ACK_DONE);
+            break;
+        }
+      }
+
+      //Determine if a receive is in progress
+      else if (receiveInProcess())
+      {
+        if (!trainingPreviousRxInProgress)
+        {
+          trainingPreviousRxInProgress = true;
+          triggerEvent(TRIGGER_TRAINING_CLIENT_RX_PARAMS);
+        }
+      }
+
+      //Check for a receive timeout
+      else if ((millis() - datagramTimer) > (settings.clientPingRetryInterval * 1000))
+        xmitDatagramTrainingPing();
+      break;
+
+    case RADIO_MP_WAIT_TX_PARAM_ACK_DONE:
+      updateCylonLEDs();
+
+      //If dio0ISR has fired, we are done transmitting
+      if (transactionComplete == true)
+      {
+        transactionComplete = false;
+        endClientServerTraining(TRIGGER_TRAINING_CLIENT_TX_ACK_DONE);
+      }
+      break;
+
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    //V2 - Multi-Point Server Training
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    /*
+               beginTrainingServer
+                        |
+                        | Save current settings
+                        |
+                        V
+                        +<--------------------------------.
+                        |                                 |
+                        V                                 |
+        .------ RADIO_MP_WAIT_FOR_TRAINING_PING           |
+        |               |                                 |
+        |               | Send client ping                |
+        |               |                                 |
+        |               V                                 |
+        |      RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE --------'
+        |
+        |
+        `---------------.
+                        | Stop training command
+                        |
+                        V
+             endTrainingClientServer
+                        |
+                        | Restore settings
+                        |
+                        V
+    */
+
+    case RADIO_MP_WAIT_FOR_TRAINING_PING:
+      updateCylonLEDs();
+
+      //If dio0ISR has fired, a packet has arrived
+      if (transactionComplete == true)
+      {
+        transactionComplete = false; //Reset ISR flag
+        trainingPreviousRxInProgress = false;
+
+        //Decode the received datagram
+        PacketType packetType = rcvDatagram();
+
+        //Process the received datagram
+        switch (packetType)
+        {
+          default:
+            triggerEvent(TRIGGER_BAD_PACKET);
+            returnToReceiving();
+            break;
+
+          case DATAGRAM_TRAINING_PING:
+            //Save the client ID
+            memcpy(trainingPartnerID, rxData, UNIQUE_ID_BYTES);
+            xmitDatagramRadioParameters(trainingPartnerID);
+
+            //Wait for the transmit to complete
+            changeState(RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE);
+            break;
+
+          case DATAGRAM_TRAINING_ACK:
+            //Verify the client ID
+            if (memcmp(trainingPartnerID, &rxData[UNIQUE_ID_BYTES], UNIQUE_ID_BYTES) == 0)
+            {
+              //Don't respond to the client ACK, just start another receive operation
+              triggerEvent(TRIGGER_TRAINING_SERVER_RX_ACK);
+
+              //Print the client trained message
+              systemPrint("Client ");
+              systemPrintUniqueID(trainingPartnerID);
+              systemPrintln(" Trained");
+            }
+            returnToReceiving();
+            break;
+        }
+      }
+
+      //Determine if a receive is in progress
+      else if (receiveInProcess())
+        if (!trainingPreviousRxInProgress)
+        {
+          trainingPreviousRxInProgress = true;
+          triggerEvent(TRIGGER_TRAINING_SERVER_RX);
+        }
+      break;
+
+    case RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE:
+      updateCylonLEDs();
+
+      //If dio0ISR has fired, we are done transmitting
+      if (transactionComplete == true)
+      {
+        transactionComplete = false;
+
+        //Indicate that the receive is complete
+        triggerEvent(TRIGGER_TRAINING_SERVER_TX_PARAMS_DONE);
+
+        //Start the receive operation
+        returnToReceiving();
+
+        //Set the next state
+        changeState(RADIO_MP_WAIT_FOR_TRAINING_PING);
+      }
+      break;
+
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
     //V1 - No Link
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -1726,6 +1954,17 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   //    State                                 Name                              Description
   {RADIO_MP_STANDBY,                     "MP_STANDBY",                     "V2 MP: Wait for TX or RX"},           //27
   {RADIO_MP_WAIT_TX_DONE,                "MP_WAIT_TX_DONE",                "V2 MP: Waiting for TX done"},         //28
+
+  //V2 - Multi-Point training client states
+  //    State                                 Name                              Description
+  {RADIO_MP_WAIT_TX_TRAINING_PING_DONE,  "MP_WAIT_TX_TRAINING_PING_DONE",  "V2 MP: Wait TX training PING done"},  //29
+  {RADIO_MP_WAIT_RX_RADIO_PARAMETERS,    "MP_WAIT_RX_RADIO_PARAMETERS",    "V2 MP: Wait for radio parameters"},   //30
+  {RADIO_MP_WAIT_TX_PARAM_ACK_DONE,      "MP_WAIT_TX_PARAM_ACK_DONE",      "V2 MP: Wait for TX param ACK done"},  //31
+
+  //V2 - Multi-Point training server states
+  //    State                                 Name                              Description
+  {RADIO_MP_WAIT_FOR_TRAINING_PING,      "MP_WAIT_FOR_TRAINING_PING",      "V2 MP: Wait for training PING"},      //32
+  {RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,   "MP_WAIT_TX_RADIO_PARAMS_DONE",   "V2 MP: Wait for TX params done"},     //33
 };
 
 void verifyRadioStateTable()

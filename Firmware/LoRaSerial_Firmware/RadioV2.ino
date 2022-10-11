@@ -295,6 +295,181 @@ void xmitDatagramMpDatagram()
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//Multi-Point Client Training
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+//Build the client ping packet used for training
+void xmitDatagramTrainingPing()
+{
+  //Add the source (server) ID
+  memcpy(endOfTxData, myUniqueId, UNIQUE_ID_BYTES);
+  endOfTxData += UNIQUE_ID_BYTES;
+
+  /*
+                        endOfTxData ---.
+                                       |
+                                       V
+      +----------+---------+-----------+----------+
+      | Optional |         |           | Optional |
+      |  NET ID  | Control | Client ID | Trailer  |
+      |  8 bits  | 8 bits  |  16 Bytes | n Bytes  |
+      +----------+---------+-----------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_TRAINING_PING;
+  txControl.ackNumber = 0;
+  transmitDatagram();
+}
+
+//Build the client ACK packet used for training
+void xmitDatagramTrainingAck(uint8_t * serverID)
+{
+  //Add the destination (server) ID
+  memcpy(endOfTxData, serverID, UNIQUE_ID_BYTES);
+  endOfTxData += UNIQUE_ID_BYTES;
+
+  //Add the source (client) ID
+  memcpy(endOfTxData, myUniqueId, UNIQUE_ID_BYTES);
+  endOfTxData += UNIQUE_ID_BYTES;
+
+  /*
+                                    endOfTxData ---.
+                                                   |
+                                                   V
+      +----------+---------+-----------+-----------+----------+
+      | Optional |         |           |           | Optional |
+      |  NET ID  | Control | Server ID | Client ID | Trailer  |
+      |  8 bits  | 8 bits  |  16 Bytes |  16 Bytes | n Bytes  |
+      +----------+---------+-----------+-----------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_TRAINING_ACK;
+  txControl.ackNumber = 0;
+  transmitDatagram();
+}
+
+void updateRadioParameters(uint8_t * rxData)
+{
+  Settings params;
+
+  //Get the parameters
+  memcpy(&params, rxData, sizeof(params));
+
+  //Update the radio parameters
+  originalSettings.airSpeed = params.airSpeed;
+  originalSettings.netID = params.netID;
+  originalSettings.pointToPoint = false;
+  originalSettings.encryptData = params.encryptData;
+  memcpy(originalSettings.encryptionKey, params.encryptionKey, sizeof(originalSettings.encryptionKey));
+  originalSettings.dataScrambling = params.dataScrambling;
+  originalSettings.radioBroadcastPower_dbm = params.radioBroadcastPower_dbm;
+  originalSettings.frequencyMin = params.frequencyMin;
+  originalSettings.frequencyMax = params.frequencyMax;
+  originalSettings.numberOfChannels = params.numberOfChannels;
+  originalSettings.frequencyHop = params.frequencyHop;
+  originalSettings.maxDwellTime = params.maxDwellTime;
+  originalSettings.radioBandwidth = params.radioBandwidth;
+  originalSettings.radioSpreadFactor = params.radioSpreadFactor;
+  originalSettings.radioCodingRate = params.radioCodingRate;
+  originalSettings.radioSyncWord = params.radioSyncWord;
+  originalSettings.radioPreambleLength = params.radioPreambleLength;
+  originalSettings.frameSize = params.frameSize;
+  originalSettings.serialTimeoutBeforeSendingFrame_ms = params.serialTimeoutBeforeSendingFrame_ms;
+  originalSettings.heartbeatTimeout = params.heartbeatTimeout;
+  originalSettings.autoTuneFrequency = params.autoTuneFrequency;
+  originalSettings.maxResends = params.maxResends;
+  originalSettings.verifyRxNetID = params.verifyRxNetID;
+  originalSettings.useV2 = params.useV2;
+  originalSettings.overheadTime = params.overheadTime;
+  originalSettings.enableCRC16 = params.enableCRC16;
+  originalSettings.clientPingRetryInterval = params.clientPingRetryInterval;
+
+  //Update the API parameters
+  originalSettings.sortParametersByName = params.sortParametersByName;
+  originalSettings.printParameterName = params.printParameterName;
+
+  //Update the debug parameters
+  if (params.copyDebug)
+  {
+    originalSettings.debug = params.debug;
+    originalSettings.displayPacketQuality = params.displayPacketQuality;
+    originalSettings.printFrequency = params.printFrequency;
+    originalSettings.debugRadio = params.debugRadio;
+    originalSettings.debugStates = params.debugStates;
+    originalSettings.debugTraining = params.debugTraining;
+    originalSettings.debugTrigger = params.debugTrigger;
+    originalSettings.printRfData = params.printRfData;
+    originalSettings.printPktData = params.printPktData;
+    originalSettings.debugReceive = params.debugReceive;
+    originalSettings.debugTransmit = params.debugTransmit;
+    originalSettings.printTxErrors = params.printTxErrors;
+    originalSettings.printTimestamp = params.printTimestamp;
+    originalSettings.debugDatagrams = params.debugDatagrams;
+    originalSettings.displayRealMillis = params.displayRealMillis;
+  }
+
+  //Update the serial parameters
+  if (params.copySerial)
+  {
+    originalSettings.serialSpeed = params.serialSpeed;
+    originalSettings.echo = params.echo;
+    originalSettings.flowControl = params.flowControl;
+    originalSettings.usbSerialWait = params.usbSerialWait;
+  }
+
+  //Update the trigger parameters
+  if (params.copyTriggers)
+  {
+    originalSettings.triggerWidth = params.triggerWidth;
+    originalSettings.triggerWidthIsMultiplier = params.triggerWidthIsMultiplier;
+    originalSettings.triggerEnable = params.triggerEnable;
+    originalSettings.triggerEnable2 = params.triggerEnable2;
+  }
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//Multi-Point Server Training
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+//Build the server parameters packet used for training
+void xmitDatagramRadioParameters(const uint8_t * clientID)
+{
+  Settings params;
+
+  //Initialize the radio parameters
+  memcpy(&params, &originalSettings, sizeof(settings));
+  params.pointToPoint = false;
+  params.trainingServer = false;
+
+  //Add the destination (client) ID
+  memcpy(endOfTxData, clientID, UNIQUE_ID_BYTES);
+  endOfTxData += UNIQUE_ID_BYTES;
+
+  //Add the source (server) ID
+  memcpy(endOfTxData, myUniqueId, UNIQUE_ID_BYTES);
+  endOfTxData += UNIQUE_ID_BYTES;
+
+  //Add the radio parameters
+  memcpy(endOfTxData, &params, sizeof(params));
+  endOfTxData += sizeof(params);
+
+  /*
+                                                  endOfTxData ---.
+                                                                 |
+                                                                 V
+      +----------+---------+-----------+-----------+---  ...  ---+----------+
+      | Optional |         |           |           |   Radio     | Optional |
+      |  NET ID  | Control | Client ID | Server ID | Parameters  | Trailer  |
+      |  8 bits  | 8 bits  |  16 Bytes |  16 Bytes |   n bytes   | n Bytes  |
+      +----------+---------+-----------+-----------+-------------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_TRAINING_PARAMS;
+  txControl.ackNumber = 0;
+  transmitDatagram();
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Datagram reception
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 

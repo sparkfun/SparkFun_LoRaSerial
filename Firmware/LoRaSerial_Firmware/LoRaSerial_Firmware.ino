@@ -239,6 +239,11 @@ const int datagramsExpectingAcks = 0
 uint8_t * endOfTxData;
 CONTROL_U8 txControl;
 
+//Multi-point Training
+bool trainingServerRunning; //Training server is running
+bool trainingPreviousRxInProgress = false; //Previous RX status
+float originalChannel; //Original channel from HOP table while training is in progress
+uint8_t trainingPartnerID[UNIQUE_ID_BYTES]; //Unique ID of the training partner
 uint8_t myUniqueId[UNIQUE_ID_BYTES]; // Unique ID of this system
 
 volatile bool clearDIO1 = true; //Clear the DIO1 hop ISR when possible

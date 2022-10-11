@@ -2,7 +2,7 @@
 void beginTraining()
 {
   if ((settings.debug == true) || (settings.debugTraining == true))
-    systemPrintln("Begin training");
+    systemPrintln("Begin point-to-point training");
 
   originalSettings = settings; //Make copy of current settings
 
@@ -255,5 +255,138 @@ void updateCylonLEDs()
     else
       trainCylonNumber >>= 1;
   }
+}
+
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//V2 Multi-Point Client/Server Training
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+void beginTrainingClient()
+{
+  systemPrintln("Multipoint client training");
+
+  //Common initialization
+  commonTrainingInitialization();
+
+  //Transmit client ping to the training server
+  xmitDatagramTrainingPing();
+
+  //Set the next state
+  changeState(RADIO_MP_WAIT_TX_TRAINING_PING_DONE);
+}
+
+void beginTrainingServer()
+{
+  trainingServerRunning = true;
+
+  //Display the values to be used for the client/server training
+  systemPrintln("Multipoint server training");
+  systemPrintln("Using:");
+  systemPrint("  netID: ");
+  systemPrintln(settings.netID);
+  systemPrint("  Encryption key: ");
+  displayEncryptionKey(settings.encryptionKey);
+  systemPrintln();
+
+  //Common initialization
+  commonTrainingInitialization();
+  settings.trainingServer = true;         //52: Operate as the training server
+
+  //Start the receive operation
+  returnToReceiving();
+
+  //Set the next state
+  changeState(RADIO_MP_WAIT_FOR_TRAINING_PING);
+}
+
+//Perform the common training initialization
+void commonTrainingInitialization()
+{
+  //Save the current settings
+  originalSettings = settings;
+
+  //Use common radio settings between the client and server for training
+  settings = defaultSettings;
+  settings.pointToPoint = false;          // 3: Disable netID checking
+  settings.encryptData = true;            // 4: Enable packet encryption
+  settings.dataScrambling = true;         // 6: Scramble the data
+  settings.radioBroadcastPower_dbm = 14;  // 7: Minimum, assume radios are near each other
+  settings.frequencyHop = false;          //11: Stay on the training frequency
+  settings.printParameterName = true;     //28: Print the parameter names
+  settings.verifyRxNetID = false;         //37: Disable netID checking
+  settings.enableCRC16 = true;            //49: Use CRC-16
+
+  //Determine the components of the frame header and trailer
+  selectHeaderAndTrailerBytes();
+
+  //Debug training if requested
+  if (originalSettings.debugTraining)
+  {
+    settings.debug = originalSettings.debug;
+    settings.displayPacketQuality = originalSettings.displayPacketQuality;
+    settings.printParameterName = originalSettings.printParameterName;
+    settings.printFrequency = originalSettings.printFrequency;
+
+    settings.debugRadio = originalSettings.debugRadio;
+    settings.debugStates = originalSettings.debugStates;
+    settings.debugTraining = originalSettings.debugTraining;
+    settings.debugTrigger = originalSettings.debugTrigger;
+
+    settings.printRfData = originalSettings.printRfData;
+    settings.printPktData = originalSettings.printPktData;
+    settings.triggerWidth = originalSettings.triggerWidth;
+    settings.triggerWidthIsMultiplier = originalSettings.triggerWidthIsMultiplier;
+
+    settings.triggerEnable = originalSettings.triggerEnable;
+    settings.triggerEnable = originalSettings.triggerEnable;
+    settings.debugReceive = originalSettings.debugReceive;
+    settings.debugTransmit = originalSettings.debugTransmit;
+    settings.printTxErrors = originalSettings.printTxErrors;
+
+    settings.printTimestamp = originalSettings.printTimestamp;
+    settings.debugDatagrams = originalSettings.debugDatagrams;
+    settings.displayRealMillis = originalSettings.displayRealMillis;
+  }
+
+  //Reset cylon variables
+  startCylonLEDs();
+
+  //Select the training frequency, a multiple of channels down from the maximum
+  petWDT();
+  float channelSpacing = (settings.frequencyMax - settings.frequencyMin) / (float)(settings.numberOfChannels + 2);
+  float trainFrequency = settings.frequencyMax - (channelSpacing * (FIRMWARE_VERSION_MAJOR % settings.numberOfChannels));
+  originalChannel = channels[0];      //Remember the original channel
+  channels[0] = trainFrequency;       //Inject this frequency into the channel table
+
+  //Use only the first channel of the previously allocated channel table
+  configureRadio(); //Setup radio with settings
+}
+
+//Upon successful exchange of parameters, switch to the new radio settings
+void endClientServerTraining(uint8_t event)
+{
+  triggerEvent(event);
+  settings = originalSettings; //Return to original radio settings
+
+  if (settings.debugTraining)
+    displayParameters();
+
+  if (!settings.trainingServer)
+  {
+    //Record the new client settings
+    recordSystemSettings();
+
+    systemPrint("Link trained from ");
+    systemPrintUniqueID(trainingPartnerID);
+    systemPrintln();
+  }
+
+  //Done with training
+  trainingServerRunning = false;
+
+  //Reboot the radio with the new parameters
+  petWDT();
+  systemFlush();
+  systemReset();
 }
 

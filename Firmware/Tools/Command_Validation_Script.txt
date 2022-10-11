@@ -452,9 +452,34 @@ ats50=1
 ats50=2
 ats50=0
 
-# Invalid commands
+# TrainingServer
 ats51=1
-ats51?
+ats51=2
+ats51=0
+
+# ClientRetryInterval
+ats52=1
+ats52=2
+ats52=0
+
+# CopyDebug
+ats53=1
+ats53=2
+ats53=0
+
+# CopySerial
+ats54=1
+ats54=2
+ats54=0
+
+# CopyTriggers
+ats55=1
+ats55=2
+ats55=0
+
+# Invalid commands
+ats56=1
+ats56?
 
 ats255=1
 ats255?
