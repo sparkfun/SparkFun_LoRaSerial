@@ -136,7 +136,6 @@ void xmitDatagramP2PCommand()
   txControl.datagramType = DATAGRAM_REMOTE_COMMAND;
   txControl.ackNumber = expectedDatagramNumber;
   expectedDatagramNumber = (expectedDatagramNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
-  packetSent = 0; //This is the first time this packet is being sent
   transmitDatagram();
 }
 
@@ -157,7 +156,6 @@ void xmitDatagramP2PCommandResponse()
   txControl.datagramType = DATAGRAM_REMOTE_COMMAND_RESPONSE;
   txControl.ackNumber = expectedDatagramNumber;
   expectedDatagramNumber = (expectedDatagramNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
-  packetSent = 0; //This is the first time this packet is being sent
   transmitDatagram();
 }
 
@@ -178,7 +176,6 @@ void xmitDatagramP2PData()
   txControl.datagramType = DATAGRAM_DATA;
   txControl.ackNumber = expectedDatagramNumber;
   expectedDatagramNumber = (expectedDatagramNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
-  packetSent = 0; //This is the first time this packet is being sent
   transmitDatagram();
 }
 
@@ -199,7 +196,6 @@ void xmitDatagramP2PHeartbeat()
   txControl.datagramType = DATAGRAM_HEARTBEAT;
   txControl.ackNumber = expectedDatagramNumber;
   expectedDatagramNumber = (expectedDatagramNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
-  packetSent = 0; //This is the first time this packet is being sent
   transmitDatagram();
 }
 
@@ -284,7 +280,9 @@ PacketType rcvDatagram()
   {
     systemPrintln("----------");
     systemPrintTimestamp();
-    systemPrint("RX: Data ");
+    systemPrint("RX: ");
+    systemPrint((settings.dataScrambling || settings.encryptData) ? "Encrypted " : "Unencrypted ");
+    systemPrint("Frame ");
     systemPrint(rxDataBytes);
     systemPrint(" (0x");
     systemPrint(rxDataBytes, HEX);
@@ -300,6 +298,21 @@ PacketType rcvDatagram()
   if (settings.encryptData == true)
     decryptBuffer(incomingBuffer, rxDataBytes);
 
+  //Display the received data bytes
+  if ((settings.dataScrambling || settings.encryptData)
+    && (settings.printRfData || settings.debugReceive))
+  {
+    systemPrintTimestamp();
+    systemPrint("RX: Unencrypted Frame ");
+    systemPrint(rxDataBytes);
+    systemPrint(" (0x");
+    systemPrint(rxDataBytes, HEX);
+    systemPrintln(") bytes");
+    petWDT();
+    if (settings.printRfData && rxDataBytes)
+      dumpBuffer(incomingBuffer, rxDataBytes);
+  }
+
   //All packets must include the 2-byte control header
   if (rxDataBytes < minDatagramSize)
   {
@@ -307,7 +320,7 @@ PacketType rcvDatagram()
     if (settings.printPktData || settings.debugReceive)
     {
       systemPrintTimestamp();
-      systemPrint("RX: Bad packet ");
+      systemPrint("RX: Bad Frame ");
       systemPrint(rxDataBytes);
       systemPrint(" (0x");
       systemPrint(rxDataBytes, HEX);
@@ -490,7 +503,7 @@ PacketType rcvDatagram()
   if (settings.printPktData || settings.debugReceive)
   {
     systemPrintTimestamp();
-    systemPrint("RX: Packet data ");
+    systemPrint("RX: Datagram ");
     systemPrint(rxDataBytes);
     systemPrint(" (0x");
     systemPrint(rxDataBytes, HEX);
@@ -596,7 +609,7 @@ void transmitDatagram()
   if (settings.printPktData || settings.debugTransmit)
   {
     systemPrintTimestamp();
-    systemPrint("TX: Packet data ");
+    systemPrint("TX: Datagram ");
     systemPrint(length);
     systemPrint(" (0x");
     systemPrint(length, HEX);
@@ -691,6 +704,20 @@ void transmitDatagram()
       |<-------------------- txDatagramSize --------------------->|
   */
 
+  //Display the transmitted packet bytes
+  if (settings.printRfData || settings.debugTransmit)
+  {
+    systemPrintTimestamp();
+    systemPrint("TX: Unencrypted Frame ");
+    systemPrint(txDatagramSize);
+    systemPrint(" (0x");
+    systemPrint(txDatagramSize, HEX);
+    systemPrintln(") bytes");
+    petWDT();
+    if (settings.printRfData)
+      dumpBuffer(outgoingPacket, txDatagramSize);
+  }
+
   //Encrypt the datagram
   if (settings.encryptData == true)
     encryptBuffer(outgoingPacket, txDatagramSize);
@@ -698,6 +725,21 @@ void transmitDatagram()
   //Scramble the datagram
   if (settings.dataScrambling == true)
     radioComputeWhitening(outgoingPacket, txDatagramSize);
+
+  //Display the transmitted packet bytes
+  if ((settings.printRfData || settings.debugTransmit)
+    && (settings.encryptData || settings.dataScrambling))
+  {
+    systemPrintTimestamp();
+    systemPrint("TX: Encrypted Frame ");
+    systemPrint(txDatagramSize);
+    systemPrint(" (0x");
+    systemPrint(txDatagramSize, HEX);
+    systemPrintln(") bytes");
+    petWDT();
+    if (settings.printRfData)
+      dumpBuffer(outgoingPacket, txDatagramSize);
+  }
 
   //If we are trainsmitting at high data rates the receiver is often not ready for new data. Pause for a few ms (measured with logic analyzer).
   if (settings.airSpeed == 28800 || settings.airSpeed == 38400)
@@ -710,6 +752,7 @@ void transmitDatagram()
   datagramAirTime = calcAirTime(txDatagramSize);
 
   //Transmit this datagram
+  packetSent = 0; //This is the first time this packet is being sent
   retransmitDatagram();
 }
 
@@ -726,7 +769,13 @@ void printControl(uint8_t value)
   systemPrintln(value & 3);
   systemPrintTimestamp();
   systemPrint("        datagramType ");
-  systemPrintln(v2DatagramType[control->datagramType]);
+  if (control->datagramType < MAX_DATAGRAM_TYPE)
+    systemPrintln(v2DatagramType[control->datagramType]);
+  else
+  {
+    systemPrint("Unknown ");
+    systemPrintln(control->datagramType);
+  }
   petWDT();
 }
 
@@ -744,13 +793,12 @@ void retransmitDatagram()
   */
 
   //Display the transmitted packet bytes
-  if (settings.printRfData || settings.debugTransmit)
+  if (packetSent && (settings.printRfData || settings.debugTransmit))
   {
     systemPrintTimestamp();
-    systemPrint("TX: ");
-    if (packetSent)
-      systemPrint("Retransmit ");
-    systemPrint ("Data ");
+    systemPrint("TX: Retransmit ");
+    systemPrint((settings.encryptData || settings.dataScrambling) ? "Encrypted " : "Unencrypted ");
+    systemPrint("Frame ");
     systemPrint(txDatagramSize);
     systemPrint(" (0x");
     systemPrint(txDatagramSize, HEX);

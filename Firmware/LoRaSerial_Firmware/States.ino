@@ -7,6 +7,7 @@ void updateRadioState()
   static uint8_t rexmtBuffer[MAX_PACKET_SIZE];
   static CONTROL_U8 rexmtControl;
   static uint8_t rexmtLength;
+  static uint8_t rexmtPacketSent;
 
   switch (radioState)
   {
@@ -673,6 +674,7 @@ void updateRadioState()
             memcpy(rexmtBuffer, outgoingPacket, MAX_PACKET_SIZE);
             rexmtControl = txControl;
             rexmtLength = txDatagramSize;
+            rexmtPacketSent = packetSent;
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
             xmitDatagramP2PAck(); //Transmit ACK
@@ -757,6 +759,7 @@ void updateRadioState()
           memcpy(outgoingPacket, rexmtBuffer, MAX_PACKET_SIZE);
           txControl = rexmtControl;
           txDatagramSize = rexmtLength;
+          packetSent = rexmtPacketSent;
           if (settings.debugDatagrams)
           {
             systemPrintTimestamp();
