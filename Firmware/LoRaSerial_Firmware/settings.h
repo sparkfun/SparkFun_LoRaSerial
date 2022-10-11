@@ -42,6 +42,15 @@ typedef enum
   RADIO_MP_STANDBY,
   RADIO_MP_WAIT_TX_DONE,
 
+  //Training client states
+  RADIO_MP_WAIT_TX_TRAINING_PING_DONE,
+  RADIO_MP_WAIT_RX_RADIO_PARAMETERS,
+  RADIO_MP_WAIT_TX_PARAM_ACK_DONE,
+
+  //Training server states
+  RADIO_MP_WAIT_FOR_TRAINING_PING,
+  RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,
+
   RADIO_MAX_STATE,
 } RadioStates;
 RadioStates radioState = RADIO_NO_LINK_RECEIVING_STANDBY;
@@ -73,6 +82,11 @@ typedef enum
   //V2: Multi-Point data exchange
   DATAGRAM_DATAGRAM,
 
+  //V2: Multi-Point training exchange
+  DATAGRAM_TRAINING_PING,
+  DATAGRAM_TRAINING_PARAMS,
+  DATAGRAM_TRAINING_ACK,
+
   //Add new V2 datagram types before this line
   MAX_DATAGRAM_TYPE,
 
@@ -97,8 +111,10 @@ typedef enum
 const char * const v2DatagramType[] =
 {//  0       1        2        3        4           5           6
   "PING", "ACK-1", "ACK-2", "DATA", "SF6-DATA", "DATA-ACK", "HEARTBEAT",
-  //  7          8                9
-  "RMT-CMD", "RMT_RESP", "DATAGRAM_DATAGRAM"
+  //  7          8                9                10
+  "RMT-CMD", "RMT_RESP", "DATAGRAM_DATAGRAM", "TRAINING_PING",
+  //     11                12
+  "TRAINING_PARAMS", "TRAINING_ACK"
 };
 
 //Train button states
@@ -189,6 +205,21 @@ enum
   TRIGGER_COMMAND_SENT_ACK_PACKET,
   TRIGGER_COMMAND_PACKET_RESEND,
   TRIGGER_PACKET_COMMAND_DATA,
+
+  //Training client triggers
+  TRIGGER_TRAINING_CLIENT_TX_PING,            //34,  875us
+  TRIGGER_TRAINING_CLIENT_TX_PING_DONE,       //35,  900us
+  TRIGGER_TRAINING_CLIENT_RX_PARAMS,          //38,  975us
+  TRIGGER_TRAINING_CLIENT_TX_ACK,             //39, 1000us
+  TRIGGER_TRAINING_CLIENT_TX_ACK_DONE,        //40, 1025us
+  TRIGGER_TRAINING_COMPLETE,                  //41, 1050us
+
+  //Training server triggers
+  TRIGGER_TRAINING_SERVER_RX,                 //42, 1075us
+  TRIGGER_TRAINING_SERVER_TX_PARAMS,          //43, 1100us
+  TRIGGER_TRAINING_SERVER_TX_PARAMS_DONE,     //44, 1125us
+  TRIGGER_TRAINING_SERVER_RX_ACK,             //45, 1150us
+  TRIGGER_TRAINING_SERVER_STOPPED,            //46, 1175us
 };
 
 //Control where to print command output
@@ -275,6 +306,11 @@ typedef struct struct_settings {
   uint16_t overheadTime = 10; ////ms added to ack and datagram times before ACK timeout occurs
   bool enableCRC16 = false; //Append CRC-16 to packet, check CRC-16 upon receive
   bool displayRealMillis = false; //true = Display the millis value without offset, false = use offset
+  bool trainingServer = false; //Default to being a client
+  uint8_t clientPingRetryInterval = 3; //Number of seconds before retransmiting the client PING
+  bool copyDebug = true; //Copy the debug parameters to the training client
+  bool copySerial = true; //Copy the serial parameters to the training client
+  bool copyTriggers = true; //Copy the trigger parameters to the training client
 } Settings;
 Settings settings;
 

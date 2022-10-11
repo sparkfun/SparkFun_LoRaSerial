@@ -42,7 +42,7 @@ SparkFun LoRaSerial SAMD21 1W 915MHz
 ati3
 -157
 ati4
-248
+15
 ati5
 506
 ati6
@@ -50,7 +50,7 @@ ati6
 ati7
 0
 ati8
-B2A99BF24A34555020312E34162815FF
+E5D60B0B4A34555020312E34212815FF
 ati9
 ERROR
 ati0
@@ -105,6 +105,11 @@ ATS47:DebugDatagrams=0
 ATS48:OverHeadtime=10
 ATS49:EnableCRC16=0
 ATS50:DisplayRealMillis=0
+ATS51:TrainingServer=0
+ATS52:ClientRetryInterval=3
+ATS53:CopyDebug=1
+ATS54:CopySerial=1
+ATS55:CopyTriggers=1
 ats28=0
 OK
 # SerialSpeed
@@ -919,11 +924,61 @@ ERROR
 ats50=0
 DisplayRealMillis=0
 OK
-# Invalid commands
+# TrainingServer
 ERROR
 ats51=1
+TrainingServer=1
+OK
+ats51=2
 ERROR
-ats51?
+ats51=0
+TrainingServer=0
+OK
+# ClientRetryInterval
+ERROR
+ats52=1
+ClientRetryInterval=1
+OK
+ats52=2
+ClientRetryInterval=2
+OK
+ats52=0
+ERROR
+# CopyDebug
+ERROR
+ats53=1
+CopyDebug=1
+OK
+ats53=2
+ERROR
+ats53=0
+CopyDebug=0
+OK
+# CopySerial
+ERROR
+ats54=1
+CopySerial=1
+OK
+ats54=2
+ERROR
+ats54=0
+CopySerial=0
+OK
+# CopyTriggers
+ERROR
+ats55=1
+CopyTriggers=1
+OK
+ats55=2
+ERROR
+ats55=0
+CopyTriggers=0
+OK
+# Invalid commands
+ERROR
+ats56=1
+ERROR
+ats56?
 ERROR
 ats255=1
 ERROR
@@ -933,7 +988,11 @@ ati0
 ATS1:AirSpeed=4800
 ATS24:AutoTune=0
 ATS13:Bandwidth=500.00
+ATS52:ClientRetryInterval=2
 ATS15:CodingRate=8
+ATS53:CopyDebug=0
+ATS54:CopySerial=0
+ATS55:CopyTriggers=0
 ATS6:DataScrambling=0
 ATS20:Debug=0
 ATS47:DebugDatagrams=0
@@ -973,6 +1032,7 @@ ATS0:SerialSpeed=57600
 ATS27:SortParametersByName=1
 ATS14:SpreadFactor=9
 ATS16:SyncWord=18
+ATS51:TrainingServer=0
 ATS40:TriggerEnable: 31-0=-1
 ATS41:TriggerEnable: 63-32=-1
 ATS38:TriggerWidth=25
