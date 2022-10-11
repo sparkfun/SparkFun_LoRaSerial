@@ -311,6 +311,7 @@ typedef struct struct_settings {
   bool copyDebug = true; //Copy the debug parameters to the training client
   bool copySerial = true; //Copy the serial parameters to the training client
   bool copyTriggers = true; //Copy the trigger parameters to the training client
+  uint8_t trainingKey[AES_KEY_BYTES] = { 0x53, 0x70, 0x61, 0x72, 0x6b, 0x46, 0x75, 0x6E, 0x54, 0x72, 0x61, 0x69, 0x6e, 0x69, 0x6e, 0x67 };
 } Settings;
 Settings settings;
 
