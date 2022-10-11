@@ -150,7 +150,6 @@ enum
   TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND_RESPONSE,
   TRIGGER_BAD_PACKET,
 
-
   TRIGGER_ACK_PROCESSED,
   TRIGGER_DATA_SEND,
   TRIGGER_RTR_2BYTE,
@@ -275,6 +274,7 @@ typedef struct struct_settings {
   bool printTimestamp = false; //Print a timestamp: days hours:minutes:seconds.milliseconds
   bool debugDatagrams = false; //Print the datagrams
   uint16_t overheadTime = 10; ////ms added to ack and datagram times before ACK timeout occurs
+  bool enableCRC16 = false; //Append CRC-16 to packet, check CRC-16 upon receive
 } Settings;
 Settings settings;
 

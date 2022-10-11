@@ -506,6 +506,7 @@ const COMMAND_ENTRY commands[] =
   {46,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTimestamp",       &settings.printTimestamp},
   {47,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &settings.debugDatagrams},
   {48,    0, 1000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &settings.overheadTime},
+  {49,    0,   1,    0, TYPE_BOOL,         valInt,         "EnableCRC16",          &settings.enableCRC16},
 
   //Define any user parameters starting at 255 decrementing towards 0
 };

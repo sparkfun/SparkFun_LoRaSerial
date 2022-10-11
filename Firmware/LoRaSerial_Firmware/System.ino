@@ -64,6 +64,24 @@ void systemPrintln(uint8_t value, uint8_t printType)
   systemPrint("\r\n");
 }
 
+void systemPrint(uint16_t value, uint8_t printType)
+{
+  char temp[20];
+
+  if (printType == HEX)
+    sprintf(temp, "%04X", value);
+  else if (printType == DEC)
+    sprintf(temp, "%d", value);
+
+  systemPrint(temp);
+}
+
+void systemPrintln(uint16_t value, uint8_t printType)
+{
+  systemPrint(value, printType);
+  systemPrint("\r\n");
+}
+
 void systemPrint(float value, uint8_t decimals)
 {
   char temp[20];

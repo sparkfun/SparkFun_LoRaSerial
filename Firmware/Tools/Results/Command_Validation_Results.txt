@@ -18,6 +18,8 @@ Command summary:
   ATT - Enter training mode
   ATX - Stop the training server
   ATZ - Reboot the radio
+  AT&F - Restore factory settings
+  AT&W - Save current settings to NVM
 ati?
   ATI0 - Show user settable parameters
   ATI1 - Show board variant
@@ -32,15 +34,15 @@ ati?
 ERROR
         	ati
 OK
-SparkFun LoRaSerial SAMD21 1W 915MHz v1.1
+SparkFun LoRaSerial SAMD21 1W 915MHz v2.0
         ati1
 SparkFun LoRaSerial SAMD21 1W 915MHz
 	ati2
-1.1
+2.0
 ati3
 -157
 ati4
-109
+154
 ati5
 506
 ati6
@@ -101,7 +103,7 @@ ATS45:UseV2=0
 ATS46:PrintTimestamp=0
 ATS47:DebugDatagrams=0
 ATS48:TxAckMillis=100
-ATS49:DisplayRealMillis=0
+ATS49:EnableCRC16=0
 ats28=0
 OK
 # SerialSpeed
@@ -893,15 +895,15 @@ ats48=2
 ERROR
 ats48=0
 ERROR
-# displayRealMillis
+# enableCRC16
 ERROR
 ats49=1
-DisplayRealMillis=1
+EnableCRC16=1
 OK
 ats49=2
 ERROR
 ats49=0
-DisplayRealMillis=0
+EnableCRC16=0
 OK
 # Invalid commands
 ERROR
@@ -928,8 +930,8 @@ ATS32:DebugTraining=0
 ATS43:DebugTransmit=0
 ATS33:DebugTrigger=0
 ATS25:DisplayPacketQuality=0
-ATS49:DisplayRealMillis=0
 ATS21:Echo=0
+ATS49:EnableCRC16=0
 ATS4:EncryptData=1
 ATS5:EncryptionKey=37782141A665734E4475672AE6308308
 ATS23:FlowControl=0
@@ -968,3 +970,5 @@ at&w
 OK
 atz
 OK
+LRS
+LRS Setup Complete
