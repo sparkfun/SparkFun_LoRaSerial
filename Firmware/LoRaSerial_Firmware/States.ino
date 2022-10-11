@@ -806,15 +806,76 @@ void updateRadioState()
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     case RADIO_MP_STANDBY:
-      if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
+      //Hop channels when required
+      if (timeToHop == true)
+        hopChannel();
+
+      //Process the receive packet
+      if (transactionComplete == true)
       {
         triggerEvent(TRIGGER_BROADCAST_PACKET_RECEIVED);
         transactionComplete = false; //Reset ISR flag
-        changeState(RADIO_MP_RECEIVE);
-      }
 
-      else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
-        hopChannel();
+        //Decode the received datagram
+        PacketType packetType = rcvDatagram();
+
+        //Process the received datagram
+        switch (packetType)
+        {
+          default:
+            returnToReceiving();
+            changeState(RADIO_MP_STANDBY);
+            break;
+
+          case DATAGRAM_ACK_1:
+          case DATAGRAM_ACK_2:
+          case DATAGRAM_DATA:
+          case DATAGRAM_DATA_ACK:
+          case DATAGRAM_HEARTBEAT:
+          case DATAGRAM_PING:
+          case DATAGRAM_REMOTE_COMMAND:
+          case DATAGRAM_REMOTE_COMMAND_RESPONSE:
+            //We should not be receiving these datagrams, but if we do, just ignore
+            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+            returnToReceiving();
+            break;
+
+          case DATAGRAM_DATAGRAM:
+            if (settings.displayPacketQuality == true)
+            {
+              systemPrintln();
+              systemPrint("R:");
+              systemPrint(radio.getRSSI());
+              systemPrint("\tS:");
+              systemPrint(radio.getSNR());
+              systemPrint("\tfE:");
+              systemPrint(radio.getFrequencyError());
+              systemPrintln();
+            }
+
+            //Determine the number of bytes received
+            length = 0;
+            if ((txHead + rxDataBytes) > sizeof(serialTransmitBuffer))
+            {
+              //Copy the first portion of the received datagram into the buffer
+              length = sizeof(serialTransmitBuffer) - txHead;
+              memcpy(&serialTransmitBuffer[txHead], rxData, length);
+              txHead = 0;
+            }
+
+            //Copy the remaining portion of the received datagram into the buffer
+            memcpy(&serialTransmitBuffer[txHead], &rxData[length], rxDataBytes - length);
+            txHead += rxDataBytes - length;
+            txHead %= sizeof(serialTransmitBuffer);
+
+            updateRSSI(); //Adjust LEDs to RSSI level
+            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+            returnToReceiving(); //No response when in broadcasting mode
+
+            lastPacketReceived = millis(); //Update timestamp for Link LED
+            break;
+        }
+      }
 
       else //Process waiting serial
       {
@@ -855,7 +916,12 @@ void updateRadioState()
       break;
 
     case RADIO_MP_WAIT_TX_DONE:
-      if (transactionComplete == true) //If dio0ISR has fired, we are done transmitting
+      //Hop channels when required
+      if (timeToHop == true)
+        hopChannel();
+
+      //If transmit is complete then start receiving
+      if (transactionComplete == true)
       {
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
@@ -864,72 +930,6 @@ void updateRadioState()
       }
       else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
         hopChannel();
-      break;
-
-    case RADIO_MP_RECEIVE:
-      {
-        //Decode the received datagram
-        PacketType packetType = rcvDatagram();
-
-        //Process the received datagram
-        switch (packetType)
-        {
-          default:
-            returnToReceiving();
-            changeState(RADIO_MP_STANDBY);
-            break;
-
-          case DATAGRAM_ACK_1:
-          case DATAGRAM_ACK_2:
-          case DATAGRAM_DATA:
-          case DATAGRAM_DATA_ACK:
-          case DATAGRAM_HEARTBEAT:
-          case DATAGRAM_PING:
-          case DATAGRAM_REMOTE_COMMAND:
-          case DATAGRAM_REMOTE_COMMAND_RESPONSE:
-            //We should not be receiving these datagrams, but if we do, just ignore
-            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-            returnToReceiving();
-            changeState(RADIO_MP_STANDBY);
-            break;
-
-          case DATAGRAM_DATAGRAM:
-            if (settings.displayPacketQuality == true)
-            {
-              systemPrintln();
-              systemPrint("R:");
-              systemPrint(radio.getRSSI());
-              systemPrint("\tS:");
-              systemPrint(radio.getSNR());
-              systemPrint("\tfE:");
-              systemPrint(radio.getFrequencyError());
-              systemPrintln();
-            }
-
-            //Determine the number of bytes received
-            length = 0;
-            if ((txHead + rxDataBytes) > sizeof(serialTransmitBuffer))
-            {
-              //Copy the first portion of the received datagram into the buffer
-              length = sizeof(serialTransmitBuffer) - txHead;
-              memcpy(&serialTransmitBuffer[txHead], rxData, length);
-              txHead = 0;
-            }
-
-            //Copy the remaining portion of the received datagram into the buffer
-            memcpy(&serialTransmitBuffer[txHead], &rxData[length], rxDataBytes - length);
-            txHead += rxDataBytes - length;
-            txHead %= sizeof(serialTransmitBuffer);
-
-            updateRSSI(); //Adjust LEDs to RSSI level
-            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-            returnToReceiving(); //No response when in broadcasting mode
-            changeState(RADIO_MP_STANDBY);
-
-            lastPacketReceived = millis(); //Update timestamp for Link LED
-            break;
-        }
-      }
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -1618,7 +1618,7 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   {RADIO_TRAINING_ACK_WAIT,              "TRAINING_ACK_WAIT",              "[Training] Ack Wait"},        //14
   {RADIO_TRAINING_RECEIVED_PACKET,       "TRAINING_RECEIVED_PACKET",       "[Training] RX Packet"},       //15
 
-  //V2 - Point to Point link handshake
+  //V2 - Point-to-Point link handshake
   //    State                                 Name                              Description
   {RADIO_P2P_LINK_DOWN,                  "P2P_LINK_DOWN",                  "V2 P2P: [No Link] Waiting for Ping"}, //16
   {RADIO_P2P_WAIT_TX_PING_DONE,          "P2P_WAIT_TX_PING_DONE",          "V2 P2P: [No Link] Wait Ping TX Done"},//17
@@ -1627,7 +1627,7 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   {RADIO_P2P_WAIT_ACK_2,                 "P2P_WAIT_ACK_2",                 "V2 P2P: [No Link] Waiting for ACK2"}, //20
   {RADIO_P2P_WAIT_TX_ACK_2_DONE,         "P2P_WAIT_TX_ACK_2_DONE",         "V2 P2P: [No Link] Wait ACK2 TX Done"},//21
 
-  //V2 - Point to Point, link up, data exchange
+  //V2 - Point-to-Point, link up, data exchange
   //    State                                 Name                              Description
   {RADIO_P2P_LINK_UP,                    "P2P_LINK_UP",                    "V2 P2P: Receiving Standby"},          //22
   {RADIO_P2P_LINK_UP_WAIT_ACK_DONE,      "P2P_LINK_UP_WAIT_ACK_DONE",      "V2 P2P: Waiting ACK TX Done"},        //23
@@ -1635,11 +1635,10 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   {RADIO_P2P_LINK_UP_WAIT_ACK,           "P2P_LINK_UP_WAIT_ACK",           "V2 P2P: Waiting for ACK"},            //25
   {RADIO_P2P_LINK_UP_HB_ACK_REXMT,       "P2P_LINK_UP_HB_ACK_REXMT",       "V2 P2P: Heartbeat ACK ReXmt"},            //26
 
-  //V2 - Multi Point data exchange
+  //V2 - Multi-Point data exchange
   //    State                                 Name                              Description
   {RADIO_MP_STANDBY,                     "MP_STANDBY",                     "V2 MP: Wait for TX or RX"},           //27
   {RADIO_MP_WAIT_TX_DONE,                "MP_WAIT_TX_DONE",                "V2 MP: Waiting for TX done"},         //28
-  {RADIO_MP_RECEIVE,                     "MP_RECEIVE",                     "V2 MP: Received datagram"},           //29
 };
 
 void verifyRadioStateTable()
