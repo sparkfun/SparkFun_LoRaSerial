@@ -806,7 +806,6 @@ void updateRadioState()
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     case RADIO_MP_STANDBY:
-      timeToHop = false;
       if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
       {
         triggerEvent(TRIGGER_BROADCAST_PACKET_RECEIVED);
@@ -856,7 +855,6 @@ void updateRadioState()
       break;
 
     case RADIO_MP_WAIT_TX_DONE:
-      timeToHop = false;
       if (transactionComplete == true) //If dio0ISR has fired, we are done transmitting
       {
         transactionComplete = false; //Reset ISR flag
@@ -870,7 +868,6 @@ void updateRadioState()
 
     case RADIO_MP_RECEIVE:
       {
-        timeToHop = false;
         //Decode the received datagram
         PacketType packetType = rcvDatagram();
 

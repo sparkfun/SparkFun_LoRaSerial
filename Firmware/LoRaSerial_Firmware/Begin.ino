@@ -104,6 +104,9 @@ void channelTimerHandler()
     channelTimer.setInterval_MS(settings.maxDwellTime, channelTimerHandler);
   }
 
-  triggerEvent(TRIGGER_CHANNEL_TIMER_ISR);
-  timeToHop = true;
+  if (settings.frequencyHop)
+  {
+    triggerEvent(TRIGGER_CHANNEL_TIMER_ISR);
+    timeToHop = true;
+  }
 }
