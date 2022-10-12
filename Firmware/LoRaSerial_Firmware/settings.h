@@ -300,7 +300,7 @@ typedef struct struct_settings {
   bool debugReceive = false; //Print receive processing
   bool debugTransmit = false; //Print transmit processing
   bool printTxErrors = false; //Print any transmit errors
-  bool useV2 = false; //Use the V2 protocol
+  uint8_t protocolVersion = 1; //Select the radio protocol
   bool printTimestamp = false; //Print a timestamp: days hours:minutes:seconds.milliseconds
   bool debugDatagrams = false; //Print the datagrams
   uint16_t overheadTime = 10; ////ms added to ack and datagram times before ACK timeout occurs
@@ -312,6 +312,10 @@ typedef struct struct_settings {
   bool copySerial = true; //Copy the serial parameters to the training client
   bool copyTriggers = true; //Copy the trigger parameters to the training client
   uint8_t trainingKey[AES_KEY_BYTES] = { 0x53, 0x70, 0x61, 0x72, 0x6b, 0x46, 0x75, 0x6E, 0x54, 0x72, 0x61, 0x69, 0x6e, 0x69, 0x6e, 0x67 };
+
+  //Add new parameters immediately before this line
+  //-- Add commands to set the parameters
+  //-- Add parameters to routine updateRadioParameters
 } Settings;
 Settings settings;
 
