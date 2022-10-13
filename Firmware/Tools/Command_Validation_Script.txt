@@ -393,98 +393,124 @@ ats38=1
 ats38=255
 ats38=256
 ats38=25
+ats38?
 
 # TriggerWidthIsMultiplier
 ats39=0
 ats39=2
 ats39=1
+ats39?
 
 # TriggerEnable: 31-0
 ats40=0
 ats40=4294967295
+ats40?
 
 # TriggerEnable: 63-32
 ats41=0
 ats41=4294967295
+ats41?
 
 # DebugReceive
 ats42=1
 ats42=2
 ats42=0
+ats42?
 
 # DebugTransmit
 ats43=1
 ats43=2
 ats43=0
+ats43?
 
 # PrintTxErrors
 ats44=1
 ats44=2
 ats44=0
+ats44?
 
-# useV2
+# protocolVersion
+ats45=0
 ats45=1
 ats45=2
-ats45=0
+ats45=3
+ats45?
 
 # PrintTimestamp
 ats46=1
 ats46=2
 ats46=0
+ats46?
 
 # debugDatagrams
 ats47=1
 ats47=2
 ats47=0
+ats47?
 
 # txAckMillis
 ats48=1
 ats48=2
 ats48=0
+ats48?
 
 # enableCRC16
 ats49=1
 ats49=2
 ats49=0
+ats49?
 
 # DisplayRealMillis
 ats50=1
 ats50=2
 ats50=0
+ats50?
 
 # TrainingServer
 ats51=1
 ats51=2
 ats51=0
+ats51?
 
 # ClientRetryInterval
 ats52=1
 ats52=2
 ats52=0
+ats52?
 
 # CopyDebug
 ats53=1
 ats53=2
 ats53=0
+ats53?
 
 # CopySerial
 ats54=1
 ats54=2
 ats54=0
+ats54?
 
 # CopyTriggers
 ats55=1
 ats55=2
 ats55=0
+ats55?
 
 # TrainingKey
 ats56=01020304050607080910111213141516
 ats56=0102030405060708091011121314151
 ats56=010203040506070809101112131415160
+ats56?
+
+# PrintLinkUpDown
+ats57=1
+ats57=2
+ats57=0
+ats57?
 
 # Invalid commands
-ats57=1
-ats57?
+ats58=1
+ats58?
 
 ats255=1
 ats255?
