@@ -84,6 +84,117 @@ void updateRadioState()
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    //V2 - Point-to-Point Training
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    /*
+        beginTrainingPointToPoint
+                |
+                | Save settings
+                |
+                | TX DATAGRAM_P2P_TRAINING_PING
+                |
+                V
+        RADIO_P2P_TRAINING_WAIT_PING_DONE
+                |
+                V                        RX DATAGRAM_P2P_TRAINING_PARAMS
+        RADIO_P2P_WAIT_FOR_TRAINING_PARAMS -----------.
+                |                                     |
+                | RX DATAGRAM_P2P_TRAINING_PING       |
+                | TX DATAGRAM_P2P_TRAINING_PARAMS     |
+                |                                     |
+                V                                     |
+        RADIO_P2P_WAIT_TRAINING_ACK_DONE              |
+                |                                     |
+                +<------------------------------------’
+                |
+                V
+        RADIO_RESET
+    */
+
+    //Wait for the PING to complete transmission
+    case RADIO_P2P_TRAINING_WAIT_PING_DONE:
+      if (transactionComplete)
+      {
+        transactionComplete = false; //Reset ISR flag
+        returnToReceiving();
+        changeState(RADIO_P2P_WAIT_FOR_TRAINING_PARAMS);
+      }
+      break;
+
+    case RADIO_P2P_WAIT_FOR_TRAINING_PARAMS:
+      updateRSSI();
+
+      //Check for a received datagram
+      if (transactionComplete == true)
+      {
+        transactionComplete = false; //Reset ISR flag
+
+        //Decode the received datagram
+        PacketType packetType = rcvDatagram();
+
+        //Process the received datagram
+        switch (packetType)
+        {
+          default:
+            triggerEvent(TRIGGER_BAD_PACKET);
+            returnToReceiving();
+            break;
+
+          case DATAGRAM_P2P_TRAINING_PING:
+            //Display the signal strength
+            if (settings.displayPacketQuality == true)
+            {
+              systemPrintln();
+              systemPrint("R:");
+              systemPrint(radio.getRSSI());
+              systemPrint("\tS:");
+              systemPrint(radio.getSNR());
+              systemPrint("\tfE:");
+              systemPrint(radio.getFrequencyError());
+              systemPrintln();
+            }
+
+            triggerEvent(TRIGGER_TRAINING_CONTROL_PACKET);
+
+            //Send the parameters
+            xmitDatagramP2pTrainingParams();
+            changeState(RADIO_P2P_WAIT_TRAINING_PARAMS_DONE);
+            break;
+
+          case DATAGRAM_P2P_TRAINING_PARAMS:
+            triggerEvent(TRIGGER_TRAINING_DATA_PACKET);
+
+            //Update the parameters
+            updateRadioParameters(rxData, true);
+            endPointToPointTraining(true);
+            changeState(RADIO_RESET);
+        }
+      }
+
+      //If the radio is available, send any data in the serial buffer over the radio
+      else if (receiveInProcess() == false)
+      {
+        //Check for a receive timeout
+        if ((millis() - datagramTimer) > (settings.clientPingRetryInterval * 1000))
+        {
+          triggerEvent(TRIGGER_TRAINING_NO_ACK);
+          retransmitDatagram();
+          changeState(RADIO_P2P_TRAINING_WAIT_PING_DONE);
+        }
+      }
+      break;
+
+    case RADIO_P2P_WAIT_TRAINING_PARAMS_DONE:
+      if (transactionComplete)
+      {
+        transactionComplete = false; //Reset ISR flag
+        endPointToPointTraining(false);
+        changeState(RADIO_RESET);
+      }
+      break;
+
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
     //V2 - No Link
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
     //Point-To-Point: Bring up the link
@@ -1929,38 +2040,44 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   {RADIO_TRAINING_ACK_WAIT,              "TRAINING_ACK_WAIT",              "[Training] Ack Wait"},        //14
   {RADIO_TRAINING_RECEIVED_PACKET,       "TRAINING_RECEIVED_PACKET",       "[Training] RX Packet"},       //15
 
+  //V2 - Point-to-Point Training
+  //    State                                 Name                              Description
+  {RADIO_P2P_TRAINING_WAIT_PING_DONE,    "P2P_TRAINING_WAIT_PING_DONE",    "V2 P2P: Wait TX Training Ping Done"}, //16
+  {RADIO_P2P_WAIT_FOR_TRAINING_PARAMS,   "P2P_WAIT_FOR_TRAINING_PARAMS",   "V2 P2P: Wait for Training params"},   //17
+  {RADIO_P2P_WAIT_TRAINING_PARAMS_DONE,  "P2P_WAIT_TRAINING_PARAMS_DONE",  "V2 P2P: Wait training params done"},  //18
+
   //V2 - Point-to-Point link handshake
   //    State                                 Name                              Description
-  {RADIO_P2P_LINK_DOWN,                  "P2P_LINK_DOWN",                  "V2 P2P: [No Link] Waiting for Ping"}, //16
-  {RADIO_P2P_WAIT_TX_PING_DONE,          "P2P_WAIT_TX_PING_DONE",          "V2 P2P: [No Link] Wait Ping TX Done"},//17
-  {RADIO_P2P_WAIT_ACK_1,                 "P2P_WAIT_ACK_1",                 "V2 P2P: [No Link] Waiting for ACK1"}, //18
-  {RADIO_P2P_WAIT_TX_ACK_1_DONE,         "P2P_WAIT_TX_ACK_1_DONE",         "V2 P2P: [No Link] Wait ACK1 TX Done"},//19
-  {RADIO_P2P_WAIT_ACK_2,                 "P2P_WAIT_ACK_2",                 "V2 P2P: [No Link] Waiting for ACK2"}, //20
-  {RADIO_P2P_WAIT_TX_ACK_2_DONE,         "P2P_WAIT_TX_ACK_2_DONE",         "V2 P2P: [No Link] Wait ACK2 TX Done"},//21
+  {RADIO_P2P_LINK_DOWN,                  "P2P_LINK_DOWN",                  "V2 P2P: [No Link] Waiting for Ping"}, //19
+  {RADIO_P2P_WAIT_TX_PING_DONE,          "P2P_WAIT_TX_PING_DONE",          "V2 P2P: [No Link] Wait Ping TX Done"},//20
+  {RADIO_P2P_WAIT_ACK_1,                 "P2P_WAIT_ACK_1",                 "V2 P2P: [No Link] Waiting for ACK1"}, //21
+  {RADIO_P2P_WAIT_TX_ACK_1_DONE,         "P2P_WAIT_TX_ACK_1_DONE",         "V2 P2P: [No Link] Wait ACK1 TX Done"},//22
+  {RADIO_P2P_WAIT_ACK_2,                 "P2P_WAIT_ACK_2",                 "V2 P2P: [No Link] Waiting for ACK2"}, //23
+  {RADIO_P2P_WAIT_TX_ACK_2_DONE,         "P2P_WAIT_TX_ACK_2_DONE",         "V2 P2P: [No Link] Wait ACK2 TX Done"},//24
 
   //V2 - Point-to-Point, link up, data exchange
   //    State                                 Name                              Description
-  {RADIO_P2P_LINK_UP,                    "P2P_LINK_UP",                    "V2 P2P: Receiving Standby"},          //22
-  {RADIO_P2P_LINK_UP_WAIT_ACK_DONE,      "P2P_LINK_UP_WAIT_ACK_DONE",      "V2 P2P: Waiting ACK TX Done"},        //23
-  {RADIO_P2P_LINK_UP_WAIT_TX_DONE,       "P2P_LINK_UP_WAIT_TX_DONE",       "V2 P2P: Waiting TX done"},            //24
-  {RADIO_P2P_LINK_UP_WAIT_ACK,           "P2P_LINK_UP_WAIT_ACK",           "V2 P2P: Waiting for ACK"},            //25
-  {RADIO_P2P_LINK_UP_HB_ACK_REXMT,       "P2P_LINK_UP_HB_ACK_REXMT",       "V2 P2P: Heartbeat ACK ReXmt"},            //26
+  {RADIO_P2P_LINK_UP,                    "P2P_LINK_UP",                    "V2 P2P: Receiving Standby"},          //25
+  {RADIO_P2P_LINK_UP_WAIT_ACK_DONE,      "P2P_LINK_UP_WAIT_ACK_DONE",      "V2 P2P: Waiting ACK TX Done"},        //26
+  {RADIO_P2P_LINK_UP_WAIT_TX_DONE,       "P2P_LINK_UP_WAIT_TX_DONE",       "V2 P2P: Waiting TX done"},            //27
+  {RADIO_P2P_LINK_UP_WAIT_ACK,           "P2P_LINK_UP_WAIT_ACK",           "V2 P2P: Waiting for ACK"},            //28
+  {RADIO_P2P_LINK_UP_HB_ACK_REXMT,       "P2P_LINK_UP_HB_ACK_REXMT",       "V2 P2P: Heartbeat ACK ReXmt"},        //29
 
   //V2 - Multi-Point data exchange
   //    State                                 Name                              Description
-  {RADIO_MP_STANDBY,                     "MP_STANDBY",                     "V2 MP: Wait for TX or RX"},           //27
-  {RADIO_MP_WAIT_TX_DONE,                "MP_WAIT_TX_DONE",                "V2 MP: Waiting for TX done"},         //28
+  {RADIO_MP_STANDBY,                     "MP_STANDBY",                     "V2 MP: Wait for TX or RX"},           //30
+  {RADIO_MP_WAIT_TX_DONE,                "MP_WAIT_TX_DONE",                "V2 MP: Waiting for TX done"},         //31
 
   //V2 - Multi-Point training client states
   //    State                                 Name                              Description
-  {RADIO_MP_WAIT_TX_TRAINING_PING_DONE,  "MP_WAIT_TX_TRAINING_PING_DONE",  "V2 MP: Wait TX training PING done"},  //29
-  {RADIO_MP_WAIT_RX_RADIO_PARAMETERS,    "MP_WAIT_RX_RADIO_PARAMETERS",    "V2 MP: Wait for radio parameters"},   //30
-  {RADIO_MP_WAIT_TX_PARAM_ACK_DONE,      "MP_WAIT_TX_PARAM_ACK_DONE",      "V2 MP: Wait for TX param ACK done"},  //31
+  {RADIO_MP_WAIT_TX_TRAINING_PING_DONE,  "MP_WAIT_TX_TRAINING_PING_DONE",  "V2 MP: Wait TX training PING done"},  //32
+  {RADIO_MP_WAIT_RX_RADIO_PARAMETERS,    "MP_WAIT_RX_RADIO_PARAMETERS",    "V2 MP: Wait for radio parameters"},   //33
+  {RADIO_MP_WAIT_TX_PARAM_ACK_DONE,      "MP_WAIT_TX_PARAM_ACK_DONE",      "V2 MP: Wait for TX param ACK done"},  //34
 
   //V2 - Multi-Point training server states
   //    State                                 Name                              Description
-  {RADIO_MP_WAIT_FOR_TRAINING_PING,      "MP_WAIT_FOR_TRAINING_PING",      "V2 MP: Wait for training PING"},      //32
-  {RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,   "MP_WAIT_TX_RADIO_PARAMS_DONE",   "V2 MP: Wait for TX params done"},     //33
+  {RADIO_MP_WAIT_FOR_TRAINING_PING,      "MP_WAIT_FOR_TRAINING_PING",      "V2 MP: Wait for training PING"},      //35
+  {RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,   "MP_WAIT_TX_RADIO_PARAMS_DONE",   "V2 MP: Wait for TX params done"},     //36
 };
 
 void verifyRadioStateTable()

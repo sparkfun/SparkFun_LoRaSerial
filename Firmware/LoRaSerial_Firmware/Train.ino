@@ -3,6 +3,9 @@ void selectTraining(bool defaultTraining)
 {
   if (settings.protocolVersion >= 2)
   {
+    if (settings.pointToPoint)
+      beginTrainingPointToPoint(defaultTraining);
+    else
     {
       if (settings.trainingServer)
         beginTrainingServer();
@@ -274,6 +277,36 @@ void updateCylonLEDs()
 }
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//V2 Point-To-Point Training
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+void beginTrainingPointToPoint(bool defaultTraining)
+{
+  if (defaultTraining)
+  {
+    settings = defaultSettings; //Upon completion we will return to default settings
+    systemPrint("Default ");
+  }
+  systemPrintln("Point-to-point training");
+
+  //Common initialization
+  commonTrainingInitialization();
+
+  //Transmit general ping packet to see if anyone else is sitting on the training channel
+  xmitDatagramP2PTrainingPing();
+
+  //Set the next state
+  changeState(RADIO_P2P_TRAINING_WAIT_PING_DONE);
+}
+
+void endPointToPointTraining(bool saveParams)
+{
+  memcpy(&settings, &originalSettings, sizeof(settings));
+  if (saveParams)
+    recordSystemSettings();
+}
+
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 //V2 Multi-Point Client/Server Training
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -306,7 +339,6 @@ void beginTrainingServer()
 
   //Common initialization
   commonTrainingInitialization();
-  memcpy(&settings.trainingKey, &originalSettings.trainingKey, AES_KEY_BYTES);
   settings.trainingServer = true;         //52: Operate as the training server
 
   //Start the receive operation
@@ -332,6 +364,7 @@ void commonTrainingInitialization()
   settings.printParameterName = true;     //28: Print the parameter names
   settings.verifyRxNetID = false;         //37: Disable netID checking
   settings.enableCRC16 = true;            //49: Use CRC-16
+  memcpy(&settings.trainingKey, &originalSettings.trainingKey, AES_KEY_BYTES); //56: Common training key
 
   //Determine the components of the frame header and trailer
   selectHeaderAndTrailerBytes();
@@ -367,6 +400,9 @@ void commonTrainingInitialization()
 
   //Reset cylon variables
   startCylonLEDs();
+
+  petWDT();
+  generateHopTable(); //Generate frequency table based on current settings
 
   //Select the training frequency, a multiple of channels down from the maximum
   petWDT();

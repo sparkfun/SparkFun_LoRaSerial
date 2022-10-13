@@ -35,6 +35,58 @@ const uint16_t crc16Table[256] =
 };
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//Point-To-Point Training
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+//Ping the other radio in the point-to-point configuration
+void xmitDatagramP2PTrainingPing()
+{
+  /*
+            endOfTxData ---.
+                           |
+                           V
+      +---------+----------+
+      |         |          |
+      | Control | Trailer  |
+      | 8 bits  | n Bytes  |
+      +---------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_P2P_TRAINING_PING;
+  txControl.ackNumber = 0;
+  transmitDatagram();
+}
+
+//Build the parameters packet used for training
+void xmitDatagramP2pTrainingParams()
+{
+  Settings params;
+
+  //Initialize the radio parameters
+  memcpy(&params, &originalSettings, sizeof(settings));
+  params.pointToPoint = true;
+
+  //Add the radio parameters
+  memcpy(endOfTxData, &params, sizeof(params));
+  endOfTxData += sizeof(params);
+
+  /*
+                          endOfTxData ---.
+                                         |
+                                         V
+      +----------+---------+---  ...  ---+----------+
+      | Optional |         |   Radio     | Optional |
+      |  NET ID  | Control | Parameters  | Trailer  |
+      |  8 bits  | 8 bits  |   n bytes   | n Bytes  |
+      +----------+---------+-------------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_P2P_TRAINING_PARAMS;
+  txControl.ackNumber = 0;
+  transmitDatagram();
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Point-To-Point: Bring up the link
 //
 //A three way handshake is used to get both systems to agree that data can flow in both
