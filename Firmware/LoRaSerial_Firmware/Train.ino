@@ -1,22 +1,130 @@
-
-void beginTraining()
+//Select the training protocol
+void selectTraining(bool defaultTraining)
 {
-  if ((settings.debug == true) || (settings.debugTraining == true))
-    systemPrintln("Begin point-to-point training");
-
-  originalSettings = settings; //Make copy of current settings
-
-  moveToTrainingFreq();
+  if (settings.protocolVersion >= 2)
+  {
+    {
+      if (settings.trainingServer)
+        beginTrainingServer();
+      else
+        beginTrainingClient();
+    }
+  }
+  else if (settings.protocolVersion == 1)
+    beginTraining(defaultTraining);
+  else
+  {
+    //Handle unknown future versions
+    systemPrint("Unknown protocol version: ");
+    systemPrintln(settings.protocolVersion);
+    while (1)
+      petWDT();
+  }
 }
 
-void beginDefaultTraining()
+/*
+      beginTraining
+            |
+            | Save settings
+            |
+            V
+    RADIO_TRAINING_TRANSMITTING
+            |
+            V
+    RADIO_TRAINING_ACK_WAIT --------------.
+            |                             |
+            V                             |
+    RADIO_TRAINING_RECEIVING_HERE_FIRST   |
+            |                             |
+            +<----------------------------’
+            |
+            V
+    RADIO_TRAINING_RECEIVED_PACKET
+            |
+            V
+       endTraining
+
+
+    beginTraining
+
+      1. Disable point-to-point
+      2. Disable frequency hopping
+      3. Reduce power to minimum
+      4. Generate HOP table
+      5. Compute channel spacing
+      6. Set training frequency
+      7. Configure the radio
+      8. Send training ping
+      9. Set state RADIO_TRAINING_TRANSMITTING
+
+    endTraining
+
+      1. Restore original settings
+      2. Update encryption key
+      3. Set net ID
+*/
+
+void beginTraining(bool defaultTraining)
 {
   if ((settings.debug == true) || (settings.debugTraining == true))
-    systemPrintln("Begin default training");
+  {
+    systemPrint("Begin ");
+    if (defaultTraining)
+      systemPrint("default ");
+    systemPrintln("point-to-point training");
+  }
 
-  originalSettings = defaultSettings; //Upon completion we will return to default settings
+  //Save the parameters
+  if (defaultTraining)
+    originalSettings = defaultSettings; //Upon completion we will return to default settings
+  else
+    originalSettings = settings; //Make copy of current settings
 
-  moveToTrainingFreq();
+  //Change to known training frequency based on available freq and current major firmware version
+  //This will allow different minor versions to continue to train to each other
+  //During training use default radio settings. This ensures both radios are at known good settings.
+  settings = defaultSettings; //Move to default settings
+
+  //Disable hopping
+  settings.frequencyHop = false;
+
+  //Disable NetID checking
+  settings.pointToPoint = false;
+  settings.verifyRxNetID = false;
+
+  //Debug training if requested
+  if (originalSettings.debugTraining)
+  {
+    settings.debugTraining = originalSettings.debugTraining;
+    settings.printPktData = originalSettings.printPktData;
+    settings.printRfData = originalSettings.printRfData;
+  }
+
+  //Turn power as low as possible. We assume two units will be near each other.
+  settings.radioBroadcastPower_dbm = 14;
+
+  generateHopTable(); //Generate frequency table based on current settings
+
+  configureRadio(); //Setup radio with settings
+
+  //Move to frequency that is not part of the hop table
+  //In normal operation we move 1/2 a channel away from min. In training, we move a full channel away + major firmware version.
+  float channelSpacing = (settings.frequencyMax - settings.frequencyMin) / (float)(settings.numberOfChannels + 2);
+  float trainFrequency = settings.frequencyMin + (channelSpacing * (FIRMWARE_VERSION_MAJOR % settings.numberOfChannels));
+
+  channels[0] = trainFrequency; //Inject this frequency into the channel table
+
+  //Transmit general ping packet to see if anyone else is sitting on the training channel
+  //Send special packet with train = 1, then wait for response
+  sendTrainingPingPacket();
+
+  //Recalculate packetAirTime because we need to wait not for a 2-byte response, but a 19 byte response
+  packetAirTime = calcAirTime(sizeof(trainEncryptionKey) + sizeof(trainNetID) + 2);
+
+  //Reset cylon variables
+  startCylonLEDs();
+
+  changeState(RADIO_TRAINING_TRANSMITTING);
 }
 
 //Upon successful exchange of keys, go back to original settings
@@ -98,101 +206,6 @@ void endTraining(bool newTrainingAvailable)
   sentFirstPing = false; //Send ping as soon as we exit
 
   systemPrintln("LINK TRAINED");
-}
-
-/*
-      beginTraining                beginDefaultTraining
-            | Save current settings          | Save default settings
-            V                                |
-            +<-------------------------------’
-            |
-            V
-    moveToTrainingFreq
-            |
-            V
-    RADIO_TRAINING_TRANSMITTING
-            |
-            V
-    RADIO_TRAINING_ACK_WAIT --------------.
-            |                             |
-            V                             |
-    RADIO_TRAINING_RECEIVING_HERE_FIRST   |
-            |                             |
-            +<----------------------------’
-            |
-            V
-    RADIO_TRAINING_RECEIVED_PACKET
-            |
-            V
-       endTraining
-
-
-    moveToTrainingFreq
-
-      1. Disable point-to-point
-      2. Disable frequency hopping
-      3. Reduce power to minimum
-      4. Generate HOP table
-      5. Compute channel spacing
-      6. Set training frequency
-      7. Configure the radio
-      8. Send training ping
-      9. Set state RADIO_TRAINING_TRANSMITTING
-
-    endTraining
-
-      1. Restore original settings
-      2. Update encryption key
-      3. Set net ID
-*/
-
-//Change to known training frequency based on available freq and current major firmware version
-//This will allow different minor versions to continue to train to each other
-//Send special packet with train = 1, then wait for response
-void moveToTrainingFreq()
-{
-  //During training use default radio settings. This ensures both radios are at known good settings.
-  settings = defaultSettings; //Move to default settings
-
-  //Disable hopping
-  settings.frequencyHop = false;
-
-  //Disable NetID checking
-  settings.pointToPoint = false;
-  settings.verifyRxNetID = false;
-
-  //Debug training if requested
-  if (originalSettings.debugTraining)
-  {
-    settings.debugTraining = originalSettings.debugTraining;
-    settings.printPktData = originalSettings.printPktData;
-    settings.printRfData = originalSettings.printRfData;
-  }
-
-  //Turn power as low as possible. We assume two units will be near each other.
-  settings.radioBroadcastPower_dbm = 14;
-
-  generateHopTable(); //Generate frequency table based on current settings
-
-  configureRadio(); //Setup radio with settings
-
-  //Move to frequency that is not part of the hop table
-  //In normal operation we move 1/2 a channel away from min. In training, we move a full channel away + major firmware version.
-  float channelSpacing = (settings.frequencyMax - settings.frequencyMin) / (float)(settings.numberOfChannels + 2);
-  float trainFrequency = settings.frequencyMin + (channelSpacing * (FIRMWARE_VERSION_MAJOR % settings.numberOfChannels));
-
-  channels[0] = trainFrequency; //Inject this frequency into the channel table
-
-  //Transmit general ping packet to see if anyone else is sitting on the training channel
-  sendTrainingPingPacket();
-
-  //Recalculate packetAirTime because we need to wait not for a 2-byte response, but a 19 byte response
-  packetAirTime = calcAirTime(sizeof(trainEncryptionKey) + sizeof(trainNetID) + 2);
-
-  //Reset cylon variables
-  startCylonLEDs();
-
-  changeState(RADIO_TRAINING_TRANSMITTING);
 }
 
 //Generate new netID/AES key to share

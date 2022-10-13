@@ -1756,13 +1756,9 @@ void updateRadioState()
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     /*
-          beginTraining                beginDefaultTraining
-                | Save current settings          | Save default settings
-                V                                |
-                +<-------------------------------’
+          beginTraining
                 |
-                V
-        moveToTrainingFreq
+                | Save settings
                 |
                 V
         RADIO_TRAINING_TRANSMITTING

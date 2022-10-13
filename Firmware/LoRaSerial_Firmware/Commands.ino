@@ -46,6 +46,8 @@ typedef struct
 
 bool commandAT(const char * commandString)
 {
+  bool defaultTraining = false;
+
   //'AT'
   if (commandLength == 2)
     reportOK();
@@ -70,10 +72,6 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATZ - Reboot the radio");
         systemPrintln("  AT&F - Restore factory settings");
         systemPrintln("  AT&W - Save current settings to NVM");
-        break;
-      case ('F'): //Enter training mode and return to factory defaults
-        reportOK();
-        beginDefaultTraining();
         break;
       case ('I'):
         //Shows the radio version
@@ -109,17 +107,16 @@ bool commandAT(const char * commandString)
           reportOK();
         }
         break;
+      case ('F'): //Enter training mode and return to factory defaults
+        defaultTraining = true;
+        //Fall through
+        //      |
+        //      |
+        //      |
+        //      V
       case ('T'): //Enter training mode
         reportOK();
-        if ((settings.protocolVersion >= 2) && (!settings.pointToPoint))
-        {
-          if (settings.trainingServer)
-            beginTrainingServer();
-          else
-            beginTrainingClient();
-        }
-        else
-          beginTraining();
+        selectTraining(defaultTraining);
         break;
       case ('X'): //Stop the training server
         if (trainingServerRunning && (!settings.pointToPoint) && settings.trainingServer)
