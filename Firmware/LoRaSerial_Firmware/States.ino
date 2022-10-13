@@ -2136,6 +2136,17 @@ void verifyRadioStateTable()
   }
 }
 
+//Verify the datagram type table
+void verifyV2DatagramType()
+{
+  if ((sizeof(v2DatagramType) / sizeof(v2DatagramType[0])) != MAX_DATAGRAM_TYPE)
+  {
+    systemPrintln("ERROR - Please update the v2DatagramTable");
+    while (1)
+      petWDT();
+  }
+}
+
 //Change states and print the new state
 void changeState(RadioStates newState)
 {
