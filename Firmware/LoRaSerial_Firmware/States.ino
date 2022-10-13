@@ -1081,7 +1081,7 @@ void updateRadioState()
             updateRadioParameters(&rxData[UNIQUE_ID_BYTES * 2]);
 
             //Acknowledge the radio parameters
-            xmitDatagramTrainingAck(&rxData[UNIQUE_ID_BYTES]);
+            xmitDatagramMpTrainingAck(&rxData[UNIQUE_ID_BYTES]);
             changeState(RADIO_MP_WAIT_TX_PARAM_ACK_DONE);
             break;
         }
@@ -1099,7 +1099,7 @@ void updateRadioState()
 
       //Check for a receive timeout
       else if ((millis() - datagramTimer) > (settings.clientPingRetryInterval * 1000))
-        xmitDatagramTrainingPing();
+        xmitDatagramMpTrainingPing();
       break;
 
     case RADIO_MP_WAIT_TX_PARAM_ACK_DONE:
@@ -1168,7 +1168,7 @@ void updateRadioState()
           case DATAGRAM_TRAINING_PING:
             //Save the client ID
             memcpy(trainingPartnerID, rxData, UNIQUE_ID_BYTES);
-            xmitDatagramRadioParameters(trainingPartnerID);
+            xmitDatagramMpRadioParameters(trainingPartnerID);
 
             //Wait for the transmit to complete
             changeState(RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE);

@@ -299,7 +299,7 @@ void xmitDatagramMpDatagram()
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Build the client ping packet used for training
-void xmitDatagramTrainingPing()
+void xmitDatagramMpTrainingPing()
 {
   //Add the source (server) ID
   memcpy(endOfTxData, myUniqueId, UNIQUE_ID_BYTES);
@@ -322,7 +322,7 @@ void xmitDatagramTrainingPing()
 }
 
 //Build the client ACK packet used for training
-void xmitDatagramTrainingAck(uint8_t * serverID)
+void xmitDatagramMpTrainingAck(uint8_t * serverID)
 {
   //Add the destination (server) ID
   memcpy(endOfTxData, serverID, UNIQUE_ID_BYTES);
@@ -433,7 +433,7 @@ void updateRadioParameters(uint8_t * rxData)
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Build the server parameters packet used for training
-void xmitDatagramRadioParameters(const uint8_t * clientID)
+void xmitDatagramMpRadioParameters(const uint8_t * clientID)
 {
   Settings params;
 

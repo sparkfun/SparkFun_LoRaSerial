@@ -282,7 +282,7 @@ void beginTrainingClient()
   commonTrainingInitialization();
 
   //Transmit client ping to the training server
-  xmitDatagramTrainingPing();
+  xmitDatagramMpTrainingPing();
 
   //Set the next state
   changeState(RADIO_MP_WAIT_TX_TRAINING_PING_DONE);
