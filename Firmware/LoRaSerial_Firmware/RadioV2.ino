@@ -348,7 +348,7 @@ void xmitDatagramMpTrainingAck(uint8_t * serverID)
   transmitDatagram();
 }
 
-void updateRadioParameters(uint8_t * rxData)
+void updateRadioParameters(uint8_t * rxData, bool pointToPoint)
 {
   Settings params;
 
@@ -358,7 +358,7 @@ void updateRadioParameters(uint8_t * rxData)
   //Update the radio parameters
   originalSettings.airSpeed = params.airSpeed;
   originalSettings.netID = params.netID;
-  originalSettings.pointToPoint = false;
+  originalSettings.pointToPoint = pointToPoint;
   originalSettings.encryptData = params.encryptData;
   memcpy(originalSettings.encryptionKey, params.encryptionKey, sizeof(originalSettings.encryptionKey));
   originalSettings.dataScrambling = params.dataScrambling;
