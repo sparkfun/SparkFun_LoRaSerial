@@ -102,14 +102,9 @@ bool commandAT(const char * commandString)
           configureRadio(); //Apply any new settings
 
           setRSSI(0); //Turn off LEDs
-          if (settings.pointToPoint == true)
-            changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-          else
-            changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
-
           inCommandMode = false; //Return to printing normal RF serial data
-
           reportOK();
+          changeState(RADIO_RESET);
         }
         break;
       case ('F'): //Enter training mode and return to factory defaults

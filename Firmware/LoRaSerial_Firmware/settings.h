@@ -58,7 +58,8 @@ typedef enum
 
   RADIO_MAX_STATE,
 } RadioStates;
-RadioStates radioState = RADIO_NO_LINK_RECEIVING_STANDBY;
+
+RadioStates radioState = RADIO_RESET;
 
 typedef struct _RADIO_STATE_ENTRY
 {
