@@ -863,7 +863,6 @@ void updateRadioState()
 
               case DATAGRAM_DATA:
               case DATAGRAM_DATA_ACK:
-              case DATAGRAM_SF6_DATA:
               case DATAGRAM_REMOTE_COMMAND:
               case DATAGRAM_REMOTE_COMMAND_RESPONSE:
               case DATAGRAM_HEARTBEAT:
@@ -925,7 +924,6 @@ void updateRadioState()
 
               case DATAGRAM_DATA:
               case DATAGRAM_DATA_ACK:
-              case DATAGRAM_SF6_DATA:
               case DATAGRAM_REMOTE_COMMAND:
               case DATAGRAM_REMOTE_COMMAND_RESPONSE:
               case DATAGRAM_HEARTBEAT:
