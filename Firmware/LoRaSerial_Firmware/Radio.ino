@@ -474,6 +474,8 @@ void configureRadio()
     systemPrintln(hoppingPeriod);
     systemPrint("controlPacketAirTime: ");
     systemPrintln(controlPacketAirTime);
+    systemPrint("ackAirTime: ");
+    systemPrintln(ackAirTime);
   }
 
   if (success == false)
