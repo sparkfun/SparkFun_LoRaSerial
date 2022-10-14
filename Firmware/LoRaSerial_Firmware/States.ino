@@ -1058,7 +1058,6 @@ void updateRadioState()
             {
               triggerEvent(TRIGGER_BROADCAST_DATA_PACKET);
               xmitDatagramMpDatagram();
-              sendDataPacket();
               changeState(RADIO_MP_WAIT_TX_DONE);
             }
           }
@@ -1066,7 +1065,7 @@ void updateRadioState()
       } //End processWaitingSerial
 
       //Toggle 2 LEDs if we have recently transmitted
-      if (millis() - packetTimestamp < 5000)
+      if (millis() - datagramTimer < 5000)
       {
         if (millis() - lastLinkBlink > 250) //Blink at 4Hz
         {
