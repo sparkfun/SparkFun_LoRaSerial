@@ -2,7 +2,7 @@ typedef enum
 {
   RADIO_RESET = 0,
 
-  // V1
+  //V1
   RADIO_NO_LINK_RECEIVING_STANDBY,
   RADIO_NO_LINK_TRANSMITTING,
   RADIO_NO_LINK_ACK_WAIT,
@@ -22,8 +22,13 @@ typedef enum
   RADIO_TRAINING_ACK_WAIT,
   RADIO_TRAINING_RECEIVED_PACKET,
 
-  // V2
-  // Point-To-Point: Bring up the link
+  //V2
+  //Point-to-Point Training
+  RADIO_P2P_TRAINING_WAIT_PING_DONE,
+  RADIO_P2P_WAIT_FOR_TRAINING_PARAMS,
+  RADIO_P2P_WAIT_TRAINING_PARAMS_DONE,
+
+  //Point-To-Point: Bring up the link
   RADIO_P2P_LINK_DOWN,
   RADIO_P2P_WAIT_TX_PING_DONE,
   RADIO_P2P_WAIT_ACK_1,
@@ -31,23 +36,23 @@ typedef enum
   RADIO_P2P_WAIT_ACK_2,
   RADIO_P2P_WAIT_TX_ACK_2_DONE,
 
-  // Point-to-Point: Link up, data exchange
+  //Point-to-Point: Link up, data exchange
   RADIO_P2P_LINK_UP,
   RADIO_P2P_LINK_UP_WAIT_ACK_DONE,
   RADIO_P2P_LINK_UP_WAIT_TX_DONE,
   RADIO_P2P_LINK_UP_WAIT_ACK,
   RADIO_P2P_LINK_UP_HB_ACK_REXMT,
 
-  // Multi-Point: Datagrams
+  //Multi-Point: Datagrams
   RADIO_MP_STANDBY,
   RADIO_MP_WAIT_TX_DONE,
 
-  //Training client states
+  //Multi-Point Training client states
   RADIO_MP_WAIT_TX_TRAINING_PING_DONE,
   RADIO_MP_WAIT_RX_RADIO_PARAMETERS,
   RADIO_MP_WAIT_TX_PARAM_ACK_DONE,
 
-  //Training server states
+  //Multi-Point Training server states
   RADIO_MP_WAIT_FOR_TRAINING_PING,
   RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,
 
@@ -66,26 +71,30 @@ typedef struct _RADIO_STATE_ENTRY
 typedef enum
 {
   //V2 packet types must start at zero
+  //V2: Point-to-Point training
+  DATAGRAM_P2P_TRAINING_PING = 0,   // 0
+  DATAGRAM_P2P_TRAINING_PARAMS,     // 1
+
   //V2: Link establishment handshake
-  DATAGRAM_PING = 0,
-  DATAGRAM_ACK_1,
-  DATAGRAM_ACK_2,
+  DATAGRAM_PING,                    // 3
+  DATAGRAM_ACK_1,                   // 4
+  DATAGRAM_ACK_2,                   // 5
 
   //V2: Point-to-Point data exchange
-  DATAGRAM_DATA,
-  DATAGRAM_SF6_DATA,
-  DATAGRAM_DATA_ACK,
-  DATAGRAM_HEARTBEAT,
-  DATAGRAM_REMOTE_COMMAND,
-  DATAGRAM_REMOTE_COMMAND_RESPONSE,
+  DATAGRAM_DATA,                    // 6
+  DATAGRAM_SF6_DATA,                // 7
+  DATAGRAM_DATA_ACK,                // 8
+  DATAGRAM_HEARTBEAT,               // 9
+  DATAGRAM_REMOTE_COMMAND,          //10
+  DATAGRAM_REMOTE_COMMAND_RESPONSE, //11
 
   //V2: Multi-Point data exchange
-  DATAGRAM_DATAGRAM,
+  DATAGRAM_DATAGRAM,                //12
 
   //V2: Multi-Point training exchange
-  DATAGRAM_TRAINING_PING,
-  DATAGRAM_TRAINING_PARAMS,
-  DATAGRAM_TRAINING_ACK,
+  DATAGRAM_TRAINING_PING,           //13
+  DATAGRAM_TRAINING_PARAMS,         //14
+  DATAGRAM_TRAINING_ACK,            //15
 
   //Add new V2 datagram types before this line
   MAX_DATAGRAM_TYPE,
@@ -109,12 +118,16 @@ typedef enum
 } PacketType;
 
 const char * const v2DatagramType[] =
-{//  0       1        2        3        4           5           6
-  "PING", "ACK-1", "ACK-2", "DATA", "SF6-DATA", "DATA-ACK", "HEARTBEAT",
-  //  7          8                9                10
-  "RMT-CMD", "RMT_RESP", "DATAGRAM_DATAGRAM", "TRAINING_PING",
-  //     11                12
-  "TRAINING_PARAMS", "TRAINING_ACK"
+{//       0                    1
+  "P2P_TRAINING_PING", "P2P_TRAINING_PARAMS",
+  // 3       4        5
+  "PING", "ACK-1", "ACK-2",
+  // 6        7           8           9           10          11
+  "DATA", "SF6-DATA", "DATA-ACK", "HEARTBEAT", "RMT-CMD", "RMT_RESP",
+  //       12
+  "DATAGRAM_DATAGRAM",
+  //       13              14               15
+  "TRAINING_PING", "TRAINING_PARAMS", "TRAINING_ACK"
 };
 
 //Train button states
