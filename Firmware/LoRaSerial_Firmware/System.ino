@@ -216,7 +216,7 @@ void updateButton()
     {
       setRSSI(0b1111);
 
-      beginTraining();
+      selectTraining(false);
 
       trainState = TRAIN_NO_PRESS;
     }
@@ -228,7 +228,7 @@ void updateButton()
     {
       setRSSI(0b1111);
 
-      beginDefaultTraining();
+      selectTraining(true);
 
       trainState = TRAIN_NO_PRESS;
     }
