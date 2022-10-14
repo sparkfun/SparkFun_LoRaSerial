@@ -123,6 +123,9 @@ SAMDTimer channelTimer(TIMER_TCC); //Available: TC3, TC4, TC5, TCC, TCC1 or TCC2
 unsigned long timerStart = 0; //Tracks how long our timer has been running since last hop
 bool partialTimer = false; //After an ACK we reset and run a partial timer to sync units
 const int SYNC_PROCESSING_OVERHEAD = -5; //Number of milliseconds it takes to compute clock deltas before sync'ing clocks
+
+uint16_t petTimeoutHalf = 0; //Half the amount of time before WDT. Helps reduce amount of time spent petting.
+unsigned long lastPet = 0; //Remebers time of last WDT pet.
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Global variables - Serial
@@ -140,6 +143,11 @@ uint16_t txTail = 0;
 uint16_t rxHead = 0;
 uint16_t rxTail = 0;
 
+unsigned long lastByteReceived_ms = 0; //Track when last transmission was. Send partial buffer once time has expired.
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+//Global variables - Command Processing
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 char commandBuffer[100]; //Received serial gets stored into buffer until \r or \n is received
 uint8_t commandRXBuffer[100]; //Bytes received from remote, waiting for printing or AT parsing
 uint8_t commandTXBuffer[1024 * 4]; //Bytes waiting to be transmitted to the remote unit
@@ -148,36 +156,33 @@ uint16_t commandTXTail = 0;
 uint16_t commandRXHead = 0;
 uint16_t commandRXTail = 0;
 
-unsigned long lastByteReceived_ms = 0; //Track when last transmission was. Send partial buffer once time has expired.
-
-char platformPrefix[25]; //Used for printing platform specific device name, ie "SAMD21 1W 915MHz"
 uint8_t escapeCharsReceived = 0; //Used to enter command mode
 unsigned long lastEscapeReceived_ms = 0; //Tracks end of serial traffic
 const long minEscapeTime_ms = 2000; //Serial traffic must stop this amount before an escape char is recognized
 
-uint16_t petTimeoutHalf = 0; //Half the amount of time before WDT. Helps reduce amount of time spent petting.
-unsigned long lastPet = 0; //Remebers time of last WDT pet.
+bool inCommandMode = false; //Normal data is prevented from entering serial output when in command mode
+uint8_t commandLength = 0;
+bool remoteCommandResponse;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-//Global variables - Radio
+//Global variables - LEDs
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+int trainCylonNumber = 0b0001;
+int trainCylonDirection = -1;
+
+unsigned long lastTrainBlink = 0; //Controls LED during training
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+//Global variables - Radio (General)
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 uint8_t outgoingPacket[MAX_PACKET_SIZE]; //Contains the current data in route to receiver
 uint8_t packetSize = 0; //Tracks how much data + control trailer
-uint16_t packetAirTime = 0; //Recalc'd with each new packet transmission
-uint16_t controlPacketAirTime = 0; //Recalc'd with each change of settings
-uint8_t packetSent = 0; //Increases each time packet is sent
-unsigned long packetTimestamp = 0;
-uint16_t packetsLost = 0; //Used to determine if radio link is down
-uint16_t packetsResent = 0; //Keep metrics of link quality
-uint16_t totalPacketsLost = 0; //Keep metrics of link quality
+uint16_t frameAirTime = 0; //Recalc'd with each new packet transmission
+uint16_t ackAirTime = 0; //Recalc'd with each change of settings
+uint8_t frameSentCount = 0; //Increases each time a frame is sent
 
-uint8_t lastPacket[MAX_PACKET_SIZE]; //Contains the last data received. Used for duplicate testing.
-uint8_t lastPacketSize = 0; //Tracks the last packet size we received
 unsigned long lastPacketReceived = 0; //Controls link LED in broadcast mode
 unsigned long lastLinkBlink = 0; //Controls link LED in broadcast mode
-
-#define MAX_LOST_PACKET_BEFORE_LINKLOST 2
-bool sentFirstPing = false; //Force a ping to link at POR
 
 volatile bool transactionComplete = false; //Used in dio0ISR
 volatile bool timeToHop = false; //Used in dio1ISR
@@ -185,19 +190,19 @@ bool expectingAck = false; //Used by various send packet functions
 
 float frequencyCorrection = 0; //Adjust receive freq based on the last packet received freqError
 
-unsigned long lastTrainBlink = 0; //Controls LED during training
+volatile bool clearDIO1 = true; //Clear the DIO1 hop ISR when possible
 
-Settings originalSettings; //Create a duplicate of settings during training so that we can resort as needed
-uint8_t trainNetID; //New netID passed during training
-uint8_t trainEncryptionKey[AES_KEY_BYTES]; //New AES key passed during training
-
-bool inCommandMode = false; //Normal data is prevented from entering serial output when in command mode
-uint8_t commandLength = 0;
-bool remoteCommandResponse;
-
+//Link quality metrics
+uint32_t datagramsSent;     //Total number of datagrams sent
+uint32_t datagramsReceived; //Total number of datagrams received
+uint32_t framesSent;        //Total number of frames sent
+uint32_t framesReceived;    //Total number of frames received
+uint32_t badFrames;         //Total number of bad frames received
+uint32_t duplicateFrames;   //Total number of duplicate frames received
+uint32_t lostFrames;        //Total number of lost TX frames
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-//V2
+//Global variables - V2 Protocol
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Frame size values
@@ -208,8 +213,6 @@ uint8_t txDatagramSize;
 //Point-to-Point
 unsigned long datagramTimer;
 uint8_t expectedDatagramNumber;
-uint16_t ackAirTime;
-uint16_t datagramAirTime;
 uint16_t pingRandomTime;
 uint16_t heartbeatRandomTime;
 
@@ -245,22 +248,14 @@ bool trainingPreviousRxInProgress = false; //Previous RX status
 float originalChannel; //Original channel from HOP table while training is in progress
 uint8_t trainingPartnerID[UNIQUE_ID_BYTES]; //Unique ID of the training partner
 uint8_t myUniqueId[UNIQUE_ID_BYTES]; // Unique ID of this system
-
-volatile bool clearDIO1 = true; //Clear the DIO1 hop ISR when possible
-
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-long startTime = 0; //Used for air time of TX frames
-long stopTime = 0;
-
-bool confirmDeliveryBeforeRadioConfig = false; //Goes true when we have remotely configured a radio
-
-int trainCylonNumber = 0b0001;
-int trainCylonDirection = -1;
-
 const Settings defaultSettings;
+Settings originalSettings; //Create a duplicate of settings during training so that we can resort as needed
+
+char platformPrefix[25]; //Used for printing platform specific device name, ie "SAMD21 1W 915MHz"
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Architecture variables

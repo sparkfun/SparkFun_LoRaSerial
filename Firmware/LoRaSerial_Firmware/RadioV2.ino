@@ -537,6 +537,7 @@ PacketType rcvDatagram()
   rcvTimeMillis = millis();
 
   //Get the received datagram
+  framesReceived++;
   radio.readData(incomingBuffer, MAX_PACKET_SIZE);
   rxDataBytes = radio.getPacketLength();
   rxData = incomingBuffer;
@@ -608,7 +609,8 @@ PacketType rcvDatagram()
       if (settings.printRfData && rxDataBytes)
         dumpBuffer(incomingBuffer, rxDataBytes);
     }
-    return (PACKET_BAD);
+    badFrames++;
+    return (DATAGRAM_BAD);
   }
 
   /*
@@ -643,7 +645,7 @@ PacketType rcvDatagram()
         petWDT();
         if (settings.printPktData && rxDataBytes)
           dumpBuffer(incomingBuffer, rxDataBytes);
-        return (PACKET_NETID_MISMATCH);
+        return (DATAGRAM_NETID_MISMATCH);
       }
       systemPrintln();
     }
@@ -676,7 +678,8 @@ PacketType rcvDatagram()
         if (settings.printRfData && rxDataBytes)
             dumpBuffer(incomingBuffer, rxDataBytes);
       }
-      return (PACKET_BAD);
+      badFrames++;
+      return (DATAGRAM_BAD);
     }
   }
 
@@ -699,8 +702,11 @@ PacketType rcvDatagram()
   uint8_t packetNumber = rxControl.ackNumber;
   if (settings.debugReceive)
     printControl(*((uint8_t *)&rxControl));
-  if (datagramType >= MAX_DATAGRAM_TYPE)
-    return (PACKET_BAD);
+  if (datagramType >= MAX_V2_DATAGRAM_TYPE)
+  {
+    badFrames++;
+    return (DATAGRAM_BAD);
+  }
 
   //Display the CRC
   if (settings.enableCRC16 && (settings.printPktData || settings.debugReceive))
@@ -740,7 +746,8 @@ PacketType rcvDatagram()
         systemPrint((int)rxDataBytes - minDatagramSize);
         systemPrintln(" received bytes");
       }
-      return (PACKET_BAD);
+      badFrames++;
+      return (DATAGRAM_BAD);
     }
   }
   rxDataBytes -= minDatagramSize;
@@ -764,7 +771,8 @@ PacketType rcvDatagram()
             systemPrint(" expecting ");
             systemPrintln(expectedAckNumber);
           }
-          return (PACKET_BAD);
+          badFrames++;
+          return (DATAGRAM_BAD);
         }
 
         //Increment the expected ACK number
@@ -782,7 +790,8 @@ PacketType rcvDatagram()
           if (packetNumber == ((expectedDatagramNumber - 1) & 3))
           {
             linkDownTimer = millis();
-            return PACKET_DUPLICATE;
+            duplicateFrames++;
+            return DATAGRAM_DUPLICATE;
           }
 
           //Not a duplicate
@@ -794,7 +803,8 @@ PacketType rcvDatagram()
             systemPrint(" expecting ");
             systemPrintln(expectedDatagramNumber);
           }
-          return PACKET_BAD;
+          badFrames++;
+          return DATAGRAM_BAD;
         }
 
         //Receive this data packet and set the next expected datagram number
@@ -860,6 +870,7 @@ PacketType rcvDatagram()
   }
 
   //Process the packet
+  datagramsReceived++;
   linkDownTimer = millis();
   return datagramType;
 }
@@ -876,6 +887,7 @@ void transmitDatagram()
   uint8_t length;
 
   //Determine the packet size
+  datagramsSent++;
   txDatagramSize = endOfTxData - outgoingPacket;
   length = txDatagramSize - headerBytes;
 
@@ -1092,11 +1104,11 @@ void transmitDatagram()
   //Reset the buffer data pointer for the next transmit operation
   endOfTxData = &outgoingPacket[headerBytes];
 
-  //Compute the time needed for this packet. Part of ACK timeout.
-  datagramAirTime = calcAirTime(txDatagramSize);
+  //Compute the time needed for this frame. Part of ACK timeout.
+  frameAirTime = calcAirTime(txDatagramSize);
 
   //Transmit this datagram
-  packetSent = 0; //This is the first time this packet is being sent
+  frameSentCount = 0; //This is the first time this frame is being sent
   retransmitDatagram();
 }
 
@@ -1113,7 +1125,7 @@ void printControl(uint8_t value)
   systemPrintln(value & 3);
   systemPrintTimestamp();
   systemPrint("        datagramType ");
-  if (control->datagramType < MAX_DATAGRAM_TYPE)
+  if (control->datagramType < MAX_V2_DATAGRAM_TYPE)
     systemPrintln(v2DatagramType[control->datagramType]);
   else
   {
@@ -1136,8 +1148,8 @@ void retransmitDatagram()
       |<-------------------- txDatagramSize --------------------->|
   */
 
-  //Display the transmitted packet bytes
-  if (packetSent && (settings.printRfData || settings.debugTransmit))
+  //Display the transmitted frame bytes
+  if (frameSentCount && (settings.printRfData || settings.debugTransmit))
   {
     systemPrintTimestamp();
     systemPrint("TX: Retransmit ");
@@ -1152,17 +1164,20 @@ void retransmitDatagram()
       dumpBuffer(outgoingPacket, txDatagramSize);
   }
 
+  //Transmit this frame
   int state = radio.startTransmit(outgoingPacket, txDatagramSize);
   if (state == RADIOLIB_ERR_NONE)
   {
+    frameSentCount++;
+    framesSent++;
     xmitTimeMillis = millis();
-    packetAirTime = calcAirTime(txDatagramSize); //Calculate packet air size while we're transmitting in the background
-    uint16_t responseDelay = packetAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
+    frameAirTime = calcAirTime(txDatagramSize); //Calculate frame air size while we're transmitting in the background
+    uint16_t responseDelay = frameAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
     if (settings.debugTransmit)
     {
       systemPrintTimestamp();
-      systemPrint("TX: PacketAirTime ");
-      systemPrint(packetAirTime);
+      systemPrint("TX: frameAirTime ");
+      systemPrint(frameAirTime);
       systemPrintln(" mSec");
 
       systemPrintTimestamp();
@@ -1170,7 +1185,7 @@ void retransmitDatagram()
       systemPrint(responseDelay);
       systemPrintln(" mSec");
     }
-    packetAirTime += responseDelay;
+    frameAirTime += responseDelay;
   }
   else if (settings.debugTransmit)
   {

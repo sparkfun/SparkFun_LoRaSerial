@@ -10,7 +10,7 @@ void updateRadioState()
   static uint8_t rexmtBuffer[MAX_PACKET_SIZE];
   static CONTROL_U8 rexmtControl;
   static uint8_t rexmtLength;
-  static uint8_t rexmtPacketSent;
+  static uint8_t rexmtFrameSentCount;
 
   switch (radioState)
   {
@@ -18,6 +18,8 @@ void updateRadioState()
       {
         systemPrint("Unknown state: ");
         systemPrintln(radioState);
+        while (1)
+          petWDT();
       }
       break;
 
@@ -64,22 +66,6 @@ void updateRadioState()
           changeState(RADIO_P2P_LINK_DOWN);
         else
           changeState(RADIO_MP_STANDBY);
-      }
-      else
-      {
-        //V1 - SF6 length, netID and control are at the end of the datagram
-        trailerBytes = headerBytes;
-        headerBytes = 0;
-
-        //Determine the minimum and maximum datagram sizes
-        minDatagramSize = headerBytes + trailerBytes;
-        maxDatagramSize = sizeof(outgoingPacket) - minDatagramSize;
-
-        //Start the V1 protocol
-        if (settings.pointToPoint == true)
-          changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-        else
-          changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
       }
       break;
 
@@ -180,6 +166,7 @@ void updateRadioState()
         {
           triggerEvent(TRIGGER_TRAINING_NO_ACK);
           retransmitDatagram();
+          lostFrames++;
           changeState(RADIO_P2P_TRAINING_WAIT_PING_DONE);
         }
       }
@@ -356,7 +343,7 @@ void updateRadioState()
       }
       else
       {
-        if ((millis() - datagramTimer) >= (datagramAirTime + ackAirTime + settings.overheadTime))
+        if ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime))
         {
           if (settings.debugDatagrams)
           {
@@ -412,7 +399,7 @@ void updateRadioState()
       }
       else
       {
-        if ((millis() - datagramTimer) >= (datagramAirTime +  ackAirTime + settings.overheadTime))
+        if ((millis() - datagramTimer) >= (frameAirTime +  ackAirTime + settings.overheadTime))
         {
           if (settings.debugDatagrams)
           {
@@ -525,7 +512,7 @@ void updateRadioState()
             returnToReceiving();
             break;
 
-          case PACKET_BAD:
+          case DATAGRAM_BAD:
             triggerEvent(TRIGGER_BAD_PACKET);
             returnToReceiving();
             break;
@@ -537,7 +524,7 @@ void updateRadioState()
             changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
             break;
 
-          case PACKET_DUPLICATE:
+          case DATAGRAM_DUPLICATE:
             //Display the signal strength
             if (settings.displayPacketQuality == true)
             {
@@ -551,7 +538,6 @@ void updateRadioState()
               systemPrintln();
             }
 
-            packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
@@ -587,7 +573,6 @@ void updateRadioState()
               systemPrintln();
             }
 
-            packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
@@ -627,7 +612,6 @@ void updateRadioState()
             txHead += rxDataBytes - length;
             txHead %= sizeof(serialTransmitBuffer);
 
-            packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
@@ -654,7 +638,6 @@ void updateRadioState()
             commandRXHead += rxDataBytes - length;
             commandRXHead %= sizeof(commandRXBuffer);
 
-            packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND);
@@ -667,7 +650,6 @@ void updateRadioState()
             for (int x = 0 ; x < rxDataBytes ; x++)
               Serial.write(rxData[x]);
 
-            packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
@@ -772,7 +754,7 @@ void updateRadioState()
             returnToReceiving();
             break;
 
-          case PACKET_BAD:
+          case DATAGRAM_BAD:
             triggerEvent(TRIGGER_BAD_PACKET);
             returnToReceiving();
             break;
@@ -800,7 +782,6 @@ void updateRadioState()
               systemPrintln();
             }
 
-            packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
@@ -832,7 +813,6 @@ void updateRadioState()
               systemPrintln();
             }
 
-            packetsLost = 0; //Reset, used for linkLost testing
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
@@ -844,7 +824,7 @@ void updateRadioState()
             memcpy(rexmtBuffer, outgoingPacket, MAX_PACKET_SIZE);
             rexmtControl = txControl;
             rexmtLength = txDatagramSize;
-            rexmtPacketSent = packetSent;
+            rexmtFrameSentCount = frameSentCount;
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
             xmitDatagramP2PAck(); //Transmit ACK
@@ -855,7 +835,7 @@ void updateRadioState()
       }
 
       //Check for ACK timeout
-      else if ((millis() - datagramTimer) >= (datagramAirTime + ackAirTime + settings.overheadTime))
+      else if ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime))
         //Set at end of transmit, measures ACK timeout
       {
         if (settings.debugDatagrams)
@@ -865,14 +845,14 @@ void updateRadioState()
         }
 
         //Retransmit the packet
-        if (packetSent < settings.maxResends)
+        if (frameSentCount < settings.maxResends)
         {
           triggerEvent(TRIGGER_LINK_RETRANSMIT);
           if (settings.debugDatagrams)
           {
             systemPrintTimestamp();
             systemPrint("TX: Retransmit ");
-            systemPrint(packetSent);
+            systemPrint(frameSentCount);
             systemPrint(", ");
             systemPrint(v2DatagramType[txControl.datagramType]);
             switch (txControl.datagramType)
@@ -897,7 +877,7 @@ void updateRadioState()
           if (receiveInProcess() == false)
           {
             retransmitDatagram();
-            packetSent++;
+            lostFrames++;
             changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
           }
         }
@@ -924,17 +904,17 @@ void updateRadioState()
         transactionComplete = false; //Reset ISR flag
 
         //Retransmit the packet
-        if (packetSent++ < settings.maxResends)
+        if (rexmtFrameSentCount < settings.maxResends)
         {
           memcpy(outgoingPacket, rexmtBuffer, MAX_PACKET_SIZE);
           txControl = rexmtControl;
           txDatagramSize = rexmtLength;
-          packetSent = rexmtPacketSent;
+          frameSentCount = rexmtFrameSentCount;
           if (settings.debugDatagrams)
           {
             systemPrintTimestamp();
             systemPrint("TX: Retransmit ");
-            systemPrint(packetSent);
+            systemPrint(frameSentCount);
             systemPrint(", ");
             systemPrint(v2DatagramType[txControl.datagramType]);
             switch (txControl.datagramType)
@@ -957,6 +937,7 @@ void updateRadioState()
             }
           }
           retransmitDatagram();
+          lostFrames++;
           changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
         }
         else
@@ -1328,651 +1309,6 @@ void updateRadioState()
         changeState(RADIO_MP_WAIT_FOR_TRAINING_PING);
       }
       break;
-
-    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    //V1 - No Link
-    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-    case RADIO_NO_LINK_RECEIVING_STANDBY:
-      {
-        if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
-        {
-          transactionComplete = false; //Reset ISR flag
-          changeState(RADIO_NO_LINK_RECEIVED_PACKET);
-        }
-
-        else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
-          hopChannel();
-
-        //Check to see if we need to send a ping
-        else if ( (millis() - packetTimestamp) > (unsigned int)(settings.heartbeatTimeout + random(0, 1000)) //Avoid pinging each other at same time
-                  || sentFirstPing == false) //Immediately send pings at POR
-        {
-          if (receiveInProcess() == false)
-          {
-            triggerEvent(TRIGGER_NOLINK_SEND_PING);
-            sentFirstPing = true;
-            sendPingPacket();
-            transactionComplete = false; //Reset ISR flag
-            changeState(RADIO_NO_LINK_TRANSMITTING);
-          }
-          else if (settings.debugRadio)
-            systemPrintln("NO_LINK_RECEIVING_STANDBY: RX In Progress");
-        }
-      }
-      break;
-
-    case RADIO_NO_LINK_TRANSMITTING:
-      {
-        if (transactionComplete == true) //If dio0ISR has fired, we are done transmitting
-        {
-          transactionComplete = false; //Reset ISR flag
-
-          if (expectingAck == false)
-          {
-            triggerEvent(TRIGGER_NOLINK_SEND_ACK_PACKET);
-            //We're done transmitting our ack packet
-            //Yay! Return to normal communication
-            packetsLost = 0; //Reset, used for linkLost testing
-            updateRSSI(); //Adjust LEDs to RSSI level. We will soon be linked.
-            returnToReceiving();
-            changeState(RADIO_LINKED_RECEIVING_STANDBY);
-          }
-          else
-          {
-            returnToReceiving();
-            changeState(RADIO_NO_LINK_ACK_WAIT);
-          }
-        }
-        else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
-          hopChannel();
-      }
-      break;
-
-    case RADIO_NO_LINK_ACK_WAIT:
-      {
-        if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
-        {
-          transactionComplete = false; //Reset ISR flag
-          changeState(RADIO_NO_LINK_RECEIVED_PACKET);
-        }
-
-        else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
-          hopChannel();
-
-        else if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response
-        {
-          //Give up. No ACK recevied.
-          randomSeed(radio.randomByte()); //Reseed the random delay between heartbeats
-          triggerEvent(TRIGGER_NOLINK_NO_ACK_GIVEUP);
-          returnToReceiving();
-          changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-        }
-      }
-      break;
-
-    case RADIO_NO_LINK_RECEIVED_PACKET:
-      {
-        PacketType packetType = identifyPacketType(); //Look at the packet we just received
-
-        if (packetType == PACKET_BAD || packetType == PACKET_NETID_MISMATCH)
-        {
-          returnToReceiving(); //Ignore
-          changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-        }
-        else if (packetType == PACKET_ACK)
-        {
-          //Yay! Return to normal communication
-          packetsLost = 0; //Reset, used for linkLost testing
-          updateRSSI(); //Adjust LEDs to RSSI level
-          returnToReceiving();
-          changeState(RADIO_LINKED_RECEIVING_STANDBY);
-        }
-        else if (packetType == PACKET_DUPLICATE)
-        {
-          sendAckPacket(); //It's a duplicate. Ack then ignore.
-          changeState(RADIO_NO_LINK_TRANSMITTING);
-        }
-        else if (packetType == PACKET_PING)
-        {
-          triggerEvent(TRIGGER_NOLINK_IDENT_PACKET);
-          updateRSSI(); //Adjust LEDs to RSSI level. We will soon be linked.
-          sendAckPacket(); //Someone is pinging us
-          changeState(RADIO_NO_LINK_TRANSMITTING);
-        }
-        else if (packetType == PACKET_DATA)
-        {
-          ; //No data packets allowed when not linked
-        }
-      }
-      break;
-
-    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    //V1 - Link
-    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-    case RADIO_LINKED_RECEIVING_STANDBY:
-      {
-        if (linkLost())
-        {
-          setRSSI(0);
-
-          //Return to home channel and begin linking process
-          returnToReceiving();
-          changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-        }
-
-        else if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
-        {
-          triggerEvent(TRIGGER_LINK_PACKET_RECEIVED);
-          transactionComplete = false; //Reset ISR flag
-          changeState(RADIO_LINKED_RECEIVED_PACKET);
-        }
-
-        else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
-          hopChannel();
-
-        else if ((millis() - packetTimestamp) > (unsigned int)(settings.heartbeatTimeout + random(0, 1000))) //Avoid pinging each other at same time
-        {
-          if (receiveInProcess() == false)
-          {
-            randomSeed(radio.randomByte()); //Takes 10ms. Reseed the random delay between heartbeats
-            triggerEvent(TRIGGER_LINK_SEND_PING);
-            sendPingPacket();
-            changeState(RADIO_LINKED_TRANSMITTING);
-          }
-          else if (settings.debugRadio)
-            systemPrintln("RECEIVING_STANDBY: RX In Progress");
-        }
-
-        else //Process any waiting serial or commands
-        {
-          //If the radio is available, send any data in the serial buffer over the radio
-          if (receiveInProcess() == false)
-          {
-            if (availableRXBytes()) //If we have bytes
-            {
-              if (processWaitingSerial(false) == true) //If we've hit a frame size or frame-timed-out
-              {
-                triggerEvent(TRIGGER_LINK_DATA_PACKET);
-                sendDataPacket();
-                changeState(RADIO_LINKED_TRANSMITTING);
-              }
-            }
-            else if (availableTXCommandBytes()) //If we have command bytes to send out
-            {
-              //Load command bytes into outgoing packet
-              readyOutgoingCommandPacket();
-
-              triggerEvent(TRIGGER_LINK_DATA_PACKET);
-
-              //Serial.print("Sending Command/Response: ");
-              //for (int x = 0 ; x < packetSize ; x++)
-              //  Serial.write(outgoingPacket[x]);
-              //Serial.println();
-
-              //We now have the commandTXBuffer loaded. But we need to send an remoteCommandResponse if we are pointed at PRINT_TO_RF.
-              if (remoteCommandResponse)
-                sendCommandResponseDataPacket();
-              else
-                sendCommandDataPacket();
-
-              if (availableTXCommandBytes() == 0)
-                printerEndpoint = PRINT_TO_SERIAL; //Once the response is received, we need to print it to serial
-
-              changeState(RADIO_LINKED_TRANSMITTING);
-            }
-          }
-        } //End processWaitingSerial
-      }
-      break;
-
-    case RADIO_LINKED_TRANSMITTING:
-      {
-        if (transactionComplete == true) //If dio0ISR has fired, we are done transmitting
-        {
-          transactionComplete = false; //Reset ISR flag
-
-          if (expectingAck == true)
-          {
-            returnToReceiving();
-            changeState(RADIO_LINKED_ACK_WAIT);
-          }
-          else
-          {
-            triggerEvent(TRIGGER_LINK_SENT_ACK_PACKET);
-            returnToReceiving();
-            changeState(RADIO_LINKED_RECEIVING_STANDBY);
-          }
-        }
-        else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
-          hopChannel();
-      }
-      break;
-
-    case RADIO_LINKED_ACK_WAIT:
-      {
-        if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
-        {
-          transactionComplete = false; //Reset ISR flag
-          changeState(RADIO_LINKED_RECEIVED_PACKET);
-        }
-
-        else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
-          hopChannel();
-
-        //Check to see if we need to retransmit
-        if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response
-        {
-          if (packetSent > settings.maxResends)
-          {
-            if (settings.debugRadio)
-              systemPrintln("Packet Lost");
-            packetsLost++;
-            totalPacketsLost++;
-            returnToReceiving();
-            changeState(RADIO_LINKED_RECEIVING_STANDBY);
-          }
-          else
-          {
-            if (receiveInProcess() == false)
-            {
-              triggerEvent(TRIGGER_LINK_PACKET_RESEND);
-              packetsResent++;
-              sendResendPacket();
-              changeState(RADIO_LINKED_TRANSMITTING);
-            }
-            else
-            {
-              if (settings.debugRadio)
-                systemPrintln("ACK_WAIT: RX In Progress");
-              triggerEvent(TRIGGER_RX_IN_PROGRESS);
-            }
-          }
-        }
-      }
-      break;
-
-    case RADIO_LINKED_RECEIVED_PACKET:
-      {
-        PacketType packetType = identifyPacketType(); //Look at the packet we just received
-
-        if (packetType == PACKET_ACK || packetType == PACKET_COMMAND_ACK || packetType == PACKET_COMMAND_RESPONSE_ACK)
-        {
-          //This packet is an ack. Return to receiving.
-          triggerEvent(TRIGGER_ACK_PROCESSED); //Trigger for transmission timing
-
-          if (settings.displayPacketQuality == true)
-          {
-            systemPrintln();
-            systemPrint("R:");
-            systemPrint(radio.getRSSI());
-            systemPrint("\tS:");
-            systemPrint(radio.getSNR());
-            systemPrint("\tfE:");
-            systemPrint(radio.getFrequencyError());
-            systemPrintln();
-          }
-          packetsLost = 0; //Reset, used for linkLost testing
-          updateRSSI(); //Adjust LEDs to RSSI level
-          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-          returnToReceiving();
-          changeState(RADIO_LINKED_RECEIVING_STANDBY);
-        }
-        else if (packetType == PACKET_DUPLICATE)
-        {
-          //It's a duplicate. Ack then throw data away.
-          triggerEvent(TRIGGER_LINK_DUPLICATE_PACKET);
-          packetsLost = 0; //Reset, used for linkLost testing
-          updateRSSI(); //Adjust LEDs to RSSI level
-          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-          sendAckPacket();
-          changeState(RADIO_LINKED_TRANSMITTING);
-        }
-        else if (packetType == PACKET_PING)
-        {
-          //Someone is pinging us. Ack back.
-          triggerEvent(TRIGGER_LINK_CONTROL_PACKET);
-          packetsLost = 0; //Reset, used for linkLost testing
-          updateRSSI(); //Adjust LEDs to RSSI level
-          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-          sendAckPacket();
-          changeState(RADIO_LINKED_TRANSMITTING);
-        }
-        else if (packetType == PACKET_DATA)
-        {
-          //Pull data from packet and move into outbound serial buffer
-          if (settings.displayPacketQuality == true)
-          {
-            systemPrintln();
-            systemPrint("R:");
-            systemPrint(radio.getRSSI());
-            systemPrint("\tS:");
-            systemPrint(radio.getSNR());
-            systemPrint("\tfE:");
-            systemPrint(radio.getFrequencyError());
-            systemPrintln();
-          }
-
-          //Move this packet into the tx buffer
-          //We cannot directly print here because Serial.print is blocking
-          for (int x = 0 ; x < lastPacketSize ; x++)
-          {
-            serialTransmitBuffer[txHead++] = lastPacket[x];
-            txHead %= sizeof(serialTransmitBuffer);
-          }
-
-          packetsLost = 0; //Reset, used for linkLost testing
-          updateRSSI(); //Adjust LEDs to RSSI level
-          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-          sendAckPacket(); //Transmit ACK
-          changeState(RADIO_LINKED_TRANSMITTING);
-        }
-
-        else if (packetType == PACKET_COMMAND_DATA)
-        {
-          //Serial.print("Received Command Data: ");
-          //for (int x = 0 ; x < lastPacketSize ; x++)
-          //  Serial.write(lastPacket[x]);
-          //Serial.println();
-
-          //Move this packet into the command RX buffer
-          for (int x = 0 ; x < lastPacketSize ; x++)
-          {
-            commandRXBuffer[commandRXHead++] = lastPacket[x];
-            commandRXHead %= sizeof(commandRXBuffer);
-          }
-
-          packetsLost = 0; //Reset, used for linkLost testing
-          updateRSSI(); //Adjust LEDs to RSSI level
-          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-          sendCommandAckPacket(); //Transmit ACK
-          changeState(RADIO_LINKED_TRANSMITTING);
-        }
-
-        else if (packetType == PACKET_COMMAND_RESPONSE_DATA)
-        {
-          //Print received data. This is blocking but we do not use the serialTransmitBuffer because we're in command mode (and it's not much data to print).
-          for (int x = 0 ; x < lastPacketSize ; x++)
-            Serial.write(lastPacket[x]);
-
-          packetsLost = 0; //Reset, used for linkLost testing
-          updateRSSI(); //Adjust LEDs to RSSI level
-          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-          sendCommandResponseAckPacket(); //Transmit ACK
-          changeState(RADIO_LINKED_TRANSMITTING);
-        }
-        else if (packetType == PACKET_COMMAND_RESPONSE_ACK)
-        {
-          //If we are waiting for ack before radio config, apply settings
-          if (confirmDeliveryBeforeRadioConfig == true)
-          {
-            confirmDeliveryBeforeRadioConfig = false;
-
-            //Apply settings
-            generateHopTable(); //Generate freq with new settings
-            configureRadio(); //Apply any new settings
-
-            setRSSI(0); //Turn off RSSI LEDs
-            changeState(RADIO_RESET);
-          }
-          else //It was just an ACK
-          {
-            packetsLost = 0; //Reset, used for linkLost testing
-            updateRSSI(); //Adjust LEDs to RSSI level
-            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-            returnToReceiving();
-            changeState(RADIO_LINKED_RECEIVING_STANDBY);
-          }
-        }
-        else //packetType == PACKET_BAD, packetType == PACKET_NETID_MISMATCH
-        {
-          //Packet type not supported in this state
-          triggerEvent(TRIGGER_LINK_BAD_PACKET);
-          returnToReceiving();
-          changeState(RADIO_LINKED_RECEIVING_STANDBY);
-        }
-      }
-      break;
-
-    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-    case RADIO_BROADCASTING_RECEIVING_STANDBY:
-      {
-        if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
-        {
-          triggerEvent(TRIGGER_BROADCAST_PACKET_RECEIVED);
-          transactionComplete = false; //Reset ISR flag
-          changeState(RADIO_BROADCASTING_RECEIVED_PACKET);
-        }
-
-        else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
-          hopChannel();
-
-        else //Process waiting serial
-        {
-          //If the radio is available, send any data in the serial buffer over the radio
-          if (receiveInProcess() == false)
-          {
-            if (availableRXBytes()) //If we have bytes
-            {
-              if (processWaitingSerial(false) == true) //If we've hit a frame size or frame-timed-out
-              {
-                triggerEvent(TRIGGER_BROADCAST_DATA_PACKET);
-                sendDataPacket();
-                changeState(RADIO_BROADCASTING_TRANSMITTING);
-              }
-            }
-          }
-        } //End processWaitingSerial
-
-        //Toggle 2 LEDs if we have recently transmitted
-        if (millis() - packetTimestamp < 5000)
-        {
-          if (millis() - lastLinkBlink > 250) //Blink at 4Hz
-          {
-            lastLinkBlink = millis();
-            if (digitalRead(pin_rssi2LED) == HIGH)
-              setRSSI(0b0001);
-            else
-              setRSSI(0b0010);
-          }
-        }
-        else if (millis() - lastPacketReceived < 5000)
-        {
-          updateRSSI(); //Adjust LEDs to RSSI level
-        }
-
-        //Turn off RSSI after 5 seconds of no activity
-        else
-          setRSSI(0);
-
-      }
-      break;
-
-    case RADIO_BROADCASTING_TRANSMITTING:
-      {
-        if (transactionComplete == true) //If dio0ISR has fired, we are done transmitting
-        {
-          transactionComplete = false; //Reset ISR flag
-          returnToReceiving();
-          changeState(RADIO_BROADCASTING_RECEIVING_STANDBY); //No ack response when in broadcasting mode
-          setRSSI(0b0001);
-        }
-
-        else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
-          hopChannel();
-      }
-      break;
-    case RADIO_BROADCASTING_RECEIVED_PACKET:
-      {
-        PacketType packetType = identifyPacketType(); //Look at the packet we just received
-
-        if (packetType == PACKET_ACK)
-        {
-          //We should not be receiving ack packets, but if we do, just ignore
-          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-          returnToReceiving();
-          changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
-        }
-        else if (packetType == PACKET_DUPLICATE || packetType == PACKET_PING)
-        {
-          //We should not be receiving control packets, but if we do, just ignore
-          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-          returnToReceiving(); //No response when in broadcasting mode
-          changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
-        }
-        else if (packetType == PACKET_DATA)
-        {
-          if (settings.displayPacketQuality == true)
-          {
-            systemPrintln();
-            systemPrint("R:");
-            systemPrint(radio.getRSSI());
-            systemPrint("\tS:");
-            systemPrint(radio.getSNR());
-            systemPrint("\tfE:");
-            systemPrint(radio.getFrequencyError());
-            systemPrintln();
-          }
-
-          //Move this packet into the tx buffer
-          //We cannot directly print here because Serial.print is blocking
-          for (int x = 0 ; x < lastPacketSize ; x++)
-          {
-            serialTransmitBuffer[txHead++] = lastPacket[x];
-            txHead %= sizeof(serialTransmitBuffer);
-          }
-
-          updateRSSI(); //Adjust LEDs to RSSI level
-          frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-          returnToReceiving(); //No response when in broadcasting mode
-          changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
-
-          lastPacketReceived = millis(); //Update timestamp for Link LED
-        }
-        else //PACKET_BAD, PACKET_NETID_MISMATCH
-        {
-          //This packet type is not supported in this state
-          returnToReceiving();
-          changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
-        }
-
-      }
-      break;
-
-    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    //V1 - Point-to-Point Training
-    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-    /*
-          beginTraining
-                |
-                | Save settings
-                |
-                V
-        RADIO_TRAINING_TRANSMITTING
-                |
-                V
-        RADIO_TRAINING_ACK_WAIT --------------.
-                |                             |
-                V                             |
-        RADIO_TRAINING_RECEIVING_HERE_FIRST   |
-                |                             |
-                +<----------------------------’
-                |
-                V
-        RADIO_TRAINING_RECEIVED_PACKET
-                |
-                V
-           endTraining
-    */
-
-    case RADIO_TRAINING_TRANSMITTING:
-      {
-        if (transactionComplete == true) //If dio0ISR has fired, we are done transmitting
-        {
-          transactionComplete = false; //Reset ISR flag
-          returnToReceiving();
-          changeState(RADIO_TRAINING_ACK_WAIT);
-        }
-      }
-      break;
-    case RADIO_TRAINING_ACK_WAIT:
-      {
-        //If we receive an ACK, absorb training data
-        if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
-        {
-          transactionComplete = false; //Reset ISR flag
-          changeState(RADIO_TRAINING_RECEIVED_PACKET);
-        }
-
-        //If timeout, create new link data and return to receive, and wait for training ping from remote
-        if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response
-        {
-          triggerEvent(TRIGGER_TRAINING_NO_ACK);
-          generateTrainingSettings();
-          returnToReceiving();
-          changeState(RADIO_TRAINING_RECEIVING_HERE_FIRST);
-        }
-      }
-      break;
-    case RADIO_TRAINING_RECEIVING_HERE_FIRST:
-      {
-        //Wait for ping. Once received, transmit training data
-        if (transactionComplete == true) //If dio0ISR has fired, a packet has arrived
-        {
-          transactionComplete = false; //Reset ISR flag
-          changeState(RADIO_TRAINING_RECEIVED_PACKET);
-        }
-        updateCylonLEDs();
-      }
-      break;
-
-    case RADIO_TRAINING_RECEIVED_PACKET:
-      {
-        PacketType packetType = identifyPacketType(); //Look at the packet we just received
-
-        if (packetType == PACKET_TRAINING_PING)
-        {
-          triggerEvent(TRIGGER_TRAINING_CONTROL_PACKET);
-          packetsLost = 0; //Reset, used for linkLost testing
-          sendTrainingDataPacket(); //Someone is pinging us, send training data back
-
-          //Wait for transmission to complete before ending training
-          while (transactionComplete == false) //If dio0ISR has fired, a packet has arrived
-          {
-            if ((millis() - packetTimestamp) > (packetAirTime + controlPacketAirTime)) //Wait for xmit of packet and ACK response
-            {
-              if (settings.debugRadio)
-                systemPrintln("Timeout");
-              break;
-            }
-          }
-          if (settings.debugRadio)
-            systemPrintln("Ending Training");
-
-          endTraining(false); //We do not have data to apply to settings
-        }
-
-        else if (packetType == PACKET_TRAINING_DATA)
-        {
-          //The waiting node has responded with a data packet
-          //Absorb training data and then return to normal operation
-          triggerEvent(TRIGGER_TRAINING_DATA_PACKET);
-          packetsLost = 0; //Reset, used for linkLost testing
-          endTraining(true); //Apply data from packet to settings
-        }
-
-        //During training, only training packets are valid
-        else //PACKET_BAD, PACKET_NETID_MISMATCH, PACKET_ACK, PACKET_PING, PACKET_DATA
-        {
-          triggerEvent(TRIGGER_TRAINING_BAD_PACKET);
-          returnToReceiving();
-          changeState(RADIO_TRAINING_RECEIVING_HERE_FIRST);
-        }
-      }
-      break;
   }
 }
 
@@ -2008,76 +1344,12 @@ void selectHeaderAndTrailerBytes()
 //This is used for determining if we can do remote AT commands or not
 bool isLinked()
 {
-  if (((radioState >= RADIO_P2P_LINK_UP)
+  if ((radioState >= RADIO_P2P_LINK_UP)
        && (radioState <= RADIO_P2P_LINK_UP_WAIT_ACK))
-      || ((radioState >= RADIO_LINKED_RECEIVING_STANDBY)
-          && (radioState <= RADIO_LINKED_RECEIVED_PACKET)))
     return (true);
 
   return (false);
 }
-
-const RADIO_STATE_ENTRY radioStateTable[] =
-{
-  {RADIO_RESET,                          "RESET",                          NULL},                         // 0
-
-  //V1
-  //    State                                 Name                              Description
-  {RADIO_NO_LINK_RECEIVING_STANDBY,      "NO_LINK_RECEIVING_STANDBY",      "[No Link] Receiving Standby"},// 1
-  {RADIO_NO_LINK_TRANSMITTING,           "NO_LINK_TRANSMITTING",           "[No Link] Transmitting"},     // 2
-  {RADIO_NO_LINK_ACK_WAIT,               "NO_LINK_ACK_WAIT",               "[No Link] Ack Wait"},         // 3
-  {RADIO_NO_LINK_RECEIVED_PACKET,        "NO_LINK_RECEIVED_PACKET",        "[No Link] Received Packet"},  // 4
-  {RADIO_LINKED_RECEIVING_STANDBY,       "LINKED_RECEIVING_STANDBY",       "Receiving Standby "},         // 5
-  {RADIO_LINKED_TRANSMITTING,            "LINKED_TRANSMITTING",            "Transmitting "},              // 6
-  {RADIO_LINKED_ACK_WAIT,                "LINKED_ACK_WAIT",                "Ack Wait "},                  // 7
-  {RADIO_LINKED_RECEIVED_PACKET,         "LINKED_RECEIVED_PACKET",         "Received Packet "},           // 8
-  {RADIO_BROADCASTING_RECEIVING_STANDBY, "BROADCASTING_RECEIVING_STANDBY", "B-Receiving Standby "},       // 9
-  {RADIO_BROADCASTING_TRANSMITTING,      "BROADCASTING_TRANSMITTING",      "B-Transmitting "},            //10
-  {RADIO_BROADCASTING_RECEIVED_PACKET,   "BROADCASTING_RECEIVED_PACKET",   "B-Received Packet "},         //11
-  {RADIO_TRAINING_RECEIVING_HERE_FIRST,  "TRAINING_RECEIVING_HERE_FIRST",  "[Training] RX Here First"},   //12
-  {RADIO_TRAINING_TRANSMITTING,          "TRAINING_TRANSMITTING",          "[Training] TX"},              //13
-  {RADIO_TRAINING_ACK_WAIT,              "TRAINING_ACK_WAIT",              "[Training] Ack Wait"},        //14
-  {RADIO_TRAINING_RECEIVED_PACKET,       "TRAINING_RECEIVED_PACKET",       "[Training] RX Packet"},       //15
-
-  //V2 - Point-to-Point Training
-  //    State                                 Name                              Description
-  {RADIO_P2P_TRAINING_WAIT_PING_DONE,    "P2P_TRAINING_WAIT_PING_DONE",    "V2 P2P: Wait TX Training Ping Done"}, //16
-  {RADIO_P2P_WAIT_FOR_TRAINING_PARAMS,   "P2P_WAIT_FOR_TRAINING_PARAMS",   "V2 P2P: Wait for Training params"},   //17
-  {RADIO_P2P_WAIT_TRAINING_PARAMS_DONE,  "P2P_WAIT_TRAINING_PARAMS_DONE",  "V2 P2P: Wait training params done"},  //18
-
-  //V2 - Point-to-Point link handshake
-  //    State                                 Name                              Description
-  {RADIO_P2P_LINK_DOWN,                  "P2P_LINK_DOWN",                  "V2 P2P: [No Link] Waiting for Ping"}, //19
-  {RADIO_P2P_WAIT_TX_PING_DONE,          "P2P_WAIT_TX_PING_DONE",          "V2 P2P: [No Link] Wait Ping TX Done"},//20
-  {RADIO_P2P_WAIT_ACK_1,                 "P2P_WAIT_ACK_1",                 "V2 P2P: [No Link] Waiting for ACK1"}, //21
-  {RADIO_P2P_WAIT_TX_ACK_1_DONE,         "P2P_WAIT_TX_ACK_1_DONE",         "V2 P2P: [No Link] Wait ACK1 TX Done"},//22
-  {RADIO_P2P_WAIT_ACK_2,                 "P2P_WAIT_ACK_2",                 "V2 P2P: [No Link] Waiting for ACK2"}, //23
-  {RADIO_P2P_WAIT_TX_ACK_2_DONE,         "P2P_WAIT_TX_ACK_2_DONE",         "V2 P2P: [No Link] Wait ACK2 TX Done"},//24
-
-  //V2 - Point-to-Point, link up, data exchange
-  //    State                                 Name                              Description
-  {RADIO_P2P_LINK_UP,                    "P2P_LINK_UP",                    "V2 P2P: Receiving Standby"},          //25
-  {RADIO_P2P_LINK_UP_WAIT_ACK_DONE,      "P2P_LINK_UP_WAIT_ACK_DONE",      "V2 P2P: Waiting ACK TX Done"},        //26
-  {RADIO_P2P_LINK_UP_WAIT_TX_DONE,       "P2P_LINK_UP_WAIT_TX_DONE",       "V2 P2P: Waiting TX done"},            //27
-  {RADIO_P2P_LINK_UP_WAIT_ACK,           "P2P_LINK_UP_WAIT_ACK",           "V2 P2P: Waiting for ACK"},            //28
-  {RADIO_P2P_LINK_UP_HB_ACK_REXMT,       "P2P_LINK_UP_HB_ACK_REXMT",       "V2 P2P: Heartbeat ACK ReXmt"},        //29
-
-  //V2 - Multi-Point data exchange
-  //    State                                 Name                              Description
-  {RADIO_MP_STANDBY,                     "MP_STANDBY",                     "V2 MP: Wait for TX or RX"},           //30
-  {RADIO_MP_WAIT_TX_DONE,                "MP_WAIT_TX_DONE",                "V2 MP: Waiting for TX done"},         //31
-
-  //V2 - Multi-Point training client states
-  //    State                                 Name                              Description
-  {RADIO_MP_WAIT_TX_TRAINING_PING_DONE,  "MP_WAIT_TX_TRAINING_PING_DONE",  "V2 MP: Wait TX training PING done"},  //32
-  {RADIO_MP_WAIT_RX_RADIO_PARAMETERS,    "MP_WAIT_RX_RADIO_PARAMETERS",    "V2 MP: Wait for radio parameters"},   //33
-  {RADIO_MP_WAIT_TX_PARAM_ACK_DONE,      "MP_WAIT_TX_PARAM_ACK_DONE",      "V2 MP: Wait for TX param ACK done"},  //34
-
-  //V2 - Multi-Point training server states
-  //    State                                 Name                              Description
-  {RADIO_MP_WAIT_FOR_TRAINING_PING,      "MP_WAIT_FOR_TRAINING_PING",      "V2 MP: Wait for training PING"},      //35
-  {RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,   "MP_WAIT_TX_RADIO_PARAMS_DONE",   "V2 MP: Wait for TX params done"},     //36
-};
 
 void verifyRadioStateTable()
 {
@@ -2255,7 +1527,7 @@ void verifyRadioStateTable()
 //Verify the datagram type table
 void verifyV2DatagramType()
 {
-  if ((sizeof(v2DatagramType) / sizeof(v2DatagramType[0])) != MAX_DATAGRAM_TYPE)
+  if ((sizeof(v2DatagramType) / sizeof(v2DatagramType[0])) != MAX_V2_DATAGRAM_TYPE)
   {
     systemPrintln("ERROR - Please update the v2DatagramTable");
     while (1)
