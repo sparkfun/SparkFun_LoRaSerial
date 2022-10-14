@@ -111,7 +111,7 @@ bool commandAT(const char * commandString)
         break;
       case ('T'): //Enter training mode
         reportOK();
-        if (settings.useV2 && (!settings.pointToPoint))
+        if ((settings.protocolVersion >= 2) && (!settings.pointToPoint))
         {
           if (settings.trainingServer)
             beginTrainingServer();
@@ -518,7 +518,7 @@ const COMMAND_ENTRY commands[] =
   {43,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &settings.debugTransmit},
   {44,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTxErrors",        &settings.printTxErrors},
 
-  {45,    0,   1,    0, TYPE_BOOL,         valInt,         "UseV2",                &settings.useV2},
+  {45,    1,   2,    0, TYPE_U8,           valInt,         "protocolVersion",      &settings.protocolVersion},
   {46,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTimestamp",       &settings.printTimestamp},
   {47,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &settings.debugDatagrams},
   {48,    0, 1000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &settings.overheadTime},
