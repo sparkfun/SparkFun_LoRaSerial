@@ -9,6 +9,7 @@ at?
 Command summary:
   AT? - Print the command summary
   ATF - Enter training mode and return to factory defaults
+  ATG - Generate new netID and encryption key
   ATI - Display the radio version
   ATI? - Display the information commands
   ATIn - Display system information
@@ -30,6 +31,13 @@ ati?
   ATI6 - Display AES key
   ATI7 - Show current FHSS channel
   ATI8 - Display unique ID
+  ATI9 - Display the total datagrams sent
+  ATI10 - Display the total datagrams received
+  ATI11 - Display the total frames sent
+  ATI12 - Display the total frames received
+  ATI13 - Display the total bad frames received
+  ATI14 - Display the total duplicate frames received
+  ATI15 - Display the total lost TX frames
 # Allow leading white space (space, tab, cr, lf)
 ERROR
         	ati
@@ -40,18 +48,32 @@ SparkFun LoRaSerial SAMD21 1W 915MHz
 	ati2
 2.0
 ati3
--157
+-68
 ati4
-167
+255
 ati5
 506
 ati6
 37782141A665734E4475672AE6308308
 ati7
-0
+11
 ati8
 CB0C64334A34555020312E34242815FF
 ati9
+4
+ati10
+2
+ati11
+2
+ati12
+2
+ati13
+0
+ati14
+0
+ati15
+0
+ati16
 ERROR
 ati0
 ATS0:SerialSpeed=57600
@@ -99,7 +121,7 @@ ATS41:TriggerEnable: 63-32=-1
 ATS42:DebugReceive=0
 ATS43:DebugTransmit=0
 ATS44:PrintTxErrors=0
-ATS45:protocolVersion=1
+ATS45:protocolVersion=2
 ATS46:PrintTimestamp=0
 ATS47:DebugDatagrams=0
 ATS48:OverHeadtime=10

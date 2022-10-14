@@ -92,7 +92,6 @@ bool commandAT(const char * commandString)
         if (printerEndpoint == PRINT_TO_RF)
         {
           //If we are pointed at the RF link, send ok and wait for response ACK before applying settings
-          confirmDeliveryBeforeRadioConfig = true;
           reportOK();
         }
         else
@@ -140,8 +139,6 @@ bool commandAT(const char * commandString)
   //ATIx commands
   else if (commandString[2] == 'I' && commandLength == 4)
   {
-    uint8_t uniqueID[UNIQUE_ID_BYTES];
-
     switch (commandString[3])
     {
       case ('?'): //ATI? - Display the information commands
@@ -154,6 +151,13 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI6 - Display AES key");
         systemPrintln("  ATI7 - Show current FHSS channel");
         systemPrintln("  ATI8 - Display unique ID");
+        systemPrintln("  ATI9 - Display the total datagrams sent");
+        systemPrintln("  ATI10 - Display the total datagrams received");
+        systemPrintln("  ATI11 - Display the total frames sent");
+        systemPrintln("  ATI12 - Display the total frames received");
+        systemPrintln("  ATI13 - Display the total bad frames received");
+        systemPrintln("  ATI14 - Display the total duplicate frames received");
+        systemPrintln("  ATI15 - Display the total lost TX frames");
         break;
       case ('0'): //ATI0 - Show user settable parameters
         displayParameters();
@@ -189,8 +193,37 @@ bool commandAT(const char * commandString)
         systemPrintUniqueID(myUniqueId);
         systemPrintln();
         break;
+      case ('9'): //ATI9 - Display the toal datagrams sent
+        systemPrintln(datagramsSent);
+        break;
       default:
         return false;
+    }
+  }
+  else if ((commandString[2] == 'I') && (commandString[3] == '1') && (commandLength == 5))
+  {
+    switch (commandString[4])
+    {
+      default:
+        return false;
+      case ('0'): //ATI10 - Display the total datagrams received
+        systemPrintln(datagramsReceived);
+        break;
+      case ('1'): //ATI11 - Display the total frames received
+        systemPrintln(framesReceived);
+        break;
+      case ('2'): //ATI12 - Display the total frames received
+        systemPrintln(framesReceived);
+        break;
+      case ('3'): //ATI13 - Display the total bad frames received
+        systemPrintln(badFrames);
+        break;
+      case ('4'): //ATI14 - Display the total duplicate frames received
+        systemPrintln(duplicateFrames);
+        break;
+      case ('5'): //ATI15 - Display the total lost TX frames
+        systemPrintln(lostFrames);
+        break;
     }
   }
 
@@ -515,7 +548,7 @@ const COMMAND_ENTRY commands[] =
   {43,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &settings.debugTransmit},
   {44,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTxErrors",        &settings.printTxErrors},
 
-  {45,    1,   2,    0, TYPE_U8,           valInt,         "protocolVersion",      &settings.protocolVersion},
+  {45,    2,   2,    0, TYPE_U8,           valInt,         "protocolVersion",      &settings.protocolVersion},
   {46,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTimestamp",       &settings.printTimestamp},
   {47,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &settings.debugDatagrams},
   {48,    0, 1000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &settings.overheadTime},

@@ -2,26 +2,6 @@ typedef enum
 {
   RADIO_RESET = 0,
 
-  //V1
-  RADIO_NO_LINK_RECEIVING_STANDBY,
-  RADIO_NO_LINK_TRANSMITTING,
-  RADIO_NO_LINK_ACK_WAIT,
-  RADIO_NO_LINK_RECEIVED_PACKET,
-
-  RADIO_LINKED_RECEIVING_STANDBY,
-  RADIO_LINKED_TRANSMITTING,
-  RADIO_LINKED_ACK_WAIT,
-  RADIO_LINKED_RECEIVED_PACKET,
-
-  RADIO_BROADCASTING_RECEIVING_STANDBY,
-  RADIO_BROADCASTING_TRANSMITTING,
-  RADIO_BROADCASTING_RECEIVED_PACKET,
-
-  RADIO_TRAINING_RECEIVING_HERE_FIRST,
-  RADIO_TRAINING_TRANSMITTING,
-  RADIO_TRAINING_ACK_WAIT,
-  RADIO_TRAINING_RECEIVED_PACKET,
-
   //V2
   //Point-to-Point Training
   RADIO_P2P_TRAINING_WAIT_PING_DONE,
@@ -64,9 +44,54 @@ RadioStates radioState = RADIO_RESET;
 typedef struct _RADIO_STATE_ENTRY
 {
   RadioStates state;
+  bool rxState;
   const char * name;
   const char * description;
 } RADIO_STATE_ENTRY;
+
+const RADIO_STATE_ENTRY radioStateTable[] =
+{
+  {RADIO_RESET,                          0, "RESET",                          NULL},                         // 0
+
+  //V2 - Point-to-Point Training
+  //    State                           RX      Name                              Description
+  {RADIO_P2P_TRAINING_WAIT_PING_DONE,    0, "P2P_TRAINING_WAIT_PING_DONE",    "V2 P2P: Wait TX Training Ping Done"}, // 1
+  {RADIO_P2P_WAIT_FOR_TRAINING_PARAMS,   1, "P2P_WAIT_FOR_TRAINING_PARAMS",   "V2 P2P: Wait for Training params"},   // 2
+  {RADIO_P2P_WAIT_TRAINING_PARAMS_DONE,  0, "P2P_WAIT_TRAINING_PARAMS_DONE",  "V2 P2P: Wait training params done"},  // 3
+
+  //V2 - Point-to-Point link handshake
+  //    State                           RX      Name                              Description
+  {RADIO_P2P_LINK_DOWN,                  1, "P2P_LINK_DOWN",                  "V2 P2P: [No Link] Waiting for Ping"}, // 4
+  {RADIO_P2P_WAIT_TX_PING_DONE,          0, "P2P_WAIT_TX_PING_DONE",          "V2 P2P: [No Link] Wait Ping TX Done"},// 5
+  {RADIO_P2P_WAIT_ACK_1,                 1, "P2P_WAIT_ACK_1",                 "V2 P2P: [No Link] Waiting for ACK1"}, // 6
+  {RADIO_P2P_WAIT_TX_ACK_1_DONE,         0, "P2P_WAIT_TX_ACK_1_DONE",         "V2 P2P: [No Link] Wait ACK1 TX Done"},// 7
+  {RADIO_P2P_WAIT_ACK_2,                 1, "P2P_WAIT_ACK_2",                 "V2 P2P: [No Link] Waiting for ACK2"}, // 8
+  {RADIO_P2P_WAIT_TX_ACK_2_DONE,         0, "P2P_WAIT_TX_ACK_2_DONE",         "V2 P2P: [No Link] Wait ACK2 TX Done"},// 9
+
+  //V2 - Point-to-Point, link up, data exchange
+  //    State                           RX      Name                              Description
+  {RADIO_P2P_LINK_UP,                    1, "P2P_LINK_UP",                    "V2 P2P: Receiving Standby"},          //10
+  {RADIO_P2P_LINK_UP_WAIT_ACK_DONE,      0, "P2P_LINK_UP_WAIT_ACK_DONE",      "V2 P2P: Waiting ACK TX Done"},        //11
+  {RADIO_P2P_LINK_UP_WAIT_TX_DONE,       0, "P2P_LINK_UP_WAIT_TX_DONE",       "V2 P2P: Waiting TX done"},            //12
+  {RADIO_P2P_LINK_UP_WAIT_ACK,           1, "P2P_LINK_UP_WAIT_ACK",           "V2 P2P: Waiting for ACK"},            //13
+  {RADIO_P2P_LINK_UP_HB_ACK_REXMT,       0, "P2P_LINK_UP_HB_ACK_REXMT",       "V2 P2P: Heartbeat ACK ReXmt"},        //14
+
+  //V2 - Multi-Point data exchange
+  //    State                           RX      Name                              Description
+  {RADIO_MP_STANDBY,                     1, "MP_STANDBY",                     "V2 MP: Wait for TX or RX"},           //15
+  {RADIO_MP_WAIT_TX_DONE,                0, "MP_WAIT_TX_DONE",                "V2 MP: Waiting for TX done"},         //16
+
+  //V2 - Multi-Point training client states
+  //    State                           RX      Name                              Description
+  {RADIO_MP_WAIT_TX_TRAINING_PING_DONE,  0, "MP_WAIT_TX_TRAINING_PING_DONE",  "V2 MP: Wait TX training PING done"},  //17
+  {RADIO_MP_WAIT_RX_RADIO_PARAMETERS,    1, "MP_WAIT_RX_RADIO_PARAMETERS",    "V2 MP: Wait for radio parameters"},   //18
+  {RADIO_MP_WAIT_TX_PARAM_ACK_DONE,      0, "MP_WAIT_TX_PARAM_ACK_DONE",      "V2 MP: Wait for TX param ACK done"},  //19
+
+  //V2 - Multi-Point training server states
+  //    State                           RX      Name                              Description
+  {RADIO_MP_WAIT_FOR_TRAINING_PING,      1, "MP_WAIT_FOR_TRAINING_PING",      "V2 MP: Wait for training PING"},      //20
+  {RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,   0, "MP_WAIT_TX_RADIO_PARAMS_DONE",   "V2 MP: Wait for TX params done"},     //21
+};
 
 //Possible types of packets received
 typedef enum
@@ -98,24 +123,14 @@ typedef enum
   DATAGRAM_TRAINING_ACK,            //15
 
   //Add new V2 datagram types before this line
-  MAX_DATAGRAM_TYPE,
+  MAX_V2_DATAGRAM_TYPE,
 
-  //V1 packet types are below
-  PACKET_BAD,
-  PACKET_NETID_MISMATCH,
-  PACKET_ACK, //ack = 1
-  PACKET_DUPLICATE,
-  PACKET_PING, //ack = 0, len = 0
-  PACKET_DATA,
+  //Add new protocol datagrams above this line
 
-  PACKET_COMMAND_ACK, //remoteCommand = 1, ack = 1
-  PACKET_COMMAND_DATA, //remoteCommand = 1
-
-  PACKET_COMMAND_RESPONSE_ACK, //remoteCommand = 1, remoteCommandResponse = 1, ack = 1
-  PACKET_COMMAND_RESPONSE_DATA, //remoteCommand = 1, remoteCommandResponse = 1,
-
-  PACKET_TRAINING_PING,
-  PACKET_TRAINING_DATA,
+  //Common datagram types
+  DATAGRAM_BAD,
+  DATAGRAM_NETID_MISMATCH,
+  DATAGRAM_DUPLICATE,
 } PacketType;
 
 const char * const v2DatagramType[] =
@@ -125,8 +140,8 @@ const char * const v2DatagramType[] =
   "PING", "ACK-1", "ACK-2",
   // 6        7           8           9           10          11
   "DATA", "SF6-DATA", "DATA-ACK", "HEARTBEAT", "RMT-CMD", "RMT_RESP",
-  //       12
-  "DATAGRAM_DATAGRAM",
+  //  12
+  "DATAGRAM",
   //       13              14               15
   "TRAINING_PING", "TRAINING_PARAMS", "TRAINING_ACK"
 };
@@ -314,7 +329,7 @@ typedef struct struct_settings {
   bool debugReceive = false; //Print receive processing
   bool debugTransmit = false; //Print transmit processing
   bool printTxErrors = false; //Print any transmit errors
-  uint8_t protocolVersion = 1; //Select the radio protocol
+  uint8_t protocolVersion = 2; //Select the radio protocol
   bool printTimestamp = false; //Print a timestamp: days hours:minutes:seconds.milliseconds
   bool debugDatagrams = false; //Print the datagrams
   uint16_t overheadTime = 10; ////ms added to ack and datagram times before ACK timeout occurs

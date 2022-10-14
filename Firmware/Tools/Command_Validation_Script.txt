@@ -17,6 +17,13 @@ ati6
 ati7
 ati8
 ati9
+ati10
+ati11
+ati12
+ati13
+ati14
+ati15
+ati16
 ati0
 
 ats28=0
