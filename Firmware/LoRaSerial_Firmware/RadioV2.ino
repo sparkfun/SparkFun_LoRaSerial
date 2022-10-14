@@ -731,7 +731,7 @@ PacketType rcvDatagram()
   */
 
   //Get the spread factor 6 length
-  if (datagramType == DATAGRAM_SF6_DATA)
+  if (settings.radioSpreadFactor == 6)
   {
     if (rxDataBytes >= (*rxData + minDatagramSize))
       rxDataBytes = *rxData++;
@@ -780,7 +780,6 @@ PacketType rcvDatagram()
         break;
 
       case DATAGRAM_DATA:
-      case DATAGRAM_SF6_DATA:
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
       case DATAGRAM_HEARTBEAT:
@@ -854,7 +853,6 @@ PacketType rcvDatagram()
 
       case DATAGRAM_DATA:
       case DATAGRAM_DATA_ACK:
-      case DATAGRAM_SF6_DATA:
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
       case DATAGRAM_HEARTBEAT:
@@ -905,7 +903,6 @@ void transmitDatagram()
 
       case DATAGRAM_DATA:
       case DATAGRAM_DATA_ACK:
-      case DATAGRAM_SF6_DATA:
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
       case DATAGRAM_HEARTBEAT:
@@ -987,7 +984,7 @@ void transmitDatagram()
     printControl(control);
 
   //Add the spread factor 6 length is required
-  if (txControl.datagramType == DATAGRAM_SF6_DATA)
+  if (settings.radioSpreadFactor == 6)
   {
     *header++ = length;
     txDatagramSize = MAX_PACKET_SIZE - trailerBytes; //We're now going to transmit a full size datagram

@@ -108,19 +108,18 @@ typedef enum
 
   //V2: Point-to-Point data exchange
   DATAGRAM_DATA,                    // 6
-  DATAGRAM_SF6_DATA,                // 7
-  DATAGRAM_DATA_ACK,                // 8
-  DATAGRAM_HEARTBEAT,               // 9
-  DATAGRAM_REMOTE_COMMAND,          //10
-  DATAGRAM_REMOTE_COMMAND_RESPONSE, //11
+  DATAGRAM_DATA_ACK,                // 7
+  DATAGRAM_HEARTBEAT,               // 8
+  DATAGRAM_REMOTE_COMMAND,          // 9
+  DATAGRAM_REMOTE_COMMAND_RESPONSE, //10
 
   //V2: Multi-Point data exchange
-  DATAGRAM_DATAGRAM,                //12
+  DATAGRAM_DATAGRAM,                //11
 
   //V2: Multi-Point training exchange
-  DATAGRAM_TRAINING_PING,           //13
-  DATAGRAM_TRAINING_PARAMS,         //14
-  DATAGRAM_TRAINING_ACK,            //15
+  DATAGRAM_TRAINING_PING,           //12
+  DATAGRAM_TRAINING_PARAMS,         //13
+  DATAGRAM_TRAINING_ACK,            //14
 
   //Add new V2 datagram types before this line
   MAX_V2_DATAGRAM_TYPE,
@@ -138,11 +137,11 @@ const char * const v2DatagramType[] =
   "P2P_TRAINING_PING", "P2P_TRAINING_PARAMS",
   // 3       4        5
   "PING", "ACK-1", "ACK-2",
-  // 6        7           8           9           10          11
-  "DATA", "SF6-DATA", "DATA-ACK", "HEARTBEAT", "RMT-CMD", "RMT_RESP",
-  //  12
+  // 6        7           8            9          10
+  "DATA", "DATA-ACK", "HEARTBEAT", "RMT-CMD", "RMT_RESP",
+  //  11
   "DATAGRAM",
-  //       13              14               15
+  //       12              13               14
   "TRAINING_PING", "TRAINING_PARAMS", "TRAINING_ACK"
 };
 
