@@ -1078,7 +1078,7 @@ void updateRadioState()
             memcpy(trainingPartnerID, &rxData[UNIQUE_ID_BYTES], UNIQUE_ID_BYTES);
 
             //Get the radio parameters
-            updateRadioParameters(&rxData[UNIQUE_ID_BYTES * 2]);
+            updateRadioParameters(&rxData[UNIQUE_ID_BYTES * 2], false);
 
             //Acknowledge the radio parameters
             xmitDatagramMpTrainingAck(&rxData[UNIQUE_ID_BYTES]);
