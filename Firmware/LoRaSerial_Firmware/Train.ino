@@ -388,7 +388,7 @@ void commonTrainingInitialization()
     settings.triggerWidthIsMultiplier = originalSettings.triggerWidthIsMultiplier;
 
     settings.triggerEnable = originalSettings.triggerEnable;
-    settings.triggerEnable = originalSettings.triggerEnable;
+    settings.triggerEnable2 = originalSettings.triggerEnable2;
     settings.debugReceive = originalSettings.debugReceive;
     settings.debugTransmit = originalSettings.debugTransmit;
     settings.printTxErrors = originalSettings.printTxErrors;
@@ -444,4 +444,3 @@ void endClientServerTraining(uint8_t event)
   systemFlush();
   systemReset();
 }
-
