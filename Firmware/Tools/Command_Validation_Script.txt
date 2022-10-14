@@ -442,20 +442,55 @@ ats48=1
 ats48=2
 ats48=0
 
-# displayRealMillis
+# enableCRC16
 ats49=1
 ats49=2
 ats49=0
 
-# Invalid commands
+# DisplayRealMillis
 ats50=1
-ats50?
+ats50=2
+ats50=0
+
+# TrainingServer
+ats51=1
+ats51=2
+ats51=0
+
+# ClientRetryInterval
+ats52=1
+ats52=2
+ats52=0
+
+# CopyDebug
+ats53=1
+ats53=2
+ats53=0
+
+# CopySerial
+ats54=1
+ats54=2
+ats54=0
+
+# CopyTriggers
+ats55=1
+ats55=2
+ats55=0
+
+# TrainingKey
+ats56=01020304050607080910111213141516
+ats56=0102030405060708091011121314151
+ats56=010203040506070809101112131415160
+
+# Invalid commands
+ats57=1
+ats57?
 
 ats255=1
 ats255?
 
 ati0
 
-at&w
+at&f
 
 atz

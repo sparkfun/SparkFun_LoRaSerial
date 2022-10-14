@@ -41,7 +41,15 @@ typedef enum
   // Multi-Point: Datagrams
   RADIO_MP_STANDBY,
   RADIO_MP_WAIT_TX_DONE,
-  RADIO_MP_RECEIVE,
+
+  //Training client states
+  RADIO_MP_WAIT_TX_TRAINING_PING_DONE,
+  RADIO_MP_WAIT_RX_RADIO_PARAMETERS,
+  RADIO_MP_WAIT_TX_PARAM_ACK_DONE,
+
+  //Training server states
+  RADIO_MP_WAIT_FOR_TRAINING_PING,
+  RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,
 
   RADIO_MAX_STATE,
 } RadioStates;
@@ -74,6 +82,11 @@ typedef enum
   //V2: Multi-Point data exchange
   DATAGRAM_DATAGRAM,
 
+  //V2: Multi-Point training exchange
+  DATAGRAM_TRAINING_PING,
+  DATAGRAM_TRAINING_PARAMS,
+  DATAGRAM_TRAINING_ACK,
+
   //Add new V2 datagram types before this line
   MAX_DATAGRAM_TYPE,
 
@@ -98,8 +111,10 @@ typedef enum
 const char * const v2DatagramType[] =
 {//  0       1        2        3        4           5           6
   "PING", "ACK-1", "ACK-2", "DATA", "SF6-DATA", "DATA-ACK", "HEARTBEAT",
-  //  7          8                9
-  "RMT-CMD", "RMT_RESP", "DATAGRAM_DATAGRAM"
+  //  7          8                9                10
+  "RMT-CMD", "RMT_RESP", "DATAGRAM_DATAGRAM", "TRAINING_PING",
+  //     11                12
+  "TRAINING_PARAMS", "TRAINING_ACK"
 };
 
 //Train button states
@@ -150,7 +165,6 @@ enum
   TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND_RESPONSE,
   TRIGGER_BAD_PACKET,
 
-
   TRIGGER_ACK_PROCESSED,
   TRIGGER_DATA_SEND,
   TRIGGER_RTR_2BYTE,
@@ -191,6 +205,21 @@ enum
   TRIGGER_COMMAND_SENT_ACK_PACKET,
   TRIGGER_COMMAND_PACKET_RESEND,
   TRIGGER_PACKET_COMMAND_DATA,
+
+  //Training client triggers
+  TRIGGER_TRAINING_CLIENT_TX_PING,            //34,  875us
+  TRIGGER_TRAINING_CLIENT_TX_PING_DONE,       //35,  900us
+  TRIGGER_TRAINING_CLIENT_RX_PARAMS,          //38,  975us
+  TRIGGER_TRAINING_CLIENT_TX_ACK,             //39, 1000us
+  TRIGGER_TRAINING_CLIENT_TX_ACK_DONE,        //40, 1025us
+  TRIGGER_TRAINING_COMPLETE,                  //41, 1050us
+
+  //Training server triggers
+  TRIGGER_TRAINING_SERVER_RX,                 //42, 1075us
+  TRIGGER_TRAINING_SERVER_TX_PARAMS,          //43, 1100us
+  TRIGGER_TRAINING_SERVER_TX_PARAMS_DONE,     //44, 1125us
+  TRIGGER_TRAINING_SERVER_RX_ACK,             //45, 1150us
+  TRIGGER_TRAINING_SERVER_STOPPED,            //46, 1175us
 };
 
 //Control where to print command output
@@ -231,7 +260,7 @@ typedef struct struct_settings {
   uint8_t netID = 192; //Both radios must share a network ID
   bool pointToPoint = true; //Receiving unit will check netID and ACK. If set to false, receiving unit doesn't check netID or ACK.
   bool encryptData = true; //AES encrypt each packet
-  uint8_t encryptionKey[16] = { 0x37, 0x78, 0x21, 0x41, 0xA6, 0x65, 0x73, 0x4E, 0x44, 0x75, 0x67, 0x2A, 0xE6, 0x30, 0x83, 0x08 };
+  uint8_t encryptionKey[AES_KEY_BYTES] = { 0x37, 0x78, 0x21, 0x41, 0xA6, 0x65, 0x73, 0x4E, 0x44, 0x75, 0x67, 0x2A, 0xE6, 0x30, 0x83, 0x08 };
   bool dataScrambling = false; //Use IBM Data Whitening to reduce DC bias
   uint8_t radioBroadcastPower_dbm = 30; //Transmit power in dBm. Max is 30dBm (1W), min is 14dBm (25mW).
   float frequencyMin = 902.0; //MHz
@@ -275,6 +304,14 @@ typedef struct struct_settings {
   bool printTimestamp = false; //Print a timestamp: days hours:minutes:seconds.milliseconds
   bool debugDatagrams = false; //Print the datagrams
   uint16_t overheadTime = 10; ////ms added to ack and datagram times before ACK timeout occurs
+  bool enableCRC16 = false; //Append CRC-16 to packet, check CRC-16 upon receive
+  bool displayRealMillis = false; //true = Display the millis value without offset, false = use offset
+  bool trainingServer = false; //Default to being a client
+  uint8_t clientPingRetryInterval = 3; //Number of seconds before retransmiting the client PING
+  bool copyDebug = true; //Copy the debug parameters to the training client
+  bool copySerial = true; //Copy the serial parameters to the training client
+  bool copyTriggers = true; //Copy the trigger parameters to the training client
+  uint8_t trainingKey[AES_KEY_BYTES] = { 0x53, 0x70, 0x61, 0x72, 0x6b, 0x46, 0x75, 0x6E, 0x54, 0x72, 0x61, 0x69, 0x6e, 0x69, 0x6e, 0x67 };
 } Settings;
 Settings settings;
 
@@ -299,7 +336,7 @@ typedef void (* ARCH_SERIAL_PRINT)(const char * value);
 typedef uint8_t (* ARCH_SERIAL_READ)();
 typedef void (* ARCH_SERIAL_WRITE)(uint8_t value);
 typedef void (* ARCH_SYSTEM_RESET)();
-typedef void (* ARCH_UNIQUE_ID)(uint32_t * unique128_BitID);
+typedef void (* ARCH_UNIQUE_ID)(uint8_t * unique128_BitID);
 
 typedef struct _ARCH_TABLE
 {

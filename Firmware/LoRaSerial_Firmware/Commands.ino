@@ -111,7 +111,24 @@ bool commandAT(const char * commandString)
         break;
       case ('T'): //Enter training mode
         reportOK();
-        beginTraining();
+        if (settings.useV2 && (!settings.pointToPoint))
+        {
+          if (settings.trainingServer)
+            beginTrainingServer();
+          else
+            beginTrainingClient();
+        }
+        else
+          beginTraining();
+        break;
+      case ('X'): //Stop the training server
+        if (trainingServerRunning && (!settings.pointToPoint) && settings.trainingServer)
+        {
+          endClientServerTraining(TRIGGER_TRAINING_SERVER_STOPPED);
+          reportOK();
+        }
+        else
+          reportERROR();
         break;
       case ('Z'): //Reboots the radio
         reportOK();
@@ -126,7 +143,7 @@ bool commandAT(const char * commandString)
   //ATIx commands
   else if (commandString[2] == 'I' && commandLength == 4)
   {
-    uint32_t uniqueID[4];
+    uint8_t uniqueID[UNIQUE_ID_BYTES];
 
     switch (commandString[3])
     {
@@ -172,8 +189,7 @@ bool commandAT(const char * commandString)
         systemPrintln(channelNumber);
         break;
       case ('8'): //ATI8 - Display the unique ID
-        arch.uniqueID(uniqueID);
-        systemPrintUniqueID(uniqueID);
+        systemPrintUniqueID(myUniqueId);
         systemPrintln();
         break;
       default:
@@ -506,6 +522,16 @@ const COMMAND_ENTRY commands[] =
   {46,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTimestamp",       &settings.printTimestamp},
   {47,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &settings.debugDatagrams},
   {48,    0, 1000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &settings.overheadTime},
+  {49,    0,   1,    0, TYPE_BOOL,         valInt,         "EnableCRC16",          &settings.enableCRC16},
+
+  {50,    0,   1,    0, TYPE_BOOL,         valInt,         "DisplayRealMillis",    &settings.displayRealMillis},
+  {51,    0,   1,    0, TYPE_BOOL,         valInt,         "TrainingServer",       &settings.trainingServer},
+  {52,    1, 255,    0, TYPE_U8,           valInt,         "ClientRetryInterval",  &settings.clientPingRetryInterval},
+  {53,    0,   1,    0, TYPE_BOOL,         valInt,         "CopyDebug",            &settings.copyDebug},
+  {54,    0,   1,    0, TYPE_BOOL,         valInt,         "CopySerial",           &settings.copySerial},
+
+  {55,    0,   1,    0, TYPE_BOOL,         valInt,         "CopyTriggers",         &settings.copyTriggers},
+  {56,    0,   0,    0, TYPE_KEY,          valKey,         "TrainingKey",          &settings.trainingKey},
 
   //Define any user parameters starting at 255 decrementing towards 0
 };
@@ -640,8 +666,8 @@ bool commandSet(const char * commandString)
       case TYPE_KEY:
         valid = command->validate((void *)buffer, command->minValue, command->maxValue);
         if (valid)
-          for (uint32_t x = 0; x < (2 * sizeof(settings.encryptionKey)); x += 2)
-            settings.encryptionKey[x / 2] = charHexToDec(buffer[x], buffer[x + 1]);
+          for (uint32_t x = 0; x < (2 * AES_KEY_BYTES); x += 2)
+            ((uint8_t *)command->setting)[x / 2] = charHexToDec(buffer[x], buffer[x + 1]);
         break;
       case TYPE_SPEED_AIR:
       case TYPE_SPEED_SERIAL:

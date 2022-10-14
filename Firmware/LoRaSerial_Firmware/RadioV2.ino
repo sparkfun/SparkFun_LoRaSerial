@@ -1,3 +1,39 @@
+const uint16_t crc16Table[256] =
+{
+  0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
+  0x8108, 0x9129, 0xA14A, 0xB16B, 0xC18C, 0xD1AD, 0xE1CE, 0xF1EF,
+  0x1231, 0x0210, 0x3273, 0x2252, 0x52B5, 0x4294, 0x72F7, 0x62D6,
+  0x9339, 0x8318, 0xB37B, 0xA35A, 0xD3BD, 0xC39C, 0xF3FF, 0xE3DE,
+  0x2462, 0x3443, 0x0420, 0x1401, 0x64E6, 0x74C7, 0x44A4, 0x5485,
+  0xA56A, 0xB54B, 0x8528, 0x9509, 0xE5EE, 0xF5CF, 0xC5AC, 0xD58D,
+  0x3653, 0x2672, 0x1611, 0x0630, 0x76D7, 0x66F6, 0x5695, 0x46B4,
+  0xB75B, 0xA77A, 0x9719, 0x8738, 0xF7DF, 0xE7FE, 0xD79D, 0xC7BC,
+  0x48C4, 0x58E5, 0x6886, 0x78A7, 0x0840, 0x1861, 0x2802, 0x3823,
+  0xC9CC, 0xD9ED, 0xE98E, 0xF9AF, 0x8948, 0x9969, 0xA90A, 0xB92B,
+  0x5AF5, 0x4AD4, 0x7AB7, 0x6A96, 0x1A71, 0x0A50, 0x3A33, 0x2A12,
+  0xDBFD, 0xCBDC, 0xFBBF, 0xEB9E, 0x9B79, 0x8B58, 0xBB3B, 0xAB1A,
+  0x6CA6, 0x7C87, 0x4CE4, 0x5CC5, 0x2C22, 0x3C03, 0x0C60, 0x1C41,
+  0xEDAE, 0xFD8F, 0xCDEC, 0xDDCD, 0xAD2A, 0xBD0B, 0x8D68, 0x9D49,
+  0x7E97, 0x6EB6, 0x5ED5, 0x4EF4, 0x3E13, 0x2E32, 0x1E51, 0x0E70,
+  0xFF9F, 0xEFBE, 0xDFDD, 0xCFFC, 0xBF1B, 0xAF3A, 0x9F59, 0x8F78,
+  0x9188, 0x81A9, 0xB1CA, 0xA1EB, 0xD10C, 0xC12D, 0xF14E, 0xE16F,
+  0x1080, 0x00A1, 0x30C2, 0x20E3, 0x5004, 0x4025, 0x7046, 0x6067,
+  0x83B9, 0x9398, 0xA3FB, 0xB3DA, 0xC33D, 0xD31C, 0xE37F, 0xF35E,
+  0x02B1, 0x1290, 0x22F3, 0x32D2, 0x4235, 0x5214, 0x6277, 0x7256,
+  0xB5EA, 0xA5CB, 0x95A8, 0x8589, 0xF56E, 0xE54F, 0xD52C, 0xC50D,
+  0x34E2, 0x24C3, 0x14A0, 0x0481, 0x7466, 0x6447, 0x5424, 0x4405,
+  0xA7DB, 0xB7FA, 0x8799, 0x97B8, 0xE75F, 0xF77E, 0xC71D, 0xD73C,
+  0x26D3, 0x36F2, 0x0691, 0x16B0, 0x6657, 0x7676, 0x4615, 0x5634,
+  0xD94C, 0xC96D, 0xF90E, 0xE92F, 0x99C8, 0x89E9, 0xB98A, 0xA9AB,
+  0x5844, 0x4865, 0x7806, 0x6827, 0x18C0, 0x08E1, 0x3882, 0x28A3,
+  0xCB7D, 0xDB5C, 0xEB3F, 0xFB1E, 0x8BF9, 0x9BD8, 0xABBB, 0xBB9A,
+  0x4A75, 0x5A54, 0x6A37, 0x7A16, 0x0AF1, 0x1AD0, 0x2AB3, 0x3A92,
+  0xFD2E, 0xED0F, 0xDD6C, 0xCD4D, 0xBDAA, 0xAD8B, 0x9DE8, 0x8DC9,
+  0x7C26, 0x6C07, 0x5C64, 0x4C45, 0x3CA2, 0x2C83, 0x1CE0, 0x0CC1,
+  0xEF1F, 0xFF3E, 0xCF5D, 0xDF7C, 0xAF9B, 0xBFBA, 0x8FD9, 0x9FF8,
+  0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0
+};
+
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Point-To-Point: Bring up the link
 //
@@ -57,15 +93,19 @@
 //First packet in the three way handshake to bring up the link
 void xmitDatagramP2PPing()
 {
+  unsigned long currentMillis = millis();
+  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
+  endOfTxData += sizeof(unsigned long);
+
   /*
-          endOfTxData ---.
-                         |
-                         V
-      +--------+---------+----------+
-      |        |         |          |
-      | NET ID | Control | Trailer  |
-      | 8 bits | 8 bits  |  8 bits  |
-      +--------+---------+----------+
+                    endOfTxData ---.
+                                   |
+                                   V
+      +--------+---------+---------+----------+
+      |        |         |         |          |
+      | NET ID | Control | Millis  | Trailer  |
+      | 8 bits | 8 bits  | 4 bytes | n Bytes  |
+      +--------+---------+---------+----------+
   */
 
   txControl.datagramType = DATAGRAM_PING;
@@ -76,19 +116,19 @@ void xmitDatagramP2PPing()
 //Second packet in the three way handshake to bring up the link
 void xmitDatagramP2PAck1()
 {
-  uint16_t channelTimerElapsed = millis() - timerStart;
-  memcpy(endOfTxData, &channelTimerElapsed, sizeof(channelTimerElapsed));
-  endOfTxData += sizeof(channelTimerElapsed);
+  unsigned long currentMillis = millis();
+  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
+  endOfTxData += sizeof(unsigned long);
 
   /*
-                     endOfTxData ---.
-                                    |
-                                    V
-      +--------+---------+----------+----------+
-      |        |         | Channel  | Optional |
-      | NET ID | Control |  Timer   | Trailer  |
-      | 8 bits | 8 bits  | 2 bytes  |  8 bits  |
-      +--------+---------+----------+----------+
+                    endOfTxData ---.
+                                   |
+                                   V
+      +--------+---------+---------+----------+
+      |        |         |         | Optional |
+      | NET ID | Control | Millis  | Trailer  |
+      | 8 bits | 8 bits  | 4 bytes | n Bytes  |
+      +--------+---------+---------+----------+
   */
 
   txControl.datagramType = DATAGRAM_ACK_1;
@@ -99,15 +139,19 @@ void xmitDatagramP2PAck1()
 //Last packet in the three way handshake to bring up the link
 void xmitDatagramP2PAck2()
 {
+  unsigned long currentMillis = millis();
+  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
+  endOfTxData += sizeof(unsigned long);
+
   /*
-          endOfTxData ---.
-                         |
-                         V
-      +--------+---------+----------+
-      |        |         |          |
-      | NET ID | Control | Trailer  |
-      | 8 bits | 8 bits  |  8 bits  |
-      +--------+---------+----------+
+                    endOfTxData ---.
+                                   |
+                                   V
+      +--------+---------+---------+----------+
+      |        |         |         |          |
+      | NET ID | Control | Millis  | Trailer  |
+      | 8 bits | 8 bits  | 4 bytes | n Bytes  |
+      +--------+---------+---------+----------+
   */
 
   txControl.datagramType = DATAGRAM_ACK_2;
@@ -129,14 +173,13 @@ void xmitDatagramP2PCommand()
       +--------+---------+---  ...  ---+----------+
       |        |         |             | Optional |
       | NET ID | Control |    Data     | Trailer  |
-      | 8 bits | 8 bits  |   n bytes   |  8 bits  |
+      | 8 bits | 8 bits  |   n bytes   | n Bytes  |
       +--------+---------+-------------+----------+
   */
 
   txControl.datagramType = DATAGRAM_REMOTE_COMMAND;
   txControl.ackNumber = expectedDatagramNumber;
   expectedDatagramNumber = (expectedDatagramNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
-  packetSent = 0; //This is the first time this packet is being sent
   transmitDatagram();
 }
 
@@ -150,14 +193,13 @@ void xmitDatagramP2PCommandResponse()
       +--------+---------+---  ...  ---+----------+
       |        |         |             | Optional |
       | NET ID | Control |    Data     | Trailer  |
-      | 8 bits | 8 bits  |   n bytes   |  8 bits  |
+      | 8 bits | 8 bits  |   n bytes   | n Bytes  |
       +--------+---------+-------------+----------+
   */
 
   txControl.datagramType = DATAGRAM_REMOTE_COMMAND_RESPONSE;
   txControl.ackNumber = expectedDatagramNumber;
   expectedDatagramNumber = (expectedDatagramNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
-  packetSent = 0; //This is the first time this packet is being sent
   transmitDatagram();
 }
 
@@ -171,35 +213,37 @@ void xmitDatagramP2PData()
       +--------+---------+---  ...  ---+----------+
       |        |         |             | Optional |
       | NET ID | Control |    Data     | Trailer  |
-      | 8 bits | 8 bits  |   n bytes   |  8 bits  |
+      | 8 bits | 8 bits  |   n bytes   | n Bytes  |
       +--------+---------+-------------+----------+
   */
 
   txControl.datagramType = DATAGRAM_DATA;
   txControl.ackNumber = expectedDatagramNumber;
   expectedDatagramNumber = (expectedDatagramNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
-  packetSent = 0; //This is the first time this packet is being sent
   transmitDatagram();
 }
 
 //Heartbeat packet to keep the link up
 void xmitDatagramP2PHeartbeat()
 {
+  unsigned long currentMillis = millis();
+  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
+  endOfTxData += sizeof(currentMillis);
+
   /*
-          endOfTxData ---.
-                         |
-                         V
-      +--------+---------+----------+
-      |        |         | Optional |
-      | NET ID | Control | Trailer  |
-      | 8 bits | 8 bits  |  8 bits  |
-      +--------+---------+----------+
+                    endOfTxData ---.
+                                   |
+                                   V
+      +--------+---------+---------+----------+
+      |        |         |         | Optional |
+      | NET ID | Control | Millis  | Trailer  |
+      | 8 bits | 8 bits  | 4 Bytes | n Bytes  |
+      +--------+---------+---------+----------+
   */
 
   txControl.datagramType = DATAGRAM_HEARTBEAT;
   txControl.ackNumber = expectedDatagramNumber;
   expectedDatagramNumber = (expectedDatagramNumber + ((datagramsExpectingAcks & (1 << txControl.datagramType)) != 0)) & 3;
-  packetSent = 0; //This is the first time this packet is being sent
   transmitDatagram();
 }
 
@@ -217,7 +261,7 @@ void xmitDatagramP2PAck()
       +--------+---------+----------+----------+
       |        |         | Channel  | Optional |
       | NET ID | Control |  Timer   | Trailer  |
-      | 8 bits | 8 bits  | 2 bytes  |  8 bits  |
+      | 8 bits | 8 bits  | 2 bytes  | n Bytes  |
       +--------+---------+----------+----------+
   */
 
@@ -241,11 +285,186 @@ void xmitDatagramMpDatagram()
       +----------+---------+---  ...  ---+----------+
       | Optional |         |             | Optional |
       |  NET ID  | Control |    Data     | Trailer  |
-      |  8 bits  | 8 bits  |   n bytes   |  8 bits  |
+      |  8 bits  | 8 bits  |   n bytes   | n Bytes  |
       +----------+---------+-------------+----------+
   */
 
   txControl.datagramType = DATAGRAM_DATAGRAM;
+  txControl.ackNumber = 0;
+  transmitDatagram();
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//Multi-Point Client Training
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+//Build the client ping packet used for training
+void xmitDatagramTrainingPing()
+{
+  //Add the source (server) ID
+  memcpy(endOfTxData, myUniqueId, UNIQUE_ID_BYTES);
+  endOfTxData += UNIQUE_ID_BYTES;
+
+  /*
+                        endOfTxData ---.
+                                       |
+                                       V
+      +----------+---------+-----------+----------+
+      | Optional |         |           | Optional |
+      |  NET ID  | Control | Client ID | Trailer  |
+      |  8 bits  | 8 bits  |  16 Bytes | n Bytes  |
+      +----------+---------+-----------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_TRAINING_PING;
+  txControl.ackNumber = 0;
+  transmitDatagram();
+}
+
+//Build the client ACK packet used for training
+void xmitDatagramTrainingAck(uint8_t * serverID)
+{
+  //Add the destination (server) ID
+  memcpy(endOfTxData, serverID, UNIQUE_ID_BYTES);
+  endOfTxData += UNIQUE_ID_BYTES;
+
+  //Add the source (client) ID
+  memcpy(endOfTxData, myUniqueId, UNIQUE_ID_BYTES);
+  endOfTxData += UNIQUE_ID_BYTES;
+
+  /*
+                                    endOfTxData ---.
+                                                   |
+                                                   V
+      +----------+---------+-----------+-----------+----------+
+      | Optional |         |           |           | Optional |
+      |  NET ID  | Control | Server ID | Client ID | Trailer  |
+      |  8 bits  | 8 bits  |  16 Bytes |  16 Bytes | n Bytes  |
+      +----------+---------+-----------+-----------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_TRAINING_ACK;
+  txControl.ackNumber = 0;
+  transmitDatagram();
+}
+
+void updateRadioParameters(uint8_t * rxData)
+{
+  Settings params;
+
+  //Get the parameters
+  memcpy(&params, rxData, sizeof(params));
+
+  //Update the radio parameters
+  originalSettings.airSpeed = params.airSpeed;
+  originalSettings.netID = params.netID;
+  originalSettings.pointToPoint = false;
+  originalSettings.encryptData = params.encryptData;
+  memcpy(originalSettings.encryptionKey, params.encryptionKey, sizeof(originalSettings.encryptionKey));
+  originalSettings.dataScrambling = params.dataScrambling;
+  originalSettings.radioBroadcastPower_dbm = params.radioBroadcastPower_dbm;
+  originalSettings.frequencyMin = params.frequencyMin;
+  originalSettings.frequencyMax = params.frequencyMax;
+  originalSettings.numberOfChannels = params.numberOfChannels;
+  originalSettings.frequencyHop = params.frequencyHop;
+  originalSettings.maxDwellTime = params.maxDwellTime;
+  originalSettings.radioBandwidth = params.radioBandwidth;
+  originalSettings.radioSpreadFactor = params.radioSpreadFactor;
+  originalSettings.radioCodingRate = params.radioCodingRate;
+  originalSettings.radioSyncWord = params.radioSyncWord;
+  originalSettings.radioPreambleLength = params.radioPreambleLength;
+  originalSettings.frameSize = params.frameSize;
+  originalSettings.serialTimeoutBeforeSendingFrame_ms = params.serialTimeoutBeforeSendingFrame_ms;
+  originalSettings.heartbeatTimeout = params.heartbeatTimeout;
+  originalSettings.autoTuneFrequency = params.autoTuneFrequency;
+  originalSettings.maxResends = params.maxResends;
+  originalSettings.verifyRxNetID = params.verifyRxNetID;
+  originalSettings.useV2 = params.useV2;
+  originalSettings.overheadTime = params.overheadTime;
+  originalSettings.enableCRC16 = params.enableCRC16;
+  originalSettings.clientPingRetryInterval = params.clientPingRetryInterval;
+
+  //Update the API parameters
+  originalSettings.sortParametersByName = params.sortParametersByName;
+  originalSettings.printParameterName = params.printParameterName;
+
+  //Update the debug parameters
+  if (params.copyDebug)
+  {
+    originalSettings.debug = params.debug;
+    originalSettings.displayPacketQuality = params.displayPacketQuality;
+    originalSettings.printFrequency = params.printFrequency;
+    originalSettings.debugRadio = params.debugRadio;
+    originalSettings.debugStates = params.debugStates;
+    originalSettings.debugTraining = params.debugTraining;
+    originalSettings.debugTrigger = params.debugTrigger;
+    originalSettings.printRfData = params.printRfData;
+    originalSettings.printPktData = params.printPktData;
+    originalSettings.debugReceive = params.debugReceive;
+    originalSettings.debugTransmit = params.debugTransmit;
+    originalSettings.printTxErrors = params.printTxErrors;
+    originalSettings.printTimestamp = params.printTimestamp;
+    originalSettings.debugDatagrams = params.debugDatagrams;
+    originalSettings.displayRealMillis = params.displayRealMillis;
+  }
+
+  //Update the serial parameters
+  if (params.copySerial)
+  {
+    originalSettings.serialSpeed = params.serialSpeed;
+    originalSettings.echo = params.echo;
+    originalSettings.flowControl = params.flowControl;
+    originalSettings.usbSerialWait = params.usbSerialWait;
+  }
+
+  //Update the trigger parameters
+  if (params.copyTriggers)
+  {
+    originalSettings.triggerWidth = params.triggerWidth;
+    originalSettings.triggerWidthIsMultiplier = params.triggerWidthIsMultiplier;
+    originalSettings.triggerEnable = params.triggerEnable;
+    originalSettings.triggerEnable2 = params.triggerEnable2;
+  }
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//Multi-Point Server Training
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+//Build the server parameters packet used for training
+void xmitDatagramRadioParameters(const uint8_t * clientID)
+{
+  Settings params;
+
+  //Initialize the radio parameters
+  memcpy(&params, &originalSettings, sizeof(settings));
+  params.pointToPoint = false;
+  params.trainingServer = false;
+
+  //Add the destination (client) ID
+  memcpy(endOfTxData, clientID, UNIQUE_ID_BYTES);
+  endOfTxData += UNIQUE_ID_BYTES;
+
+  //Add the source (server) ID
+  memcpy(endOfTxData, myUniqueId, UNIQUE_ID_BYTES);
+  endOfTxData += UNIQUE_ID_BYTES;
+
+  //Add the radio parameters
+  memcpy(endOfTxData, &params, sizeof(params));
+  endOfTxData += sizeof(params);
+
+  /*
+                                                  endOfTxData ---.
+                                                                 |
+                                                                 V
+      +----------+---------+-----------+-----------+---  ...  ---+----------+
+      | Optional |         |           |           |   Radio     | Optional |
+      |  NET ID  | Control | Client ID | Server ID | Parameters  | Trailer  |
+      |  8 bits  | 8 bits  |  16 Bytes |  16 Bytes |   n bytes   | n Bytes  |
+      +----------+---------+-----------+-----------+-------------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_TRAINING_PARAMS;
   txControl.ackNumber = 0;
   transmitDatagram();
 }
@@ -261,6 +480,9 @@ PacketType rcvDatagram()
   uint8_t receivedNetID;
   CONTROL_U8 rxControl;
 
+  //Save the receive time
+  rcvTimeMillis = millis();
+
   //Get the received datagram
   radio.readData(incomingBuffer, MAX_PACKET_SIZE);
   rxDataBytes = radio.getPacketLength();
@@ -272,7 +494,7 @@ PacketType rcvDatagram()
       +----------+----------+------------+---  ...  ---+----------+
       | Optional |          |  Optional  |             | Optional |
       |  NET ID  | Control  | SF6 Length |    Data     | Trailer  |
-      |  8 bits  |  8 bits  |   8 bits   |   n bytes   |  8 bits  |
+      |  8 bits  |  8 bits  |   8 bits   |   n bytes   | n Bytes  |
       +----------+----------+------------+-------------+----------+
       ^
       |
@@ -284,7 +506,9 @@ PacketType rcvDatagram()
   {
     systemPrintln("----------");
     systemPrintTimestamp();
-    systemPrint("RX: Data ");
+    systemPrint("RX: ");
+    systemPrint((settings.dataScrambling || settings.encryptData) ? "Encrypted " : "Unencrypted ");
+    systemPrint("Frame ");
     systemPrint(rxDataBytes);
     systemPrint(" (0x");
     systemPrint(rxDataBytes, HEX);
@@ -300,6 +524,21 @@ PacketType rcvDatagram()
   if (settings.encryptData == true)
     decryptBuffer(incomingBuffer, rxDataBytes);
 
+  //Display the received data bytes
+  if ((settings.dataScrambling || settings.encryptData)
+    && (settings.printRfData || settings.debugReceive))
+  {
+    systemPrintTimestamp();
+    systemPrint("RX: Unencrypted Frame ");
+    systemPrint(rxDataBytes);
+    systemPrint(" (0x");
+    systemPrint(rxDataBytes, HEX);
+    systemPrintln(") bytes");
+    petWDT();
+    if (settings.printRfData && rxDataBytes)
+      dumpBuffer(incomingBuffer, rxDataBytes);
+  }
+
   //All packets must include the 2-byte control header
   if (rxDataBytes < minDatagramSize)
   {
@@ -307,7 +546,7 @@ PacketType rcvDatagram()
     if (settings.printPktData || settings.debugReceive)
     {
       systemPrintTimestamp();
-      systemPrint("RX: Bad packet ");
+      systemPrint("RX: Bad Frame ");
       systemPrint(rxDataBytes);
       systemPrint(" (0x");
       systemPrint(rxDataBytes, HEX);
@@ -325,14 +564,12 @@ PacketType rcvDatagram()
       +----------+----------+------------+---  ...  ---+----------+
       | Optional |          |  Optional  |             | Optional |
       |  NET ID  | Control  | SF6 Length |    Data     | Trailer  |
-      |  8 bits  |  8 bits  |   8 bits   |   n bytes   |  8 bits  |
+      |  8 bits  |  8 bits  |   8 bits   |   n bytes   | n Bytes  |
       +----------+----------+------------+-------------+----------+
       ^
       |
       '---- rxData
   */
-
-  //Process the trailer
 
   //Verify the netID if necessary
   if (settings.pointToPoint || settings.verifyRxNetID)
@@ -359,13 +596,44 @@ PacketType rcvDatagram()
     }
   }
 
+  //Process the trailer
+  petWDT();
+  if (settings.enableCRC16)
+  {
+    uint16_t crc;
+    uint8_t * data;
+
+    //Compute the CRC-16 value
+    crc = 0xffff;
+    for (data = incomingBuffer; data < &incomingBuffer[rxDataBytes - 2]; data++)
+      crc = crc16Table[*data ^ (uint8_t)(crc >> (16 - 8))] ^ (crc << 8);
+    if ((incomingBuffer[rxDataBytes - 2] != (crc >> 8))
+      && (incomingBuffer[rxDataBytes - 1] != (crc & 0xff)))
+    {
+      //Display the packet contents
+      if (settings.printPktData || settings.debugReceive)
+      {
+        systemPrintTimestamp();
+        systemPrint("RX: Bad CRC-16, received 0x");
+        systemPrint(incomingBuffer[rxDataBytes - 2], HEX);
+        systemPrint(incomingBuffer[rxDataBytes - 1], HEX);
+        systemPrint(" expected 0x");
+        systemPrintln(crc, HEX);
+        petWDT();
+        if (settings.printRfData && rxDataBytes)
+            dumpBuffer(incomingBuffer, rxDataBytes);
+      }
+      return (PACKET_BAD);
+    }
+  }
+
   /*
       |<---------------------- rxDataBytes ---------------------->|
       |                                                           |
       +----------+----------+------------+---  ...  ---+----------+
       | Optional |          |  Optional  |             | Optional |
       |  NET ID  | Control  | SF6 Length |    Data     | Trailer  |
-      |  8 bits  |  8 bits  |   8 bits   |   n bytes   |  8 bits  |
+      |  8 bits  |  8 bits  |   8 bits   |   n bytes   | n Bytes  |
       +----------+----------+------------+-------------+----------+
                  ^
                  |
@@ -381,13 +649,22 @@ PacketType rcvDatagram()
   if (datagramType >= MAX_DATAGRAM_TYPE)
     return (PACKET_BAD);
 
+  //Display the CRC
+  if (settings.enableCRC16 && (settings.printPktData || settings.debugReceive))
+  {
+    systemPrintTimestamp();
+    systemPrint("    CRC-16: 0x");
+    systemPrint(incomingBuffer[rxDataBytes - 2], HEX);
+    systemPrintln(incomingBuffer[rxDataBytes - 1], HEX);
+  }
+
   /*
       |<---------------------- rxDataBytes ---------------------->|
       |                                                           |
       +----------+----------+------------+---  ...  ---+----------+
       | Optional |          |  Optional  |             | Optional |
       |  NET ID  | Control  | SF6 Length |    Data     | Trailer  |
-      |  8 bits  |  8 bits  |   8 bits   |   n bytes   |  8 bits  |
+      |  8 bits  |  8 bits  |   8 bits   |   n bytes   | n Bytes  |
       +----------+----------+------------+-------------+----------+
                             ^
                             |
@@ -479,7 +756,7 @@ PacketType rcvDatagram()
       +----------+----------+------------+------  ...  ------+----------+
       | Optional |          |  Optional  |                   | Optional |
       |  NET ID  | Control  | SF6 Length |       Data        | Trailer  |
-      |  8 bits  |  8 bits  |   8 bits   |      n bytes      |  8 bits  |
+      |  8 bits  |  8 bits  |   8 bits   |      n bytes      | n Bytes  |
       +----------+----------+------------+-------------------+----------+
                                          ^
                                          |
@@ -490,7 +767,7 @@ PacketType rcvDatagram()
   if (settings.printPktData || settings.debugReceive)
   {
     systemPrintTimestamp();
-    systemPrint("RX: Packet data ");
+    systemPrint("RX: Datagram ");
     systemPrint(rxDataBytes);
     systemPrint(" (0x");
     systemPrint(rxDataBytes, HEX);
@@ -585,7 +862,7 @@ void transmitDatagram()
       +----------+----------+------------+---  ...  ---+----------+
       | Optional |          |  Optional  |             | Optional |
       |  NET ID  | Control  | SF6 Length |    Data     | Trailer  |
-      |  8 bits  |  8 bits  |   8 bits   |   n bytes   |  8 bits  |
+      |  8 bits  |  8 bits  |   8 bits   |   n bytes   | n Bytes  |
       +----------+----------+------------+-------------+----------+
       |                                  |             |
       |                                  |<- Length -->|
@@ -596,7 +873,7 @@ void transmitDatagram()
   if (settings.printPktData || settings.debugTransmit)
   {
     systemPrintTimestamp();
-    systemPrint("TX: Packet data ");
+    systemPrint("TX: Datagram ");
     systemPrint(length);
     systemPrint(" (0x");
     systemPrint(length, HEX);
@@ -658,6 +935,9 @@ void transmitDatagram()
   }
 
   /*
+                                        endOfTxData ---.
+                                                       |
+                                                       V
       +----------+----------+------------+---  ...  ---+
       | Optional |          |  Optional  |             |
       |  NET ID  | Control  | SF6 Length |    Data     |
@@ -668,6 +948,18 @@ void transmitDatagram()
   */
 
   //Add the datagram trailer
+  if (settings.enableCRC16)
+  {
+    uint16_t crc;
+    uint8_t * txData;
+
+    //Compute the CRC-16 value
+    crc = 0xffff;
+    for (txData = outgoingPacket; txData < endOfTxData; txData++)
+      crc = crc16Table[*txData ^ (uint8_t)(crc >> (16 - 8))] ^ (crc << 8);
+    *endOfTxData++ = (uint8_t)(crc >> 8);
+    *endOfTxData++ = (uint8_t)(crc & 0xff);
+  }
   txDatagramSize += trailerBytes;
 
   //Display the trailer
@@ -679,17 +971,43 @@ void transmitDatagram()
     systemPrint(" (0x");
     systemPrint(trailerBytes);
     systemPrintln(") bytes");
+
+    //Display the CRC
+    if (settings.enableCRC16 && (settings.printPktData || settings.debugReceive))
+    {
+      systemPrintTimestamp();
+      systemPrint("    CRC-16: 0x");
+      systemPrint(endOfTxData[-2], HEX);
+      systemPrintln(endOfTxData[-1], HEX);
+    }
   }
 
   /*
+                                                   endOfTxData ---.
+                                                                  |
+                                                                  V
       +----------+----------+------------+---  ...  ---+----------+
       | Optional |          |  Optional  |             | Optional |
       |  NET ID  | Control  | SF6 Length |    Data     | Trailer  |
-      |  8 bits  |  8 bits  |   8 bits   |   n bytes   |  8 bits  |
+      |  8 bits  |  8 bits  |   8 bits   |   n bytes   | n Bytes  |
       +----------+----------+------------+-------------+----------+
       |                                                           |
       |<-------------------- txDatagramSize --------------------->|
   */
+
+  //Display the transmitted packet bytes
+  if (settings.printRfData || settings.debugTransmit)
+  {
+    systemPrintTimestamp();
+    systemPrint("TX: Unencrypted Frame ");
+    systemPrint(txDatagramSize);
+    systemPrint(" (0x");
+    systemPrint(txDatagramSize, HEX);
+    systemPrintln(") bytes");
+    petWDT();
+    if (settings.printRfData)
+      dumpBuffer(outgoingPacket, txDatagramSize);
+  }
 
   //Encrypt the datagram
   if (settings.encryptData == true)
@@ -698,6 +1016,21 @@ void transmitDatagram()
   //Scramble the datagram
   if (settings.dataScrambling == true)
     radioComputeWhitening(outgoingPacket, txDatagramSize);
+
+  //Display the transmitted packet bytes
+  if ((settings.printRfData || settings.debugTransmit)
+    && (settings.encryptData || settings.dataScrambling))
+  {
+    systemPrintTimestamp();
+    systemPrint("TX: Encrypted Frame ");
+    systemPrint(txDatagramSize);
+    systemPrint(" (0x");
+    systemPrint(txDatagramSize, HEX);
+    systemPrintln(") bytes");
+    petWDT();
+    if (settings.printRfData)
+      dumpBuffer(outgoingPacket, txDatagramSize);
+  }
 
   //If we are trainsmitting at high data rates the receiver is often not ready for new data. Pause for a few ms (measured with logic analyzer).
   if (settings.airSpeed == 28800 || settings.airSpeed == 38400)
@@ -710,6 +1043,7 @@ void transmitDatagram()
   datagramAirTime = calcAirTime(txDatagramSize);
 
   //Transmit this datagram
+  packetSent = 0; //This is the first time this packet is being sent
   retransmitDatagram();
 }
 
@@ -726,7 +1060,13 @@ void printControl(uint8_t value)
   systemPrintln(value & 3);
   systemPrintTimestamp();
   systemPrint("        datagramType ");
-  systemPrintln(v2DatagramType[control->datagramType]);
+  if (control->datagramType < MAX_DATAGRAM_TYPE)
+    systemPrintln(v2DatagramType[control->datagramType]);
+  else
+  {
+    systemPrint("Unknown ");
+    systemPrintln(control->datagramType);
+  }
   petWDT();
 }
 
@@ -737,20 +1077,19 @@ void retransmitDatagram()
       +----------+----------+------------+---  ...  ---+----------+
       | Optional |          |  Optional  |             | Optional |
       |  NET ID  | Control  | SF6 Length |    Data     | Trailer  |
-      |  8 bits  |  8 bits  |   8 bits   |   n bytes   |  8 bits  |
+      |  8 bits  |  8 bits  |   8 bits   |   n bytes   | n Bytes  |
       +----------+----------+------------+-------------+----------+
       |                                                           |
       |<-------------------- txDatagramSize --------------------->|
   */
 
   //Display the transmitted packet bytes
-  if (settings.printRfData || settings.debugTransmit)
+  if (packetSent && (settings.printRfData || settings.debugTransmit))
   {
     systemPrintTimestamp();
-    systemPrint("TX: ");
-    if (packetSent)
-      systemPrint("Retransmit ");
-    systemPrint ("Data ");
+    systemPrint("TX: Retransmit ");
+    systemPrint((settings.encryptData || settings.dataScrambling) ? "Encrypted " : "Unencrypted ");
+    systemPrint("Frame ");
     systemPrint(txDatagramSize);
     systemPrint(" (0x");
     systemPrint(txDatagramSize, HEX);
@@ -763,6 +1102,7 @@ void retransmitDatagram()
   int state = radio.startTransmit(outgoingPacket, txDatagramSize);
   if (state == RADIOLIB_ERR_NONE)
   {
+    xmitTimeMillis = millis();
     packetAirTime = calcAirTime(txDatagramSize); //Calculate packet air size while we're transmitting in the background
     uint16_t responseDelay = packetAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
     if (settings.debugTransmit)

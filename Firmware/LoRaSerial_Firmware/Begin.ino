@@ -87,7 +87,7 @@ void petWDT()
 void beginChannelTimer()
 {
   if (channelTimer.attachInterruptInterval_MS(settings.maxDwellTime, channelTimerHandler) == false)
-    Serial.println(F("Error starting ChannelTimer!"));
+    Serial.println("Error starting ChannelTimer!");
 
   stopChannelTimer(); //Start timer only after link is up
 }
@@ -104,6 +104,9 @@ void channelTimerHandler()
     channelTimer.setInterval_MS(settings.maxDwellTime, channelTimerHandler);
   }
 
-  triggerEvent(TRIGGER_CHANNEL_TIMER_ISR);
-  timeToHop = true;
+  if (settings.frequencyHop)
+  {
+    triggerEvent(TRIGGER_CHANNEL_TIMER_ISR);
+    timeToHop = true;
+  }
 }

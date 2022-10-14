@@ -64,6 +64,24 @@ void systemPrintln(uint8_t value, uint8_t printType)
   systemPrint("\r\n");
 }
 
+void systemPrint(uint16_t value, uint8_t printType)
+{
+  char temp[20];
+
+  if (printType == HEX)
+    sprintf(temp, "%04X", value);
+  else if (printType == DEC)
+    sprintf(temp, "%d", value);
+
+  systemPrint(temp);
+}
+
+void systemPrintln(uint16_t value, uint8_t printType)
+{
+  systemPrint(value, printType);
+  systemPrint("\r\n");
+}
+
 void systemPrint(float value, uint8_t decimals)
 {
   char temp[20];
@@ -110,6 +128,10 @@ void systemPrintTimestamp()
     //Get the clock value
     milliseconds = millis();
 
+    //Offset the value for display
+    if (!settings.displayRealMillis)
+      milliseconds += timestampOffset;
+
     //Compute the values for display
     seconds = milliseconds / 1000;
     minutes = seconds / 60;
@@ -154,14 +176,13 @@ void systemPrintTimestamp()
   }
 }
 
-void systemPrintUniqueID(uint32_t * uniqueID)
+void systemPrintUniqueID(uint8_t * uniqueID)
 {
-  uint8_t * id = (uint8_t *)uniqueID;
   int index;
 
   //Display in the same byte order as dump output
-  for (index = 0; index < 16; index++)
-    systemPrint(id[index], HEX);
+  for (index = 0; index < UNIQUE_ID_BYTES; index++)
+    systemPrint(uniqueID[index], HEX);
 }
 
 void systemWrite(uint8_t value)
@@ -252,7 +273,7 @@ void systemReset()
 //Encrypt a given array in place
 void encryptBuffer(uint8_t *bufferToEncrypt, uint8_t arraySize)
 {
-  gcm.setKey(settings.encryptionKey, gcm.keySize());
+  gcm.setKey(settings.encryptionKey, sizeof(settings.encryptionKey));
   gcm.setIV(AESiv, sizeof(AESiv));
 
   gcm.encrypt(bufferToEncrypt, bufferToEncrypt, arraySize);
@@ -261,7 +282,7 @@ void encryptBuffer(uint8_t *bufferToEncrypt, uint8_t arraySize)
 //Decrypt a given array in place
 void decryptBuffer(uint8_t *bufferToDecrypt, uint8_t arraySize)
 {
-  gcm.setKey(settings.encryptionKey, gcm.keySize());
+  gcm.setKey(settings.encryptionKey, sizeof(settings.encryptionKey));
   gcm.setIV(AESiv, sizeof(AESiv));
 
   gcm.decrypt(bufferToDecrypt, bufferToDecrypt, arraySize);
@@ -412,7 +433,7 @@ void dumpBuffer(uint8_t * data, int length)
     data -= bytes;
     for (index = 0; index < bytes; index++) {
       byte[0] = *data++;
-      systemPrint(((byte[0] <= ' ') || (byte[0] >= 0x7f)) ? "." : byte);
+      systemPrint(((byte[0] < ' ') || (byte[0] >= 0x7f)) ? "." : byte);
     }
     systemPrintln();
     petWDT();

@@ -18,6 +18,8 @@ Command summary:
   ATT - Enter training mode
   ATX - Stop the training server
   ATZ - Reboot the radio
+  AT&F - Restore factory settings
+  AT&W - Save current settings to NVM
 ati?
   ATI0 - Show user settable parameters
   ATI1 - Show board variant
@@ -32,15 +34,15 @@ ati?
 ERROR
         	ati
 OK
-SparkFun LoRaSerial SAMD21 1W 915MHz v1.1
+SparkFun LoRaSerial SAMD21 1W 915MHz v2.0
         ati1
 SparkFun LoRaSerial SAMD21 1W 915MHz
 	ati2
-1.1
+2.0
 ati3
 -157
 ati4
-109
+175
 ati5
 506
 ati6
@@ -48,7 +50,7 @@ ati6
 ati7
 0
 ati8
-B2A99BF24A34555020312E34162815FF
+E5D60B0B4A34555020312E34212815FF
 ati9
 ERROR
 ati0
@@ -100,8 +102,15 @@ ATS44:PrintTxErrors=0
 ATS45:UseV2=0
 ATS46:PrintTimestamp=0
 ATS47:DebugDatagrams=0
-ATS48:TxAckMillis=100
-ATS49:DisplayRealMillis=0
+ATS48:OverHeadtime=10
+ATS49:EnableCRC16=0
+ATS50:DisplayRealMillis=0
+ATS51:TrainingServer=0
+ATS52:ClientRetryInterval=3
+ATS53:CopyDebug=1
+ATS54:CopySerial=1
+ATS55:CopyTriggers=1
+ATS56:TrainingKey=537061726B46756E547261696E696E67
 ats28=0
 OK
 # SerialSpeed
@@ -888,26 +897,98 @@ OK
 # txAckMillis
 ERROR
 ats48=1
-ERROR
+OverHeadtime=1
+OK
 ats48=2
-ERROR
+OverHeadtime=2
+OK
 ats48=0
-ERROR
-# displayRealMillis
+OverHeadtime=0
+OK
+# enableCRC16
 ERROR
 ats49=1
-DisplayRealMillis=1
+EnableCRC16=1
 OK
 ats49=2
 ERROR
 ats49=0
-DisplayRealMillis=0
+EnableCRC16=0
 OK
-# Invalid commands
+# DisplayRealMillis
 ERROR
 ats50=1
+DisplayRealMillis=1
+OK
+ats50=2
 ERROR
-ats50?
+ats50=0
+DisplayRealMillis=0
+OK
+# TrainingServer
+ERROR
+ats51=1
+TrainingServer=1
+OK
+ats51=2
+ERROR
+ats51=0
+TrainingServer=0
+OK
+# ClientRetryInterval
+ERROR
+ats52=1
+ClientRetryInterval=1
+OK
+ats52=2
+ClientRetryInterval=2
+OK
+ats52=0
+ERROR
+# CopyDebug
+ERROR
+ats53=1
+CopyDebug=1
+OK
+ats53=2
+ERROR
+ats53=0
+CopyDebug=0
+OK
+# CopySerial
+ERROR
+ats54=1
+CopySerial=1
+OK
+ats54=2
+ERROR
+ats54=0
+CopySerial=0
+OK
+# CopyTriggers
+ERROR
+ats55=1
+CopyTriggers=1
+OK
+ats55=2
+ERROR
+ats55=0
+CopyTriggers=0
+OK
+# TrainingKey
+ERROR
+ats56=01020304050607080910111213141516
+TrainingKey=01020304050607080910111213141516
+OK
+ats56=0102030405060708091011121314151
+ERROR
+ats56=010203040506070809101112131415160
+ERROR
+# Invalid commands
+ERROR
+ats57=1
+ERROR
+ats57?
 ERROR
 ats255=1
 ERROR
@@ -917,7 +998,11 @@ ati0
 ATS1:AirSpeed=4800
 ATS24:AutoTune=0
 ATS13:Bandwidth=500.00
+ATS52:ClientRetryInterval=2
 ATS15:CodingRate=8
+ATS53:CopyDebug=0
+ATS54:CopySerial=0
+ATS55:CopyTriggers=0
 ATS6:DataScrambling=0
 ATS20:Debug=0
 ATS47:DebugDatagrams=0
@@ -928,8 +1013,9 @@ ATS32:DebugTraining=0
 ATS43:DebugTransmit=0
 ATS33:DebugTrigger=0
 ATS25:DisplayPacketQuality=0
-ATS49:DisplayRealMillis=0
+ATS50:DisplayRealMillis=0
 ATS21:Echo=0
+ATS49:EnableCRC16=0
 ATS4:EncryptData=1
 ATS5:EncryptionKey=37782141A665734E4475672AE6308308
 ATS23:FlowControl=0
@@ -943,6 +1029,7 @@ ATS12:MaxDwellTime=400
 ATS26:MaxResends=2
 ATS2:netID=192
 ATS10:NumberOfChannels=50
+ATS48:OverHeadtime=0
 ATS3:PointToPoint=1
 ATS17:PreambleLength=8
 ATS29:PrintFrequency=0
@@ -955,16 +1042,19 @@ ATS0:SerialSpeed=57600
 ATS27:SortParametersByName=1
 ATS14:SpreadFactor=9
 ATS16:SyncWord=18
+ATS56:TrainingKey=01020304050607080910111213141516
+ATS51:TrainingServer=0
 ATS40:TriggerEnable: 31-0=-1
 ATS41:TriggerEnable: 63-32=-1
 ATS38:TriggerWidth=25
 ATS39:TriggerWidthIsMultiplier=1
-ATS48:TxAckMillis=100
 ATS7:TxPower=30
 ATS34:UsbSerialWait=0
 ATS45:UseV2=0
 ATS37:VerifyRxNetID=0
-at&w
+at&f
 OK
 atz
 OK
+LRS
+LRS Setup Complete
