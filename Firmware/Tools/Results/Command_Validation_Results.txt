@@ -42,7 +42,7 @@ SparkFun LoRaSerial SAMD21 1W 915MHz
 ati3
 -157
 ati4
-175
+167
 ati5
 506
 ati6
@@ -50,7 +50,7 @@ ati6
 ati7
 0
 ati8
-E5D60B0B4A34555020312E34212815FF
+CB0C64334A34555020312E34242815FF
 ati9
 ERROR
 ati0
@@ -99,7 +99,7 @@ ATS41:TriggerEnable: 63-32=-1
 ATS42:DebugReceive=0
 ATS43:DebugTransmit=0
 ATS44:PrintTxErrors=0
-ATS45:UseV2=0
+ATS45:protocolVersion=1
 ATS46:PrintTimestamp=0
 ATS47:DebugDatagrams=0
 ATS48:OverHeadtime=10
@@ -111,6 +111,7 @@ ATS53:CopyDebug=1
 ATS54:CopySerial=1
 ATS55:CopyTriggers=1
 ATS56:TrainingKey=537061726B46756E547261696E696E67
+ATS57:PrintLinkUpDown=0
 ats28=0
 OK
 # SerialSpeed
@@ -808,6 +809,8 @@ ERROR
 ats38=25
 TriggerWidth=25
 OK
+ats38?
+TriggerWidth=25
 # TriggerWidthIsMultiplier
 ERROR
 ats39=0
@@ -818,6 +821,8 @@ ERROR
 ats39=1
 TriggerWidthIsMultiplier=1
 OK
+ats39?
+TriggerWidthIsMultiplier=1
 # TriggerEnable: 31-0
 ERROR
 ats40=0
@@ -826,6 +831,8 @@ OK
 ats40=4294967295
 TriggerEnable: 31-0=-1
 OK
+ats40?
+TriggerEnable: 31-0=-1
 # TriggerEnable: 63-32
 ERROR
 ats41=0
@@ -834,6 +841,8 @@ OK
 ats41=4294967295
 TriggerEnable: 63-32=-1
 OK
+ats41?
+TriggerEnable: 63-32=-1
 # DebugReceive
 ERROR
 ats42=1
@@ -844,6 +853,8 @@ ERROR
 ats42=0
 DebugReceive=0
 OK
+ats42?
+DebugReceive=0
 # DebugTransmit
 ERROR
 ats43=1
@@ -854,6 +865,8 @@ ERROR
 ats43=0
 DebugTransmit=0
 OK
+ats43?
+DebugTransmit=0
 # PrintTxErrors
 ERROR
 ats44=1
@@ -864,16 +877,22 @@ ERROR
 ats44=0
 PrintTxErrors=0
 OK
-# useV2
-ERROR
-ats45=1
-UseV2=1
-OK
-ats45=2
+ats44?
+PrintTxErrors=0
+# protocolVersion
 ERROR
 ats45=0
-UseV2=0
+ERROR
+ats45=1
+protocolVersion=1
 OK
+ats45=2
+protocolVersion=2
+OK
+ats45=3
+ERROR
+ats45?
+protocolVersion=2
 # PrintTimestamp
 ERROR
 ats46=1
@@ -884,6 +903,8 @@ ERROR
 ats46=0
 PrintTimestamp=0
 OK
+ats46?
+PrintTimestamp=0
 # debugDatagrams
 ERROR
 ats47=1
@@ -894,6 +915,8 @@ ERROR
 ats47=0
 DebugDatagrams=0
 OK
+ats47?
+DebugDatagrams=0
 # txAckMillis
 ERROR
 ats48=1
@@ -905,6 +928,8 @@ OK
 ats48=0
 OverHeadtime=0
 OK
+ats48?
+OverHeadtime=0
 # enableCRC16
 ERROR
 ats49=1
@@ -915,6 +940,8 @@ ERROR
 ats49=0
 EnableCRC16=0
 OK
+ats49?
+EnableCRC16=0
 # DisplayRealMillis
 ERROR
 ats50=1
@@ -925,6 +952,8 @@ ERROR
 ats50=0
 DisplayRealMillis=0
 OK
+ats50?
+DisplayRealMillis=0
 # TrainingServer
 ERROR
 ats51=1
@@ -935,6 +964,8 @@ ERROR
 ats51=0
 TrainingServer=0
 OK
+ats51?
+TrainingServer=0
 # ClientRetryInterval
 ERROR
 ats52=1
@@ -945,6 +976,8 @@ ClientRetryInterval=2
 OK
 ats52=0
 ERROR
+ats52?
+ClientRetryInterval=2
 # CopyDebug
 ERROR
 ats53=1
@@ -955,6 +988,8 @@ ERROR
 ats53=0
 CopyDebug=0
 OK
+ats53?
+CopyDebug=0
 # CopySerial
 ERROR
 ats54=1
@@ -965,6 +1000,8 @@ ERROR
 ats54=0
 CopySerial=0
 OK
+ats54?
+CopySerial=0
 # CopyTriggers
 ERROR
 ats55=1
@@ -975,6 +1012,8 @@ ERROR
 ats55=0
 CopyTriggers=0
 OK
+ats55?
+CopyTriggers=0
 # TrainingKey
 ERROR
 ats56=01020304050607080910111213141516
@@ -984,11 +1023,25 @@ ats56=0102030405060708091011121314151
 ERROR
 ats56=010203040506070809101112131415160
 ERROR
-# Invalid commands
+ats56?
+TrainingKey=01020304050607080910111213141516
+# PrintLinkUpDown
 ERROR
 ats57=1
+PrintLinkUpDown=1
+OK
+ats57=2
 ERROR
+ats57=0
+PrintLinkUpDown=0
+OK
 ats57?
+PrintLinkUpDown=0
+# Invalid commands
+ERROR
+ats58=1
+ERROR
+ats58?
 ERROR
 ats255=1
 ERROR
@@ -1033,11 +1086,13 @@ ATS48:OverHeadtime=0
 ATS3:PointToPoint=1
 ATS17:PreambleLength=8
 ATS29:PrintFrequency=0
+ATS57:PrintLinkUpDown=0
 ATS28:PrintParameterName=1
 ATS36:PrintPktData=0
 ATS35:PrintRfData=0
 ATS46:PrintTimestamp=0
 ATS44:PrintTxErrors=0
+ATS45:protocolVersion=2
 ATS0:SerialSpeed=57600
 ATS27:SortParametersByName=1
 ATS14:SpreadFactor=9
@@ -1050,7 +1105,6 @@ ATS38:TriggerWidth=25
 ATS39:TriggerWidthIsMultiplier=1
 ATS7:TxPower=30
 ATS34:UsbSerialWait=0
-ATS45:UseV2=0
 ATS37:VerifyRxNetID=0
 at&f
 OK
