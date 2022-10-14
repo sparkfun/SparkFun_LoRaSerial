@@ -1068,12 +1068,14 @@ void generateHopTable()
 
   if ((settings.debug == true) || (settings.debugRadio == true))
   {
+    petWDT();
     systemPrint("channelSpacing: ");
     systemPrintln(channelSpacing, 3);
 
     systemPrintln("Channel table:");
     for (int x = 0 ; x < settings.numberOfChannels ; x++)
     {
+      petWDT();
       systemPrint(x);
       systemPrint(": ");
       systemPrint(channels[x], 3);
@@ -1083,6 +1085,7 @@ void generateHopTable()
     systemPrint("AES IV:");
     for (uint8_t i = 0 ; i < sizeof(AESiv) ; i++)
     {
+      petWDT();
       systemPrint(" 0x");
       systemPrint(AESiv[i], HEX);
     }

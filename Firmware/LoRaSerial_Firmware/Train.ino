@@ -130,6 +130,7 @@ void beginTraining(bool defaultTraining)
 //Upon successful exchange of keys, go back to original settings
 void endTraining(bool newTrainingAvailable)
 {
+  petWDT();
   settings = originalSettings; //Return to original radio settings
 
   //Apply new netID and AES if available
@@ -171,8 +172,10 @@ void endTraining(bool newTrainingAvailable)
     settings.netID = trainNetID; //Last spot in array is netID
   }
 
+  petWDT();
   recordSystemSettings();
 
+  petWDT();
   generateHopTable(); //Generate frequency table based on current settings
 
   configureRadio(); //Setup radio with settings
@@ -282,7 +285,7 @@ void beginTrainingClient()
   commonTrainingInitialization();
 
   //Transmit client ping to the training server
-  xmitDatagramTrainingPing();
+  xmitDatagramMpTrainingPing();
 
   //Set the next state
   changeState(RADIO_MP_WAIT_TX_TRAINING_PING_DONE);
@@ -373,6 +376,7 @@ void commonTrainingInitialization()
   channels[0] = trainFrequency;       //Inject this frequency into the channel table
 
   //Use only the first channel of the previously allocated channel table
+  petWDT();
   configureRadio(); //Setup radio with settings
 }
 
@@ -388,6 +392,7 @@ void endClientServerTraining(uint8_t event)
   if (!settings.trainingServer)
   {
     //Record the new client settings
+    petWDT();
     recordSystemSettings();
 
     systemPrint("Link trained from ");
