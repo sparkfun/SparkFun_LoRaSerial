@@ -158,6 +158,7 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI13 - Display the total bad frames received");
         systemPrintln("  ATI14 - Display the total duplicate frames received");
         systemPrintln("  ATI15 - Display the total lost TX frames");
+        systemPrintln("  ATI16 - Display the maximum datagram size");
         break;
       case ('0'): //ATI0 - Show user settable parameters
         displayParameters();
@@ -223,6 +224,9 @@ bool commandAT(const char * commandString)
         break;
       case ('5'): //ATI15 - Display the total lost TX frames
         systemPrintln(lostFrames);
+        break;
+      case ('6'): //ATI16 - Display the maximum datagram size
+        systemPrintln(maxDatagramSize);
         break;
     }
   }
@@ -515,7 +519,6 @@ const COMMAND_ENTRY commands[] =
   {15,   5,   8,     0, TYPE_U8,           valOverride,    "CodingRate",           &settings.radioCodingRate},
   {16,   0, 255,     0, TYPE_U8,           valInt,         "SyncWord",             &settings.radioSyncWord},
   {17,   6, 65535,   0, TYPE_U16,          valInt,         "PreambleLength",       &settings.radioPreambleLength},
-  {18,  16, 254,     0, TYPE_U8,           valInt,         "FrameSize",            &settings.frameSize},
   {19,  10, 2000,    0, TYPE_U16,          valInt,         "FrameTimeout",         &settings.serialTimeoutBeforeSendingFrame_ms},
 
   {20,    0,   1,    0, TYPE_BOOL,         valInt,         "Debug",                &settings.debug},

@@ -24,6 +24,7 @@ ati13
 ati14
 ati15
 ati16
+ati17
 ati0
 
 ats28=0
@@ -267,12 +268,7 @@ ats17=8
 ats17?
 
 # FrameSize
-ats18=15
-ats18=16
-ats18=256
-ats18=255
-ats18=254
-ats18=253
+ats18=0
 ats18?
 
 # FrameTimeout

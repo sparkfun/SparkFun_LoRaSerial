@@ -254,8 +254,8 @@ float calcSymbolTime()
 //Given spread factor, bandwidth, coding rate and frame size, return most bytes we can push per second
 uint16_t calcMaxThroughput()
 {
-  uint8_t mostFramesPerSecond = 1000 / calcAirTime(settings.frameSize);
-  uint16_t mostBytesPerSecond = settings.frameSize * mostFramesPerSecond;
+  uint8_t mostFramesPerSecond = 1000 / calcAirTime(MAX_PACKET_SIZE);
+  uint16_t mostBytesPerSecond = maxDatagramSize * mostFramesPerSecond;
 
   return (mostBytesPerSecond);
 }

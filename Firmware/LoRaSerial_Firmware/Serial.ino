@@ -228,7 +228,7 @@ bool isCTS()
 bool processWaitingSerial(bool sendNow)
 {
   //Push any available data out
-  if (availableRXBytes() >= settings.frameSize)
+  if (availableRXBytes() >= maxDatagramSize)
   {
     if (settings.debugRadio)
       systemPrintln("Sending max frame");
@@ -252,7 +252,7 @@ void readyOutgoingPacket()
 {
   uint16_t length;
   uint16_t bytesToSend = availableRXBytes();
-  if (bytesToSend > settings.frameSize) bytesToSend = settings.frameSize;
+  if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize;
 
   //SF6 requires an implicit header which means there is no dataLength in the header
   if (settings.radioSpreadFactor == 6)
@@ -284,7 +284,7 @@ void readyOutgoingCommandPacket()
 {
   uint16_t length;
   uint16_t bytesToSend = availableTXCommandBytes();
-  if (bytesToSend > settings.frameSize) bytesToSend = settings.frameSize;
+  if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize;
 
   //SF6 requires an implicit header which means there is no dataLength in the header
   if (settings.radioSpreadFactor == 6)
