@@ -425,7 +425,6 @@ void updateRadioParameters(uint8_t * rxData, bool pointToPoint)
   originalSettings.radioCodingRate = params.radioCodingRate;
   originalSettings.radioSyncWord = params.radioSyncWord;
   originalSettings.radioPreambleLength = params.radioPreambleLength;
-  originalSettings.frameSize = params.frameSize;
   originalSettings.serialTimeoutBeforeSendingFrame_ms = params.serialTimeoutBeforeSendingFrame_ms;
   originalSettings.heartbeatTimeout = params.heartbeatTimeout;
   originalSettings.autoTuneFrequency = params.autoTuneFrequency;

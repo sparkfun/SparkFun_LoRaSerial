@@ -38,6 +38,7 @@ ati?
   ATI13 - Display the total bad frames received
   ATI14 - Display the total duplicate frames received
   ATI15 - Display the total lost TX frames
+  ATI16 - Display the maximum datagram size
 # Allow leading white space (space, tab, cr, lf)
 ERROR
         	ati
@@ -48,25 +49,25 @@ SparkFun LoRaSerial SAMD21 1W 915MHz
 	ati2
 2.0
 ati3
--68
+-157
 ati4
-255
+42
 ati5
 506
 ati6
 37782141A665734E4475672AE6308308
 ati7
-11
+0
 ati8
-CB0C64334A34555020312E34242815FF
+E5D60B0B4A34555020312E34212815FF
 ati9
-4
+54
 ati10
-2
+0
 ati11
-2
+0
 ati12
-2
+0
 ati13
 0
 ati14
@@ -74,6 +75,8 @@ ati14
 ati15
 0
 ati16
+253
+ati17
 ERROR
 ati0
 ATS0:SerialSpeed=57600
@@ -94,7 +97,6 @@ ATS14:SpreadFactor=9
 ATS15:CodingRate=8
 ATS16:SyncWord=18
 ATS17:PreambleLength=8
-ATS18:FrameSize=253
 ATS19:FrameTimeout=50
 ATS20:Debug=0
 ATS21:Echo=0
@@ -117,7 +119,7 @@ ATS37:VerifyRxNetID=0
 ATS38:TriggerWidth=25
 ATS39:TriggerWidthIsMultiplier=1
 ATS40:TriggerEnable: 31-0=-1
-ATS41:TriggerEnable: 63-32=-1
+ATS41:TriggerEnable2: 63-32=-1
 ATS42:DebugReceive=0
 ATS43:DebugTransmit=0
 ATS44:PrintTxErrors=0
@@ -583,20 +585,10 @@ ats17?
 8
 # FrameSize
 ERROR
-ats18=15
+ats18=0
 ERROR
-ats18=16
-OK
-ats18=256
-ERROR
-ats18=255
-ERROR
-ats18=254
-OK
-ats18=253
-OK
 ats18?
-253
+ERROR
 # FrameTimeout
 ERROR
 ats19=9
@@ -858,13 +850,13 @@ TriggerEnable: 31-0=-1
 # TriggerEnable: 63-32
 ERROR
 ats41=0
-TriggerEnable: 63-32=0
+TriggerEnable2: 63-32=0
 OK
 ats41=4294967295
-TriggerEnable: 63-32=-1
+TriggerEnable2: 63-32=-1
 OK
 ats41?
-TriggerEnable: 63-32=-1
+TriggerEnable2: 63-32=-1
 # DebugReceive
 ERROR
 ats42=1
@@ -906,8 +898,7 @@ ERROR
 ats45=0
 ERROR
 ats45=1
-protocolVersion=1
-OK
+ERROR
 ats45=2
 protocolVersion=2
 OK
@@ -1094,7 +1085,6 @@ ATS49:EnableCRC16=0
 ATS4:EncryptData=1
 ATS5:EncryptionKey=37782141A665734E4475672AE6308308
 ATS23:FlowControl=0
-ATS18:FrameSize=253
 ATS19:FrameTimeout=50
 ATS11:FrequencyHop=1
 ATS9:FrequencyMax=928.000
@@ -1121,8 +1111,8 @@ ATS14:SpreadFactor=9
 ATS16:SyncWord=18
 ATS56:TrainingKey=01020304050607080910111213141516
 ATS51:TrainingServer=0
+ATS41:TriggerEnable2: 63-32=-1
 ATS40:TriggerEnable: 31-0=-1
-ATS41:TriggerEnable: 63-32=-1
 ATS38:TriggerWidth=25
 ATS39:TriggerWidthIsMultiplier=1
 ATS7:TxPower=30
