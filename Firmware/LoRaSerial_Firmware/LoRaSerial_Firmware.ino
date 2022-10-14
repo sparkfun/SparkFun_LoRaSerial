@@ -282,6 +282,8 @@ void setup()
 
   verifyRadioStateTable(); //Verify that the state table contains all of the states in increasing order
 
+  verifyV2DatagramType(); //Verify that the datagram type table contains all of the datagram types
+
   arch.uniqueID(myUniqueId); //Get the unique ID
 
   beginBoard(); //Determine what hardware platform we are running on.
