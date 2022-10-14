@@ -2169,7 +2169,8 @@ void changeState(RadioStates newState)
 void v2BreakLink()
 {
   //Break the link
-  systemPrintln("--------- Link DOWN ---------");
+  if (settings.printLinkUpDown)
+    systemPrintln("--------- Link DOWN ---------");
   triggerEvent(TRIGGER_RADIO_RESET);
   changeState(RADIO_RESET);
 }
@@ -2196,5 +2197,6 @@ void v2EnterLinkUp()
   //Start the receiver
   returnToReceiving();
   changeState(RADIO_P2P_LINK_UP);
-  systemPrintln("========== Link UP ==========");
+  if (settings.printLinkUpDown)
+    systemPrintln("========== Link UP ==========");
 }

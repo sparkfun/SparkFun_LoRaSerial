@@ -415,6 +415,7 @@ void updateRadioParameters(uint8_t * rxData)
     originalSettings.echo = params.echo;
     originalSettings.flowControl = params.flowControl;
     originalSettings.usbSerialWait = params.usbSerialWait;
+    originalSettings.printLinkUpDown = params.printLinkUpDown;
   }
 
   //Update the trigger parameters

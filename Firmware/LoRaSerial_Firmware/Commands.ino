@@ -532,6 +532,7 @@ const COMMAND_ENTRY commands[] =
 
   {55,    0,   1,    0, TYPE_BOOL,         valInt,         "CopyTriggers",         &settings.copyTriggers},
   {56,    0,   0,    0, TYPE_KEY,          valKey,         "TrainingKey",          &settings.trainingKey},
+  {57,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintLinkUpDown",      &settings.printLinkUpDown},
 
   //Define any user parameters starting at 255 decrementing towards 0
 };
