@@ -61,6 +61,7 @@ bool commandAT(const char * commandString)
         systemPrintln("Command summary:");
         systemPrintln("  AT? - Print the command summary");
         systemPrintln("  ATF - Enter training mode and return to factory defaults");
+        systemPrintln("  ATG - Generate new netID and encryption key");
         systemPrintln("  ATI - Display the radio version");
         systemPrintln("  ATI? - Display the information commands");
         systemPrintln("  ATIn - Display system information");
@@ -72,6 +73,10 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATZ - Reboot the radio");
         systemPrintln("  AT&F - Restore factory settings");
         systemPrintln("  AT&W - Save current settings to NVM");
+        break;
+      case ('G'): //Generate a new netID and encryption key
+        generateTrainingSettings();
+        reportOK();
         break;
       case ('I'):
         //Shows the radio version
@@ -97,14 +102,9 @@ bool commandAT(const char * commandString)
           configureRadio(); //Apply any new settings
 
           setRSSI(0); //Turn off LEDs
-          if (settings.pointToPoint == true)
-            changeState(RADIO_NO_LINK_RECEIVING_STANDBY);
-          else
-            changeState(RADIO_BROADCASTING_RECEIVING_STANDBY);
-
           inCommandMode = false; //Return to printing normal RF serial data
-
           reportOK();
+          changeState(RADIO_RESET);
         }
         break;
       case ('F'): //Enter training mode and return to factory defaults
