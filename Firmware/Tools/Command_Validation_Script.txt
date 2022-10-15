@@ -25,6 +25,14 @@ ati14
 ati15
 ati16
 ati17
+ati18
+ati19
+ati20
+ati21
+ati22
+ati23
+ati24
+ati25
 ati0
 
 ats28=0
@@ -114,9 +122,10 @@ ats2=255
 ats2=192
 ats2?
 
-# PointToPoint
+# OperatingMode
 ats3=0
 ats3=2
+ats3=3
 ats3=1
 ats3?
 
@@ -432,7 +441,7 @@ ats44=2
 ats44=0
 ats44?
 
-# protocolVersion
+# radioProtocolVersion
 ats45=0
 ats45=1
 ats45=2
