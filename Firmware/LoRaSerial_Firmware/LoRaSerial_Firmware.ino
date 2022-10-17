@@ -200,6 +200,7 @@ uint32_t framesReceived;    //Total number of frames received
 uint32_t badFrames;         //Total number of bad frames received
 uint32_t duplicateFrames;   //Total number of duplicate frames received
 uint32_t lostFrames;        //Total number of lost TX frames
+uint32_t linkFailures;      //Total number of link failures
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - V2 Protocol

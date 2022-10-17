@@ -518,10 +518,7 @@ void updateRadioState()
             break;
 
           case DATAGRAM_PING:
-            //Acknowledge the PING
-            triggerEvent(TRIGGER_SEND_ACK1);
-            xmitDatagramP2PAck1();
-            changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
+            v2BreakLink();
             break;
 
           case DATAGRAM_DUPLICATE:
@@ -1562,6 +1559,7 @@ void changeState(RadioStates newState)
 void v2BreakLink()
 {
   //Break the link
+  linkFailures++;
   if (settings.printLinkUpDown)
     systemPrintln("--------- Link DOWN ---------");
   triggerEvent(TRIGGER_RADIO_RESET);
