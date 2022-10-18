@@ -542,9 +542,6 @@ void updateRadioState()
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DUP);
-
-            if (expectedAckNumber == 0) expectedAckNumber = 3; //Reduce eAN by one to align with remote's count
-            else expectedAckNumber--;
             xmitDatagramP2PAck(); //Transmit ACK
 
             changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
@@ -1577,9 +1574,9 @@ void v2EnterLinkUp()
   resetHeartbeat();
 
   //Synchronize the ACK numbers
-  txControl.ackNumber = 0;
-  expectedAckNumber = 0;
-  expectedDatagramNumber = 0;
+  rmtTxAckNumber = 0;
+  rxAckNumber = 0;
+  txAckNumber = 0;
 
   //Discard any previous data
   rxTail = rxHead;
