@@ -159,6 +159,7 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI14 - Display the total duplicate frames received");
         systemPrintln("  ATI15 - Display the total lost TX frames");
         systemPrintln("  ATI16 - Display the maximum datagram size");
+        systemPrintln("  ATI17 - Display the total link failures");
         break;
       case ('0'): //ATI0 - Show user settable parameters
         displayParameters();
@@ -195,6 +196,7 @@ bool commandAT(const char * commandString)
         systemPrintln();
         break;
       case ('9'): //ATI9 - Display the toal datagrams sent
+        systemPrint("Total datagrams sent: ");
         systemPrintln(datagramsSent);
         break;
       default:
@@ -208,25 +210,36 @@ bool commandAT(const char * commandString)
       default:
         return false;
       case ('0'): //ATI10 - Display the total datagrams received
+        systemPrint("Total datagrams received: ");
         systemPrintln(datagramsReceived);
         break;
       case ('1'): //ATI11 - Display the total frames received
+        systemPrint("Total frames sent: ");
         systemPrintln(framesReceived);
         break;
       case ('2'): //ATI12 - Display the total frames received
+        systemPrint("Total frames sent: ");
         systemPrintln(framesReceived);
         break;
       case ('3'): //ATI13 - Display the total bad frames received
+        systemPrint("Total bad frames received: ");
         systemPrintln(badFrames);
         break;
       case ('4'): //ATI14 - Display the total duplicate frames received
+        systemPrint("Total duplicate frames received: ");
         systemPrintln(duplicateFrames);
         break;
       case ('5'): //ATI15 - Display the total lost TX frames
+        systemPrint("Total lost TX frames: ");
         systemPrintln(lostFrames);
         break;
       case ('6'): //ATI16 - Display the maximum datagram size
+        systemPrint("Maximum datagram size: ");
         systemPrintln(maxDatagramSize);
+        break;
+      case ('7'): //ATI17 - Display the total link failures
+        systemPrint("Total link failures: ");
+        systemPrintln(linkFailures);
         break;
     }
   }
