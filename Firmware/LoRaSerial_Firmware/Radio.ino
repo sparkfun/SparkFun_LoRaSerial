@@ -126,12 +126,10 @@ void configureRadio()
   if (radio.setFHSSHoppingPeriod(hoppingPeriod) != RADIOLIB_ERR_NONE)
     success = false;
 
-  ackAirTime = calcAirTime(2); //Used for response timeout during ACK
-  uint16_t responseDelay = ackAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
-  ackAirTime += responseDelay;
-
   //Precalculate the ACK packet time
-  ackAirTime = calcAirTime(4); //We assume all ACKs have max of 4 bytes
+  ackAirTime = calcAirTime(headerBytes + ACK_BYTES + trailerBytes); //Used for response timeout during ACK
+  if (settings.radioSpreadFactor == 6)
+    ackAirTime = calcAirTime(MAX_PACKET_SIZE);
 
   if ((settings.debug == true) || (settings.debugRadio == true))
   {
