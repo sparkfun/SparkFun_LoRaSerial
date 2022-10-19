@@ -56,6 +56,7 @@ const int FIRMWARE_VERSION_MINOR = 0;
 //    the minor firmware version
 #define LRS_IDENTIFIER (FIRMWARE_VERSION_MAJOR * 0x10 + FIRMWARE_VERSION_MINOR)
 
+#define ACK_BYTES       2   //Length of the ACK in bytes
 #define MAX_PACKET_SIZE 255 //Limited by SX127x
 #define AES_IV_BYTES    12  //Number of bytes for AESiv
 #define AES_KEY_BYTES   16  //Number of bytes in the encryption key
