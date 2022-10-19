@@ -690,7 +690,7 @@ PacketType rcvDatagram()
   }
 
   //Display the CRC
-  if (settings.enableCRC16 && (settings.printPktData || settings.debugReceive))
+  if (settings.enableCRC16 && settings.debugReceive)
   {
     systemPrintTimestamp();
     systemPrint("    CRC-16: 0x");
