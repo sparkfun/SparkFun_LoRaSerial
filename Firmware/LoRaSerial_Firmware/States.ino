@@ -62,7 +62,7 @@ void updateRadioState()
       if (settings.protocolVersion >= 2)
       {
         //Start the V2 protocol
-        if (settings.pointToPoint == true)
+        if (settings.operatingMode == MODE_POINT_TO_POINT)
           changeState(RADIO_P2P_LINK_DOWN);
         else
           changeState(RADIO_MP_STANDBY);
@@ -152,7 +152,7 @@ void updateRadioState()
             triggerEvent(TRIGGER_TRAINING_DATA_PACKET);
 
             //Update the parameters
-            updateRadioParameters(rxData, true);
+            updateRadioParameters(rxData);
             endPointToPointTraining(true);
             changeState(RADIO_RESET);
         }
@@ -1161,7 +1161,7 @@ void updateRadioState()
             memcpy(trainingPartnerID, &rxData[UNIQUE_ID_BYTES], UNIQUE_ID_BYTES);
 
             //Get the radio parameters
-            updateRadioParameters(&rxData[UNIQUE_ID_BYTES * 2], false);
+            updateRadioParameters(&rxData[UNIQUE_ID_BYTES * 2]);
 
             //Acknowledge the radio parameters
             xmitDatagramMpTrainingAck(&rxData[UNIQUE_ID_BYTES]);
@@ -1311,7 +1311,7 @@ void selectHeaderAndTrailerBytes()
   headerBytes = 0;
 
   //Add the netID to the header
-  if (settings.pointToPoint || settings.verifyRxNetID)
+  if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
     headerBytes += 1;
 
   //Add the control byte to the header

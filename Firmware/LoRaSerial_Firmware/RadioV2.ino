@@ -63,7 +63,7 @@ void xmitDatagramP2pTrainingParams()
 
   //Initialize the radio parameters
   memcpy(&params, &originalSettings, sizeof(settings));
-  params.pointToPoint = true;
+  params.operatingMode = MODE_POINT_TO_POINT;
 
   //Add the radio parameters
   memcpy(endOfTxData, &params, sizeof(params));
@@ -382,7 +382,7 @@ void xmitDatagramMpTrainingAck(uint8_t * serverID)
   transmitDatagram();
 }
 
-void updateRadioParameters(uint8_t * rxData, bool pointToPoint)
+void updateRadioParameters(uint8_t * rxData)
 {
   Settings params;
 
@@ -392,7 +392,7 @@ void updateRadioParameters(uint8_t * rxData, bool pointToPoint)
   //Update the radio parameters
   originalSettings.airSpeed = params.airSpeed;
   originalSettings.netID = params.netID;
-  originalSettings.pointToPoint = pointToPoint;
+  originalSettings.operatingMode = params.operatingMode;
   originalSettings.encryptData = params.encryptData;
   memcpy(originalSettings.encryptionKey, params.encryptionKey, sizeof(originalSettings.encryptionKey));
   originalSettings.dataScrambling = params.dataScrambling;
@@ -472,7 +472,7 @@ void xmitDatagramMpRadioParameters(const uint8_t * clientID)
 
   //Initialize the radio parameters
   memcpy(&params, &originalSettings, sizeof(settings));
-  params.pointToPoint = false;
+  params.operatingMode = MODE_DATAGRAM;
   params.trainingServer = false;
 
   //Add the destination (client) ID
@@ -608,7 +608,7 @@ PacketType rcvDatagram()
   */
 
   //Verify the netID if necessary
-  if (settings.pointToPoint || settings.verifyRxNetID)
+  if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
   {
     receivedNetID = *rxData++;
     if (settings.debugReceive)
@@ -734,7 +734,7 @@ PacketType rcvDatagram()
   rxDataBytes -= minDatagramSize;
 
   //Verify the packet number last so that the expected datagram or ACK number can be updated
-  if (settings.pointToPoint)
+  if (settings.operatingMode == MODE_POINT_TO_POINT)
   {
     switch (datagramType)
     {
@@ -838,7 +838,7 @@ PacketType rcvDatagram()
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
       case DATAGRAM_HEARTBEAT:
-        if (settings.pointToPoint)
+        if (settings.operatingMode == MODE_POINT_TO_POINT)
         {
           systemPrint(" (ACK #");
           systemPrint(ackNumber);
@@ -894,7 +894,7 @@ void transmitDatagram()
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
       case DATAGRAM_HEARTBEAT:
-        if (settings.pointToPoint)
+        if (settings.operatingMode == MODE_POINT_TO_POINT)
         {
           systemPrint(" (ACK #");
           systemPrint(txControl.ackNumber);
@@ -946,7 +946,7 @@ void transmitDatagram()
   }
 
   //Add the netID if necessary
-  if (settings.pointToPoint || settings.verifyRxNetID)
+  if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
   {
     *header++ = settings.netID;
 

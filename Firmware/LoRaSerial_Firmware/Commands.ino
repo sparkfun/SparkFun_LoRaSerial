@@ -118,7 +118,8 @@ bool commandAT(const char * commandString)
         selectTraining(defaultTraining);
         break;
       case ('X'): //Stop the training server
-        if (trainingServerRunning && (!settings.pointToPoint) && settings.trainingServer)
+        if (trainingServerRunning && settings.trainingServer
+            && (settings.operatingMode == MODE_DATAGRAM))
         {
           endClientServerTraining(TRIGGER_TRAINING_SERVER_STOPPED);
           reportOK();
@@ -514,7 +515,7 @@ const COMMAND_ENTRY commands[] =
   {0,   0,   0,      0, TYPE_SPEED_SERIAL, valSpeedSerial, "SerialSpeed",          &settings.serialSpeed},
   {1,   0,   0,      0, TYPE_SPEED_AIR,    valSpeedAir,    "AirSpeed",             &settings.airSpeed},
   {2,   0, 255,      0, TYPE_U8,           valInt,         "netID",                &settings.netID},
-  {3,   0,   1,      0, TYPE_BOOL,         valInt,         "PointToPoint",         &settings.pointToPoint},
+  {3,   0,   2,      0, TYPE_U8,           valInt,         "OperatingMode",        &settings.operatingMode},
   {4,   0,   1,      0, TYPE_BOOL,         valInt,         "EncryptData",          &settings.encryptData},
 
   {5,   0,   0,      0, TYPE_KEY,          valKey,         "EncryptionKey",        &settings.encryptionKey},
