@@ -220,6 +220,12 @@ typedef enum
 } PrinterEndpoints;
 PrinterEndpoints printerEndpoint = PRINT_TO_SERIAL;
 
+//Select the operating mode
+typedef enum
+{
+  MODE_DATAGRAM = 0,
+  MODE_POINT_TO_POINT,
+} OPERATING_MODE;
 
 struct ControlTrailer
 {
@@ -248,7 +254,7 @@ typedef struct struct_settings {
   uint32_t serialSpeed = 57600; //Default to 57600bps to match RTK Surveyor default firmware
   uint32_t airSpeed = 4800; //Default to ~523 bytes per second to support RTCM. Overrides spread, bandwidth, and coding
   uint8_t netID = 192; //Both radios must share a network ID
-  bool pointToPoint = true; //Receiving unit will check netID and ACK. If set to false, receiving unit doesn't check netID or ACK.
+  uint8_t operatingMode = MODE_POINT_TO_POINT; //Receiving unit will check netID and ACK. If set to false, receiving unit doesn't check netID or ACK.
   bool encryptData = true; //AES encrypt each packet
   uint8_t encryptionKey[AES_KEY_BYTES] = { 0x37, 0x78, 0x21, 0x41, 0xA6, 0x65, 0x73, 0x4E, 0x44, 0x75, 0x67, 0x2A, 0xE6, 0x30, 0x83, 0x08 };
   bool dataScrambling = false; //Use IBM Data Whitening to reduce DC bias

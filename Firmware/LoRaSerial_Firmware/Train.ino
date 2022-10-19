@@ -3,7 +3,7 @@ void selectTraining(bool defaultTraining)
 {
   if (settings.radioProtocolVersion >= 2)
   {
-    if (settings.pointToPoint)
+    if (settings.operatingMode == MODE_POINT_TO_POINT)
       beginTrainingPointToPoint(defaultTraining);
     else
     {
@@ -168,7 +168,7 @@ void commonTrainingInitialization()
 
   //Use common radio settings between the client and server for training
   settings = defaultSettings;
-  settings.pointToPoint = false;          // 3: Disable netID checking
+  settings.operatingMode = MODE_DATAGRAM; // 3: Use datagrams
   settings.encryptData = true;            // 4: Enable packet encryption
   settings.dataScrambling = true;         // 6: Scramble the data
   settings.radioBroadcastPower_dbm = 14;  // 7: Minimum, assume radios are near each other
