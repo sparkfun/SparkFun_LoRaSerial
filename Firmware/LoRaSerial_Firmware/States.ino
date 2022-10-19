@@ -694,7 +694,7 @@ void updateRadioState()
             changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
           }
         }
-        else if ((millis() - linkDownTimer) >= (3 * settings.heartbeatTimeout))
+        else if ((millis() - linkDownTimer) >= (P2P_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))
           //Break the link
           v2BreakLink();
       }
