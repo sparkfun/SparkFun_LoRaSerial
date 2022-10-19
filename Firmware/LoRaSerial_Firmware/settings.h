@@ -36,6 +36,12 @@ typedef enum
   RADIO_MP_WAIT_FOR_TRAINING_PING,
   RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,
 
+  //Virtual-Circuit states
+  RADIO_VC_WAIT_TX_DONE,
+  RADIO_VC_WAIT_RECEIVE,
+  RADIO_VC_WAIT_TX_DONE_ACK,
+  RADIO_VC_WAIT_ACK,
+
   RADIO_MAX_STATE,
 } RadioStates;
 
@@ -93,6 +99,12 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   //    State                           RX      Name                              Description
   {RADIO_MP_WAIT_FOR_TRAINING_PING,      1, "MP_WAIT_FOR_TRAINING_PING",      "V2 MP: Wait for training PING"},      //20
   {RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,   0, "MP_WAIT_TX_RADIO_PARAMS_DONE",   "V2 MP: Wait for TX params done"},     //21
+
+  //V2 - Virtual circuit states
+  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "V2 VC: Wait for TX done"},            //22
+  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "V2 VC: Wait for receive"},            //23
+  {RADIO_VC_WAIT_TX_DONE_ACK,            0, "VC_WAIT_TX_DONE_ACK",            "V2 VC: Wait for TX done then ACK"},   //24
+  {RADIO_VC_WAIT_ACK,                    1, "VC_WAIT_ACK",                    "V2 VC: Wait for ACK"},                //25
 };
 
 //Possible types of packets received
@@ -123,6 +135,9 @@ typedef enum
   DATAGRAM_TRAINING_PARAMS,         //12
   DATAGRAM_TRAINING_ACK,            //13
 
+  //V2: Virtual-Circuit (VC) exchange
+  DATAGRAM_VC_HEARTBEAT,            //14
+
   //Add new V2 datagram types before this line
   MAX_V2_DATAGRAM_TYPE,
 
@@ -143,9 +158,140 @@ const char * const v2DatagramType[] =
   "DATA", "DATA-ACK", "HEARTBEAT", "RMT-CMD", "RMT_RESP",
   //  10
   "DATAGRAM",
-  //       11              12               13
-  "TRAINING_PING", "TRAINING_PARAMS", "TRAINING_ACK"
+  //     11                12               13
+  "TRAINING_PING", "TRAINING_PARAMS", "TRAINING_ACK",
+  //    14
+  "VC_HEARTBEAT",
 };
+
+typedef struct _VIRTUAL_CIRCUIT
+{
+  uint8_t uniqueId[UNIQUE_ID_BYTES];
+  unsigned long lastHeartbeatMillis;
+
+  //Link quality metrics
+  uint32_t framesSent;        //Total number of frames sent
+  uint32_t framesReceived;    //Total number of frames received
+  uint32_t messagesSent;      //Total number of messages sent
+  uint32_t messagesReceived;  //Total number of messages received
+  uint32_t badLength;         //Total number of bad lengths received
+  uint32_t linkFailures;      //Total number of link failures
+
+  //Link management
+  bool valid;                 //Unique ID is valid
+  bool linkUp;                //Link is up, received a recent HEARTBEAT datagram
+
+  /* ACK number management
+
+              System A                              System B
+
+             txAckNumber
+                  |
+                  V
+            Tx DATA Frame -----------------------> Rx DATA Frame
+                                                        |
+                                                        V
+                                                    AckNumber == rmtTxAckNumber
+                                                        |
+                                                        | yes
+                                                        V
+                                                   rxAckNumber = rmtTxAckNumber++
+                                                        |
+                                                        V
+          Rx DATA_Ack Frame <--------------------- Tx DATA_ACK Frame
+                  |
+                  V
+              ackNumber == txAckNumber
+                  |
+                  | yes
+                  V
+             txAckNumber++
+  */
+
+  uint8_t rmtTxAckNumber; //Next expected ACK # from remote system in DATA frame,
+                          //incremented upon match to received DATA frame ACK number,
+                          //indicates frame was received and processed
+                          //Duplicate frame if received ACK # == (rmtTxAckNumber -1)
+  uint8_t rxAckNumber;    //Received ACK # of the most recent acknowledged DATA frame,
+                          //does not get incremented, used to ACK the data frame
+  uint8_t txAckNumber;    //# of next ACK to be sent by the local system in DATA frame,
+                          //incremented when successfully acknowledged via DATA_ACK frame
+} VIRTUAL_CIRCUIT;
+
+typedef struct _VC_MESSAGE_HEADER
+{
+  uint8_t length;         //Length in bytes of the VC message
+  int8_t destVc;          //Destination VC
+  int8_t srcVc;           //Source VC
+} VC_MESSAGE_HEADER;
+
+#define VC_HEADER_BYTES     (sizeof(VC_MESSAGE_HEADER)) //Length of the VC header in bytes
+
+//Virtual-Circuit source and destination index values
+#define MAX_VC              8
+#define VC_SERVER           0
+#define VC_BROADCAST        -1
+#define VC_UNASSIGNED       -2
+
+//Source and destinations reserved for the local host
+#define VC_LINK_RESET       -3    //Force link reset
+#define VC_LINK_STATUS      -4    //Asynchronous link status output
+#define VC_COMMAND          -5    //Command input and command response
+#define VC_DEBUG            -6    //Debug input and output
+
+/*
+Host Interaction using Virtual-Circuits
+
+       Host A                   LoRa A      LoRa B               Host B
+
+All output goes to serial                                           .
+                                                                    .
+              +++ ---->                                             .
+                  <---- OK
+              .
+              .
+              .
+                  <---- Command responses
+                  <---- Debug message
+
+         Mode: VC ---->
+                  <---- OK
+
+       (VC debug) <---- Debug message
+
+        CMD: AT&W ---->
+     (VC command) <---- OK
+
+  CMD: LINK_RESET ---->
+                         HEARTBEAT -2 ---->
+      (VC status) <---- Link A up             Link A Up ----> (link status)
+
+       (VC debug) <---- Debug message
+
+                                      <---- HEARTBEAT B
+      (VC status) <---- Link B Up
+
+       (VC debug) <---- Debug message
+
+  MSG: Data for B ---->
+                           Data for B ---->
+                                      <---- ACK
+                                             Data for B ----> MSG: Data for B
+                                                        <---- MSG: Resp for A
+                                      <---- Resp for A
+                                  ACK ---->
+  MSG: Resp for A <---- Resp for A
+
+*/
+
+//Field offsets in the VC HEARTBEAT frame
+#define VC_HB_UNIQUE_ID     0
+#define VC_HB_MILLIS        (VC_HB_UNIQUE_ID + UNIQUE_ID_BYTES)
+#define VC_HB_CHANNEL_TIMER (VC_HB_MILLIS + sizeof(uint32_t))
+#define VC_HB_CHANNEL       (VC_HB_CHANNEL_TIMER + sizeof(uint16_t))
+#define VC_HB_END           (VC_HB_CHANNEL + sizeof(uint8_t))
+
+#define VC_LINK_BREAK_MULTIPLIER    3 //Number of missing HEARTBEAT timeouts
 
 //Train button states
 typedef enum
@@ -212,6 +358,8 @@ enum
   TRIGGER_TRAINING_SERVER_TX_PARAMS_DONE,
   TRIGGER_TRAINING_SERVER_RX_ACK,
   TRIGGER_TRAINING_SERVER_STOPPED,
+  TRIGGER_VC_TX_DONE,
+  TRIGGER_VC_TX_DATA,
 };
 
 //Control where to print command output
@@ -227,6 +375,7 @@ typedef enum
 {
   MODE_DATAGRAM = 0,
   MODE_POINT_TO_POINT,
+  MODE_VIRTUAL_CIRCUIT,
 } OPERATING_MODE;
 
 struct ControlTrailer

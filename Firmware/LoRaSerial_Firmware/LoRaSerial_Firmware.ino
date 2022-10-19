@@ -263,6 +263,7 @@ unsigned long rcvTimeMillis;
 unsigned long xmitTimeMillis;
 unsigned long timestampOffset;
 unsigned long roundTripMillis;
+unsigned long vcTxHeartbeatMillis;
 
 //Transmit control
 uint8_t * endOfTxData;
@@ -274,6 +275,17 @@ bool trainingPreviousRxInProgress = false; //Previous RX status
 float originalChannel; //Original channel from HOP table while training is in progress
 uint8_t trainingPartnerID[UNIQUE_ID_BYTES]; //Unique ID of the training partner
 uint8_t myUniqueId[UNIQUE_ID_BYTES]; // Unique ID of this system
+
+//Virtual-Circuit
+int8_t cmdVc;   //VC index for ATI commands only
+int8_t myVc;
+int8_t rxDestVc;
+int8_t rxSrcVc;
+uint8_t *rxVcData;
+int8_t txDestVc;
+unsigned long vcAckTimer;
+VIRTUAL_CIRCUIT virtualCircuitList[MAX_VC];
+
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables

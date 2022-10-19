@@ -342,3 +342,101 @@ void updateSerial()
   }
 }
 
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//Virtual-Circuit support
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+//Get the message length byte from the serial buffer
+uint8_t vcSerialMsgGetLengthByte()
+{
+  //Get the length byte for the received serial message
+  return serialReceiveBuffer[rxTail];
+}
+
+//Get the destination virtual circuit byte from the serial buffer
+uint8_t vcSerialMsgGetVcDest()
+{
+  uint16_t index;
+
+  //Get the destination address byte
+  index = rxTail + 1;
+  if (index >= sizeof(serialReceiveBuffer))
+    index -= sizeof(serialReceiveBuffer);
+  return serialReceiveBuffer[index];
+}
+
+//Determine if received serial data may be sent to the remote system
+bool vcSerialMessageReceived()
+{
+  int8_t vcDest;
+  uint8_t msgLength;
+
+  do
+  {
+    //Determine if the radio is idle
+    if (receiveInProcess())
+      //The radio is busy, wait until it is idle
+      break;
+
+    //Wait until at least one byte is available
+    if (!availableRXBytes())
+      //No data available
+      break;
+
+    //Verify that the entire message is in the serial buffer
+    msgLength = vcSerialMsgGetLengthByte();
+    if (availableRXBytes() < msgLength)
+      //The entire message is not in the buffer
+      break;
+
+    //Determine if the message is too large
+    vcDest = vcSerialMsgGetVcDest();
+    if (msgLength > maxDatagramSize)
+    {
+      //Discard this message, it is too long to transmit over the radio link
+      rxTail += msgLength;
+      if (rxTail >= sizeof(serialReceiveBuffer))
+        rxTail -= sizeof(serialReceiveBuffer);
+
+      //Nothing to do for invalid addresses or the broadcast address
+      if ((vcDest >= MAX_VC) || (vcDest == VC_BROADCAST))
+        break;
+
+      //Break the link to this host
+      vcBreakLink(vcDest);
+      break;
+    }
+
+    //Validate the destination VC
+    if ((vcDest < VC_BROADCAST) || (vcDest >= MAX_VC))
+    {
+      if (settings.debugTransmit)
+      {
+        systemPrint("ERROR: Invalid vcDest ");
+        systemPrint(vcDest);
+        systemPrintln(", discarding message!");
+      }
+
+      //Discard this message
+      rxTail += msgLength;
+      if (rxTail >= sizeof(serialReceiveBuffer))
+        rxTail -= sizeof(serialReceiveBuffer);
+      break;
+    }
+
+    //If sending to ourself, just place the data in the serial output buffer
+    readyOutgoingPacket(msgLength);
+    if (vcDest == myVc)
+    {
+      serialBufferOutput(outgoingPacket, msgLength);
+      endOfTxData -= msgLength;
+      break;
+    }
+
+    //Send this message
+    return true;
+  } while (0);
+
+  //Nothing to send at this time
+  return false;
+}
