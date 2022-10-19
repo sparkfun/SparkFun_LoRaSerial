@@ -516,6 +516,50 @@ void xmitDatagramMpRadioParameters(const uint8_t * clientID)
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//Virtual Circuit frames
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+void xmitVcHeartbeat(int8_t addr, uint8_t * id)
+{
+  uint8_t * txData;
+
+  uint32_t currentMillis = millis();
+  txData = endOfTxData;
+  *endOfTxData++ = 0; //Reserve for length
+  *endOfTxData++ = VC_BROADCAST;
+  *endOfTxData++ = addr;
+  memcpy(endOfTxData, id, UNIQUE_ID_BYTES);
+  endOfTxData += UNIQUE_ID_BYTES;
+  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
+  endOfTxData += sizeof(currentMillis);
+
+  //Set the length field
+  *txData = (uint8_t)(endOfTxData - txData);
+
+  /*
+                                                               endOfTxData ---.
+                                                                              |
+                                                                              V
+      +----------+---------+--------+----------+---------+----------+---------+----------+
+      | Optional |         |        |          |         |          |         | Optional |
+      |  NET ID  | Control | Length | DestAddr | SrcAddr |  Src ID  | millis  | Trailer  |
+      |  8 bits  | 8 bits  | 8 bits |  8 bits  | 8 bits  | 16 Bytes | 4 Bytes || n Bytes  |
+      +----------+---------+--------+----------+---------+----------+---------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_VC_HEARTBEAT;
+  txControl.ackNumber = 0;
+  transmitDatagram();
+
+  //Determine the time that it took to pass this frame to the radio
+  //This time is used to adjust the time offset
+  vcTxHeartbeatMillis = millis() - currentMillis;
+
+  //Select a random for the next heartbeat
+  resetHeartbeat();
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Datagram reception
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -526,6 +570,7 @@ PacketType rcvDatagram()
   PacketType datagramType;
   uint8_t receivedNetID;
   CONTROL_U8 rxControl;
+  VIRTUAL_CIRCUIT * vc;
 
   //Save the receive time
   rcvTimeMillis = millis();
@@ -747,6 +792,7 @@ PacketType rcvDatagram()
   rxDataBytes -= minDatagramSize;
 
   //Verify the packet number last so that the expected datagram or ACK number can be updated
+  rxVcData = rxData;
   if (settings.operatingMode == MODE_POINT_TO_POINT)
   {
     switch (datagramType)
@@ -804,6 +850,87 @@ PacketType rcvDatagram()
         rxAckNumber = rmtTxAckNumber;
         rmtTxAckNumber = (rmtTxAckNumber + 1) & 3;
         break;
+    }
+  }
+
+  //Verify the Virtual-Circuit length
+  else if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+  {
+    //Verify that the virtual circuit header is present
+    if (rxDataBytes < 3)
+    {
+      if (settings.debugReceive)
+      {
+        systemPrintTimestamp();
+        systemPrint("Missing VC header bytes, received only ");
+        systemPrint(rxDataBytes);
+        systemPrintln(" bytes, expecting at least 3 bytes");
+      }
+      badFrames++;
+      return DATAGRAM_BAD;
+    }
+
+    //Parse the virtual circuit header
+    rxDestVc = rxData[1];
+    rxSrcVc = rxData[2];
+    rxVcData = &rxData[3];
+
+    //Validate the source VC
+    vc = NULL;
+    if (rxSrcVc != VC_UNASSIGNED)
+    {
+      if ((uint8_t)rxSrcVc >= MAX_VC)
+      {
+        if (settings.debugReceive)
+        {
+          systemPrintTimestamp();
+          systemPrint("Invalid source VC: ");
+          systemPrintln(rxSrcVc);
+        }
+        badFrames++;
+        return DATAGRAM_BAD;
+      }
+      vc = &virtualCircuitList[rxSrcVc];
+    }
+
+    //Validate the length
+    if (*rxData != rxDataBytes)
+    {
+      systemPrintTimestamp();
+      systemPrint("Invalid VC length, received ");
+      systemPrint(*rxData);
+      systemPrint(" expecting ");
+      systemPrintln(rxDataBytes);
+      badFrames++;
+      if (vc)
+        vc->badLength++;
+      return DATAGRAM_BAD;
+    }
+
+    //Account for this frame
+    if (vc)
+    {
+      vc->framesReceived++;
+      if (datagramType == DATAGRAM_DATA)
+        vc->messagesReceived++;
+    }
+
+    //Display the virtual circuit header
+    if (settings.debugReceive)
+    {
+      systemPrintTimestamp();
+      systemPrint("    VC Length: ");
+      systemPrintln(*rxData);
+      systemPrint("    DestAddr: ");
+      if (rxDestVc == VC_BROADCAST)
+        systemPrintln("Broadcast");
+      else
+        systemPrintln(rxDestVc);
+      systemPrint("    SrcAddr: ");
+      if (rxSrcVc == VC_UNASSIGNED)
+        systemPrintln("Unassigned");
+      else
+        systemPrintln(rxSrcVc);
     }
   }
 
@@ -878,6 +1005,25 @@ void transmitDatagram()
   uint8_t control;
   uint8_t * header;
   uint8_t length;
+  int8_t srcVc;
+  uint8_t * vcData;
+  uint8_t vcLength;
+  VIRTUAL_CIRCUIT * vc;
+
+  //Parse the virtual circuit header
+  vc = NULL;
+  if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+  {
+    vcData = &outgoingPacket[headerBytes];
+    vcLength = *vcData++;
+    txDestVc = *vcData++;
+    srcVc = *vcData++;
+    if ((uint8_t)srcVc <= MAX_VC)
+    {
+      vc = &virtualCircuitList[srcVc];
+      vc->messagesSent++;
+    }
+  }
 
   //Determine the packet size
   datagramsSent++;
@@ -998,6 +1144,24 @@ void transmitDatagram()
     }
   }
 
+  //Verify the Virtual-Circuit length
+  if (settings.debugTransmit && (settings.operatingMode == MODE_VIRTUAL_CIRCUIT))
+  {
+    systemPrintTimestamp();
+    systemPrint("    Length: ");
+    systemPrintln(vcLength);
+    systemPrint("    DestAddr: ");
+    if (txDestVc == VC_BROADCAST)
+      systemPrintln("Broadcast");
+    else
+      systemPrintln(txDestVc);
+    systemPrint("    SrcAddr: ");
+    if (srcVc == VC_UNASSIGNED)
+      systemPrintln("Unassigned");
+    else
+      systemPrintln(srcVc);
+  }
+
   /*
                                         endOfTxData ---.
                                                        |
@@ -1108,7 +1272,7 @@ void transmitDatagram()
 
   //Transmit this datagram
   frameSentCount = 0; //This is the first time this frame is being sent
-  retransmitDatagram();
+  retransmitDatagram(vc);
 }
 
 //Print the control byte value
@@ -1135,7 +1299,7 @@ void printControl(uint8_t value)
 }
 
 //The previous transmission was not received, retransmit the datagram
-void retransmitDatagram()
+void retransmitDatagram(VIRTUAL_CIRCUIT * vc)
 {
   /*
       +----------+----------+------------+---  ...  ---+----------+
@@ -1168,6 +1332,8 @@ void retransmitDatagram()
   if (state == RADIOLIB_ERR_NONE)
   {
     frameSentCount++;
+    if (vc)
+      vc->framesSent++;
     framesSent++;
     xmitTimeMillis = millis();
     frameAirTime = calcAirTime(txDatagramSize); //Calculate frame air size while we're transmitting in the background
@@ -1218,7 +1384,7 @@ void syncChannelTimer(int offset)
   triggerEvent(TRIGGER_SYNC_CHANNEL);
 
   uint16_t channelTimerElapsed;
-  memcpy(&channelTimerElapsed, &rxData[offset], sizeof(channelTimerElapsed));
+  memcpy(&channelTimerElapsed, &rxVcData[offset], sizeof(channelTimerElapsed));
   channelTimerElapsed += ackAirTime;
   channelTimerElapsed += SYNC_PROCESSING_OVERHEAD;
 
