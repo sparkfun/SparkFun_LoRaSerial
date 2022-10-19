@@ -87,6 +87,26 @@ uint16_t availableTXBytes()
   return (sizeof(serialTransmitBuffer) - txTail + txHead);
 }
 
+//Add serial data to the output buffer
+void serialBufferOutput(uint8_t * data, uint16_t dataLength)
+{
+  int length;
+
+  length = 0;
+  if ((txHead + dataLength) > sizeof(serialTransmitBuffer))
+  {
+    //Copy the first portion of the received datagram into the buffer
+    length = sizeof(serialTransmitBuffer) - txHead;
+    memcpy(&serialTransmitBuffer[txHead], data, length);
+    txHead = 0;
+  }
+
+  //Copy the remaining portion of the received datagram into the buffer
+  memcpy(&serialTransmitBuffer[txHead], &data[length], dataLength - length);
+  txHead += dataLength - length;
+  txHead %= sizeof(serialTransmitBuffer);
+}
+
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Command RX - Remote command data received from a remote system
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
