@@ -289,9 +289,22 @@ void xmitDatagramP2PHeartbeat()
 //Create short packet of 2 control bytes - do not expect ack
 void xmitDatagramP2PAck()
 {
+  int ackLength;
+
+  uint8_t * ackStart = endOfTxData;
   uint16_t channelTimerElapsed = millis() - timerStart;
   memcpy(endOfTxData, &channelTimerElapsed, sizeof(channelTimerElapsed));
   endOfTxData += sizeof(channelTimerElapsed);
+
+  //Verify the ACK length
+  ackLength = endOfTxData - ackStart;
+  if (ackLength != ACK_BYTES)
+  {
+    systemPrint("ERROR - Please define ACK_BYTES = ");
+    systemPrintln(ackLength);
+    while (1)
+      petWDT();
+  }
 
   /*
                      endOfTxData ---.
