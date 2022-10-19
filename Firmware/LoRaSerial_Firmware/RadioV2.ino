@@ -412,7 +412,7 @@ void updateRadioParameters(uint8_t * rxData, bool pointToPoint)
   originalSettings.autoTuneFrequency = params.autoTuneFrequency;
   originalSettings.maxResends = params.maxResends;
   originalSettings.verifyRxNetID = params.verifyRxNetID;
-  originalSettings.protocolVersion = params.protocolVersion;
+  originalSettings.radioProtocolVersion = params.radioProtocolVersion;
   originalSettings.overheadTime = params.overheadTime;
   originalSettings.enableCRC16 = params.enableCRC16;
   originalSettings.clientPingRetryInterval = params.clientPingRetryInterval;

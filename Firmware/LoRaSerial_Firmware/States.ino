@@ -59,7 +59,7 @@ void updateRadioState()
       returnToReceiving(); //Start receiving
 
       //Start the link between the radios
-      if (settings.protocolVersion >= 2)
+      if (settings.radioProtocolVersion >= 2)
       {
         //Start the V2 protocol
         if (settings.pointToPoint == true)
