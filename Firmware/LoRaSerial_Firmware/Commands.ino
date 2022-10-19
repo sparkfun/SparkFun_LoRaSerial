@@ -57,6 +57,8 @@ bool commandAT(const char * commandString)
   {
     switch (commandString[2])
     {
+      default:
+        return false;
       case ('?'): //Display the command help
         systemPrintln("Command summary:");
         systemPrintln("  AT? - Print the command summary");
@@ -131,8 +133,6 @@ bool commandAT(const char * commandString)
         systemFlush();
         systemReset();
         break;
-      default:
-        return false;
     }
   }
 
@@ -141,6 +141,8 @@ bool commandAT(const char * commandString)
   {
     switch (commandString[3])
     {
+      default:
+        return false;
       case ('?'): //ATI? - Display the information commands
         systemPrintln("  ATI0 - Show user settable parameters");
         systemPrintln("  ATI1 - Show board variant");
@@ -199,8 +201,6 @@ bool commandAT(const char * commandString)
         systemPrint("Total datagrams sent: ");
         systemPrintln(datagramsSent);
         break;
-      default:
-        return false;
     }
   }
   else if ((commandString[2] == 'I') && (commandString[3] == '1') && (commandLength == 5))
