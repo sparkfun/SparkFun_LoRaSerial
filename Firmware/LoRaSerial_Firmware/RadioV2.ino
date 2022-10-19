@@ -522,29 +522,97 @@ void xmitDatagramMpRadioParameters(const uint8_t * clientID)
 void xmitVcHeartbeat(int8_t addr, uint8_t * id)
 {
   uint8_t * txData;
+  uint8_t * vcData;
 
   uint32_t currentMillis = millis();
   txData = endOfTxData;
+
+  //Add the virtual circuit header
   *endOfTxData++ = 0; //Reserve for length
   *endOfTxData++ = VC_BROADCAST;
   *endOfTxData++ = addr;
+  vcData = endOfTxData;
+
+  //Add the system ID value
+  if ((endOfTxData - vcData) != VC_HB_UNIQUE_ID)
+  {
+    systemPrint("ERROR: System ID is in wrong location (");
+    systemPrint(endOfTxData - vcData);
+    systemPrint(" != ");
+    systemPrint(VC_HB_UNIQUE_ID);
+    systemPrintln(" : VC_HB_UNIQUE_ID) in DATAGRAM_VC_HEARTBEAT!");
+    while (1)
+      petWDT();
+  }
   memcpy(endOfTxData, id, UNIQUE_ID_BYTES);
   endOfTxData += UNIQUE_ID_BYTES;
+
+  //Add the current millis value
+  if ((endOfTxData - vcData) != VC_HB_MILLIS)
+  {
+    systemPrint("ERROR: Current millis is in wrong location (");
+    systemPrint(endOfTxData - vcData);
+    systemPrint(" != ");
+    systemPrint(VC_HB_MILLIS);
+    systemPrintln(" : VC_HB_MILLIS) in DATAGRAM_VC_HEARTBEAT!");
+    while (1)
+      petWDT();
+  }
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   endOfTxData += sizeof(currentMillis);
+
+  //Add the channel timer value
+  if ((endOfTxData - vcData) != VC_HB_CHANNEL_TIMER)
+  {
+    systemPrint("ERROR: Channel timer is in wrong location (");
+    systemPrint(endOfTxData - vcData);
+    systemPrint(" != ");
+    systemPrint(VC_HB_CHANNEL_TIMER);
+    systemPrintln(" : VC_HB_CHANNEL_TIMER) in DATAGRAM_VC_HEARTBEAT!");
+    while (1)
+      petWDT();
+  }
+  uint16_t channelTimerElapsed = millis() - timerStart;
+  memcpy(endOfTxData, &channelTimerElapsed, sizeof(channelTimerElapsed));
+  endOfTxData += sizeof(channelTimerElapsed);
+
+  //Add the channel value
+  if ((endOfTxData - vcData) != VC_HB_CHANNEL)
+  {
+    systemPrint("ERROR: Channel is in wrong location (");
+    systemPrint(endOfTxData - vcData);
+    systemPrint(" != ");
+    systemPrint(VC_HB_CHANNEL);
+    systemPrintln(" : VC_HB_CHANNEL) in VC_HEARTBEAT!");
+    while (1)
+      petWDT();
+  }
+  *endOfTxData++ = channelNumber;
+
+  //Validate the end of the message
+  if ((endOfTxData - vcData) != VC_HB_END)
+  {
+    systemPrint("ERROR: End of message is in wrong location (");
+    systemPrint(endOfTxData - vcData);
+    systemPrint(" != ");
+    systemPrint(VC_HB_CHANNEL);
+    systemPrintln(" : VC_HB_END) in VC_HEARTBEAT!");
+    while (1)
+      petWDT();
+  }
 
   //Set the length field
   *txData = (uint8_t)(endOfTxData - txData);
 
   /*
-                                                               endOfTxData ---.
-                                                                              |
-                                                                              V
-      +----------+---------+--------+----------+---------+----------+---------+----------+
-      | Optional |         |        |          |         |          |         | Optional |
-      |  NET ID  | Control | Length | DestAddr | SrcAddr |  Src ID  | millis  | Trailer  |
-      |  8 bits  | 8 bits  | 8 bits |  8 bits  | 8 bits  | 16 Bytes | 4 Bytes || n Bytes  |
-      +----------+---------+--------+----------+---------+----------+---------+----------+
+                                                                                   endOfTxData ---.
+                           |<-- Virtual Circuit Header ->|                                        |
+                           |                             |                                        V
+      +----------+---------+--------+----------+---------+----------+---------+---------+---------+----------+
+      | Optional |         |        |          |         |          |         |         | Channel | Optional |
+      |  NET ID  | Control | Length | DestAddr | SrcAddr |  Src ID  | millis  | Channel | Number  | Trailer  |
+      |  8 bits  | 8 bits  | 8 bits |  8 bits  | 8 bits  | 16 Bytes | 4 Bytes | 2 Bytes | 1 Byte  | n Bytes  |
+      +----------+---------+--------+----------+---------+----------+---------+---------+---------+----------+
   */
 
   txControl.datagramType = DATAGRAM_VC_HEARTBEAT;
@@ -1378,21 +1446,26 @@ void stopChannelTimer()
 
 //Given the remote unit's amount of channelTimer that has elapsed,
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
-void syncChannelTimer(int offset)
+uint8_t syncChannelTimer(int offset, uint16_t overheadMillis)
 {
   triggerEvent(TRIGGER_SYNC_CHANNEL);
 
   uint16_t channelTimerElapsed;
   memcpy(&channelTimerElapsed, &rxVcData[offset], sizeof(channelTimerElapsed));
-  channelTimerElapsed += ackAirTime;
-  channelTimerElapsed += SYNC_PROCESSING_OVERHEAD;
+  channelTimerElapsed += overheadMillis;
 
-  if (channelTimerElapsed > settings.maxDwellTime) channelTimerElapsed -= settings.maxDwellTime;
+  uint8_t nextChannel = channelNumber;
+  if (channelTimerElapsed > settings.maxDwellTime)
+  {
+    channelTimerElapsed -= settings.maxDwellTime;
+    nextChannel = (channelNumber + 1) % settings.numberOfChannels;
+  }
 
   partialTimer = true;
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(settings.maxDwellTime - channelTimerElapsed, channelTimerHandler); //Shorten our hardware timer to match our mate's
   channelTimer.enableTimer();
+  return nextChannel;
 }
 
 //This function resets the heartbeat time and re-rolls the random time

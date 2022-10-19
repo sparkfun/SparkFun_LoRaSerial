@@ -37,6 +37,8 @@ typedef enum
   RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,
 
   //Virtual-Circuit states
+  RADIO_VC_WAIT_HEARTBEAT_SENT,
+  RADIO_VC_WAIT_SERVER_LINK_UP,
   RADIO_VC_WAIT_TX_DONE,
   RADIO_VC_WAIT_RECEIVE,
   RADIO_VC_WAIT_TX_DONE_ACK,
@@ -101,10 +103,12 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   {RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,   0, "MP_WAIT_TX_RADIO_PARAMS_DONE",   "V2 MP: Wait for TX params done"},     //21
 
   //V2 - Virtual circuit states
-  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "V2 VC: Wait for TX done"},            //22
-  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "V2 VC: Wait for receive"},            //23
-  {RADIO_VC_WAIT_TX_DONE_ACK,            0, "VC_WAIT_TX_DONE_ACK",            "V2 VC: Wait for TX done then ACK"},   //24
-  {RADIO_VC_WAIT_ACK,                    1, "VC_WAIT_ACK",                    "V2 VC: Wait for ACK"},                //25
+  {RADIO_VC_WAIT_HEARTBEAT_SENT,         0, "VC_WAIT_HEARTBEAT_SENT",         "V2 VC: Wait HEARTBEAT sent"},         //22
+  {RADIO_VC_WAIT_SERVER_LINK_UP,         1, "VC_WAIT_SERVER_LINK_UP",         "V2 VC: Wait server link up"},         //23
+  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "V2 VC: Wait for TX done"},            //24
+  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "V2 VC: Wait for receive"},            //25
+  {RADIO_VC_WAIT_TX_DONE_ACK,            0, "VC_WAIT_TX_DONE_ACK",            "V2 VC: Wait for TX done then ACK"},   //26
+  {RADIO_VC_WAIT_ACK,                    1, "VC_WAIT_ACK",                    "V2 VC: Wait for ACK"},                //27
 };
 
 //Possible types of packets received

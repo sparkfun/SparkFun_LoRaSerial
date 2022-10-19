@@ -178,7 +178,7 @@ void updateSerial()
           //Take a break if there are ISRs to attend to
           petWDT();
           if (transactionComplete == true) break;
-          if (timeToHop == true) hopChannel();
+          if (timeToHop == true) hopChannel(true);
           if (isCTS() == false) break;
 
           //          int bytesToSend = availableTXBytes();
@@ -211,7 +211,7 @@ void updateSerial()
 
     //Take a break if there are ISRs to attend to
     petWDT();
-    if (timeToHop == true) hopChannel();
+    if (timeToHop == true) hopChannel(true);
 
     //Handle RTS
     if (availableRXBytes() == sizeof(serialReceiveBuffer) - 1)
@@ -365,6 +365,22 @@ uint8_t vcSerialMsgGetVcDest()
   return serialReceiveBuffer[index];
 }
 
+//Discard the serial data in the buffer
+void discardSerialData(uint16_t length)
+{
+  uint16_t maxLength;
+
+  //Determine the amount of data to discard
+  maxLength = availableRXBytes();
+  if (length > maxLength)
+    length = maxLength;
+
+  //Discard the data
+  rxTail += length;
+  if (rxTail >= sizeof(serialReceiveBuffer))
+    rxTail -= sizeof(serialReceiveBuffer);
+}
+
 //Determine if received serial data may be sent to the remote system
 bool vcSerialMessageReceived()
 {
@@ -394,9 +410,7 @@ bool vcSerialMessageReceived()
     if (msgLength > maxDatagramSize)
     {
       //Discard this message, it is too long to transmit over the radio link
-      rxTail += msgLength;
-      if (rxTail >= sizeof(serialReceiveBuffer))
-        rxTail -= sizeof(serialReceiveBuffer);
+      discardSerialData(msgLength);
 
       //Nothing to do for invalid addresses or the broadcast address
       if ((vcDest >= MAX_VC) || (vcDest == VC_BROADCAST))
@@ -418,9 +432,7 @@ bool vcSerialMessageReceived()
       }
 
       //Discard this message
-      rxTail += msgLength;
-      if (rxTail >= sizeof(serialReceiveBuffer))
-        rxTail -= sizeof(serialReceiveBuffer);
+      discardSerialData(msgLength);
       break;
     }
 

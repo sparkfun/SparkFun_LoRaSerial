@@ -77,6 +77,14 @@ void configureRadio()
 
   channelNumber = 0;
 
+  //Print the frequency if requested
+  if (settings.printFrequency)
+  {
+    systemPrintTimestamp();
+    systemPrint(channels[0], 3);
+    systemPrintln(" MHz");
+  }
+
   //The SX1276 and RadioLib accepts a value of 2 to 17, with 20 enabling the power amplifier
   //Measuring actual power output the radio will output 14dBm (25mW) to 27.9dBm (617mW) in constant transmission
   //So we use a lookup to convert between the user's chosen power and the radio setting
@@ -172,13 +180,13 @@ void setRadioFrequency(bool rxAdjust)
   frequency = channels[channelNumber];
   if (rxAdjust)
     frequency -= frequencyCorrection;
+  radio.setFrequency(frequency);
   if (settings.printFrequency)
   {
     systemPrintTimestamp();
     systemPrint(frequency);
     systemPrintln(" MHz");
   }
-  radio.setFrequency(frequency);
 }
 
 void returnToReceiving()
@@ -294,7 +302,7 @@ void generateHopTable()
   }
 
   //'Randomly' shuffle list based on our specific seed
-  shuffle(channels, settings.numberOfChannels);
+//  shuffle(channels, settings.numberOfChannels);
 
   //Verify the AES IV length
   if (AES_IV_BYTES != gcm.ivSize())
@@ -369,12 +377,15 @@ uint16_t myRand()
 //Move to the next channel
 //This is called when the FHSS interrupt is received
 //at the beginning and during of a transmission or reception
-void hopChannel()
+void hopChannel(bool forward)
 {
   timeToHop = false;
   triggerEvent(TRIGGER_FREQ_CHANGE);
 
-  channelNumber++;
+  if (forward)
+    channelNumber++;
+  else
+    channelNumber--;
   channelNumber %= settings.numberOfChannels;
 
   //Select the new frequency
@@ -421,7 +432,7 @@ bool receiveInProcess()
   {
     radioStatus = radio.getModemStatus();
     if (radioStatus & 0b1011) return (true); //If any bits are set there is a receive in progress
-    if (timeToHop) hopChannel(); //If the channelTimer has expired, move to next frequency
+    if (timeToHop) hopChannel(true); //If the channelTimer has expired, move to next frequency
     delay(1);
   }
 

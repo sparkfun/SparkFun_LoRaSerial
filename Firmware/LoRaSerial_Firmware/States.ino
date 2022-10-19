@@ -95,7 +95,8 @@ void updateRadioState()
 
           //Start sending heartbeats
           xmitVcHeartbeat(myVc, myUniqueId);
-          changeState(RADIO_VC_WAIT_TX_DONE);
+          startChannelTimer();
+          changeState(myVc ? RADIO_VC_WAIT_HEARTBEAT_SENT : RADIO_VC_WAIT_TX_DONE);
         }
         else
           changeState(RADIO_MP_STANDBY);
@@ -279,6 +280,12 @@ void updateRadioState()
         stopChannelTimer();
         channelNumber = 0;
         radio.setFrequency(channels[channelNumber]);
+        if (settings.printFrequency)
+        {
+          systemPrintTimestamp();
+          systemPrint(channels[channelNumber]);
+          systemPrintln(" MHz");
+        }
       }
 
       //Is it time to send the PING to the remote system
@@ -527,7 +534,7 @@ void updateRadioState()
       updateRSSI();
 
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-        hopChannel();
+        hopChannel(true);
 
       //Check for a received datagram
       if (transactionComplete == true)
@@ -724,7 +731,7 @@ void updateRadioState()
     //Wait for the ACK or HEARTBEAT to finish transmission
     case RADIO_P2P_LINK_UP_WAIT_ACK_DONE:
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-        hopChannel();
+        hopChannel(true);
 
       if (transactionComplete)
       {
@@ -738,7 +745,7 @@ void updateRadioState()
     //Wait for the data transmission to complete
     case RADIO_P2P_LINK_UP_WAIT_TX_DONE:
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-        hopChannel();
+        hopChannel(true);
 
       if (transactionComplete)
       {
@@ -752,7 +759,7 @@ void updateRadioState()
     //Wait for the ACK to be received
     case RADIO_P2P_LINK_UP_WAIT_ACK:
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-        hopChannel();
+        hopChannel(true);
 
       if (transactionComplete)
       {
@@ -780,7 +787,8 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DATA_ACK:
-            syncChannelTimer(0); //Adjust freq hop ISR based on remote's remaining clock
+            //Adjust freq hop ISR based on remote's remaining clock
+            syncChannelTimer(0, ackAirTime + SYNC_PROCESSING_OVERHEAD);
 
             resetHeartbeat(); //Extend time before next heartbeat
 
@@ -905,7 +913,7 @@ void updateRadioState()
 
     case RADIO_P2P_LINK_UP_HB_ACK_REXMT:
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-        hopChannel();
+        hopChannel(true);
 
       //An ACK was expected for a previous transmission that must have been
       //lost.  A heartbeat was received instead which was ACKed.  Once the ACK
@@ -966,7 +974,7 @@ void updateRadioState()
     case RADIO_MP_STANDBY:
       //Hop channels when required
       if (timeToHop == true)
-        hopChannel();
+        hopChannel(true);
 
       //Process the receive packet
       if (transactionComplete == true)
@@ -1063,7 +1071,7 @@ void updateRadioState()
     case RADIO_MP_WAIT_TX_DONE:
       //Hop channels when required
       if (timeToHop == true)
-        hopChannel();
+        hopChannel(true);
 
       //If transmit is complete then start receiving
       if (transactionComplete == true)
@@ -1074,7 +1082,7 @@ void updateRadioState()
         setRSSI(0b0001);
       }
       else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
-        hopChannel();
+        hopChannel(true);
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -1313,6 +1321,12 @@ void updateRadioState()
                    RADIO_RESET
                         |
                         V
+           RADIO_VC_WAIT_HEARTBEAT_SENT
+                        |
+                        V
+           RADIO_VC_WAIT_SERVER_LINK_UP
+                        |
+                        V
                         +<-------------------------.
                         |                          |
                         | Send VC_HEARTBEAT        |
@@ -1338,7 +1352,7 @@ void updateRadioState()
 
     */
 
-    case RADIO_VC_WAIT_TX_DONE:
+    case RADIO_VC_WAIT_HEARTBEAT_SENT:
       //If dio0ISR has fired, we are done transmitting
       if (transactionComplete == true)
       {
@@ -1351,11 +1365,20 @@ void updateRadioState()
         returnToReceiving();
 
         //Set the next state
-        changeState(RADIO_VC_WAIT_RECEIVE);
+        changeState(RADIO_VC_WAIT_SERVER_LINK_UP);
       }
       break;
 
-    case RADIO_VC_WAIT_RECEIVE:
+    case RADIO_VC_WAIT_SERVER_LINK_UP:
+      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+      {
+        timeToHop = false;
+
+        //Send another HEARTBEAT
+        xmitVcHeartbeat(myVc, myUniqueId);
+        changeState(RADIO_VC_WAIT_HEARTBEAT_SENT);
+      }
+
       //If dio0ISR has fired, a packet has arrived
       currentMillis = millis();
       if (transactionComplete == true)
@@ -1375,7 +1398,61 @@ void updateRadioState()
             break;
 
           case DATAGRAM_VC_HEARTBEAT:
-            vcReceiveHeartbeat(RADIO_VC_WAIT_TX_DONE, millis() - currentMillis);
+            vcReceiveHeartbeat(RADIO_VC_WAIT_TX_DONE, millis() - currentMillis, rxVcData[VC_HB_CHANNEL]);
+            returnToReceiving();
+            changeState(RADIO_VC_WAIT_RECEIVE);
+            break;
+        }
+      }
+
+      //Discard serial data
+      discardSerialData(-1);
+      break;
+
+    case RADIO_VC_WAIT_TX_DONE:
+      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+        hopChannel(true);
+
+      //If dio0ISR has fired, we are done transmitting
+      if (transactionComplete == true)
+      {
+        transactionComplete = false;
+
+        //Indicate that the receive is complete
+        triggerEvent(TRIGGER_VC_TX_DONE);
+
+        //Start the receive operation
+        returnToReceiving();
+
+        //Set the next state
+        changeState(RADIO_VC_WAIT_RECEIVE);
+      }
+      break;
+
+    case RADIO_VC_WAIT_RECEIVE:
+      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+        hopChannel(true);
+
+      //If dio0ISR has fired, a packet has arrived
+      currentMillis = millis();
+      if (transactionComplete == true)
+      {
+        transactionComplete = false; //Reset ISR flag
+        trainingPreviousRxInProgress = false;
+
+        //Decode the received datagram
+        PacketType packetType = rcvDatagram();
+
+        //Process the received datagram
+        switch (packetType)
+        {
+          default:
+            triggerEvent(TRIGGER_BAD_PACKET);
+            returnToReceiving();
+            break;
+
+          case DATAGRAM_VC_HEARTBEAT:
+            vcReceiveHeartbeat(RADIO_VC_WAIT_TX_DONE, millis() - currentMillis, rxVcData[VC_HB_CHANNEL]);
             break;
 
           case DATAGRAM_DATA:
@@ -1440,6 +1517,9 @@ void updateRadioState()
       break;
 
     case RADIO_VC_WAIT_TX_DONE_ACK:
+      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+        hopChannel(true);
+
       //If dio0ISR has fired, we are done transmitting
       if (transactionComplete == true)
       {
@@ -1457,6 +1537,9 @@ void updateRadioState()
       break;
 
     case RADIO_VC_WAIT_ACK:
+      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+        hopChannel(true);
+
       //If dio0ISR has fired, a packet has arrived
       currentMillis = millis();
       if (transactionComplete == true)
@@ -1476,7 +1559,7 @@ void updateRadioState()
             break;
 
           case DATAGRAM_VC_HEARTBEAT:
-            vcReceiveHeartbeat(RADIO_VC_WAIT_TX_DONE_ACK, millis() - currentMillis);
+            vcReceiveHeartbeat(RADIO_VC_WAIT_TX_DONE_ACK, millis() - currentMillis, rxVcData[VC_HB_CHANNEL]);
             break;
 
           case DATAGRAM_DATA:
@@ -1575,7 +1658,7 @@ void updateRadioState()
           if (vc->linkUp && ((currentMillis - vc->lastHeartbeatMillis) > (VC_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout)))
           {
             vcBreakLink(index);
-            if (index == rexmtTxDestVc)
+            if ((index == rexmtTxDestVc) && (radioState == RADIO_VC_WAIT_ACK))
               changeState(RADIO_VC_WAIT_RECEIVE);
           }
         }
@@ -1850,7 +1933,7 @@ void v2EnterLinkUp()
   //Bring up the link
   triggerEvent(TRIGGER_HANDSHAKE_COMPLETE);
   startChannelTimer();
-  hopChannel(); //Leave home
+  hopChannel(true); //Leave home
   resetHeartbeat();
 
   //Synchronize the ACK numbers
@@ -1871,6 +1954,14 @@ void v2EnterLinkUp()
     systemPrintln("========== Link UP ==========");
 }
 
+//Restart the network
+void vcResetNetwork()
+{
+  //Invalidate the virtual circuites
+  memset(virtualCircuitList, 0, sizeof(virtualCircuitList));
+  changeState(RADIO_RESET);
+}
+
 //Break the virtual-circuit link
 void vcBreakLink(int8_t vcIndex)
 {
@@ -1883,6 +1974,12 @@ void vcBreakLink(int8_t vcIndex)
     vc = &virtualCircuitList[vcIndex];
     vc->linkFailures++;
     vc->linkUp = false;
+
+    //The timing will drift causing communications to fail between nodes
+    //since the server is down.  Restart the network, waiting for the server
+    //to come back online.
+    if (vcIndex == VC_SERVER)
+      vcResetNetwork();
   }
   linkFailures++;
 
@@ -1985,27 +2082,45 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
   return index;
 }
 
-void vcReceiveHeartbeat(RadioStates nextState, uint32_t rxMillis)
+void vcReceiveHeartbeat(RadioStates nextState, uint32_t rxMillis, uint8_t channel)
 {
   uint32_t deltaMillis;
+  float frequency;
+  uint8_t nextChannel;
   int vcSrc;
 
   //Update the timestamp offset
   if (rxSrcVc == VC_SERVER)
   {
+    //Adjust freq hop ISR based on remote's remaining clock
+    nextChannel = syncChannelTimer(VC_HB_CHANNEL_TIMER, vcTxHeartbeatMillis + rxMillis);
+
     //Assume client and server are running the same level of debugging,
     //then the delay from reading the millisecond value on the server should
     //get offset by the transmit setup time and the receive overhead time.
-    memcpy(&timestampOffset, &rxVcData[UNIQUE_ID_BYTES], sizeof(timestampOffset));
+    memcpy(&timestampOffset, &rxVcData[VC_HB_MILLIS], sizeof(timestampOffset));
     timestampOffset += vcTxHeartbeatMillis + rxMillis - millis();
+
+    //Select the proper frequency
+    frequency = channels[nextChannel];
+    radio.setFrequency(frequency);
+
+    //Print the frequency if requested
+    if (settings.printFrequency)
+    {
+      systemPrintTimestamp();
+      systemPrint(frequency, 3);
+      systemPrintln(" MHz");
+    }
+
   }
 
   //Save our address
-  if ((myVc == VC_UNASSIGNED) && (memcmp(myUniqueId, rxVcData, UNIQUE_ID_BYTES) == 0))
+  if ((myVc == VC_UNASSIGNED) && (memcmp(myUniqueId, &rxVcData[VC_HB_UNIQUE_ID], UNIQUE_ID_BYTES) == 0))
     myVc = rxSrcVc;
 
   //Translate the unique ID into an address byte
-  vcSrc = vcIdToAddressByte(rxSrcVc, rxVcData);
+  vcSrc = vcIdToAddressByte(rxSrcVc, &rxVcData[VC_HB_UNIQUE_ID]);
 
   if (settings.trainingServer && (rxSrcVc == VC_UNASSIGNED) && (vcSrc >= 0))
   {
