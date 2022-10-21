@@ -190,7 +190,7 @@ void returnToReceiving()
   }
   else
   {
-    if (expectingAck && settings.pointToPoint == true)
+    if (expectingAck && (settings.operatingMode == MODE_POINT_TO_POINT))
     {
       radio.implicitHeader(2);
       state = radio.startReceive(2); //Expect a control packet
@@ -281,7 +281,7 @@ void generateHopTable()
   //Feed random number generator with our specific platform settings
   //Use settings that must be identical to have a functioning link.
   //For example, we do not use coding rate because two radios can communicate with different coding rate values
-  myRandSeed = settings.airSpeed + settings.netID + settings.pointToPoint + settings.encryptData
+  myRandSeed = settings.airSpeed + settings.netID + settings.operatingMode + settings.encryptData
                + settings.dataScrambling
                + (uint16_t)settings.frequencyMin + (uint16_t)settings.frequencyMax
                + settings.numberOfChannels + settings.frequencyHop + settings.maxDwellTime
