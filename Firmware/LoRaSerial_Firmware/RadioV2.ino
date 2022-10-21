@@ -1212,12 +1212,12 @@ void stopChannelTimer()
 
 //Given the remote unit's amount of channelTimer that has elapsed,
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
-void syncChannelTimer()
+void syncChannelTimer(int offset)
 {
   triggerEvent(TRIGGER_SYNC_CHANNEL);
 
   uint16_t channelTimerElapsed;
-  memcpy(&channelTimerElapsed, rxData, sizeof(channelTimerElapsed));
+  memcpy(&channelTimerElapsed, &rxData[offset], sizeof(channelTimerElapsed));
   channelTimerElapsed += ackAirTime;
   channelTimerElapsed += SYNC_PROCESSING_OVERHEAD;
 

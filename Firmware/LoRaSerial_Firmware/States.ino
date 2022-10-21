@@ -775,7 +775,7 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DATA_ACK:
-            syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
+            syncChannelTimer(0); //Adjust freq hop ISR based on remote's remaining clock
 
             resetHeartbeat(); //Extend time before next heartbeat
 
