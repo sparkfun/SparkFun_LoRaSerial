@@ -607,20 +607,8 @@ void updateRadioState()
               systemPrintln();
             }
 
-            //Determine the number of bytes received
-            length = 0;
-            if ((txHead + rxDataBytes) > sizeof(serialTransmitBuffer))
-            {
-              //Copy the first portion of the received datagram into the buffer
-              length = sizeof(serialTransmitBuffer) - txHead;
-              memcpy(&serialTransmitBuffer[txHead], rxData, length);
-              txHead = 0;
-            }
-
-            //Copy the remaining portion of the received datagram into the buffer
-            memcpy(&serialTransmitBuffer[txHead], &rxData[length], rxDataBytes - length);
-            txHead += rxDataBytes - length;
-            txHead %= sizeof(serialTransmitBuffer);
+            //Place the data in the serial output buffer
+            serialBufferOutput(rxData, rxDataBytes);
 
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
@@ -1006,20 +994,8 @@ void updateRadioState()
               systemPrintln();
             }
 
-            //Determine the number of bytes received
-            length = 0;
-            if ((txHead + rxDataBytes) > sizeof(serialTransmitBuffer))
-            {
-              //Copy the first portion of the received datagram into the buffer
-              length = sizeof(serialTransmitBuffer) - txHead;
-              memcpy(&serialTransmitBuffer[txHead], rxData, length);
-              txHead = 0;
-            }
-
-            //Copy the remaining portion of the received datagram into the buffer
-            memcpy(&serialTransmitBuffer[txHead], &rxData[length], rxDataBytes - length);
-            txHead += rxDataBytes - length;
-            txHead %= sizeof(serialTransmitBuffer);
+            //Place the data in the serial output buffer
+            serialBufferOutput(rxData, rxDataBytes);
 
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
