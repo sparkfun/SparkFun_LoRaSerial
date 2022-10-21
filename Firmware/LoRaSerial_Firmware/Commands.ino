@@ -46,6 +46,9 @@ typedef struct
 
 bool commandAT(const char * commandString)
 {
+  VIRTUAL_CIRCUIT * vc;
+  unsigned long timer;
+
   //'AT'
   if (commandLength == 2)
     reportOK();
@@ -66,6 +69,7 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI? - Display the information commands");
         systemPrintln("  ATIn - Display system information");
         systemPrintln("  ATO - Exit command mode");
+        systemPrintln("  ATR - VC link reset");
         systemPrintln("  ATSn=xxx - Set parameter n's value to xxx");
         systemPrintln("  ATSn? - Print parameter n's current value");
         systemPrintln("  ATT - Enter training mode");
@@ -108,6 +112,17 @@ bool commandAT(const char * commandString)
           inCommandMode = false; //Return to printing normal RF serial data
           reportOK();
           changeState(RADIO_RESET);
+        }
+        break;
+      case ('R'): //VC link reset
+        reportOK();
+        if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+        {
+          //Idle the system to break the link
+          //This is required on the server system which does not request an VC number assignment
+          timer = millis();
+          while ((millis() - timer) < ((VC_LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout))
+            petWDT();
         }
         break;
       case ('T'): //Enter training mode
@@ -158,6 +173,13 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI15 - Display the total lost TX frames");
         systemPrintln("  ATI16 - Display the maximum datagram size");
         systemPrintln("  ATI17 - Display the total link failures");
+        systemPrintln("  ATI18 - Display the VC frames sent");
+        systemPrintln("  ATI19 - Display the VC frames received");
+        systemPrintln("  ATI20 - Display the VC messages sent");
+        systemPrintln("  ATI21 - Display the VC messages received");
+        systemPrintln("  ATI22 - Display the VC bad length received");
+        systemPrintln("  ATI23 - Display the VC link failures");
+        systemPrintln("  ATI24 - Display the VC details");
         break;
       case ('0'): //ATI0 - Show user settable parameters
         displayParameters();
@@ -236,6 +258,91 @@ bool commandAT(const char * commandString)
       case ('7'): //ATI17 - Display the total link failures
         systemPrint("Total link failures: ");
         systemPrintln(linkFailures);
+        break;
+      case ('8'): //ATI18 - Display the VC frames sent
+        systemPrint("VC ");
+        systemPrint(cmdVc);
+        systemPrint(" frames sent: ");
+        systemPrintln(virtualCircuitList[cmdVc].framesSent);
+        break;
+      case ('9'): //ATI19 - Display the VC frames received
+        systemPrint("VC ");
+        systemPrint(cmdVc);
+        systemPrint(" frames received: ");
+        systemPrintln(virtualCircuitList[cmdVc].framesReceived);
+        break;
+    }
+  }
+  else if ((commandString[2] == 'I') && (commandString[3] == '2') && (commandLength == 5))
+  {
+    switch (commandString[4])
+    {
+      default:
+        return false;
+      case ('0'): //ATI20 - Display the VC messages sent
+        systemPrint("VC ");
+        systemPrint(cmdVc);
+        systemPrint(" messages sent: ");
+        systemPrintln(virtualCircuitList[cmdVc].messagesSent);
+        break;
+      case ('1'): //ATI21 - Display the VC messages received
+        systemPrint("VC ");
+        systemPrint(cmdVc);
+        systemPrint(" messages received: ");
+        systemPrintln(virtualCircuitList[cmdVc].messagesReceived);
+        break;
+      case ('2'): //ATI22 - Display the VC bad length received
+        systemPrint("VC ");
+        systemPrint(cmdVc);
+        systemPrint(" bad length received: ");
+        systemPrintln(virtualCircuitList[cmdVc].badLength);
+        break;
+      case ('3'): //ATI23 - Display the VC link failures
+        systemPrint("VC ");
+        systemPrint(cmdVc);
+        systemPrint(" link failures: ");
+        systemPrintln(virtualCircuitList[cmdVc].linkFailures);
+        break;
+      case ('4'): //ATI24 - Display the VC details
+        vc = &virtualCircuitList[cmdVc];
+        systemPrint("VC ");
+        systemPrint(cmdVc);
+        systemPrint(":");
+        if (!vc->valid)
+          systemPrintln(" Not valid!");
+        else
+        {
+          petWDT();
+          systemPrint("    Link: ");
+          systemPrintln(vc->linkUp ? "Up" : "Down");
+          systemPrint("    Unique ID: ");
+          systemPrintUniqueID(vc->uniqueId);
+
+          systemPrintln("    Metrics:");
+          systemPrint("        Link Failures: ");
+          systemPrintln(vc->linkFailures);
+          systemPrint("        Frames Sent: ");
+          systemPrintln(vc->framesSent);
+          systemPrint("        Frames Received: ");
+          systemPrintln(vc->framesReceived);
+          systemPrint("        Messages Sent: ");
+          systemPrintln(vc->messagesSent);
+          systemPrint("        Messages Received: ");
+          systemPrintln(vc->messagesReceived);
+          systemPrint("        Bad Lengths Received: ");
+          systemPrintln(vc->badLength);
+
+          systemPrintln("    ACK Management:");
+          systemPrint("        Last RX ACK number: ");
+          systemPrintln(vc->rxAckNumber);
+          systemPrint("        Next RX ACK number: ");
+          systemPrintln(vc->rmtTxAckNumber);
+          systemPrint("        Last TX ACK number: ");
+          systemPrintln(vc->txAckNumber);
+
+          systemPrint("    Last HEARTBEAT millis: ");
+          systemPrintln(vc->lastHeartbeatMillis);
+        }
         break;
     }
   }
@@ -528,6 +635,7 @@ const COMMAND_ENTRY commands[] =
   {15,   5,   8,     0, TYPE_U8,           valOverride,    "CodingRate",           &settings.radioCodingRate},
   {16,   0, 255,     0, TYPE_U8,           valInt,         "SyncWord",             &settings.radioSyncWord},
   {17,   6, 65535,   0, TYPE_U16,          valInt,         "PreambleLength",       &settings.radioPreambleLength},
+  {18,   0, MAX_VC,  0, TYPE_U8,           valInt,         "CmdVC",                &cmdVc},
   {19,  10, 2000,    0, TYPE_U16,          valInt,         "FrameTimeout",         &settings.serialTimeoutBeforeSendingFrame_ms},
 
   {20,    0,   1,    0, TYPE_BOOL,         valInt,         "Debug",                &settings.debug},

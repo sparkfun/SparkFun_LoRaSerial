@@ -32,7 +32,8 @@ $RECYCLE.BIN/
 .LSOverride
 
 # Icon must ends with two \r.
-Icon
+Icon
+
 
 # Thumbnails
 ._*
@@ -40,3 +41,17 @@ Icon
 # Files that might appear on external disk
 .Spotlight-V100
 .Trashes
+
+# Linux
+# =========================
+
+# Object files
+*.o
+
+# Archives (Libraries)
+*.a
+
+# Executables
+Firmware/Tools/Client
+Firmware/Tools/Server
+Firmware/Tools/VcServerTest
