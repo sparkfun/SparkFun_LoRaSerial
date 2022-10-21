@@ -289,7 +289,7 @@ typedef struct struct_settings {
   bool debugReceive = false; //Print receive processing
   bool debugTransmit = false; //Print transmit processing
   bool printTxErrors = false; //Print any transmit errors
-  uint8_t protocolVersion = 2; //Select the radio protocol
+  uint8_t radioProtocolVersion = 2; //Select the radio protocol
   bool printTimestamp = false; //Print a timestamp: days hours:minutes:seconds.milliseconds
   bool debugDatagrams = false; //Print the datagrams
   uint16_t overheadTime = 10; ////ms added to ack and datagram times before ACK timeout occurs

@@ -564,7 +564,7 @@ const COMMAND_ENTRY commands[] =
   {43,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &settings.debugTransmit},
   {44,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTxErrors",        &settings.printTxErrors},
 
-  {45,    2,   2,    0, TYPE_U8,           valInt,         "protocolVersion",      &settings.protocolVersion},
+  {45,    2,   2,    0, TYPE_U8,           valInt,         "radioProtocolVersion", &settings.radioProtocolVersion},
   {46,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTimestamp",       &settings.printTimestamp},
   {47,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &settings.debugDatagrams},
   {48,    0, 1000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &settings.overheadTime},

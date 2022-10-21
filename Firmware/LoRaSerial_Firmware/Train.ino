@@ -1,7 +1,7 @@
 //Select the training protocol
 void selectTraining(bool defaultTraining)
 {
-  if (settings.protocolVersion >= 2)
+  if (settings.radioProtocolVersion >= 2)
   {
     if (settings.pointToPoint)
       beginTrainingPointToPoint(defaultTraining);
@@ -17,7 +17,7 @@ void selectTraining(bool defaultTraining)
   {
     //Handle unknown future versions
     systemPrint("Unknown protocol version: ");
-    systemPrintln(settings.protocolVersion);
+    systemPrintln(settings.radioProtocolVersion);
     while (1)
       petWDT();
   }
