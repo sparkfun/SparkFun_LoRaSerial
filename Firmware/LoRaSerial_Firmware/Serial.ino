@@ -1,9 +1,82 @@
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//Serial RX - Data arriving at the USB or serial port
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 //Return number of bytes sitting in the serial receive buffer
 uint16_t availableRXBytes()
 {
   if (rxHead >= rxTail) return (rxHead - rxTail);
   return (sizeof(serialReceiveBuffer) - rxTail + rxHead);
 }
+
+//Returns true if CTS is asserted (high = host says it's ok to send data)
+bool isCTS()
+{
+  if (pin_cts == PIN_UNDEFINED) return (true); //CTS not implmented on this board
+  if (settings.flowControl == false) return (true); //CTS turned off
+  if (digitalRead(pin_cts) == HIGH) return (true);
+  return (false);
+}
+
+//If we have data to send, get the packet ready
+//Return true if new data is ready to be sent
+bool processWaitingSerial(bool sendNow)
+{
+  //Push any available data out
+  if (availableRXBytes() >= maxDatagramSize)
+  {
+    if (settings.debugRadio)
+      systemPrintln("Sending max frame");
+    readyOutgoingPacket();
+    return (true);
+  }
+
+  //Check if we should send out a partial frame
+  else if (sendNow || (availableRXBytes() > 0 && (millis() - lastByteReceived_ms) >= settings.serialTimeoutBeforeSendingFrame_ms))
+  {
+    if (settings.debugRadio)
+      systemPrintln("Sending partial frame");
+    readyOutgoingPacket();
+    return (true);
+  }
+  return (false);
+}
+
+//Send a portion of the serialReceiveBuffer to outgoingPacket
+void readyOutgoingPacket()
+{
+  uint16_t length;
+  uint16_t bytesToSend = availableRXBytes();
+  if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize;
+
+  //SF6 requires an implicit header which means there is no dataLength in the header
+  if (settings.radioSpreadFactor == 6)
+  {
+    if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize; //We are going to transmit 255 bytes no matter what
+  }
+
+  packetSize = bytesToSend;
+
+  //Determine the number of bytes to send
+  length = 0;
+  if ((rxTail + packetSize) > sizeof(serialReceiveBuffer))
+  {
+    //Copy the first portion of the buffer
+    length = sizeof(serialReceiveBuffer) - rxTail;
+    memcpy(&outgoingPacket[headerBytes], &serialReceiveBuffer[rxTail], length);
+    rxTail = 0;
+  }
+
+  //Copy the remaining portion of the buffer
+  memcpy(&outgoingPacket[headerBytes + length], &serialReceiveBuffer[rxTail], packetSize - length);
+  rxTail += packetSize - length;
+  rxTail %= sizeof(serialReceiveBuffer);
+  endOfTxData += packetSize;
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//Serial TX - Data being sent to the USB or serial port
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Return number of bytes sitting in the serial transmit buffer
 uint16_t availableTXBytes()
@@ -14,6 +87,10 @@ uint16_t availableTXBytes()
   return (sizeof(serialTransmitBuffer) - txTail + txHead);
 }
 
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//Command RX - Remote command data received from a remote system
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 //Return number of bytes sitting in the serial receive buffer
 uint16_t availableRXCommandBytes()
 {
@@ -21,12 +98,52 @@ uint16_t availableRXCommandBytes()
   return (sizeof(commandRXBuffer) - commandRXTail + commandRXHead);
 }
 
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//Command TX - Remote command data or command response data to be sent to the remote system
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 //Return number of bytes sitting in the serial transmit buffer
 uint16_t availableTXCommandBytes()
 {
   if (commandTXHead >= commandTXTail) return (commandTXHead - commandTXTail);
   return (sizeof(commandTXBuffer) - commandTXTail + commandTXHead);
 }
+
+//Send a portion of the commandTXBuffer to outgoingPacket
+void readyOutgoingCommandPacket()
+{
+  uint16_t length;
+  uint16_t bytesToSend = availableTXCommandBytes();
+  if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize;
+
+  //SF6 requires an implicit header which means there is no dataLength in the header
+  if (settings.radioSpreadFactor == 6)
+  {
+    if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize; //We are going to transmit 255 bytes no matter what
+  }
+
+  packetSize = bytesToSend;
+
+  //Determine the number of bytes to send
+  length = 0;
+  if ((commandTXTail + packetSize) > sizeof(commandTXBuffer))
+  {
+    //Copy the first portion of the buffer
+    length = sizeof(commandTXBuffer) - commandTXTail;
+    memcpy(&outgoingPacket[headerBytes], &commandTXBuffer[commandTXTail], length);
+    commandTXTail = 0;
+  }
+
+  //Copy the remaining portion of the buffer
+  memcpy(&outgoingPacket[headerBytes + length], &commandTXBuffer[commandTXTail], packetSize - length);
+  commandTXTail += packetSize - length;
+  commandTXTail %= sizeof(commandTXBuffer);
+  endOfTxData += packetSize;
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//Move serial data through the system
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //See if there's any serial from the remote radio that needs printing
 //Record any characters to the receive buffer
@@ -214,99 +331,3 @@ void updateSerial()
   }
 }
 
-//Returns true if CTS is asserted (high = host says it's ok to send data)
-bool isCTS()
-{
-  if (pin_cts == PIN_UNDEFINED) return (true); //CTS not implmented on this board
-  if (settings.flowControl == false) return (true); //CTS turned off
-  if (digitalRead(pin_cts) == HIGH) return (true);
-  return (false);
-}
-
-//If we have data to send, get the packet ready
-//Return true if new data is ready to be sent
-bool processWaitingSerial(bool sendNow)
-{
-  //Push any available data out
-  if (availableRXBytes() >= maxDatagramSize)
-  {
-    if (settings.debugRadio)
-      systemPrintln("Sending max frame");
-    readyOutgoingPacket();
-    return (true);
-  }
-
-  //Check if we should send out a partial frame
-  else if (sendNow || (availableRXBytes() > 0 && (millis() - lastByteReceived_ms) >= settings.serialTimeoutBeforeSendingFrame_ms))
-  {
-    if (settings.debugRadio)
-      systemPrintln("Sending partial frame");
-    readyOutgoingPacket();
-    return (true);
-  }
-  return (false);
-}
-
-//Send a portion of the serialReceiveBuffer to outgoingPacket
-void readyOutgoingPacket()
-{
-  uint16_t length;
-  uint16_t bytesToSend = availableRXBytes();
-  if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize;
-
-  //SF6 requires an implicit header which means there is no dataLength in the header
-  if (settings.radioSpreadFactor == 6)
-  {
-    if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize; //We are going to transmit 255 bytes no matter what
-  }
-
-  packetSize = bytesToSend;
-
-  //Determine the number of bytes to send
-  length = 0;
-  if ((rxTail + packetSize) > sizeof(serialReceiveBuffer))
-  {
-    //Copy the first portion of the buffer
-    length = sizeof(serialReceiveBuffer) - rxTail;
-    memcpy(&outgoingPacket[headerBytes], &serialReceiveBuffer[rxTail], length);
-    rxTail = 0;
-  }
-
-  //Copy the remaining portion of the buffer
-  memcpy(&outgoingPacket[headerBytes + length], &serialReceiveBuffer[rxTail], packetSize - length);
-  rxTail += packetSize - length;
-  rxTail %= sizeof(serialReceiveBuffer);
-  endOfTxData += packetSize;
-}
-
-//Send a portion of the commandTXBuffer to outgoingPacket
-void readyOutgoingCommandPacket()
-{
-  uint16_t length;
-  uint16_t bytesToSend = availableTXCommandBytes();
-  if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize;
-
-  //SF6 requires an implicit header which means there is no dataLength in the header
-  if (settings.radioSpreadFactor == 6)
-  {
-    if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize; //We are going to transmit 255 bytes no matter what
-  }
-
-  packetSize = bytesToSend;
-
-  //Determine the number of bytes to send
-  length = 0;
-  if ((commandTXTail + packetSize) > sizeof(commandTXBuffer))
-  {
-    //Copy the first portion of the buffer
-    length = sizeof(commandTXBuffer) - commandTXTail;
-    memcpy(&outgoingPacket[headerBytes], &commandTXBuffer[commandTXTail], length);
-    commandTXTail = 0;
-  }
-
-  //Copy the remaining portion of the buffer
-  memcpy(&outgoingPacket[headerBytes + length], &commandTXBuffer[commandTXTail], packetSize - length);
-  commandTXTail += packetSize - length;
-  commandTXTail %= sizeof(commandTXBuffer);
-  endOfTxData += packetSize;
-}
