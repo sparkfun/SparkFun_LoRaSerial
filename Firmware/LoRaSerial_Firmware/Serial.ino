@@ -27,7 +27,7 @@ bool processWaitingSerial(bool sendNow)
   {
     if (settings.debugRadio)
       systemPrintln("Sending max frame");
-    readyOutgoingPacket();
+    readyOutgoingPacket(availableRXBytes());
     return (true);
   }
 
@@ -36,30 +36,21 @@ bool processWaitingSerial(bool sendNow)
   {
     if (settings.debugRadio)
       systemPrintln("Sending partial frame");
-    readyOutgoingPacket();
+    readyOutgoingPacket(availableRXBytes());
     return (true);
   }
   return (false);
 }
 
 //Send a portion of the serialReceiveBuffer to outgoingPacket
-void readyOutgoingPacket()
+void readyOutgoingPacket(uint16_t bytesToSend)
 {
   uint16_t length;
-  uint16_t bytesToSend = availableRXBytes();
   if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize;
-
-  //SF6 requires an implicit header which means there is no dataLength in the header
-  if (settings.radioSpreadFactor == 6)
-  {
-    if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize; //We are going to transmit 255 bytes no matter what
-  }
-
-  packetSize = bytesToSend;
 
   //Determine the number of bytes to send
   length = 0;
-  if ((rxTail + packetSize) > sizeof(serialReceiveBuffer))
+  if ((rxTail + bytesToSend) > sizeof(serialReceiveBuffer))
   {
     //Copy the first portion of the buffer
     length = sizeof(serialReceiveBuffer) - rxTail;
@@ -68,10 +59,10 @@ void readyOutgoingPacket()
   }
 
   //Copy the remaining portion of the buffer
-  memcpy(&outgoingPacket[headerBytes + length], &serialReceiveBuffer[rxTail], packetSize - length);
-  rxTail += packetSize - length;
+  memcpy(&outgoingPacket[headerBytes + length], &serialReceiveBuffer[rxTail], bytesToSend - length);
+  rxTail += bytesToSend - length;
   rxTail %= sizeof(serialReceiveBuffer);
-  endOfTxData += packetSize;
+  endOfTxData += bytesToSend;
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
