@@ -1,3 +1,19 @@
+#define SAVE_TX_BUFFER()                                \
+{                                                       \
+  memcpy(rexmtBuffer, outgoingPacket, MAX_PACKET_SIZE); \
+  rexmtControl = txControl;                             \
+  rexmtLength = txDatagramSize;                         \
+  rexmtFrameSentCount = frameSentCount;                 \
+}
+
+#define RESTORE_TX_BUFFER()                             \
+{                                                       \
+  memcpy(outgoingPacket, rexmtBuffer, MAX_PACKET_SIZE); \
+  txControl = rexmtControl;                             \
+  txDatagramSize = rexmtLength;                         \
+  frameSentCount = rexmtFrameSentCount;                 \
+}
+
 void updateRadioState()
 {
   unsigned long clockOffset;
@@ -815,10 +831,7 @@ void updateRadioState()
             //and ACK the heartbeat.  Later perform the retransmission for the
             //datagram that was lost.
             petWDT();
-            memcpy(rexmtBuffer, outgoingPacket, MAX_PACKET_SIZE);
-            rexmtControl = txControl;
-            rexmtLength = txDatagramSize;
-            rexmtFrameSentCount = frameSentCount;
+            SAVE_TX_BUFFER();
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
             xmitDatagramP2PAck(); //Transmit ACK
@@ -899,10 +912,7 @@ void updateRadioState()
         //Retransmit the packet
         if (rexmtFrameSentCount < settings.maxResends)
         {
-          memcpy(outgoingPacket, rexmtBuffer, MAX_PACKET_SIZE);
-          txControl = rexmtControl;
-          txDatagramSize = rexmtLength;
-          frameSentCount = rexmtFrameSentCount;
+          RESTORE_TX_BUFFER();
           if (settings.debugDatagrams)
           {
             systemPrintTimestamp();
