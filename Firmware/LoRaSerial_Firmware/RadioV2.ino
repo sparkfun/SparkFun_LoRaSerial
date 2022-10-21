@@ -989,6 +989,7 @@ void transmitDatagram()
   {
     *header++ = length;
     txDatagramSize = MAX_PACKET_SIZE - trailerBytes; //We're now going to transmit a full size datagram
+    endOfTxData = &outgoingPacket[txDatagramSize];
     if (settings.debugTransmit)
     {
       systemPrintTimestamp();
