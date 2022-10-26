@@ -221,6 +221,72 @@ bool rtsAsserted; //When RTS is asserted, host says it's ok to send data
 
 */
 
+/* Data Flow - Virtual Circuit
+
+                             USB or UART
+                                  |
+                                  | Flow control: RTS for UART
+                                  |      Off: Buffer full
+                                  |      On: Buffer drops below half full
+                                  V
+                         serialReceiveBuffer
+                                  |
+                                  | Destination VC?
+                                  |
+                                  V                                    Other
+                    .-------------+--------------->+---------------->+------> Discard
+         VC_COMMAND |                         myVc |            >= 0 |
+                    |                              |    VC_BROADCAST |
+                    |                              |                 |
+                    V                              |                 v
+              commandBuffer                        |           radioTxBuffer
+                    |                              |                 |
+                    | Remote Command?              |                 v
+                    |                              |           outgoingPacket
+       false        V         true                 |                 |
+      .-------------+-------------.                |                 V
+      |                           |                |       Send to remote system
+      |                           V                |                 |
+      |                    outgoingPacket          |                 V
+      |                           |                |          incomingBuffer
+      |                           V                |                 |
+      |                 Send to remote system      |                 |
+      |                           |                |                 |
+      |                           V                |                 |
+      |                    incomingBuffer          |                 |
+      |                           |                |                 |
+      |                           V                |                 |
+      |                    commandRXBuffer         |                 |
+      |                           |                |                 |
+      |                           V                |                 |
+      |                  Command processing        |                 |
+      |                     checkCommand           |                 |
+      |                           |                |                 |
+      |                           V                |                 |
+      |                    commandTXBuffer         |                 |
+      |                           |                |                 |
+      |                           V                |                 |
+      |                    outgoingPacket          |                 |
+      |                           |                |                 |
+      |                           V                |                 |
+      |               Send back to local system    |                 |
+      |                           |                |                 |
+      |                           V                |                 |
+      |                    incomingBuffer          |                 |
+      |                           |                |                 |
+      |                           V                V                 |
+      `-------------------------->+<---------------+<----------------'
+                                  |
+                                  V
+                        serialTransmitBuffer
+                                  |
+                                  | Flow control: CTS for UART
+                                  |
+                                  V
+                             USB or UART
+
+*/
+
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - LEDs
