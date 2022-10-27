@@ -14,8 +14,7 @@ bool isCTS()
 {
   if (pin_cts == PIN_UNDEFINED) return (true); //CTS not implmented on this board
   if (settings.flowControl == false) return (true); //CTS turned off
-  if (digitalRead(pin_cts) == HIGH) return (true);
-  return (false);
+  return (digitalRead(pin_cts) == HIGH) ^ settings.invertCts;
 }
 
 //If we have data to send, get the packet ready
@@ -96,6 +95,14 @@ void serialBufferOutput(uint8_t * data, uint16_t dataLength)
   memcpy(&serialTransmitBuffer[txHead], &data[length], dataLength - length);
   txHead += dataLength - length;
   txHead %= sizeof(serialTransmitBuffer);
+}
+
+//Update the output of the RTS pin (host says it's ok to send data when assertRTS = true)
+void updateRTS(bool assertRTS)
+{
+    rtsAsserted = assertRTS;
+    if (settings.flowControl && (pin_rts != PIN_UNDEFINED))
+      digitalWrite(pin_rts, assertRTS ^ settings.invertRts);
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -215,16 +222,9 @@ void updateSerial()
 
     //Handle RTS
     if (availableRXBytes() == sizeof(serialReceiveBuffer) - 1)
-    {
-      //Buffer full!
-      if (pin_rts != PIN_UNDEFINED && settings.flowControl == true)
-        digitalWrite(pin_rts, LOW); //Don't give me more
-    }
+      updateRTS(false); //Buffer full!
     else
-    {
-      if (pin_rts != PIN_UNDEFINED && settings.flowControl == true)
-        digitalWrite(pin_rts, HIGH); //Ok to send more
-    }
+      updateRTS(true); //Ok to send more
 
     byte incoming = systemRead();
 
