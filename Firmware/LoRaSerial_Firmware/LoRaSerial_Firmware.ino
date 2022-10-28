@@ -164,6 +164,8 @@ const long minEscapeTime_ms = 2000; //Serial traffic must stop this amount befor
 bool inCommandMode = false; //Normal data is prevented from entering serial output when in command mode
 uint8_t commandLength = 0;
 bool remoteCommandResponse;
+
+bool rtsAsserted; //When RTS is asserted, host says it's ok to send data
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - LEDs
@@ -298,6 +300,8 @@ char platformPrefix[25]; //Used for printing platform specific device name, ie "
 
 //Architecture variables
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+void updateRTS(bool assertRTS);
+
 #include "Arch_ESP32.h"
 #include "Arch_SAMD.h"
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -328,6 +332,8 @@ void setup()
   beginChannelTimer(); //Setup (but do not start) hardware timer for channel hopping
 
   arch.beginWDT(); //Start watchdog timer
+
+  updateRTS(true); //Enable serial input
 
   systemPrintTimestamp();
   systemPrintln("LRS Setup Complete");

@@ -86,7 +86,7 @@ void samdBeginBoard()
 
   //Flow control
   pinMode(pin_rts, OUTPUT);
-  digitalWrite(pin_rts, HIGH);
+  updateRTS(false); //Disable serial input until the radio starts
 
   pinMode(pin_cts, INPUT_PULLUP);
 
