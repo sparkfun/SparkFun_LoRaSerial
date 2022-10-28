@@ -299,6 +299,8 @@ void radioComputeWhitening(uint8_t *buffer, uint16_t bufferSize)
 
   for (uint16_t j = 0 ; j < bufferSize ; j++)
   {
+    if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+      hopChannel();
     buffer[j] ^= WhiteningKeyLSB;
 
     for (uint8_t i = 0 ; i < 8 ; i++)
@@ -418,6 +420,8 @@ void dumpBuffer(uint8_t * data, int length)
     {
       systemPrint(" ");
       systemPrint(*data++, HEX);
+      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+        hopChannel();
       petWDT();
     }
 
@@ -425,6 +429,8 @@ void dumpBuffer(uint8_t * data, int length)
     for (; index < displayWidth; index++)
     {
       systemPrint("   ");
+      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+        hopChannel();
       petWDT();
     }
     systemPrint("  ");
@@ -436,6 +442,8 @@ void dumpBuffer(uint8_t * data, int length)
       systemPrint(((byte[0] < ' ') || (byte[0] >= 0x7f)) ? "." : byte);
     }
     systemPrintln();
+    if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+      hopChannel();
     petWDT();
   }
 }
