@@ -78,6 +78,9 @@ void updateRadioState()
 
       returnToReceiving(); //Start receiving
 
+      //Stop the transmit timer
+      transmitTimer = 0;
+
       //Start the link between the radios
       if (settings.radioProtocolVersion >= 2)
       {
@@ -685,6 +688,7 @@ void updateRadioState()
         {
           triggerEvent(TRIGGER_LINK_DATA_XMIT);
           xmitDatagramP2PData();
+          transmitTimer = datagramTimer;
           changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
         }
         else if (availableTXCommandBytes()) //If we have command bytes to send out
@@ -782,6 +786,9 @@ void updateRadioState()
           case DATAGRAM_DATA_ACK:
             syncChannelTimer(0); //Adjust freq hop ISR based on remote's remaining clock
 
+            //Stop the transmit timer
+            transmitTimer = 0;
+
             resetHeartbeat(); //Extend time before next heartbeat
 
             //Display the signal strength
@@ -857,7 +864,7 @@ void updateRadioState()
         }
 
         //Retransmit the packet
-        if (frameSentCount < settings.maxResends)
+        if ((!settings.maxResends) || (frameSentCount < settings.maxResends))
         {
           triggerEvent(TRIGGER_LINK_RETRANSMIT);
           if (settings.debugDatagrams)
@@ -901,6 +908,11 @@ void updateRadioState()
           v2BreakLink();
         }
       }
+
+      //Retransmits are not getting through in a rational time
+      else if (transmitTimer && ((millis() - transmitTimer) >= (P2P_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout)))
+        //Break the link
+        v2BreakLink();
       break;
 
     case RADIO_P2P_LINK_UP_HB_ACK_REXMT:
@@ -915,7 +927,7 @@ void updateRadioState()
         transactionComplete = false; //Reset ISR flag
 
         //Retransmit the packet
-        if (rexmtFrameSentCount < settings.maxResends)
+        if ((!settings.maxResends) || (rexmtFrameSentCount < settings.maxResends))
         {
           RESTORE_TX_BUFFER();
           if (settings.debugDatagrams)
@@ -1513,7 +1525,7 @@ void updateRadioState()
       {
         //Determine if another retransmit is allowed
         txDestVc = rexmtTxDestVc;
-        if (rexmtFrameSentCount < settings.maxResends)
+        if ((!settings.maxResends) || (rexmtFrameSentCount < settings.maxResends))
         {
           rexmtFrameSentCount++;
 
@@ -1843,6 +1855,9 @@ void v2BreakLink()
     systemPrintln("--------- Link DOWN ---------");
   triggerEvent(TRIGGER_RADIO_RESET);
 
+  //Stop the transmit timer
+  transmitTimer = 0;
+
   //Flush the buffers
   resetSerial();
   changeState(RADIO_RESET);
@@ -1866,6 +1881,9 @@ void v2EnterLinkUp()
   txTail = txHead;
   commandRXTail = commandRXHead;
   commandTXTail = commandTXHead;
+
+  //Stop the transmit timer
+  transmitTimer = 0;
 
   //Start the receiver
   returnToReceiving();
@@ -1896,6 +1914,9 @@ void vcBreakLink(int8_t vcIndex)
     systemPrint(vcIndex);
     systemPrintln(" Down  ---------");
   }
+
+  //Stop the transmit timer
+  transmitTimer = 0;
 
   //Flush the buffers
   resetSerial();

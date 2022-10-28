@@ -325,6 +325,7 @@ unsigned long vcTxHeartbeatMillis;
 //Transmit control
 uint8_t * endOfTxData;
 CONTROL_U8 txControl;
+uint32_t transmitTimer;
 
 //Multi-point Training
 bool trainingServerRunning; //Training server is running
