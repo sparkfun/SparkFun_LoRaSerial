@@ -33,6 +33,7 @@ ati22
 ati23
 ati24
 ati25
+ati26
 ati0
 
 ats28=0
@@ -520,9 +521,21 @@ ats57=2
 ats57=0
 ats57?
 
-# Invalid commands
+# InvertCts
 ats58=1
+ats58=2
+ats58=0
 ats58?
+
+# InvertRts
+ats59=1
+ats59=2
+ats59=0
+ats59?
+
+# Invalid commands
+ats60=1
+ats60?
 
 ats255=1
 ats255?

@@ -168,51 +168,34 @@ void readyOutgoingCommandPacket()
 //Scan for escape characters
 void updateSerial()
 {
+  int dataBytes;
   int x;
 
+  //Assert RTS when there is enough space in the receive buffer
+  if ((!rtsAsserted) && (availableRXBytes() < (sizeof(serialReceiveBuffer) / 2))
+    && (availableTXBytes() < (sizeof(serialTransmitBuffer) / 4)))
+    updateRTS(true);
+
   //Forget printing if there are ISRs to attend to
-  if (transactionComplete == false && timeToHop == false)
+  dataBytes = availableTXBytes();
+  while (dataBytes-- && isCTS() && (!transactionComplete))
   {
-    if (availableTXBytes())
-    {
-      if (isCTS())
-      {
-        txLED(true); //Turn on LED during serial transmissions
+    txLED(true); //Turn on LED during serial transmissions
 
-        //Print data to both ports
-        for (int x = 0 ; x < availableTXBytes() ; x++)
-        {
-          //Take a break if there are ISRs to attend to
-          petWDT();
-          if (transactionComplete == true) break;
-          if (timeToHop == true) hopChannel();
-          if (isCTS() == false) break;
+    //Take a break if there are ISRs to attend to
+    petWDT();
+    if (timeToHop == true) hopChannel();
 
-          //          int bytesToSend = availableTXBytes();
-          //
-          //          if (txTail + bytesToSend > sizeof(serialTransmitBuffer))
-          //            bytesToSend = sizeof(serialTransmitBuffer) - txTail;
-          //
-          //          //TODO this may introduce delays when we should be checking ISRs
-          //          Serial.write(&serialTransmitBuffer[txTail], bytesToSend);
-          //          Serial1.write(&serialTransmitBuffer[txTail], bytesToSend);
-          //          txTail += bytesToSend;
-          //          txTail %= sizeof(serialTransmitBuffer);
+    systemWrite(serialTransmitBuffer[txTail]);
+    systemFlush(); //Prevent serial hardware from blocking more than this one write
 
-          systemWrite(serialTransmitBuffer[txTail]);
-          systemFlush(); //Prevent serial hardware from blocking more than this one write
-
-          txTail++;
-          txTail %= sizeof(serialTransmitBuffer);
-        }
-
-        txLED(false); //Turn off LED
-      }
-    }
+    txTail++;
+    txTail %= sizeof(serialTransmitBuffer);
   }
+  txLED(false); //Turn off LED
 
   //Look for local incoming serial
-  while (arch.serialAvailable() && transactionComplete == false)
+  while (rtsAsserted && arch.serialAvailable() && (transactionComplete == false))
   {
     rxLED(true); //Turn on LED during serial reception
 
@@ -220,11 +203,9 @@ void updateSerial()
     petWDT();
     if (timeToHop == true) hopChannel();
 
-    //Handle RTS
-    if (availableRXBytes() == sizeof(serialReceiveBuffer) - 1)
-      updateRTS(false); //Buffer full!
-    else
-      updateRTS(true); //Ok to send more
+    //Deassert RTS when the buffer gets full
+    if (rtsAsserted && (sizeof(serialReceiveBuffer) - availableRXBytes()) < 32)
+      updateRTS(false);
 
     byte incoming = systemRead();
 
@@ -305,15 +286,11 @@ void updateSerial()
       if (settings.echo == true)
         systemWrite(incoming);
 
-      //We must always read in characters to avoid causing the host computer blocking USB from sending more
-      //If the buffer is full, we will overwrite oldest data first
       serialReceiveBuffer[rxHead++] = incoming; //Push char to holding buffer
       rxHead %= sizeof(serialReceiveBuffer);
     } //End process rx buffer
-
-    rxLED(false); //Turn off LED
-
   } //End Serial.available()
+  rxLED(false); //Turn off LED
 
   //Process any remote commands sitting in buffer
   if (availableRXCommandBytes() && inCommandMode == false)

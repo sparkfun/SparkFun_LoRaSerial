@@ -14,6 +14,7 @@ Command summary:
   ATI? - Display the information commands
   ATIn - Display system information
   ATO - Exit command mode
+  ATR - VC link reset
   ATSn=xxx - Set parameter n's value to xxx
   ATSn? - Print parameter n's current value
   ATT - Enter training mode
@@ -47,6 +48,7 @@ ati?
   ATI22 - Display the VC bad length received
   ATI23 - Display the VC link failures
   ATI24 - Display the VC details
+  ATI25 - Display the total insufficient buffer count
 # Allow leading white space (space, tab, cr, lf)
 ERROR
         	ati
@@ -57,35 +59,35 @@ SparkFun LoRaSerial SAMD21 1W 915MHz
 	ati2
 2.0
 ati3
--157
+-105
 ati4
-218
+29
 ati5
 506
 ati6
 37782141A665734E4475672AE6308308
 ati7
-0
+2
 ati8
-E5D60B0B4A34555020312E34212815FF
+FB25B80B5730305020312E50021A0AFF
 ati9
-Total datagrams sent: 24
+Total datagrams sent: 36
 ati10
-Total datagrams received: 0
+Total datagrams received: 34
 ati11
-Total frames sent: 0
+Total frames sent: 34
 ati12
-Total frames sent: 0
+Total frames sent: 34
 ati13
 Total bad frames received: 0
 ati14
 Total duplicate frames received: 0
 ati15
-Total lost TX frames: 0
+Total lost TX frames: 201
 ati16
 Maximum datagram size: 253
 ati17
-Total link failures: 0
+Total link failures: 1
 ati18
 VC 0 frames sent: 0
 ati19
@@ -101,6 +103,8 @@ VC 0 link failures: 0
 ati24
 VC 0: Not valid!
 ati25
+Total insufficient buffer count: 0
+ati26
 ERROR
 ati0
 ATS0:SerialSpeed=57600
@@ -129,7 +133,7 @@ ATS22:HeartBeatTimeout=5000
 ATS23:FlowControl=0
 ATS24:AutoTune=0
 ATS25:DisplayPacketQuality=0
-ATS26:MaxResends=2
+ATS26:MaxResends=0
 ATS27:SortParametersByName=0
 ATS28:PrintParameterName=0
 ATS29:PrintFrequency=0
@@ -161,6 +165,8 @@ ATS54:CopySerial=1
 ATS55:CopyTriggers=1
 ATS56:TrainingKey=537061726B46756E547261696E696E67
 ATS57:PrintLinkUpDown=0
+ATS58:InvertCts=0
+ATS59:InvertRts=0
 ats28=0
 OK
 # SerialSpeed
@@ -1077,11 +1083,35 @@ PrintLinkUpDown=0
 OK
 ats57?
 PrintLinkUpDown=0
-# Invalid commands
+# InvertCts
 ERROR
 ats58=1
+InvertCts=1
+OK
+ats58=2
 ERROR
+ats58=0
+InvertCts=0
+OK
 ats58?
+InvertCts=0
+# InvertRts
+ERROR
+ats59=1
+InvertRts=1
+OK
+ats59=2
+ERROR
+ats59=0
+InvertRts=0
+OK
+ats59?
+InvertRts=0
+# Invalid commands
+ERROR
+ats60=1
+ERROR
+ats60?
 ERROR
 ats255=1
 ERROR
@@ -1118,6 +1148,8 @@ ATS11:FrequencyHop=1
 ATS9:FrequencyMax=928.000
 ATS8:FrequencyMin=902.000
 ATS22:HeartBeatTimeout=5000
+ATS58:InvertCts=0
+ATS59:InvertRts=0
 ATS12:MaxDwellTime=400
 ATS26:MaxResends=2
 ATS2:netID=192

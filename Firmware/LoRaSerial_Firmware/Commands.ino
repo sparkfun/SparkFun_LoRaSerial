@@ -180,6 +180,7 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI22 - Display the VC bad length received");
         systemPrintln("  ATI23 - Display the VC link failures");
         systemPrintln("  ATI24 - Display the VC details");
+        systemPrintln("  ATI25 - Display the total insufficient buffer count");
         break;
       case ('0'): //ATI0 - Show user settable parameters
         displayParameters();
@@ -343,6 +344,10 @@ bool commandAT(const char * commandString)
           systemPrint("    Last HEARTBEAT millis: ");
           systemPrintln(vc->lastHeartbeatMillis);
         }
+        break;
+      case ('5'): //ATI25 - Display the total insufficient buffer count
+        systemPrint("Total insufficient buffer count: ");
+        systemPrintln(insufficientSpace);
         break;
     }
   }

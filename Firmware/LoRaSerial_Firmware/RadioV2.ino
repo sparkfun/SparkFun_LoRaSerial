@@ -819,7 +819,6 @@ PacketType rcvDatagram()
         txAckNumber = (txAckNumber + 1) & 3;
         break;
 
-      case DATAGRAM_DATA:
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
       case DATAGRAM_HEARTBEAT:
@@ -843,6 +842,50 @@ PacketType rcvDatagram()
             systemPrintln(rmtTxAckNumber);
           }
           badFrames++;
+          return DATAGRAM_BAD;
+        }
+
+        //Receive this data packet and set the next expected datagram number
+        rxAckNumber = rmtTxAckNumber;
+        rmtTxAckNumber = (rmtTxAckNumber + 1) & 3;
+        break;
+
+      case DATAGRAM_DATA:
+        if (ackNumber != rmtTxAckNumber)
+        {
+          //Determine if this is a duplicate datagram
+          if (ackNumber == ((rmtTxAckNumber - 1) & 3))
+          {
+            linkDownTimer = millis();
+            duplicateFrames++;
+            return DATAGRAM_DUPLICATE;
+          }
+
+          //Not a duplicate
+          if (settings.debugReceive)
+          {
+            systemPrintTimestamp();
+            systemPrint("Invalid datagram number, received ");
+            systemPrint(ackNumber);
+            systemPrint(" expecting ");
+            systemPrintln(rmtTxAckNumber);
+          }
+          badFrames++;
+          return DATAGRAM_BAD;
+        }
+
+        //Verify that there is sufficient space in the serialTransmitBuffer
+        if ((sizeof(serialTransmitBuffer) - availableTXBytes()) < rxDataBytes)
+        {
+          if (settings.debugReceive)
+          {
+            systemPrintTimestamp();
+            systemPrintln("Insufficient space in the serialTransmitBuffer");
+          }
+          insufficientSpace++;
+
+          //Apply back pressure to the other radio by dropping this packet and
+          //forcing the other radio to retransmit the packet.
           return DATAGRAM_BAD;
         }
 
