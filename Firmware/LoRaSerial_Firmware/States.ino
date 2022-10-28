@@ -965,14 +965,8 @@ void updateRadioState()
           changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
         }
         else
-        {
           //Failed to reach the other system, break the link
-          if (settings.debugDatagrams)
-            systemPrintln("---------- Link DOWN ----------");
-          heartbeatTimer = millis();
-          pingRandomTime = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2); //Fast ping
-          changeState(RADIO_P2P_LINK_DOWN);
-        }
+          v2BreakLink();
       }
       break;
 
