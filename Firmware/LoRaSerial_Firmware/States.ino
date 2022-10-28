@@ -1842,6 +1842,9 @@ void v2BreakLink()
   if (settings.printLinkUpDown)
     systemPrintln("--------- Link DOWN ---------");
   triggerEvent(TRIGGER_RADIO_RESET);
+
+  //Flush the buffers
+  resetSerial();
   changeState(RADIO_RESET);
 }
 
@@ -1893,6 +1896,9 @@ void vcBreakLink(int8_t vcIndex)
     systemPrint(vcIndex);
     systemPrintln(" Down  ---------");
   }
+
+  //Flush the buffers
+  resetSerial();
 }
 
 int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
