@@ -166,6 +166,61 @@ uint8_t commandLength = 0;
 bool remoteCommandResponse;
 
 bool rtsAsserted; //When RTS is asserted, host says it's ok to send data
+
+/* Data Flow - Point-to-Point and Multi-Point
+
+                             USB or UART
+                                  |
+                                  | inCommandMode?
+                                  |
+                     true         V        false
+                    .-------------+--------------------------.
+                    |                                        |
+                    V                                        v
+              commandBuffer                         serialReceiveBuffer
+                    |                                        |
+                    | Remote Command?                        v
+                    |                                 outgoingPacket
+       false        V         true                           |
+      .-------------+-------------.                          V
+      |                           |                Send to remote system
+      |                           V                          |
+      |                    outgoingPacket                    V
+      |                           |                   incomingBuffer
+      |                           V                          |
+      |                 Send to remote system                V
+      |                           |                serialTransmitBuffer
+      |                           V                          |
+      |                    incomingBuffer                    |
+      |                           |                          |
+      |                           V                          |
+      |                    commandRXBuffer                   |
+      |                           |                          |
+      |                           V                          |
+      |                  Command processing                  |
+      |                     checkCommand                     |
+      |                           |                          |
+      |                           V                          |
+      |                    commandTXBuffer                   |
+      |                           |                          |
+      |                           V                          |
+      |                    outgoingPacket                    |
+      |                           |                          |
+      |                           V                          |
+      |               Send back to local system              |
+      |                           |                          |
+      |                           V                          |
+      |                    incomingBuffer                    |
+      |                           |                          |
+      |                           V                          |
+      `-------------------------->+<-------------------------'
+                                  |
+                                  |
+                                  V
+                             USB or UART
+
+*/
+
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - LEDs
