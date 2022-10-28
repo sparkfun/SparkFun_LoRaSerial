@@ -427,7 +427,7 @@ typedef struct struct_settings {
   bool flowControl = false; //Enable the use of CTS/RTS flow control signals
   bool autoTuneFrequency = false; //Based on the last packets frequency error, adjust our next transaction frequency
   bool displayPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
-  uint8_t maxResends = 2; //Attempt resends up to this number.
+  uint8_t maxResends = 0; //Attempt resends up to this number, 0 = infinite retries
   bool sortParametersByName = false; //Sort the parameter list (ATI0) by parameter name
   bool printParameterName = false; //Print the parameter name in the ATSx? response
   bool printFrequency = false; //Print the updated frequency
