@@ -259,6 +259,7 @@ uint32_t badFrames;         //Total number of bad frames received
 uint32_t duplicateFrames;   //Total number of duplicate frames received
 uint32_t lostFrames;        //Total number of lost TX frames
 uint32_t linkFailures;      //Total number of link failures
+uint32_t insufficientSpace; //Total number of times the buffer did not have enough space
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - V2 Protocol
