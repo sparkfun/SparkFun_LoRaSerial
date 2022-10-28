@@ -714,6 +714,7 @@ void updateRadioState()
             xmitDatagramP2PHeartbeat();
 
             resetHeartbeat();
+            transmitTimer = datagramTimer;
 
             //Wait for heartbeat to transmit
             changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
@@ -908,6 +909,10 @@ void updateRadioState()
           v2BreakLink();
         }
       }
+
+      else if ((millis() - linkDownTimer) >= (P2P_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))
+        //Break the link
+        v2BreakLink();
 
       //Retransmits are not getting through in a rational time
       else if (transmitTimer && ((millis() - transmitTimer) >= (P2P_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout)))
