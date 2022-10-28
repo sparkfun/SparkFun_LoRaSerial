@@ -440,3 +440,44 @@ bool vcSerialMessageReceived()
   //Nothing to send at this time
   return false;
 }
+
+void resetSerial()
+{
+  uint32_t delayTime;
+  uint32_t lastCharacterReceived;
+
+  //Determine the amount of time needed to receive a character
+  delayTime = 200;
+  if (settings.airSpeed)
+  {
+    delayTime = (1000 * 8 * 2) / settings.airSpeed;
+    if (delayTime < 200)
+      delayTime = 200;
+  }
+
+  //Enable RTS
+  updateRTS(true);
+
+  //Flush the incoming serial
+  lastCharacterReceived = millis();
+  do
+  {
+    //Discard any incoming serial data
+    while (arch.serialAvailable())
+    {
+      petWDT();
+      systemRead();
+      lastCharacterReceived = millis();
+    }
+    petWDT();
+
+    //Wait enough time to receive any remaining data from the host
+  } while ((millis() - lastCharacterReceived) < delayTime);
+
+  //Empty the buffers
+  rxHead = rxTail;
+  txHead = txTail;
+  commandRXHead = commandRXTail;
+  commandTXHead = commandTXTail;
+  endOfTxData = &outgoingPacket[headerBytes];
+}
