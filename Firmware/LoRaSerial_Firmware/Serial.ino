@@ -2,6 +2,13 @@
 //Serial RX - Data arriving at the USB or serial port
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+//Return number of bytes sitting in the serial receive buffer
+uint16_t availableRXBytes()
+{
+  if (rxHead >= rxTail) return (rxHead - rxTail);
+  return (sizeof(serialReceiveBuffer) - rxTail + rxHead);
+}
+
 //Returns true if CTS is asserted (high = host says it's ok to send data)
 bool isCTS()
 {
@@ -179,7 +186,7 @@ void updateSerial()
   int x;
 
   //Assert RTS when there is enough space in the receive buffer
-  if ((!rtsAsserted) && (availableRadioTXBytes() < (sizeof(radioTxBuffer) / 2))
+  if ((!rtsAsserted) && (availableRXBytes() < (sizeof(serialReceiveBuffer) / 2))
     && (availableTXBytes() < (sizeof(serialTransmitBuffer) / 4)))
     updateRTS(true);
 
@@ -211,10 +218,29 @@ void updateSerial()
     if (timeToHop == true) hopChannel();
 
     //Deassert RTS when the buffer gets full
-    if (rtsAsserted && (sizeof(radioTxBuffer) - availableRadioTXBytes()) < 32)
+    if (rtsAsserted && (sizeof(serialReceiveBuffer) - availableRXBytes()) < 32)
       updateRTS(false);
 
     byte incoming = systemRead();
+
+    if (settings.echo == true)
+      systemWrite(incoming);
+
+    serialReceiveBuffer[rxHead++] = incoming; //Push char to holding buffer
+    rxHead %= sizeof(serialReceiveBuffer);
+  } //End Serial.available()
+  rxLED(false); //Turn off LED
+
+  //Process the serial data
+  while (availableRXBytes() && (availableRadioTXBytes() < (sizeof(radioTxBuffer) - 1))
+    && (transactionComplete == false))
+  {
+    //Take a break if there are ISRs to attend to
+    petWDT();
+    if (timeToHop == true) hopChannel();
+
+    byte incoming = serialReceiveBuffer[rxTail++];
+    rxTail %= sizeof(serialReceiveBuffer);
 
     //Process serial into either rx buffer or command buffer
     if (inCommandMode == true)
@@ -266,9 +292,6 @@ void updateSerial()
           escapeCharsReceived++;
           if (escapeCharsReceived == maxEscapeCharacters)
           {
-            if (settings.echo == true)
-              systemWrite(incoming);
-
             systemPrintln("\r\nOK");
 
             inCommandMode = true; //Allow AT parsing. Prevent received RF data from being printed.
@@ -290,15 +313,11 @@ void updateSerial()
         escapeCharsReceived = 0; //Update timeout check for escape char and partial frame
       }
 
-      if (settings.echo == true)
-        systemWrite(incoming);
-
       //This data byte will be sent over the long range radio
       radioTxBuffer[radioTxHead++] = incoming;
       radioTxHead %= sizeof(radioTxBuffer);
     } //End process rx buffer
   } //End Serial.available()
-  rxLED(false); //Turn off LED
 
   //Process any remote commands sitting in buffer
   if (availableRXCommandBytes() && inCommandMode == false)
@@ -460,6 +479,7 @@ void resetSerial()
   } while ((millis() - lastCharacterReceived) < delayTime);
 
   //Empty the buffers
+  rxHead = rxTail;
   radioTxHead = radioTxTail;
   txHead = txTail;
   commandRXHead = commandRXTail;
