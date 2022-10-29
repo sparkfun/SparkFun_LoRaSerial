@@ -685,7 +685,7 @@ void updateRadioState()
         heartbeatTimeout = ((millis() - heartbeatTimer) > heartbeatRandomTime);
 
         //Check for time to send serial data
-        if (availableRXBytes() && (processWaitingSerial(heartbeatTimeout) == true))
+        if (availableRadioTXBytes() && (processWaitingSerial(heartbeatTimeout) == true))
         {
           triggerEvent(TRIGGER_LINK_DATA_XMIT);
           xmitDatagramP2PData();
@@ -1040,7 +1040,7 @@ void updateRadioState()
         //If the radio is available, send any data in the serial buffer over the radio
         if (receiveInProcess() == false)
         {
-          if (availableRXBytes()) //If we have bytes
+          if (availableRadioTXBytes()) //If we have bytes
           {
             if (processWaitingSerial(false) == true) //If we've hit a frame size or frame-timed-out
             {
@@ -1877,7 +1877,7 @@ void v2EnterLinkUp()
   txAckNumber = 0;
 
   //Discard any previous data
-  rxTail = rxHead;
+  radioTxTail = radioTxHead;
   txTail = txHead;
   commandRXTail = commandRXHead;
   commandTXTail = commandTXHead;

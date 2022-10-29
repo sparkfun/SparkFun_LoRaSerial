@@ -2,66 +2,12 @@
 //Serial RX - Data arriving at the USB or serial port
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-//Return number of bytes sitting in the serial receive buffer
-uint16_t availableRXBytes()
-{
-  if (rxHead >= rxTail) return (rxHead - rxTail);
-  return (sizeof(serialReceiveBuffer) - rxTail + rxHead);
-}
-
 //Returns true if CTS is asserted (high = host says it's ok to send data)
 bool isCTS()
 {
   if (pin_cts == PIN_UNDEFINED) return (true); //CTS not implmented on this board
   if (settings.flowControl == false) return (true); //CTS turned off
   return (digitalRead(pin_cts) == HIGH) ^ settings.invertCts;
-}
-
-//If we have data to send, get the packet ready
-//Return true if new data is ready to be sent
-bool processWaitingSerial(bool sendNow)
-{
-  //Push any available data out
-  if (availableRXBytes() >= maxDatagramSize)
-  {
-    if (settings.debugRadio)
-      systemPrintln("Sending max frame");
-    readyOutgoingPacket(availableRXBytes());
-    return (true);
-  }
-
-  //Check if we should send out a partial frame
-  else if (sendNow || (availableRXBytes() > 0 && (millis() - lastByteReceived_ms) >= settings.serialTimeoutBeforeSendingFrame_ms))
-  {
-    if (settings.debugRadio)
-      systemPrintln("Sending partial frame");
-    readyOutgoingPacket(availableRXBytes());
-    return (true);
-  }
-  return (false);
-}
-
-//Send a portion of the serialReceiveBuffer to outgoingPacket
-void readyOutgoingPacket(uint16_t bytesToSend)
-{
-  uint16_t length;
-  if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize;
-
-  //Determine the number of bytes to send
-  length = 0;
-  if ((rxTail + bytesToSend) > sizeof(serialReceiveBuffer))
-  {
-    //Copy the first portion of the buffer
-    length = sizeof(serialReceiveBuffer) - rxTail;
-    memcpy(&outgoingPacket[headerBytes], &serialReceiveBuffer[rxTail], length);
-    rxTail = 0;
-  }
-
-  //Copy the remaining portion of the buffer
-  memcpy(&outgoingPacket[headerBytes + length], &serialReceiveBuffer[rxTail], bytesToSend - length);
-  rxTail += bytesToSend - length;
-  rxTail %= sizeof(serialReceiveBuffer);
-  endOfTxData += bytesToSend;
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -103,6 +49,67 @@ void updateRTS(bool assertRTS)
     rtsAsserted = assertRTS;
     if (settings.flowControl && (pin_rts != PIN_UNDEFINED))
       digitalWrite(pin_rts, assertRTS ^ settings.invertRts);
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//Radio TX - Data to provide to the long range radio
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+//Return number of bytes sitting in the radio TX buffer
+uint16_t availableRadioTXBytes()
+{
+  if (radioTxHead >= radioTxTail) return (radioTxHead - radioTxTail);
+  return (sizeof(radioTxBuffer) - radioTxTail + radioTxHead);
+}
+
+//If we have data to send, get the packet ready
+//Return true if new data is ready to be sent
+bool processWaitingSerial(bool sendNow)
+{
+  uint16_t dataBytes;
+
+  //Push any available data out
+  dataBytes = availableRadioTXBytes();
+  if (dataBytes >= maxDatagramSize)
+  {
+    if (settings.debugRadio)
+      systemPrintln("Sending max frame");
+    readyOutgoingPacket(dataBytes);
+    return (true);
+  }
+
+  //Check if we should send out a partial frame
+  else if (sendNow || (dataBytes > 0 && (millis() - lastByteReceived_ms) >= settings.serialTimeoutBeforeSendingFrame_ms))
+  {
+    if (settings.debugRadio)
+      systemPrintln("Sending partial frame");
+    readyOutgoingPacket(dataBytes);
+    return (true);
+  }
+  return (false);
+}
+
+//Send a portion of the radioTxBuffer to outgoingPacket
+void readyOutgoingPacket(uint16_t bytesToSend)
+{
+  uint16_t length;
+  if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize;
+
+  //Determine the number of bytes to send
+  length = 0;
+  if ((radioTxTail + bytesToSend) > sizeof(radioTxBuffer))
+  {
+    //Copy the first portion of the buffer
+    length = sizeof(radioTxBuffer) - radioTxTail;
+    memcpy(&outgoingPacket[headerBytes], &radioTxBuffer[radioTxTail], length);
+    radioTxTail = 0;
+  }
+
+  //Copy the remaining portion of the buffer
+  memcpy(&outgoingPacket[headerBytes + length], &radioTxBuffer[radioTxTail], bytesToSend - length);
+  radioTxTail += bytesToSend - length;
+  radioTxTail %= sizeof(radioTxBuffer);
+  endOfTxData += bytesToSend;
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -172,7 +179,7 @@ void updateSerial()
   int x;
 
   //Assert RTS when there is enough space in the receive buffer
-  if ((!rtsAsserted) && (availableRXBytes() < (sizeof(serialReceiveBuffer) / 2))
+  if ((!rtsAsserted) && (availableRadioTXBytes() < (sizeof(radioTxBuffer) / 2))
     && (availableTXBytes() < (sizeof(serialTransmitBuffer) / 4)))
     updateRTS(true);
 
@@ -204,7 +211,7 @@ void updateSerial()
     if (timeToHop == true) hopChannel();
 
     //Deassert RTS when the buffer gets full
-    if (rtsAsserted && (sizeof(serialReceiveBuffer) - availableRXBytes()) < 32)
+    if (rtsAsserted && (sizeof(radioTxBuffer) - availableRadioTXBytes()) < 32)
       updateRTS(false);
 
     byte incoming = systemRead();
@@ -286,8 +293,9 @@ void updateSerial()
       if (settings.echo == true)
         systemWrite(incoming);
 
-      serialReceiveBuffer[rxHead++] = incoming; //Push char to holding buffer
-      rxHead %= sizeof(serialReceiveBuffer);
+      //This data byte will be sent over the long range radio
+      radioTxBuffer[radioTxHead++] = incoming;
+      radioTxHead %= sizeof(radioTxBuffer);
     } //End process rx buffer
   } //End Serial.available()
   rxLED(false); //Turn off LED
@@ -327,7 +335,7 @@ void updateSerial()
 uint8_t vcSerialMsgGetLengthByte()
 {
   //Get the length byte for the received serial message
-  return serialReceiveBuffer[rxTail];
+  return radioTxBuffer[radioTxTail];
 }
 
 //Get the destination virtual circuit byte from the serial buffer
@@ -336,10 +344,10 @@ uint8_t vcSerialMsgGetVcDest()
   uint16_t index;
 
   //Get the destination address byte
-  index = rxTail + 1;
-  if (index >= sizeof(serialReceiveBuffer))
-    index -= sizeof(serialReceiveBuffer);
-  return serialReceiveBuffer[index];
+  index = radioTxTail + 1;
+  if (index >= sizeof(radioTxBuffer))
+    index -= sizeof(radioTxBuffer);
+  return radioTxBuffer[index];
 }
 
 //Determine if received serial data may be sent to the remote system
@@ -356,13 +364,13 @@ bool vcSerialMessageReceived()
       break;
 
     //Wait until at least one byte is available
-    if (!availableRXBytes())
+    if (!availableRadioTXBytes())
       //No data available
       break;
 
     //Verify that the entire message is in the serial buffer
     msgLength = vcSerialMsgGetLengthByte();
-    if (availableRXBytes() < msgLength)
+    if (availableRadioTXBytes() < msgLength)
       //The entire message is not in the buffer
       break;
 
@@ -371,9 +379,9 @@ bool vcSerialMessageReceived()
     if (msgLength > maxDatagramSize)
     {
       //Discard this message, it is too long to transmit over the radio link
-      rxTail += msgLength;
-      if (rxTail >= sizeof(serialReceiveBuffer))
-        rxTail -= sizeof(serialReceiveBuffer);
+      radioTxTail += msgLength;
+      if (radioTxTail >= sizeof(radioTxBuffer))
+        radioTxTail -= sizeof(radioTxBuffer);
 
       //Nothing to do for invalid addresses or the broadcast address
       if ((vcDest >= MAX_VC) || (vcDest == VC_BROADCAST))
@@ -395,9 +403,9 @@ bool vcSerialMessageReceived()
       }
 
       //Discard this message
-      rxTail += msgLength;
-      if (rxTail >= sizeof(serialReceiveBuffer))
-        rxTail -= sizeof(serialReceiveBuffer);
+      radioTxTail += msgLength;
+      if (radioTxTail >= sizeof(radioTxBuffer))
+        radioTxTail -= sizeof(radioTxBuffer);
       break;
     }
 
@@ -452,7 +460,7 @@ void resetSerial()
   } while ((millis() - lastCharacterReceived) < delayTime);
 
   //Empty the buffers
-  rxHead = rxTail;
+  radioTxHead = radioTxTail;
   txHead = txTail;
   commandRXHead = commandRXTail;
   commandTXHead = commandTXTail;
