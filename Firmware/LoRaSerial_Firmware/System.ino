@@ -450,13 +450,10 @@ void dumpBuffer(uint8_t * data, int length)
 
 void updateRSSI()
 {
-  //RSSI must be above these negative numbers for LED to illuminate
-  const int rssiLevelLow = -150;
-  const int rssiLevelMed = -70;
-  const int rssiLevelHigh = -50;
-  const int rssiLevelMax = -20;
-
-  int rssi = radio.getRSSI();
+  //Get the current signal level
+  rssi = radio.getRSSI();
+  if (settings.alternateLedUsage)
+    return;
 
   //Set LEDs according to RSSI level
   if (rssi > rssiLevelLow)
@@ -471,6 +468,9 @@ void updateRSSI()
 
 void setRSSI(uint8_t ledBits)
 {
+  if (settings.alternateLedUsage)
+    return;
+
   if (ledBits & 0b0001)
     digitalWrite(pin_rssi1LED, HIGH);
   else
@@ -494,6 +494,8 @@ void setRSSI(uint8_t ledBits)
 
 void txLED(bool illuminate)
 {
+  if (settings.alternateLedUsage)
+    return;
   if (pin_txLED != PIN_UNDEFINED)
   {
     if (illuminate == true)
@@ -505,6 +507,8 @@ void txLED(bool illuminate)
 
 void rxLED(bool illuminate)
 {
+  if (settings.alternateLedUsage)
+    return;
   if (pin_rxLED != PIN_UNDEFINED)
   {
     if (illuminate == true)
@@ -512,6 +516,97 @@ void rxLED(bool illuminate)
     else
       digitalWrite(pin_rxLED, LOW);
   }
+}
+
+void updateLeds()
+{
+  uint32_t currentMillis;
+  static uint32_t previousMillis;
+  static uint32_t previousBadFrames;
+  static uint32_t badFramesMillis;
+  static uint32_t previousBadCrc;
+  static uint32_t badCrcMillis;
+  static int8_t rssiCount = 127;
+  static int8_t rssiValue;
+
+  //Turn off the RX LED to end the blink
+  currentMillis = millis();
+  if ((currentMillis - linkDownTimer) >= ALT_LED_BLINK_MILLIS)
+    digitalWrite(ALT_LED_RX_DATA, LED_OFF);
+
+  //Turn off the TX LED to end the blink
+  currentMillis = millis();
+  if ((currentMillis - datagramTimer) >= ALT_LED_BLINK_MILLIS)
+    digitalWrite(ALT_LED_TX_DATA, LED_OFF);
+
+  //Blink the bad frames LED
+  if (badFrames != previousBadFrames)
+  {
+    previousBadFrames = badFrames;
+    badFramesMillis = currentMillis;
+    digitalWrite(ALT_LED_BAD_FRAMES, LED_ON);
+  }
+  else if (badFramesMillis && ((currentMillis - badFramesMillis) >= ALT_LED_BLINK_MILLIS))
+  {
+    badFramesMillis = 0;
+    digitalWrite(ALT_LED_BAD_FRAMES, LED_OFF);
+  }
+
+  //Blink the bad CRC or duplicate frames LED
+  if (settings.enableCRC16 && (badCrc != previousBadCrc))
+  {
+    previousBadCrc = badCrc;
+    badCrcMillis = currentMillis;
+    digitalWrite(ALT_LED_BAD_CRC, LED_ON);
+  }
+  if ((!settings.enableCRC16) && (duplicateFrames != previousBadCrc))
+  {
+    previousBadCrc = duplicateFrames;
+    badCrcMillis = currentMillis;
+    digitalWrite(ALT_LED_BAD_CRC, LED_ON);
+  }
+  else if (badCrcMillis && ((currentMillis - badCrcMillis) >= ALT_LED_BLINK_MILLIS))
+  {
+    badCrcMillis = 0;
+    digitalWrite(ALT_LED_BAD_CRC, LED_OFF);
+  }
+
+  //Update the link LED
+  switch (radioState)
+  {
+    //Turn off the LED
+    default:
+      digitalWrite(ALT_LED_RADIO_LINK, LED_OFF);
+      break;
+
+    //Turn on the LED
+    case RADIO_P2P_LINK_UP:
+    case RADIO_P2P_LINK_UP_WAIT_ACK_DONE:
+    case RADIO_P2P_LINK_UP_WAIT_TX_DONE:
+    case RADIO_P2P_LINK_UP_WAIT_ACK:
+    case RADIO_P2P_LINK_UP_HB_ACK_REXMT:
+      digitalWrite(ALT_LED_RADIO_LINK, LED_ON);
+      break;
+  }
+
+  //Update the RSSI LED
+  if (currentMillis != previousMillis)
+  {
+    if (rssiCount >= 16)
+    {
+      rssiValue = (150 + rssi) / 10;
+      rssiCount = 0;
+      if (rssiValue >= rssiCount)
+        digitalWrite(ALT_LED_RSSI, LED_ON);
+    }
+
+    //Turn off the RSSI LED
+    else if (rssiValue < rssiCount++)
+      digitalWrite(ALT_LED_RSSI, LED_OFF);
+  }
+
+  //Save the last millis value
+  previousMillis = currentMillis;
 }
 
 int stricmp(const char * str1, const char * str2)

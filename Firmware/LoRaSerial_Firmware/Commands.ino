@@ -181,6 +181,7 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI23 - Display the VC link failures");
         systemPrintln("  ATI24 - Display the VC details");
         systemPrintln("  ATI25 - Display the total insufficient buffer count");
+        systemPrintln("  ATI26 - Display the total number of bad CRC frames");
         break;
       case ('0'): //ATI0 - Show user settable parameters
         displayParameters();
@@ -348,6 +349,10 @@ bool commandAT(const char * commandString)
       case ('5'): //ATI25 - Display the total insufficient buffer count
         systemPrint("Total insufficient buffer count: ");
         systemPrintln(insufficientSpace);
+        break;
+      case ('6'): //ATI26 - Display the total number of bad CRC frames
+        systemPrint("Total number of bad CRC frames: ");
+        systemPrintln(badCrc);
         break;
     }
   }
@@ -690,6 +695,8 @@ const COMMAND_ENTRY commands[] =
   {57,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintLinkUpDown",      &settings.printLinkUpDown},
   {58,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertCts",            &settings.invertCts},
   {59,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertRts",            &settings.invertRts},
+
+  {60,    0,   1,    0, TYPE_BOOL,         valInt,         "AlternateLedUsage",    &settings.alternateLedUsage},
 
   //Define any user parameters starting at 255 decrementing towards 0
 };

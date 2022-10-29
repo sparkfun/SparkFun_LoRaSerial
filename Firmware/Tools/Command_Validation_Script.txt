@@ -34,6 +34,7 @@ ati23
 ati24
 ati25
 ati26
+ati27
 ati0
 
 ats28=0
@@ -533,9 +534,15 @@ ats59=2
 ats59=0
 ats59?
 
-# Invalid commands
+# AlternateLedUsage
 ats60=1
+ats60=2
+ats60=0
 ats60?
+
+# Invalid commands
+ats61=1
+ats61?
 
 ats255=1
 ats255?

@@ -61,6 +61,7 @@ void updateRadioState()
       selectHeaderAndTrailerBytes();
 
       //Initialize the radio
+      rssi = -200;
       radioSeed = radio.randomByte(); //Puts radio into standy-by state
       randomSeed(radioSeed);
       if ((settings.debug == true) || (settings.debugRadio == true))

@@ -49,6 +49,7 @@ ati?
   ATI23 - Display the VC link failures
   ATI24 - Display the VC details
   ATI25 - Display the total insufficient buffer count
+  ATI26 - Display the total number of bad CRC frames
 # Allow leading white space (space, tab, cr, lf)
 ERROR
         	ati
@@ -59,35 +60,35 @@ SparkFun LoRaSerial SAMD21 1W 915MHz
 	ati2
 2.0
 ati3
--105
+-4
 ati4
-29
+122
 ati5
 506
 ati6
 37782141A665734E4475672AE6308308
 ati7
-2
+10
 ati8
-FB25B80B5730305020312E50021A0AFF
+E5D60B0B4A34555020312E34212815FF
 ati9
-Total datagrams sent: 36
+Total datagrams sent: 3
 ati10
-Total datagrams received: 34
+Total datagrams received: 1
 ati11
-Total frames sent: 34
+Total frames sent: 1
 ati12
-Total frames sent: 34
+Total frames sent: 1
 ati13
 Total bad frames received: 0
 ati14
 Total duplicate frames received: 0
 ati15
-Total lost TX frames: 201
+Total lost TX frames: 1
 ati16
 Maximum datagram size: 253
 ati17
-Total link failures: 1
+Total link failures: 0
 ati18
 VC 0 frames sent: 0
 ati19
@@ -105,6 +106,8 @@ VC 0: Not valid!
 ati25
 Total insufficient buffer count: 0
 ati26
+Total number of bad CRC frames: 0
+ati27
 ERROR
 ati0
 ATS0:SerialSpeed=57600
@@ -167,6 +170,7 @@ ATS56:TrainingKey=537061726B46756E547261696E696E67
 ATS57:PrintLinkUpDown=0
 ATS58:InvertCts=0
 ATS59:InvertRts=0
+ATS60:AlternateLedUsage=0
 ats28=0
 OK
 # SerialSpeed
@@ -1107,11 +1111,23 @@ InvertRts=0
 OK
 ats59?
 InvertRts=0
-# Invalid commands
+# AlternateLedUsage
 ERROR
 ats60=1
+AlternateLedUsage=1
+OK
+ats60=2
 ERROR
+ats60=0
+AlternateLedUsage=0
+OK
 ats60?
+AlternateLedUsage=0
+# Invalid commands
+ERROR
+ats61=1
+ERROR
+ats61?
 ERROR
 ats255=1
 ERROR
@@ -1119,6 +1135,7 @@ ats255?
 ERROR
 ati0
 ATS1:AirSpeed=4800
+ATS60:AlternateLedUsage=0
 ATS24:AutoTune=0
 ATS13:Bandwidth=500.00
 ATS52:ClientRetryInterval=2

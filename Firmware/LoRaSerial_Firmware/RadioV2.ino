@@ -735,7 +735,7 @@ PacketType rcvDatagram()
         if (settings.printRfData && rxDataBytes)
             dumpBuffer(incomingBuffer, rxDataBytes);
       }
-      badFrames++;
+      badCrc++;
       return (DATAGRAM_BAD);
     }
   }
@@ -1075,6 +1075,10 @@ PacketType rcvDatagram()
   //Process the packet
   datagramsReceived++;
   linkDownTimer = millis();
+
+  //BLink the RX LED
+  if (settings.alternateLedUsage)
+    digitalWrite(ALT_LED_RX_DATA, LED_ON);
   return datagramType;
 }
 
@@ -1491,6 +1495,10 @@ void retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   }
 
   datagramTimer = millis(); //Move timestamp even if error
+
+  //BLink the RX LED
+  if (settings.alternateLedUsage)
+    digitalWrite(ALT_LED_TX_DATA, LED_ON);
 }
 
 void startChannelTimer()
