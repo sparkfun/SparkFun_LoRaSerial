@@ -556,7 +556,7 @@ void xmitVcHeartbeat(int8_t addr, uint8_t * id)
   vcTxHeartbeatMillis = millis() - currentMillis;
 
   //Select a random for the next heartbeat
-  resetHeartbeat();
+  setHeartbeatLong(); //Those who send a heartbeat or data have long time before next heartbeat. Those who send ACKs, have short wait to next heartbeat.
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -625,7 +625,7 @@ PacketType rcvDatagram()
 
   //Display the received data bytes
   if ((settings.dataScrambling || settings.encryptData)
-    && (settings.printRfData || settings.debugReceive))
+      && (settings.printRfData || settings.debugReceive))
   {
     systemPrintTimestamp();
     systemPrint("RX: Unencrypted Frame ");
@@ -718,7 +718,7 @@ PacketType rcvDatagram()
     if (timeToHop == true) //If the channelTimer has expired, move to next frequency
       hopChannel();
     if ((incomingBuffer[rxDataBytes - 2] != (crc >> 8))
-      && (incomingBuffer[rxDataBytes - 1] != (crc & 0xff)))
+        && (incomingBuffer[rxDataBytes - 1] != (crc & 0xff)))
     {
       //Display the packet contents
       if (settings.printPktData || settings.debugReceive)
@@ -733,7 +733,7 @@ PacketType rcvDatagram()
           hopChannel();
         petWDT();
         if (settings.printRfData && rxDataBytes)
-            dumpBuffer(incomingBuffer, rxDataBytes);
+          dumpBuffer(incomingBuffer, rxDataBytes);
       }
       badFrames++;
       return (DATAGRAM_BAD);
@@ -1359,7 +1359,7 @@ void transmitDatagram()
 
   //Display the transmitted packet bytes
   if ((settings.printRfData || settings.debugTransmit)
-    && (settings.encryptData || settings.dataScrambling))
+      && (settings.encryptData || settings.dataScrambling))
   {
     systemPrintTimestamp();
     systemPrint("TX: Encrypted Frame ");
@@ -1529,8 +1529,16 @@ void syncChannelTimer(int offset)
 
 //This function resets the heartbeat time and re-rolls the random time
 //Call when something has happened (ACK received, etc) where clocks have been sync'd
-void resetHeartbeat()
+//Short/long times set to avoid two radios attempting to xmit heartbeat at same time
+//Those who send an ACK have short time to next heartbeat. Those who send a heartbeat or data have long time to next heartbeat.
+void setHeartbeatShort()
 {
   heartbeatTimer = millis();
-  heartbeatRandomTime = random(settings.heartbeatTimeout * 8 / 10, settings.heartbeatTimeout); //20-100%
+  heartbeatRandomTime = random(settings.heartbeatTimeout * 2 / 10, settings.heartbeatTimeout / 2); //20-50%
+}
+
+void setHeartbeatLong()
+{
+  heartbeatTimer = millis();
+  heartbeatRandomTime = random(settings.heartbeatTimeout * 8 / 10, settings.heartbeatTimeout); //80-100%
 }
