@@ -1510,20 +1510,39 @@ void stopChannelTimer()
 
 //Given the remote unit's amount of channelTimer that has elapsed,
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
-void syncChannelTimer(int offset)
+void syncChannelTimer()
 {
   triggerEvent(TRIGGER_SYNC_CHANNEL);
 
   uint16_t channelTimerElapsed;
-  memcpy(&channelTimerElapsed, &rxVcData[offset], sizeof(channelTimerElapsed));
+  memcpy(&channelTimerElapsed, &rxVcData[0], sizeof(channelTimerElapsed));
   channelTimerElapsed += ackAirTime;
   channelTimerElapsed += SYNC_PROCESSING_OVERHEAD;
 
-  if (channelTimerElapsed > settings.maxDwellTime) channelTimerElapsed -= settings.maxDwellTime;
+  int16_t remoteRemainingTime = settings.maxDwellTime - channelTimerElapsed; 
+
+  int16_t localRemainingTime = settings.maxDwellTime - (millis() - timerStart); //The amount of time we think we have left on this channel
+  
+  //If we have just hopped channels, and a sync comes in that is very small, it will incorrectly
+  //cause us to hop again, causing the clocks to be sync'd, but the channels to be one ahead.
+  //So, if our localRemainingTime is very large, and remoteRemainingTime is very small, then add
+  //the remoteRemainingTime to our localRemainingTime
+  if (remoteRemainingTime < (settings.maxDwellTime / 16)
+      && localRemainingTime > (settings.maxDwellTime - (settings.maxDwellTime / 16)) )
+  {
+//    systemPrint("remoteRemainingTime: ");
+//    systemPrint(remoteRemainingTime);
+//    systemPrint(" localRemainingTime: ");
+//    systemPrint(localRemainingTime);
+//    systemPrintln();
+    
+    triggerEvent(TRIGGER_SYNC_CHANNEL); //Double trigger
+    remoteRemainingTime = remoteRemainingTime + localRemainingTime;
+  }
 
   partialTimer = true;
   channelTimer.disableTimer();
-  channelTimer.setInterval_MS(settings.maxDwellTime - channelTimerElapsed, channelTimerHandler); //Shorten our hardware timer to match our mate's
+  channelTimer.setInterval_MS(remoteRemainingTime, channelTimerHandler); //Adjust our hardware timer to match our mate's
   channelTimer.enableTimer();
 }
 
