@@ -1840,10 +1840,27 @@ void changeState(RadioStates newState)
   else
   {
     if (radioStateTable[radioState].description)
-      systemPrintln(radioStateTable[radioState].description);
+      systemPrint(radioStateTable[radioState].description);
     else
-      systemPrintln(radioStateTable[radioState].name);
+      systemPrint(radioStateTable[radioState].name);
   }
+
+  if (newState == RADIO_P2P_LINK_UP)
+  {
+    int seconds = (millis() - lastLinkUpTime) / 1000;
+    int minutes = seconds / 60;
+    seconds -= (minutes * 60);
+
+    systemPrint(" LinkUptime: ");
+
+    if (minutes < 10) systemPrint("0");
+    systemPrint(minutes);
+    systemPrint(":");
+    if (seconds < 10) systemPrint("0");
+    systemPrint(seconds);
+  }
+
+  systemPrintln();
 }
 
 void v2BreakLink()
@@ -1883,6 +1900,9 @@ void v2EnterLinkUp()
 
   //Stop the transmit timer
   transmitTimer = 0;
+
+  //Mark start time for uptime calculation
+  lastLinkUpTime = millis();
 
   //Start the receiver
   returnToReceiving();
