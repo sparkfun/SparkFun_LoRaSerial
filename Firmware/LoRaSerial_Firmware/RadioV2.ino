@@ -1519,10 +1519,10 @@ void syncChannelTimer()
   channelTimerElapsed += ackAirTime;
   channelTimerElapsed += SYNC_PROCESSING_OVERHEAD;
 
-  int16_t remoteRemainingTime = settings.maxDwellTime - channelTimerElapsed; 
+  int16_t remoteRemainingTime = settings.maxDwellTime - channelTimerElapsed;
 
   int16_t localRemainingTime = settings.maxDwellTime - (millis() - timerStart); //The amount of time we think we have left on this channel
-  
+
   //If we have just hopped channels, and a sync comes in that is very small, it will incorrectly
   //cause us to hop again, causing the clocks to be sync'd, but the channels to be one ahead.
   //So, if our localRemainingTime is very large, and remoteRemainingTime is very small, then add
@@ -1530,14 +1530,24 @@ void syncChannelTimer()
   if (remoteRemainingTime < (settings.maxDwellTime / 16)
       && localRemainingTime > (settings.maxDwellTime - (settings.maxDwellTime / 16)) )
   {
-//    systemPrint("remoteRemainingTime: ");
-//    systemPrint(remoteRemainingTime);
-//    systemPrint(" localRemainingTime: ");
-//    systemPrint(localRemainingTime);
-//    systemPrintln();
-    
+    //    systemPrint("remoteRemainingTime: ");
+    //    systemPrint(remoteRemainingTime);
+    //    systemPrint(" localRemainingTime: ");
+    //    systemPrint(localRemainingTime);
+    //    systemPrintln();
+
     triggerEvent(TRIGGER_SYNC_CHANNEL); //Double trigger
     remoteRemainingTime = remoteRemainingTime + localRemainingTime;
+  }
+
+  if (remoteRemainingTime < 0)
+  {
+    //    systemPrint(" channelTimerElapsed: ");
+    //    systemPrint(channelTimerElapsed);
+    //    systemPrint("remoteRemainingTime: ");
+    //    systemPrint(remoteRemainingTime);
+    //    systemPrintln();
+    remoteRemainingTime = 0;
   }
 
   partialTimer = true;
