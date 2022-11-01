@@ -461,6 +461,7 @@ typedef struct struct_settings {
   bool printLinkUpDown = false; //Print the link up and link down messages
   bool invertCts = false; //Invert the input of CTS
   bool invertRts = false; //Invert the output of RTS
+  bool alternateLedUsage = false; //Enable alternate LED usage
 
   //Add new parameters immediately before this line
   //-- Add commands to set the parameters

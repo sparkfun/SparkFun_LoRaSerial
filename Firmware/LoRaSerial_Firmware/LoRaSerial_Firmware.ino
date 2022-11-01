@@ -87,6 +87,18 @@ uint8_t pin_rssi4LED = PIN_UNDEFINED;
 uint8_t pin_boardID = PIN_UNDEFINED;
 
 uint8_t pin_trigger = PIN_UNDEFINED;
+
+#define ALT_LED_RX_DATA     pin_rssi1LED  //Green
+#define ALT_LED_RADIO_LINK  pin_rssi2LED  //Green
+#define ALT_LED_RSSI        pin_rssi3LED  //Green
+#define ALT_LED_TX_DATA     pin_rssi4LED  //Green
+#define ALT_LED_BAD_FRAMES  pin_txLED     //Blue
+#define ALT_LED_BAD_CRC     pin_rxLED     //Yellow
+
+#define LED_ON              HIGH
+#define LED_OFF             LOW
+
+#define ALT_LED_BLINK_MILLIS    15
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Radio Library
@@ -250,6 +262,13 @@ float frequencyCorrection = 0; //Adjust receive freq based on the last packet re
 
 volatile bool clearDIO1 = true; //Clear the DIO1 hop ISR when possible
 
+//RSSI must be above these negative numbers for LED to illuminate
+const int rssiLevelLow = -150;
+const int rssiLevelMed = -70;
+const int rssiLevelHigh = -50;
+const int rssiLevelMax = -20;
+int rssi; //Signal level
+
 //Link quality metrics
 uint32_t datagramsSent;     //Total number of datagrams sent
 uint32_t datagramsReceived; //Total number of datagrams received
@@ -260,6 +279,7 @@ uint32_t duplicateFrames;   //Total number of duplicate frames received
 uint32_t lostFrames;        //Total number of lost TX frames
 uint32_t linkFailures;      //Total number of link failures
 uint32_t insufficientSpace; //Total number of times the buffer did not have enough space
+uint32_t badCrc;            //Total number of bad CRC frames
 
 unsigned long lastLinkUpTime = 0; //Mark when link was first established
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -407,6 +427,9 @@ void loop()
   updateButton();
 
   updateSerial(); //Store incoming and print outgoing
+
+  if (settings.alternateLedUsage)
+    updateLeds();
 
   updateRadioState(); //Ping/ack/send packets as needed
 
