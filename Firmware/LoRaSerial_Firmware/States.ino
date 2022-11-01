@@ -1,18 +1,18 @@
 #define SAVE_TX_BUFFER()                                \
-{                                                       \
-  memcpy(rexmtBuffer, outgoingPacket, MAX_PACKET_SIZE); \
-  rexmtControl = txControl;                             \
-  rexmtLength = txDatagramSize;                         \
-  rexmtFrameSentCount = frameSentCount;                 \
-}
+  {                                                       \
+    memcpy(rexmtBuffer, outgoingPacket, MAX_PACKET_SIZE); \
+    rexmtControl = txControl;                             \
+    rexmtLength = txDatagramSize;                         \
+    rexmtFrameSentCount = frameSentCount;                 \
+  }
 
 #define RESTORE_TX_BUFFER()                             \
-{                                                       \
-  memcpy(outgoingPacket, rexmtBuffer, MAX_PACKET_SIZE); \
-  txControl = rexmtControl;                             \
-  txDatagramSize = rexmtLength;                         \
-  frameSentCount = rexmtFrameSentCount;                 \
-}
+  {                                                       \
+    memcpy(outgoingPacket, rexmtBuffer, MAX_PACKET_SIZE); \
+    txControl = rexmtControl;                             \
+    txDatagramSize = rexmtLength;                         \
+    frameSentCount = rexmtFrameSentCount;                 \
+  }
 
 void updateRadioState()
 {
@@ -51,7 +51,7 @@ void updateRadioState()
       petWDT();
 
       //Start the TX timer: time to delay before transmitting the PING
-      resetHeartbeat();
+      setHeartbeatShort(); //Both radios start with short heartbeat period
       pingRandomTime = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2); //Fast ping
 
       //Set all of the ACK numbers to zero
@@ -391,7 +391,7 @@ void updateRadioState()
 
           //Start the TX timer: time to delay before transmitting the PING
           triggerEvent(TRIGGER_HANDSHAKE_ACK1_TIMEOUT);
-          resetHeartbeat();
+          setHeartbeatShort();
           pingRandomTime = random(settings.maxDwellTime * 2, settings.maxDwellTime * 4); //Slow ping
           changeState(RADIO_P2P_LINK_DOWN);
         }
@@ -446,7 +446,7 @@ void updateRadioState()
 
           //Start the TX timer: time to delay before transmitting the PING
           triggerEvent(TRIGGER_HANDSHAKE_ACK2_TIMEOUT);
-          resetHeartbeat();
+          setHeartbeatShort();
           pingRandomTime = random(settings.maxDwellTime * 2, settings.maxDwellTime * 4); //Slow ping
           changeState(RADIO_P2P_LINK_DOWN);
         }
@@ -607,7 +607,7 @@ void updateRadioState()
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
-            resetHeartbeat();
+            setHeartbeatShort(); //We ack'd this heartbeat so be responsible for sending the next heartbeat
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
             xmitDatagramP2PAck(); //Transmit ACK
@@ -634,7 +634,7 @@ void updateRadioState()
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
-            resetHeartbeat();
+            setHeartbeatShort(); //We ack'd this data, so be responsible for sending the next heartbeat
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DATA);
             xmitDatagramP2PAck(); //Transmit ACK
@@ -714,7 +714,7 @@ void updateRadioState()
           {
             xmitDatagramP2PHeartbeat();
 
-            resetHeartbeat();
+            setHeartbeatLong(); //We're sending a heartbeat, so don't be the first to send next heartbeat
             transmitTimer = datagramTimer;
 
             //Wait for heartbeat to transmit
@@ -786,12 +786,12 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DATA_ACK:
-            syncChannelTimer(0); //Adjust freq hop ISR based on remote's remaining clock
+            syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
 
             //Stop the transmit timer
             transmitTimer = 0;
 
-            resetHeartbeat(); //Extend time before next heartbeat
+            setHeartbeatLong(); //Those who send an ACK have short time to next heartbeat. Those who send a heartbeat or data have long time to next heartbeat.
 
             //Display the signal strength
             if (settings.displayPacketQuality == true)
@@ -1116,7 +1116,7 @@ void updateRadioState()
         RADIO_MP_WAIT_TX_PARAM_ACK_DONE
                 |
                 V
-     endTrainingClientServer
+      endTrainingClientServer
                 |
                 | Restore settings
                 |
@@ -1165,7 +1165,7 @@ void updateRadioState()
           case DATAGRAM_TRAINING_PARAMS:
             //Verify the IDs
             if ((memcmp(rxData, myUniqueId, UNIQUE_ID_BYTES) != 0)
-              && (memcmp(rxData, myUniqueId, UNIQUE_ID_BYTES) != 0))
+                && (memcmp(rxData, myUniqueId, UNIQUE_ID_BYTES) != 0))
             {
               triggerEvent(TRIGGER_BAD_PACKET);
               returnToReceiving();
@@ -1411,7 +1411,7 @@ void updateRadioState()
 
       //Transmit a HEARTBEAT if necessary
       else if (((currentMillis - heartbeatTimer) >= heartbeatRandomTime)
-                  && (receiveInProcess() == false))
+               && (receiveInProcess() == false))
       {
         //Send another heartbeat
         xmitVcHeartbeat(myVc, myUniqueId);
@@ -1513,7 +1513,7 @@ void updateRadioState()
 
       //Transmit a HEARTBEAT if necessary
       else if (((currentMillis - heartbeatTimer) >= heartbeatRandomTime)
-                  && (receiveInProcess() == false))
+               && (receiveInProcess() == false))
       {
         //Send another heartbeat
         xmitVcHeartbeat(myVc, myUniqueId);
@@ -1631,7 +1631,7 @@ void selectHeaderAndTrailerBytes()
 bool isLinked()
 {
   if ((radioState >= RADIO_P2P_LINK_UP)
-       && (radioState <= RADIO_P2P_LINK_UP_WAIT_ACK))
+      && (radioState <= RADIO_P2P_LINK_UP_WAIT_ACK))
     return (true);
 
   return (false);
@@ -1841,10 +1841,27 @@ void changeState(RadioStates newState)
   else
   {
     if (radioStateTable[radioState].description)
-      systemPrintln(radioStateTable[radioState].description);
+      systemPrint(radioStateTable[radioState].description);
     else
-      systemPrintln(radioStateTable[radioState].name);
+      systemPrint(radioStateTable[radioState].name);
   }
+
+  if (newState == RADIO_P2P_LINK_UP)
+  {
+    int seconds = (millis() - lastLinkUpTime) / 1000;
+    int minutes = seconds / 60;
+    seconds -= (minutes * 60);
+
+    systemPrint(" LinkUptime: ");
+
+    if (minutes < 10) systemPrint("0");
+    systemPrint(minutes);
+    systemPrint(":");
+    if (seconds < 10) systemPrint("0");
+    systemPrint(seconds);
+  }
+
+  systemPrintln();
 }
 
 void v2BreakLink()
@@ -1869,7 +1886,7 @@ void v2EnterLinkUp()
   triggerEvent(TRIGGER_HANDSHAKE_COMPLETE);
   startChannelTimer();
   hopChannel(); //Leave home
-  resetHeartbeat();
+  setHeartbeatLong(); //Start link with long heartbeat
 
   //Synchronize the ACK numbers
   rmtTxAckNumber = 0;
@@ -1884,6 +1901,9 @@ void v2EnterLinkUp()
 
   //Stop the transmit timer
   transmitTimer = 0;
+
+  //Mark start time for uptime calculation
+  lastLinkUpTime = millis();
 
   //Start the receiver
   returnToReceiving();

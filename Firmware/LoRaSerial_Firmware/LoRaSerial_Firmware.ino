@@ -135,7 +135,7 @@ const int trainWithDefaultsButtonTime = 5000; //ms press and hold before enterin
 SAMDTimer channelTimer(TIMER_TCC); //Available: TC3, TC4, TC5, TCC, TCC1 or TCC2
 unsigned long timerStart = 0; //Tracks how long our timer has been running since last hop
 bool partialTimer = false; //After an ACK we reset and run a partial timer to sync units
-const int SYNC_PROCESSING_OVERHEAD = -5; //Number of milliseconds it takes to compute clock deltas before sync'ing clocks
+const int SYNC_PROCESSING_OVERHEAD = 3; //Number of milliseconds it takes to compute clock deltas before sync'ing clocks
 
 uint16_t petTimeoutHalf = 0; //Half the amount of time before WDT. Helps reduce amount of time spent petting.
 unsigned long lastPet = 0; //Remebers time of last WDT pet.
@@ -280,6 +280,8 @@ uint32_t lostFrames;        //Total number of lost TX frames
 uint32_t linkFailures;      //Total number of link failures
 uint32_t insufficientSpace; //Total number of times the buffer did not have enough space
 uint32_t badCrc;            //Total number of bad CRC frames
+
+unsigned long lastLinkUpTime = 0; //Mark when link was first established
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - V2 Protocol

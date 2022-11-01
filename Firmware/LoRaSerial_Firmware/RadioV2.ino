@@ -556,7 +556,7 @@ void xmitVcHeartbeat(int8_t addr, uint8_t * id)
   vcTxHeartbeatMillis = millis() - currentMillis;
 
   //Select a random for the next heartbeat
-  resetHeartbeat();
+  setHeartbeatLong(); //Those who send a heartbeat or data have long time before next heartbeat. Those who send ACKs, have short wait to next heartbeat.
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -625,7 +625,7 @@ PacketType rcvDatagram()
 
   //Display the received data bytes
   if ((settings.dataScrambling || settings.encryptData)
-    && (settings.printRfData || settings.debugReceive))
+      && (settings.printRfData || settings.debugReceive))
   {
     systemPrintTimestamp();
     systemPrint("RX: Unencrypted Frame ");
@@ -718,7 +718,7 @@ PacketType rcvDatagram()
     if (timeToHop == true) //If the channelTimer has expired, move to next frequency
       hopChannel();
     if ((incomingBuffer[rxDataBytes - 2] != (crc >> 8))
-      && (incomingBuffer[rxDataBytes - 1] != (crc & 0xff)))
+        && (incomingBuffer[rxDataBytes - 1] != (crc & 0xff)))
     {
       //Display the packet contents
       if (settings.printPktData || settings.debugReceive)
@@ -733,7 +733,7 @@ PacketType rcvDatagram()
           hopChannel();
         petWDT();
         if (settings.printRfData && rxDataBytes)
-            dumpBuffer(incomingBuffer, rxDataBytes);
+          dumpBuffer(incomingBuffer, rxDataBytes);
       }
       badCrc++;
       return (DATAGRAM_BAD);
@@ -1363,7 +1363,7 @@ void transmitDatagram()
 
   //Display the transmitted packet bytes
   if ((settings.printRfData || settings.debugTransmit)
-    && (settings.encryptData || settings.dataScrambling))
+      && (settings.encryptData || settings.dataScrambling))
   {
     systemPrintTimestamp();
     systemPrint("TX: Encrypted Frame ");
@@ -1518,27 +1518,64 @@ void stopChannelTimer()
 
 //Given the remote unit's amount of channelTimer that has elapsed,
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
-void syncChannelTimer(int offset)
+void syncChannelTimer()
 {
   triggerEvent(TRIGGER_SYNC_CHANNEL);
 
   uint16_t channelTimerElapsed;
-  memcpy(&channelTimerElapsed, &rxVcData[offset], sizeof(channelTimerElapsed));
+  memcpy(&channelTimerElapsed, &rxVcData[0], sizeof(channelTimerElapsed));
   channelTimerElapsed += ackAirTime;
   channelTimerElapsed += SYNC_PROCESSING_OVERHEAD;
 
-  if (channelTimerElapsed > settings.maxDwellTime) channelTimerElapsed -= settings.maxDwellTime;
+  int16_t remoteRemainingTime = settings.maxDwellTime - channelTimerElapsed;
+
+  int16_t localRemainingTime = settings.maxDwellTime - (millis() - timerStart); //The amount of time we think we have left on this channel
+
+  //If we have just hopped channels, and a sync comes in that is very small, it will incorrectly
+  //cause us to hop again, causing the clocks to be sync'd, but the channels to be one ahead.
+  //So, if our localRemainingTime is very large, and remoteRemainingTime is very small, then add
+  //the remoteRemainingTime to our localRemainingTime
+  if (remoteRemainingTime < (settings.maxDwellTime / 16)
+      && localRemainingTime > (settings.maxDwellTime - (settings.maxDwellTime / 16)) )
+  {
+    //    systemPrint("remoteRemainingTime: ");
+    //    systemPrint(remoteRemainingTime);
+    //    systemPrint(" localRemainingTime: ");
+    //    systemPrint(localRemainingTime);
+    //    systemPrintln();
+
+    triggerEvent(TRIGGER_SYNC_CHANNEL); //Double trigger
+    remoteRemainingTime = remoteRemainingTime + localRemainingTime;
+  }
+
+  if (remoteRemainingTime < 0)
+  {
+    //    systemPrint(" channelTimerElapsed: ");
+    //    systemPrint(channelTimerElapsed);
+    //    systemPrint("remoteRemainingTime: ");
+    //    systemPrint(remoteRemainingTime);
+    //    systemPrintln();
+    remoteRemainingTime = 0;
+  }
 
   partialTimer = true;
   channelTimer.disableTimer();
-  channelTimer.setInterval_MS(settings.maxDwellTime - channelTimerElapsed, channelTimerHandler); //Shorten our hardware timer to match our mate's
+  channelTimer.setInterval_MS(remoteRemainingTime, channelTimerHandler); //Adjust our hardware timer to match our mate's
   channelTimer.enableTimer();
 }
 
 //This function resets the heartbeat time and re-rolls the random time
 //Call when something has happened (ACK received, etc) where clocks have been sync'd
-void resetHeartbeat()
+//Short/long times set to avoid two radios attempting to xmit heartbeat at same time
+//Those who send an ACK have short time to next heartbeat. Those who send a heartbeat or data have long time to next heartbeat.
+void setHeartbeatShort()
 {
   heartbeatTimer = millis();
-  heartbeatRandomTime = random(settings.heartbeatTimeout * 8 / 10, settings.heartbeatTimeout); //20-100%
+  heartbeatRandomTime = random(settings.heartbeatTimeout * 2 / 10, settings.heartbeatTimeout / 2); //20-50%
+}
+
+void setHeartbeatLong()
+{
+  heartbeatTimer = millis();
+  heartbeatRandomTime = random(settings.heartbeatTimeout * 8 / 10, settings.heartbeatTimeout); //80-100%
 }
