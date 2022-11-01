@@ -147,14 +147,16 @@ const uint8_t escapeCharacter = '+';
 const uint8_t maxEscapeCharacters = 3; //Number of characters needed to enter command mode
 const uint8_t responseDelayDivisor = 4; //Add on to max response time after packet has been sent. Factor of 2. 8 is ok. 4 is good. A smaller number increases the delay.
 
-//Buffer to store bytes incoming from serial before broadcasting over LoRa
-uint8_t serialReceiveBuffer[1024 * 4]; //Bytes received from UART waiting to be RF transmitted. Buffer up to 1s of bytes at 4k
-uint8_t serialTransmitBuffer[1024 * 4]; //Bytes received from RF waiting to be printed out UART. Buffer up to 1s of bytes at 4k
 
+//Buffer to store bytes for transmission via the long range radio
+uint16_t radioTxHead = 0;
+uint16_t radioTxTail = 0;
+uint8_t radioTxBuffer[1024 * 3];
+
+//Buffer to store bytes to be sent to the USB or serial ports
 uint16_t txHead = 0;
 uint16_t txTail = 0;
-uint16_t rxHead = 0;
-uint16_t rxTail = 0;
+uint8_t serialTransmitBuffer[1024 * 4]; //Bytes received from RF waiting to be printed out UART. Buffer up to 1s of bytes at 4k
 
 unsigned long lastByteReceived_ms = 0; //Track when last transmission was. Send partial buffer once time has expired.
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -189,7 +191,7 @@ bool rtsAsserted; //When RTS is asserted, host says it's ok to send data
                     .-------------+--------------------------.
                     |                                        |
                     V                                        v
-              commandBuffer                         serialReceiveBuffer
+              commandBuffer                            radioTxBuffer
                     |                                        |
                     | Remote Command?                        v
                     |                                 outgoingPacket
