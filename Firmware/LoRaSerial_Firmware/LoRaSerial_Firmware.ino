@@ -147,6 +147,10 @@ const uint8_t escapeCharacter = '+';
 const uint8_t maxEscapeCharacters = 3; //Number of characters needed to enter command mode
 const uint8_t responseDelayDivisor = 4; //Add on to max response time after packet has been sent. Factor of 2. 8 is ok. 4 is good. A smaller number increases the delay.
 
+//Buffer to receive serial data from the USB or serial ports
+uint16_t rxHead = 0;
+uint16_t rxTail = 0;
+uint8_t serialReceiveBuffer[1024];
 
 //Buffer to store bytes for transmission via the long range radio
 uint16_t radioTxHead = 0;
@@ -184,6 +188,12 @@ bool rtsAsserted; //When RTS is asserted, host says it's ok to send data
 /* Data Flow - Point-to-Point and Multi-Point
 
                              USB or UART
+                                  |
+                                  | Flow control: RTS for UART
+                                  |      Off: Buffer full
+                                  |      On: Buffer drops below half full
+                                  V
+                         serialReceiveBuffer
                                   |
                                   | inCommandMode?
                                   |
