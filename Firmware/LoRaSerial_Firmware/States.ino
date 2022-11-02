@@ -1848,12 +1848,26 @@ void changeState(RadioStates newState)
 
   if (newState == RADIO_P2P_LINK_UP)
   {
-    int seconds = (millis() - lastLinkUpTime) / 1000;
-    int minutes = seconds / 60;
+    unsigned int seconds = (millis() - lastLinkUpTime) / 1000;
+    unsigned int minutes = seconds / 60;
     seconds -= (minutes * 60);
+    unsigned int hours = minutes / 60; 
+    minutes -= (hours * 60);
+    unsigned int days = hours / 24;
+    hours -= (days * 24);
 
     systemPrint(" LinkUptime: ");
 
+    if (days < 10) systemPrint(" ");
+    if (days)
+      systemPrint(days);
+    else
+      systemPrint(" ");
+    systemPrint(" ");
+
+    if (hours < 10) systemPrint(" ");
+    systemPrint(hours);
+    systemPrint(":");
     if (minutes < 10) systemPrint("0");
     systemPrint(minutes);
     systemPrint(":");
