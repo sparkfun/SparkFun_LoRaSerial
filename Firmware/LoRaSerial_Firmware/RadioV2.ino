@@ -292,9 +292,9 @@ void xmitDatagramP2PAck()
   int ackLength;
 
   uint8_t * ackStart = endOfTxData;
-  uint16_t channelTimerElapsed = millis() - timerStart;
-  memcpy(endOfTxData, &channelTimerElapsed, sizeof(channelTimerElapsed));
-  endOfTxData += sizeof(channelTimerElapsed);
+  uint16_t msToNextHop = settings.maxDwellTime - (millis() - timerStart);
+  memcpy(endOfTxData, &msToNextHop, sizeof(msToNextHop));
+  endOfTxData += sizeof(msToNextHop);
 
   //Verify the ACK length
   ackLength = endOfTxData - ackStart;
@@ -1508,52 +1508,81 @@ void stopChannelTimer()
   triggerEvent(TRIGGER_HOP_TIMER_STOP);
 }
 
-//Given the remote unit's amount of channelTimer that has elapsed,
+//Given the remote unit's number of ms before its next hop,
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
 void syncChannelTimer()
 {
-  triggerEvent(TRIGGER_SYNC_CHANNEL);
+  int16_t msToNextHopRemote;
+  memcpy(&msToNextHopRemote, &rxVcData[0], sizeof(msToNextHopRemote));
+  msToNextHopRemote -= ackAirTime;
+  msToNextHopRemote -= SYNC_PROCESSING_OVERHEAD; //Can be negative
 
-  uint16_t channelTimerElapsed;
-  memcpy(&channelTimerElapsed, &rxVcData[0], sizeof(channelTimerElapsed));
-  channelTimerElapsed += ackAirTime;
-  channelTimerElapsed += SYNC_PROCESSING_OVERHEAD;
+  int16_t msToNextHopLocal = settings.maxDwellTime - (millis() - timerStart);
 
-  int16_t remoteRemainingTime = settings.maxDwellTime - channelTimerElapsed;
+  //Precalculate large/small time amounts
+  uint16_t smallAmount = settings.maxDwellTime / 8;
+  uint16_t largeAmount = settings.maxDwellTime - smallAmount;
 
-  int16_t localRemainingTime = settings.maxDwellTime - (millis() - timerStart); //The amount of time we think we have left on this channel
+  int16_t msToNextHop = msToNextHopRemote; //By default, we will adjust our clock to match our mate's
 
-  //If we have just hopped channels, and a sync comes in that is very small, it will incorrectly
-  //cause us to hop again, causing the clocks to be sync'd, but the channels to be one ahead.
-  //So, if our localRemainingTime is very large, and remoteRemainingTime is very small, then add
-  //the remoteRemainingTime to our localRemainingTime
-  if (remoteRemainingTime < (settings.maxDwellTime / 16)
-      && localRemainingTime > (settings.maxDwellTime - (settings.maxDwellTime / 16)) )
+  //Below are the edge cases that occur when a hop occurs near ACK reception
+
+  //msToNextHopLocal is small and msToNextHopRemote is negative
+  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRemote comes in negative then the remote has hopped
+  //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRemote + dwellTime)
+  if (msToNextHopLocal < smallAmount && msToNextHopRemote <= 0)
   {
-    //    systemPrint("remoteRemainingTime: ");
-    //    systemPrint(remoteRemainingTime);
-    //    systemPrint(" localRemainingTime: ");
-    //    systemPrint(localRemainingTime);
-    //    systemPrintln();
-
-    triggerEvent(TRIGGER_SYNC_CHANNEL); //Double trigger
-    remoteRemainingTime = remoteRemainingTime + localRemainingTime;
+    hopChannel();
+    msToNextHop = msToNextHopRemote + settings.maxDwellTime;
   }
 
-  if (remoteRemainingTime < 0)
+  //msToNextHopLocal is large and msToNextHopRemote is negative
+  //If we just hopped (msToNextHopLocal is large), and msToNextHopRemote comes in negative then the remote has hopped
+  //No need to hop. Adjust our clock to the remote's next hop (msToNextHopRemote + dwellTime)
+  else if (msToNextHopLocal > largeAmount && msToNextHopRemote <= 0)
   {
-    //    systemPrint(" channelTimerElapsed: ");
-    //    systemPrint(channelTimerElapsed);
-    //    systemPrint("remoteRemainingTime: ");
-    //    systemPrint(remoteRemainingTime);
-    //    systemPrintln();
-    remoteRemainingTime = 0;
+    msToNextHop = msToNextHopRemote + settings.maxDwellTime;
+  }
+
+  //msToNextHopLocal is small and msToNextHopRemote is large
+  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRemote comes in large then the remote has hopped
+  //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRemote)
+  else if (msToNextHopLocal < smallAmount && msToNextHopRemote > largeAmount)
+  {
+    hopChannel();
+    msToNextHop = msToNextHopRemote;
+  }
+
+  //msToNextHopLocal is large and msToNextHopRemote is large
+  //If we just hopped (msToNextHopLocal is large), and a msToNextHopRemote comes in large then the remote has hopped
+  //Then adjust our clock to the remote's next hop (msToNextHopRemote)
+  else if (msToNextHopLocal > largeAmount && msToNextHopRemote > largeAmount)
+  {
+    msToNextHop = msToNextHopRemote;
+  }
+
+  //msToNextHopLocal is large and msToNextHopRemote is small
+  //If we just hopped (msToNextHopLocal is large), and a msToNextHopRemote comes in small then the remote is about to hop
+  //Then adjust our clock to the remote's next hop (msToNextHopRemote + dwellTime)
+  else if (msToNextHopLocal > largeAmount && msToNextHopRemote < smallAmount)
+  {
+    msToNextHop = msToNextHopRemote + settings.maxDwellTime;
+  }
+
+  //msToNextHopLocal is small and msToNextHopRemote is small
+  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRemote comes in small then the remote is about to hop
+  //Then adjust our clock to the remote's next hop (msToNextHopRemote)
+  else if (msToNextHopLocal < smallAmount && msToNextHopRemote < smallAmount)
+  {
+    msToNextHop = msToNextHopRemote;
   }
 
   partialTimer = true;
   channelTimer.disableTimer();
-  channelTimer.setInterval_MS(remoteRemainingTime, channelTimerHandler); //Adjust our hardware timer to match our mate's
+  channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
   channelTimer.enableTimer();
+
+  triggerEvent(TRIGGER_SYNC_CHANNEL); //Trigger after adjustments to timer to avoid skew during debug
 }
 
 //This function resets the heartbeat time and re-rolls the random time
