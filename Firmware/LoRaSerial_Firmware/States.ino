@@ -137,6 +137,7 @@ void updateRadioState()
 
     //Wait for the PING to complete transmission
     case RADIO_P2P_TRAINING_WAIT_PING_DONE:
+      updateCylonLEDs();
       if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
@@ -146,7 +147,7 @@ void updateRadioState()
       break;
 
     case RADIO_P2P_WAIT_FOR_TRAINING_PARAMS:
-      updateRSSI();
+      updateCylonLEDs();
 
       //Check for a received datagram
       if (transactionComplete == true)
@@ -191,6 +192,8 @@ void updateRadioState()
             //Update the parameters
             updateRadioParameters(rxData);
             endPointToPointTraining(true);
+            if (settings.debugTraining)
+              systemPrintln("Training successful, received parameters!");
             changeState(RADIO_RESET);
         }
       }
@@ -206,14 +209,27 @@ void updateRadioState()
           lostFrames++;
           changeState(RADIO_P2P_TRAINING_WAIT_PING_DONE);
         }
+
+        //Check for done the training
+        else if ((millis() - trainingTimer) > (settings.trainingTimeout * 60 * 1000))
+        {
+          //Failed to complete the training
+          if (settings.debugTraining)
+            systemPrintln("Training timeout, returning to previous mode!");
+          endPointToPointTraining(false);
+          changeState(RADIO_RESET);
+        }
       }
       break;
 
     case RADIO_P2P_WAIT_TRAINING_PARAMS_DONE:
+      updateCylonLEDs();
       if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
         endPointToPointTraining(false);
+        if (settings.debugTraining)
+          systemPrintln("Training successful, sent parameters!");
         changeState(RADIO_RESET);
       }
       break;
@@ -1851,7 +1867,7 @@ void changeState(RadioStates newState)
     unsigned int seconds = (millis() - lastLinkUpTime) / 1000;
     unsigned int minutes = seconds / 60;
     seconds -= (minutes * 60);
-    unsigned int hours = minutes / 60; 
+    unsigned int hours = minutes / 60;
     minutes -= (hours * 60);
     unsigned int days = hours / 24;
     hours -= (days * 24);
