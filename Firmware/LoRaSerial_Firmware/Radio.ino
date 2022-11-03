@@ -99,6 +99,9 @@ void configureRadio()
   if (radio.setPreambleLength(settings.radioPreambleLength) == RADIOLIB_ERR_INVALID_PREAMBLE_LENGTH)
     success = false;
 
+  if (radio.setCRC(true) == RADIOLIB_ERR_INVALID_CRC_CONFIGURATION) //Enable hardware CRC
+    success = false;
+
   //SF6 requires an implicit header. We will transmit 255 bytes for most packets and 2 bytes for ACK packets.
   if (settings.radioSpreadFactor == 6)
   {
