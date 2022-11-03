@@ -428,15 +428,14 @@ typedef struct struct_settings {
   bool debugRadio = false; //Print radio info
   bool debugStates = false; //Print state changes
   bool debugTraining = false; //Print training info
-  bool debugTrigger = false; //Print triggers
   bool usbSerialWait = false; //Wait for USB serial initialization
   bool printRfData = false; //Print RX and TX data
   bool printPktData = false; //Print data, before encryption and after decryption
   bool verifyRxNetID = false; //Verify RX netID value when not operating in point-to-point mode
   uint8_t triggerWidth = 25; //Trigger width in microSeconds or multipler for trigger width
   bool triggerWidthIsMultiplier = true; //Use the trigger width as a multiplier
-  uint32_t triggerEnable = 0xffffffff; //Determine which triggers are enabled: 31 - 0
-  uint32_t triggerEnable2 = 0xffffffff; //Determine which triggers are enabled: 63 - 32
+  uint32_t triggerEnable = 0; //Determine which triggers are enabled: 31 - 0
+  uint32_t triggerEnable2 = 0; //Determine which triggers are enabled: 63 - 32
   bool debugReceive = false; //Print receive processing
   bool debugTransmit = false; //Print transmit processing
   bool printTxErrors = false; //Print any transmit errors
