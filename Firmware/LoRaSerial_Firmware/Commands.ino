@@ -663,7 +663,7 @@ const COMMAND_ENTRY commands[] =
   {30,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugRadio",           &settings.debugRadio},
   {31,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugStates",          &settings.debugStates},
   {32,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTraining",        &settings.debugTraining},
-  //33
+  {33,    1, 255,    0, TYPE_U8,           valInt,         "TrainingTimeout",      &settings.trainingTimeout},
   {34,    0,   1,    0, TYPE_BOOL,         valInt,         "UsbSerialWait",        &settings.usbSerialWait},
 
   {35,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintRfData",          &settings.printRfData},
