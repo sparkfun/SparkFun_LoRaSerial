@@ -10,6 +10,9 @@ if [%1]==[] goto usage
 
 atprogram.exe -t atmelice -i swd -cl 20mhz -d atsamd21g18a chiperase program -f %1 --verify
 
+rem Lock bootloader
+atprogram.exe -t atmelice -i swd -cl 20mhz -d atsamd21g18a write --fuses --offset 0x804000 --values 0xFAC7E0D8
+
 @echo Done programming! Ready for next board.
 @pause
 
