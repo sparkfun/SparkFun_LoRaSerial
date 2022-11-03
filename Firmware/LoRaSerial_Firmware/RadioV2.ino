@@ -1533,6 +1533,8 @@ void syncChannelTimer()
 
   int16_t msToNextHop = msToNextHopRemote; //By default, we will adjust our clock to match our mate's
 
+  bool resetHop = false; //The hop ISR may occur while we are forcing a hop (case A and C). Reset timeToHop as needed. 
+  
   //Below are the edge cases that occur when a hop occurs near ACK reception
 
   //msToNextHopLocal is small and msToNextHopRemote is negative
@@ -1542,6 +1544,7 @@ void syncChannelTimer()
   {
     hopChannel();
     msToNextHop = msToNextHopRemote + settings.maxDwellTime;
+    resetHop = true; //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
   }
 
   //msToNextHopLocal is large and msToNextHopRemote is negative
@@ -1559,6 +1562,7 @@ void syncChannelTimer()
   {
     hopChannel();
     msToNextHop = msToNextHopRemote;
+    resetHop = true; //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
   }
 
   //msToNextHopLocal is large and msToNextHopRemote is large
@@ -1588,6 +1592,10 @@ void syncChannelTimer()
   partialTimer = true;
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
+
+  if(resetHop) //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
+    timeToHop = false;
+  
   channelTimer.enableTimer();
 
   triggerEvent(TRIGGER_SYNC_CHANNEL); //Trigger after adjustments to timer to avoid skew during debug

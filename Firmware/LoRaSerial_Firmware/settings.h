@@ -443,7 +443,7 @@ typedef struct struct_settings {
   uint8_t radioProtocolVersion = 2; //Select the radio protocol
   bool printTimestamp = false; //Print a timestamp: days hours:minutes:seconds.milliseconds
   bool debugDatagrams = false; //Print the datagrams
-  uint16_t overheadTime = 10; ////ms added to ack and datagram times before ACK timeout occurs
+  uint16_t overheadTime = 10; //ms added to ack and datagram times before ACK timeout occurs
   bool enableCRC16 = false; //Append CRC-16 to packet, check CRC-16 upon receive
   bool displayRealMillis = false; //true = Display the millis value without offset, false = use offset
   bool trainingServer = false; //Default to being a client
