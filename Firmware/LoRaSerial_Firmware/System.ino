@@ -319,6 +319,10 @@ void triggerEvent(uint8_t triggerNumber)
   uint32_t triggerEnable;
   uint16_t triggerWidth;
 
+  //Determine if the trigger pin is enabled
+  if (pin_trigger != PIN_UNDEFINED)
+    return;
+
   //Determine which trigger enable to use
   triggerBitNumber = triggerNumber;
   triggerEnable = settings.triggerEnable;
@@ -329,24 +333,17 @@ void triggerEvent(uint8_t triggerNumber)
   }
 
   //Determine if the trigger is enabled
-  if ((pin_trigger != PIN_UNDEFINED) && (triggerEnable & (1 << triggerBitNumber)))
+  if (triggerEnable & (1 << triggerBitNumber))
   {
-    //Determine if the trigger pin is enabled
-    if (pin_trigger != PIN_UNDEFINED)
-    {
-      if ((settings.debug == true) || (settings.debugTrigger == true))
-      {
-        //Determine the trigger pulse width
-        triggerWidth = settings.triggerWidth;
-        if (settings.triggerWidthIsMultiplier)
-          triggerWidth *= (triggerNumber + 1);
+    //Determine the trigger pulse width
+    triggerWidth = settings.triggerWidth;
+    if (settings.triggerWidthIsMultiplier)
+      triggerWidth *= (triggerNumber + 1);
 
-        //Output the trigger pulse
-        digitalWrite(pin_trigger, LOW);
-        delayMicroseconds(triggerWidth);
-        digitalWrite(pin_trigger, HIGH);
-      }
-    }
+    //Output the trigger pulse
+    digitalWrite(pin_trigger, LOW);
+    delayMicroseconds(triggerWidth);
+    digitalWrite(pin_trigger, HIGH);
   }
 }
 
