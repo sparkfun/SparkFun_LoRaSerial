@@ -167,8 +167,10 @@ unsigned long lastByteReceived_ms = 0; //Track when last transmission was. Send 
 
 //Global variables - Command Processing
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-char commandBuffer[100]; //Received serial gets stored into buffer until \r or \n is received
-uint8_t commandRXBuffer[100]; //Bytes received from remote, waiting for printing or AT parsing
+#define COMMAND_LENGTH      100
+
+char commandBuffer[COMMAND_LENGTH]; //Received serial gets stored into buffer until \r or \n is received
+uint8_t commandRXBuffer[COMMAND_LENGTH]; //Bytes received from remote, waiting for printing or AT parsing
 uint8_t commandTXBuffer[1024 * 4]; //Bytes waiting to be transmitted to the remote unit
 uint16_t commandTXHead = 0;
 uint16_t commandTXTail = 0;

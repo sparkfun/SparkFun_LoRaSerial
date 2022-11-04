@@ -64,7 +64,7 @@ const COMMAND_ENTRY debugCommands[] =
   //Define any user parameters starting at 255 decrementing towards 0
 };
 
-const int debugCommandCount = sizeof(debugCommands) / sizeof(debugCommands[0]);
+#define DEBUG_COMMAND_COUNT         (sizeof(debugCommands) / sizeof(debugCommands[0]))
 
 //----------------------------------------
 //  Radio command table
@@ -111,7 +111,7 @@ const COMMAND_ENTRY radioCommands[] =
   //Define any user parameters starting at 255 decrementing towards 0
 };
 
-const int radioCommandCount = sizeof(radioCommands) / sizeof(radioCommands[0]);
+#define RADIO_COMMAND_COUNT         (sizeof(radioCommands) / sizeof(radioCommands[0]))
 
 //----------------------------------------
 //  Serial command table
@@ -133,7 +133,22 @@ const COMMAND_ENTRY serialCommands[] =
   //Define any user parameters starting at 255 decrementing towards 0
 };
 
-const int serialCommandCount = sizeof(serialCommands) / sizeof(serialCommands[0]);
+#define SERIAL_COMMAND_COUNT        (sizeof(serialCommands) / sizeof(serialCommands[0]))
+
+//----------------------------------------
+//  Command prefix table
+//----------------------------------------
+
+const COMMAND_PREFIX prefixTable[] = {
+  {"ATD", debugCommands,  DEBUG_COMMAND_COUNT,  commandSet},
+  {"ATR", radioCommands,  RADIO_COMMAND_COUNT,  commandSet},
+  {"ATS", serialCommands, SERIAL_COMMAND_COUNT, commandSet},
+  {"AT-", NULL,           NULL,                 commandSetByName},
+  {"AT",  NULL,           NULL,                 commandAT},
+  {"RT",  NULL,           NULL,                 sendRemoteCommand},
+};
+
+const int prefixCount = sizeof(prefixTable) / sizeof(prefixTable[0]);
 
 //----------------------------------------
 //  Command prefix routines
@@ -177,6 +192,8 @@ bool commandAT(const COMMAND_ENTRY * commandTable, int commandCount, const char 
         systemPrintln("  ATV - VC link reset");
         systemPrintln("  ATX - Stop the training server");
         systemPrintln("  ATZ - Reboot the radio");
+        systemPrintln("  AT-Param=xxx - Set parameter's value to xxx by name (Param)");
+        systemPrintln("  AT-Param? - Print parameter's current value by name (Param)");
         systemPrintln("  AT&F - Restore factory settings");
         systemPrintln("  AT&W - Save current settings to NVM");
         break;
@@ -511,20 +528,6 @@ bool sendRemoteCommand(const COMMAND_ENTRY * commandTable, int commandCount, con
 }
 
 //----------------------------------------
-//  Command prefix table
-//----------------------------------------
-
-const COMMAND_PREFIX prefixTable[] = {
-  {"ATD", debugCommands, debugCommandCount, commandSet},
-  {"ATR", radioCommands, radioCommandCount, commandSet},
-  {"ATS", serialCommands, serialCommandCount, commandSet},
-  {"AT", NULL, NULL, commandAT},
-  {"RT", NULL, NULL, sendRemoteCommand},
-};
-
-const int prefixCount = sizeof(prefixTable) / sizeof(prefixTable[0]);
-
-//----------------------------------------
 //  Command processing routine
 //----------------------------------------
 
@@ -800,7 +803,136 @@ void commandDisplay(const COMMAND_ENTRY * command, int commandCount, uint8_t num
   systemPrintln();
 }
 
-//Set or display the command
+//Set or display the parameter by name
+bool commandSetByName(const COMMAND_ENTRY * commandTable, int commandCount, const char * commandString)
+{
+  const char * buffer;
+  const COMMAND_ENTRY * command;
+  double doubleSettingValue;
+  int index;
+  int nameLength;
+  int number;
+  char * param;
+  char parameter[COMMAND_LENGTH];
+  int paramLength;
+  char paramName[COMMAND_LENGTH];
+  uint32_t settingValue;
+  int table;
+  bool valid;
+
+  do {
+    //Locate the end of the parameter name
+    buffer = &commandString[3];
+    param = parameter;
+    while (*buffer && (*buffer != '=') && (*buffer != '?'))
+      *param++ = *buffer++;
+    *param = 0;
+    paramLength = strlen(parameter);
+
+    //Walk the list of command tables
+    command = NULL;
+    for (table = 0; table < prefixCount; table++)
+    {
+      if (!prefixTable[table].commandTable)
+        continue;
+      //Search for the parameter name
+      commandTable = prefixTable[table].commandTable;
+      commandCount = prefixTable[table].commandCount;
+      for (index = 0; index < prefixTable[table].commandCount; index++)
+      {
+        nameLength = strlen(commandTable[index].name);
+        if (nameLength == paramLength)
+        {
+          //Convert the parameter name to uppercase
+          for (int i = 0; i <= nameLength; i++)
+            paramName[i] = toupper(commandTable[index].name[i]);
+
+          //Compare the parameter names
+          if (strcmp(parameter, paramName) == 0)
+          {
+            command = &commandTable[index];
+            break;
+          }
+        }
+      }
+      if (command)
+        break;
+    }
+
+    //Verify that the parameter was found
+    if (!command)
+      break;
+
+    //Is this a display request
+    if (strcmp(buffer, "?") == 0)
+    {
+      commandDisplay(commandTable, commandCount, command->number, settings.printParameterName);
+      return true;
+    }
+
+    //Make sure the command has the proper syntax
+    if (*buffer++ != '=')
+      break;
+
+    //Get the value
+    doubleSettingValue = strtod(buffer, NULL);
+    settingValue = doubleSettingValue;
+
+    //Validate and set the value
+    valid = false;
+    switch (command->type)
+    {
+      case TYPE_BOOL:
+        valid = command->validate((void *)&settingValue, command->minValue, command->maxValue);
+        if (valid)
+          *(bool *)(command->setting) = (bool)settingValue;
+        break;
+      case TYPE_FLOAT:
+        valid = command->validate((void *)&doubleSettingValue, command->minValue, command->maxValue);
+        if (valid)
+          *((float *)(command->setting)) = doubleSettingValue;
+        break;
+      case TYPE_KEY:
+        valid = command->validate((void *)buffer, command->minValue, command->maxValue);
+        if (valid)
+          for (uint32_t x = 0; x < (2 * AES_KEY_BYTES); x += 2)
+            ((uint8_t *)command->setting)[x / 2] = charHexToDec(buffer[x], buffer[x + 1]);
+        break;
+      case TYPE_SPEED_AIR:
+      case TYPE_SPEED_SERIAL:
+      case TYPE_U32:
+        valid = command->validate((void *)&settingValue, command->minValue, command->maxValue);
+        if (valid)
+          *(uint32_t *)(command->setting) = settingValue;
+        break;
+      case TYPE_U8:
+        valid = command->validate((void *)&settingValue, command->minValue, command->maxValue);
+        if (valid)
+          *(uint8_t *)(command->setting) = (uint8_t)settingValue;
+        break;
+      case TYPE_U16:
+        valid = command->validate((void *)&settingValue, command->minValue, command->maxValue);
+        if (valid)
+          *(uint16_t *)(command->setting) = (uint16_t)settingValue;
+        break;
+    }
+    if (valid == false)
+      break;
+
+    //Display the parameter if requested
+    if (settings.printParameterName)
+      commandDisplay(commandTable, commandCount, command->number, true);
+
+    //The parameter was successfully set
+    reportOK();
+    return true;
+  } while (0);
+
+  //Report the error
+  return false;
+}
+
+//Set or display the parameter
 bool commandSet(const COMMAND_ENTRY * commandTable, int commandCount, const char * commandString)
 {
   const char * buffer;
@@ -900,9 +1032,11 @@ void displayEncryptionKey(uint8_t * key)
 //Show current settings in user friendly way
 void displayParameters()
 {
-  displayParameters(radioCommands, radioCommandCount, "TR");
-  displayParameters(serialCommands, serialCommandCount, "TS");
-  displayParameters(debugCommands, debugCommandCount, "TD");
+  for (int index = 0; index < prefixCount; index++)
+    if (prefixTable[index].commandTable)
+      displayParameters(prefixTable[index].commandTable,
+                        prefixTable[index].commandCount,
+                        &prefixTable[index].prefix[1]);
 }
 
 void displayParameters(const COMMAND_ENTRY * commandTable, int commandCount, const char * suffix)
