@@ -391,6 +391,20 @@ typedef struct _CONTROL_U8
   uint8_t filler : 2;
 } CONTROL_U8;
 
+typedef bool (* VALIDATION_ROUTINE)(void * value, uint32_t valMin, uint32_t valMax);
+
+typedef struct _COMMAND_ENTRY
+{
+  uint8_t number;
+  uint32_t minValue;
+  uint32_t maxValue;
+  uint8_t digits;
+  uint8_t type;
+  VALIDATION_ROUTINE validate;
+  const char * name;
+  void * setting;
+} COMMAND_ENTRY;
+
 //These are all the settings that can be set on Serial Terminal Radio. It's recorded to NVM.
 typedef struct struct_settings {
   uint16_t sizeOfSettings = 0; //sizeOfSettings **must** be the first entry and must be int

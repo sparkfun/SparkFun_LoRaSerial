@@ -19,35 +19,133 @@ enum {
   TYPE_U32,
 };
 
-typedef bool (* VALIDATION_ROUTINE)(void * value, uint32_t valMin, uint32_t valMax);
-
-typedef struct _COMMAND_ENTRY
-{
-  uint8_t number;
-  uint32_t minValue;
-  uint32_t maxValue;
-  uint8_t digits;
-  uint8_t type;
-  VALIDATION_ROUTINE validate;
-  const char * name;
-  void * setting;
-} COMMAND_ENTRY;
-
-typedef bool (* COMMAND_ROUTINE)(const char * commandString);
+typedef bool (* COMMAND_ROUTINE)(const COMMAND_ENTRY * commandTable, int commandCount, const char * commandString);
 typedef struct
 {
   const char * prefix;
+  const COMMAND_ENTRY * commandTable;
+  int commandCount;
   COMMAND_ROUTINE processCommand;
 } COMMAND_PREFIX;
+
+//----------------------------------------
+//  Debug command table
+//----------------------------------------
+
+const COMMAND_ENTRY debugCommands[] =
+{ //#, min, max, digits,   type,            validation,        name,                setting addr
+  { 0,    1, 255,    0, TYPE_U8,           valInt,         "TriggerWidth",         &settings.triggerWidth},
+  { 1,    0,   1,    0, TYPE_BOOL,         valInt,         "TriggerWidthIsMultiplier", &settings.triggerWidthIsMultiplier},
+  { 2,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable: 31-0",  &settings.triggerEnable},
+  { 3,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable2: 63-32", &settings.triggerEnable2},
+  { 4,    0,   1,    0, TYPE_BOOL,         valInt,         "CopyTriggers",         &settings.copyTriggers},
+
+  { 5,    0,   1,    0, TYPE_BOOL,         valInt,         "AlternateLedUsage",    &settings.alternateLedUsage},
+  { 6,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &settings.debugDatagrams},
+  { 7,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintLinkUpDown",      &settings.printLinkUpDown},
+  { 8,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugStates",          &settings.debugStates},
+  { 9,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTimestamp",       &settings.printTimestamp},
+
+  {10,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugReceive",         &settings.debugReceive},
+  {11,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &settings.debugTransmit},
+  {12,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTraining",        &settings.debugTraining},
+  {13,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintPktData",         &settings.printPktData},
+  {14,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintFrequency",       &settings.printFrequency},
+
+  {15,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugRadio",           &settings.debugRadio},
+  {16,    0,   1,    0, TYPE_BOOL,         valInt,         "DisplayPacketQuality", &settings.displayPacketQuality},
+  {17,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTxErrors",        &settings.printTxErrors},
+  {18,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintRfData",          &settings.printRfData},
+  {19,    0,   1,    0, TYPE_BOOL,         valInt,         "DisplayRealMillis",    &settings.displayRealMillis},
+
+  {20,    0,   1,    0, TYPE_BOOL,         valInt,         "Debug",                &settings.debug},
+  {21,    0,   1,    0, TYPE_BOOL,         valInt,         "CopyDebug",            &settings.copyDebug},
+
+  //Define any user parameters starting at 255 decrementing towards 0
+};
+
+const int debugCommandCount = sizeof(debugCommands) / sizeof(debugCommands[0]);
+
+//----------------------------------------
+//  Radio command table
+//----------------------------------------
+
+const COMMAND_ENTRY radioCommands[] =
+{ //#, min, max, digits,   type,            validation,        name,                setting addr
+  { 0,   0,   0,     0, TYPE_SPEED_AIR,    valSpeedAir,    "AirSpeed",             &settings.airSpeed},
+  { 1,   0,   0,     2, TYPE_FLOAT,        valBandwidth,   "Bandwidth",            &settings.radioBandwidth},
+  { 2,   6,  12,     0, TYPE_U8,           valOverride,    "SpreadFactor",         &settings.radioSpreadFactor},
+  { 3,   5,   8,     0, TYPE_U8,           valOverride,    "CodingRate",           &settings.radioCodingRate},
+  { 4,  14,  30,     0, TYPE_U8,           valInt,         "TxPower",              &settings.radioBroadcastPower_dbm},
+
+  { 5,    2,   2,    0, TYPE_U8,           valInt,         "radioProtocolVersion", &settings.radioProtocolVersion},
+  { 6,   0,   2,     0, TYPE_U8,           valInt,         "OperatingMode",        &settings.operatingMode},
+  { 7,   0, 255,     0, TYPE_U8,           valInt,         "netID",                &settings.netID},
+  { 8,    0,   1,    0, TYPE_BOOL,         valInt,         "VerifyRxNetID",        &settings.verifyRxNetID},
+  { 9,    0,   1,    0, TYPE_BOOL,         valInt,         "EnableCRC16",          &settings.enableCRC16},
+
+  {10, 902,   0,     3, TYPE_FLOAT,        valFreqMin,     "FrequencyMin",         &settings.frequencyMin},
+  {11,   0, 928,     3, TYPE_FLOAT,        valFreqMax,     "FrequencyMax",         &settings.frequencyMax},
+  {12,   1, 255,     0, TYPE_U8,           valInt,         "NumberOfChannels",     &settings.numberOfChannels},
+  {13,   0,   1,     0, TYPE_BOOL,         valInt,         "FrequencyHop",         &settings.frequencyHop},
+  {14,    0,   1,    0, TYPE_BOOL,         valInt,         "AutoTune",             &settings.autoTuneFrequency},
+
+  {15,    0, 5000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &settings.overheadTime},
+  {16,  10, 65535,   0, TYPE_U16,          valInt,         "MaxDwellTime",         &settings.maxDwellTime},
+  {17,  250, 65535,  0, TYPE_U16,          valInt,         "HeartBeatTimeout",     &settings.heartbeatTimeout},
+  {18,  10, 2000,    0, TYPE_U16,          valInt,         "FrameTimeout",         &settings.serialTimeoutBeforeSendingFrame_ms},
+  {19,    1, 255,    0, TYPE_U8,           valInt,         "ClientRetryInterval",  &settings.clientPingRetryInterval},
+
+  {20,   0,   1,     0, TYPE_BOOL,         valInt,         "DataScrambling",       &settings.dataScrambling},
+  {21,   0,   1,     0, TYPE_BOOL,         valInt,         "EncryptData",          &settings.encryptData},
+  {22,   0,   0,     0, TYPE_KEY,          valKey,         "EncryptionKey",        &settings.encryptionKey},
+  {23,    1, 255,    0, TYPE_U8,           valInt,         "TrainingTimeout",      &settings.trainingTimeout},
+  {24,    0,   0,    0, TYPE_KEY,          valKey,         "TrainingKey",          &settings.trainingKey},
+
+  {25,    0,   1,    0, TYPE_BOOL,         valInt,         "TrainingServer",       &settings.trainingServer},
+  {26,   6, 65535,   0, TYPE_U16,          valInt,         "PreambleLength",       &settings.radioPreambleLength},
+  {27,   0, MAX_VC,  0, TYPE_U8,           valInt,         "CmdVC",                &cmdVc},
+  {28,    0, 255,    0, TYPE_U8,           valInt,         "MaxResends",           &settings.maxResends},
+  {29,   0, 255,     0, TYPE_U8,           valInt,         "SyncWord",             &settings.radioSyncWord},
+
+  //Define any user parameters starting at 255 decrementing towards 0
+};
+
+const int radioCommandCount = sizeof(radioCommands) / sizeof(radioCommands[0]);
+
+//----------------------------------------
+//  Serial command table
+//----------------------------------------
+
+const COMMAND_ENTRY serialCommands[] =
+{ //#, min, max, digits,   type,            validation,        name,                setting addr
+  { 0,    0,   0,    0, TYPE_SPEED_SERIAL, valSpeedSerial, "SerialSpeed",          &settings.serialSpeed},
+  { 1,    0,   1,    0, TYPE_BOOL,         valInt,         "Echo",                 &settings.echo},
+  { 2,    0,   1,    0, TYPE_BOOL,         valInt,         "FlowControl",          &settings.flowControl},
+  { 3,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertCts",            &settings.invertCts},
+  { 4,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertRts",            &settings.invertRts},
+
+  { 5,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintParameterName",   &settings.printParameterName},
+  { 6,    0,   1,    0, TYPE_BOOL,         valInt,         "SortParametersByName", &settings.sortParametersByName},
+  { 7,    0,   1,    0, TYPE_BOOL,         valInt,         "UsbSerialWait",        &settings.usbSerialWait},
+  { 8,    0,   1,    0, TYPE_BOOL,         valInt,         "CopySerial",           &settings.copySerial},
+
+  //Define any user parameters starting at 255 decrementing towards 0
+};
+
+const int serialCommandCount = sizeof(serialCommands) / sizeof(serialCommands[0]);
 
 //----------------------------------------
 //  Command prefix routines
 //----------------------------------------
 
-bool commandAT(const char * commandString)
+bool commandAT(const COMMAND_ENTRY * commandTable, int commandCount, const char * commandString)
 {
   VIRTUAL_CIRCUIT * vc;
   unsigned long timer;
+
+  UNUSED(commandTable);
+  UNUSED(commandCount);
 
   //'AT'
   if (commandLength == 2)
@@ -63,16 +161,20 @@ bool commandAT(const char * commandString)
       case ('?'): //Display the command help
         systemPrintln("Command summary:");
         systemPrintln("  AT? - Print the command summary");
+        systemPrintln("  ATDn=xxx - Set debug parameter n's value to xxx");
+        systemPrintln("  ATDn? - Print debug parameter n's current value");
         systemPrintln("  ATF - Enter training mode and return to factory defaults");
         systemPrintln("  ATG - Generate new netID and encryption key");
         systemPrintln("  ATI - Display the radio version");
         systemPrintln("  ATI? - Display the information commands");
         systemPrintln("  ATIn - Display system information");
         systemPrintln("  ATO - Exit command mode");
-        systemPrintln("  ATR - VC link reset");
-        systemPrintln("  ATSn=xxx - Set parameter n's value to xxx");
-        systemPrintln("  ATSn? - Print parameter n's current value");
+        systemPrintln("  ATRn=xxx - Set radio parameter n's value to xxx");
+        systemPrintln("  ATRn? - Print radio parameter n's current value");
+        systemPrintln("  ATSn=xxx - Set serial parameter n's value to xxx");
+        systemPrintln("  ATSn? - Print serial parameter n's current value");
         systemPrintln("  ATT - Enter training mode");
+        systemPrintln("  ATV - VC link reset");
         systemPrintln("  ATX - Stop the training server");
         systemPrintln("  ATZ - Reboot the radio");
         systemPrintln("  AT&F - Restore factory settings");
@@ -114,7 +216,11 @@ bool commandAT(const char * commandString)
           changeState(RADIO_RESET);
         }
         break;
-      case ('R'): //VC link reset
+      case ('T'): //Enter training mode
+        reportOK();
+        selectTraining(false);
+        break;
+      case ('V'): //VC link reset
         reportOK();
         if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
         {
@@ -124,10 +230,6 @@ bool commandAT(const char * commandString)
           while ((millis() - timer) < ((VC_LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout))
             petWDT();
         }
-        break;
-      case ('T'): //Enter training mode
-        reportOK();
-        selectTraining(false);
         break;
       case ('X'): //Stop the training server
         if (trainingServerRunning && settings.trainingServer
@@ -389,8 +491,11 @@ bool commandAT(const char * commandString)
 }
 
 //Send the AT command over RF link
-bool sendRemoteCommand(const char * commandString)
+bool sendRemoteCommand(const COMMAND_ENTRY * commandTable, int commandCount, const char * commandString)
 {
+  UNUSED(commandTable);
+  UNUSED(commandCount);
+
   //We cannot send a command if not linked
   if (isLinked() == false)
     return false;
@@ -410,9 +515,11 @@ bool sendRemoteCommand(const char * commandString)
 //----------------------------------------
 
 const COMMAND_PREFIX prefixTable[] = {
-  {"ATS", commandSet},
-  {"AT", commandAT},
-  {"RT", sendRemoteCommand},
+  {"ATD", debugCommands, debugCommandCount, commandSet},
+  {"ATR", radioCommands, radioCommandCount, commandSet},
+  {"ATS", serialCommands, serialCommandCount, commandSet},
+  {"AT", NULL, NULL, commandAT},
+  {"RT", NULL, NULL, sendRemoteCommand},
 };
 
 const int prefixCount = sizeof(prefixTable) / sizeof(prefixTable[0]);
@@ -445,7 +552,9 @@ void checkCommand()
       continue;
 
     //Process the command
-    success = prefixTable[index].processCommand(commandString);
+    success = prefixTable[index].processCommand(prefixTable[index].commandTable,
+                                                prefixTable[index].commandCount,
+                                                commandString);
     break;
   }
 
@@ -619,91 +728,6 @@ bool valSpeedSerial (void * value, uint32_t valMin, uint32_t valMax)
 }
 
 //----------------------------------------
-//  Command table
-//----------------------------------------
-
-const COMMAND_ENTRY commands[] =
-{ //#, min, max, digits,   type,            validation,        name,                setting addr
-  {0,   0,   0,      0, TYPE_SPEED_SERIAL, valSpeedSerial, "SerialSpeed",          &settings.serialSpeed},
-  {1,   0,   0,      0, TYPE_SPEED_AIR,    valSpeedAir,    "AirSpeed",             &settings.airSpeed},
-  {2,   0, 255,      0, TYPE_U8,           valInt,         "netID",                &settings.netID},
-  {3,   0,   2,      0, TYPE_U8,           valInt,         "OperatingMode",        &settings.operatingMode},
-  {4,   0,   1,      0, TYPE_BOOL,         valInt,         "EncryptData",          &settings.encryptData},
-
-  {5,   0,   0,      0, TYPE_KEY,          valKey,         "EncryptionKey",        &settings.encryptionKey},
-  {6,   0,   1,      0, TYPE_BOOL,         valInt,         "DataScrambling",       &settings.dataScrambling},
-  {7,  14,  30,      0, TYPE_U8,           valInt,         "TxPower",              &settings.radioBroadcastPower_dbm},
-  {8, 902,   0,      3, TYPE_FLOAT,        valFreqMin,     "FrequencyMin",         &settings.frequencyMin},
-  {9,   0, 928,      3, TYPE_FLOAT,        valFreqMax,     "FrequencyMax",         &settings.frequencyMax},
-
-  {10,   1, 255,     0, TYPE_U8,           valInt,         "NumberOfChannels",     &settings.numberOfChannels},
-  {11,   0,   1,     0, TYPE_BOOL,         valInt,         "FrequencyHop",         &settings.frequencyHop},
-  {12,  10, 65535,   0, TYPE_U16,          valInt,         "MaxDwellTime",         &settings.maxDwellTime},
-  {13,   0,   0,     2, TYPE_FLOAT,        valBandwidth,   "Bandwidth",            &settings.radioBandwidth},
-  {14,   6,  12,     0, TYPE_U8,           valOverride,    "SpreadFactor",         &settings.radioSpreadFactor},
-
-  {15,   5,   8,     0, TYPE_U8,           valOverride,    "CodingRate",           &settings.radioCodingRate},
-  {16,   0, 255,     0, TYPE_U8,           valInt,         "SyncWord",             &settings.radioSyncWord},
-  {17,   6, 65535,   0, TYPE_U16,          valInt,         "PreambleLength",       &settings.radioPreambleLength},
-  {18,   0, MAX_VC,  0, TYPE_U8,           valInt,         "CmdVC",                &cmdVc},
-  {19,  10, 2000,    0, TYPE_U16,          valInt,         "FrameTimeout",         &settings.serialTimeoutBeforeSendingFrame_ms},
-
-  {20,    0,   1,    0, TYPE_BOOL,         valInt,         "Debug",                &settings.debug},
-  {21,    0,   1,    0, TYPE_BOOL,         valInt,         "Echo",                 &settings.echo},
-  {22,  250, 65535,  0, TYPE_U16,          valInt,         "HeartBeatTimeout",     &settings.heartbeatTimeout},
-  {23,    0,   1,    0, TYPE_BOOL,         valInt,         "FlowControl",          &settings.flowControl},
-  {24,    0,   1,    0, TYPE_BOOL,         valInt,         "AutoTune",             &settings.autoTuneFrequency},
-
-  {25,    0,   1,    0, TYPE_BOOL,         valInt,         "DisplayPacketQuality", &settings.displayPacketQuality},
-  {26,    0, 255,    0, TYPE_U8,           valInt,         "MaxResends",           &settings.maxResends},
-  {27,    0,   1,    0, TYPE_BOOL,         valInt,         "SortParametersByName", &settings.sortParametersByName},
-  {28,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintParameterName",   &settings.printParameterName},
-  {29,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintFrequency",       &settings.printFrequency},
-
-  {30,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugRadio",           &settings.debugRadio},
-  {31,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugStates",          &settings.debugStates},
-  {32,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTraining",        &settings.debugTraining},
-  {33,    1, 255,    0, TYPE_U8,           valInt,         "TrainingTimeout",      &settings.trainingTimeout},
-  {34,    0,   1,    0, TYPE_BOOL,         valInt,         "UsbSerialWait",        &settings.usbSerialWait},
-
-  {35,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintRfData",          &settings.printRfData},
-  {36,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintPktData",         &settings.printPktData},
-  {37,    0,   1,    0, TYPE_BOOL,         valInt,         "VerifyRxNetID",        &settings.verifyRxNetID},
-  {38,    1, 255,    0, TYPE_U8,           valInt,         "TriggerWidth",         &settings.triggerWidth},
-  {39,    0,   1,    0, TYPE_BOOL,         valInt,         "TriggerWidthIsMultiplier", &settings.triggerWidthIsMultiplier},
-
-  {40,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable: 31-0",  &settings.triggerEnable},
-  {41,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable2: 63-32", &settings.triggerEnable2},
-  {42,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugReceive",         &settings.debugReceive},
-  {43,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &settings.debugTransmit},
-  {44,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTxErrors",        &settings.printTxErrors},
-
-  {45,    2,   2,    0, TYPE_U8,           valInt,         "radioProtocolVersion", &settings.radioProtocolVersion},
-  {46,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTimestamp",       &settings.printTimestamp},
-  {47,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &settings.debugDatagrams},
-  {48,    0, 1000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &settings.overheadTime},
-  {49,    0,   1,    0, TYPE_BOOL,         valInt,         "EnableCRC16",          &settings.enableCRC16},
-
-  {50,    0,   1,    0, TYPE_BOOL,         valInt,         "DisplayRealMillis",    &settings.displayRealMillis},
-  {51,    0,   1,    0, TYPE_BOOL,         valInt,         "TrainingServer",       &settings.trainingServer},
-  {52,    1, 255,    0, TYPE_U8,           valInt,         "ClientRetryInterval",  &settings.clientPingRetryInterval},
-  {53,    0,   1,    0, TYPE_BOOL,         valInt,         "CopyDebug",            &settings.copyDebug},
-  {54,    0,   1,    0, TYPE_BOOL,         valInt,         "CopySerial",           &settings.copySerial},
-
-  {55,    0,   1,    0, TYPE_BOOL,         valInt,         "CopyTriggers",         &settings.copyTriggers},
-  {56,    0,   0,    0, TYPE_KEY,          valKey,         "TrainingKey",          &settings.trainingKey},
-  {57,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintLinkUpDown",      &settings.printLinkUpDown},
-  {58,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertCts",            &settings.invertCts},
-  {59,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertRts",            &settings.invertRts},
-
-  {60,    0,   1,    0, TYPE_BOOL,         valInt,         "AlternateLedUsage",    &settings.alternateLedUsage},
-
-  //Define any user parameters starting at 255 decrementing towards 0
-};
-
-const int commandCount = sizeof(commands) / sizeof(commands[0]);
-
-//----------------------------------------
 //  ATSxx routines
 //----------------------------------------
 
@@ -726,14 +750,12 @@ const char * commandGetNumber(const char * buffer, uint32_t * value)
   return buffer;
 }
 
-void commandDisplay(uint8_t number, bool printName)
+void commandDisplay(const COMMAND_ENTRY * command, int commandCount, uint8_t number, bool printName)
 {
-  const COMMAND_ENTRY * command;
   const COMMAND_ENTRY * commandEnd;
 
   //Locate the command
-  command = &commands[0];
-  commandEnd = &commands[commandCount];
+  commandEnd = &command[commandCount];
   while (command < commandEnd)
     if (command->number == number)
       break;
@@ -779,7 +801,7 @@ void commandDisplay(uint8_t number, bool printName)
 }
 
 //Set or display the command
-bool commandSet(const char * commandString)
+bool commandSet(const COMMAND_ENTRY * commandTable, int commandCount, const char * commandString)
 {
   const char * buffer;
   const COMMAND_ENTRY * command;
@@ -793,16 +815,16 @@ bool commandSet(const char * commandString)
     //Validate the command number
     buffer = commandGetNumber(&commandString[3], &number);
     for (index = 0; index < commandCount; index++)
-      if (number == commands[index].number)
+      if (number == commandTable[index].number)
         break;
     if (index >= commandCount)
       break;
-    command = &commands[index];
+    command = &commandTable[index];
 
     //Is this a display request
     if (strcmp(buffer, "?") == 0)
     {
-      commandDisplay(command->number, settings.printParameterName);
+      commandDisplay(commandTable, commandCount, command->number, settings.printParameterName);
       return true;
     }
 
@@ -857,7 +879,7 @@ bool commandSet(const char * commandString)
 
     //Display the parameter if requested
     if (settings.printParameterName)
-      commandDisplay(command->number, true);
+      commandDisplay(commandTable, commandCount, command->number, true);
 
     //The parameter was successfully set
     reportOK();
@@ -878,6 +900,13 @@ void displayEncryptionKey(uint8_t * key)
 //Show current settings in user friendly way
 void displayParameters()
 {
+  displayParameters(radioCommands, radioCommandCount, "TR");
+  displayParameters(serialCommands, serialCommandCount, "TS");
+  displayParameters(debugCommands, debugCommandCount, "TD");
+}
+
+void displayParameters(const COMMAND_ENTRY * commandTable, int commandCount, const char * suffix)
+{
   int index;
   uint8_t sortOrder[commandCount];
   uint8_t temp;
@@ -891,7 +920,7 @@ void displayParameters()
   if (settings.sortParametersByName)
     for (index = 0; index < commandCount; index++)
       for (x = index + 1; x < commandCount; x++)
-        if (stricmp(commands[sortOrder[index]].name, commands[sortOrder[x]].name) > 0)
+        if (stricmp(commandTable[sortOrder[index]].name, commandTable[sortOrder[x]].name) > 0)
         {
           temp = sortOrder[index];
           sortOrder[index] = sortOrder[x];
@@ -908,9 +937,9 @@ void displayParameters()
     else
       systemPrint("A");
 
-    systemPrint("TS");
-    systemPrint(commands[sortOrder[index]].number);
+    systemPrint(suffix);
+    systemPrint(commandTable[sortOrder[index]].number);
     systemPrint(":");
-    commandDisplay(commands[sortOrder[index]].number, true);
+    commandDisplay(commandTable, commandCount, commandTable[sortOrder[index]].number, true);
   }
 }
