@@ -52,7 +52,7 @@ void updateRadioState()
 
       //Start the TX timer: time to delay before transmitting the PING
       setHeartbeatShort(); //Both radios start with short heartbeat period
-      pingRandomTime = random(settings.maxDwellTime / 10, settings.maxDwellTime / 2); //Fast ping
+      pingRandomTime = random(ackAirTime, ackAirTime * 2); //Fast ping
 
       //Set all of the ACK numbers to zero
       *(uint8_t *)(&txControl) = 0;
@@ -392,7 +392,7 @@ void updateRadioState()
           //Start the TX timer: time to delay before transmitting the PING
           triggerEvent(TRIGGER_HANDSHAKE_ACK1_TIMEOUT);
           setHeartbeatShort();
-          pingRandomTime = random(settings.maxDwellTime * 2, settings.maxDwellTime * 4); //Slow ping
+          pingRandomTime = random(ackAirTime * 4, ackAirTime * 8); //Slow ping
           changeState(RADIO_P2P_LINK_DOWN);
         }
       }
@@ -447,7 +447,7 @@ void updateRadioState()
           //Start the TX timer: time to delay before transmitting the PING
           triggerEvent(TRIGGER_HANDSHAKE_ACK2_TIMEOUT);
           setHeartbeatShort();
-          pingRandomTime = random(settings.maxDwellTime * 2, settings.maxDwellTime * 4); //Slow ping
+          pingRandomTime = random(ackAirTime * 4, ackAirTime * 8); //Slow ping
           changeState(RADIO_P2P_LINK_DOWN);
         }
       }
