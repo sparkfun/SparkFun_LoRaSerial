@@ -19,12 +19,15 @@ enum {
   TYPE_U32,
 };
 
+typedef void (* COMMAND_HELP_ROUTINE)(const COMMAND_ENTRY * commandTable, int commandCount);
 typedef bool (* COMMAND_ROUTINE)(const COMMAND_ENTRY * commandTable, int commandCount, const char * commandString);
 typedef struct
 {
   const char * prefix;
   const COMMAND_ENTRY * commandTable;
   int commandCount;
+  bool displayHelp;
+  COMMAND_HELP_ROUTINE helpRoutine;
   COMMAND_ROUTINE processCommand;
 } COMMAND_PREFIX;
 
@@ -140,12 +143,12 @@ const COMMAND_ENTRY serialCommands[] =
 //----------------------------------------
 
 const COMMAND_PREFIX prefixTable[] = {
-  {"ATD", debugCommands,  DEBUG_COMMAND_COUNT,  commandSet},
-  {"ATR", radioCommands,  RADIO_COMMAND_COUNT,  commandSet},
-  {"ATS", serialCommands, SERIAL_COMMAND_COUNT, commandSet},
-  {"AT-", NULL,           NULL,                 commandSetByName},
-  {"AT",  NULL,           NULL,                 commandAT},
-  {"RT",  NULL,           NULL,                 sendRemoteCommand},
+  {"ATD", debugCommands,  DEBUG_COMMAND_COUNT,  0, NULL,        commandSet},
+  {"ATR", radioCommands,  RADIO_COMMAND_COUNT,  1, NULL,        commandSet},
+  {"ATS", serialCommands, SERIAL_COMMAND_COUNT, 1, NULL,        commandSet},
+  {"AT-", NULL,           0,                    0, helpAll,     commandSetByName},
+  {"AT",  NULL,           0,                    0, helpCommand, commandAT},
+  {"RT",  NULL,           0,                    0, helpRemote,  sendRemoteCommand},
 };
 
 const int prefixCount = sizeof(prefixTable) / sizeof(prefixTable[0]);
@@ -173,30 +176,6 @@ bool commandAT(const COMMAND_ENTRY * commandTable, int commandCount, const char 
     {
       default:
         return false;
-      case ('?'): //Display the command help
-        systemPrintln("Command summary:");
-        systemPrintln("  AT? - Print the command summary");
-        systemPrintln("  ATDn=xxx - Set debug parameter n's value to xxx");
-        systemPrintln("  ATDn? - Print debug parameter n's current value");
-        systemPrintln("  ATF - Enter training mode and return to factory defaults");
-        systemPrintln("  ATG - Generate new netID and encryption key");
-        systemPrintln("  ATI - Display the radio version");
-        systemPrintln("  ATI? - Display the information commands");
-        systemPrintln("  ATIn - Display system information");
-        systemPrintln("  ATO - Exit command mode");
-        systemPrintln("  ATRn=xxx - Set radio parameter n's value to xxx");
-        systemPrintln("  ATRn? - Print radio parameter n's current value");
-        systemPrintln("  ATSn=xxx - Set serial parameter n's value to xxx");
-        systemPrintln("  ATSn? - Print serial parameter n's current value");
-        systemPrintln("  ATT - Enter training mode");
-        systemPrintln("  ATV - VC link reset");
-        systemPrintln("  ATX - Stop the training server");
-        systemPrintln("  ATZ - Reboot the radio");
-        systemPrintln("  AT-Param=xxx - Set parameter's value to xxx by name (Param)");
-        systemPrintln("  AT-Param? - Print parameter's current value by name (Param)");
-        systemPrintln("  AT&F - Restore factory settings");
-        systemPrintln("  AT&W - Save current settings to NVM");
-        break;
       case ('F'): //Enter training mode and return to factory defaults
         reportOK();
         selectTraining(true);
@@ -303,7 +282,7 @@ bool commandAT(const COMMAND_ENTRY * commandTable, int commandCount, const char 
         systemPrintln("  ATI26 - Display the total number of bad CRC frames");
         break;
       case ('0'): //ATI0 - Show user settable parameters
-        displayParameters();
+        displayParameters(false);
         break;
       case ('1'): //ATI1 - Show board variant
         systemPrint("SparkFun LoRaSerial ");
@@ -554,10 +533,24 @@ void checkCommand()
     if (strncmp(commandString, prefixTable[index].prefix, prefixLength) != 0)
       continue;
 
-    //Process the command
-    success = prefixTable[index].processCommand(prefixTable[index].commandTable,
-                                                prefixTable[index].commandCount,
-                                                commandString);
+    if (strcmp(&commandString[prefixLength], "?") == 0)
+    {
+      //Display the parameters
+      if (prefixTable[index].helpRoutine)
+        prefixTable[index].helpRoutine(prefixTable[index].commandTable,
+                                       prefixTable[index].commandCount);
+      else
+        displayParameters(prefixTable[index].commandTable,
+                          prefixTable[index].commandCount,
+                          &prefixTable[index].prefix[1],
+                          true);
+      success = true;
+    }
+    else
+      //Process the command
+      success = prefixTable[index].processCommand(prefixTable[index].commandTable,
+                                                  prefixTable[index].commandCount,
+                                                  commandString);
     break;
   }
 
@@ -589,6 +582,49 @@ char * trimCommand()
     commandLength--;
   }
   return commandString;
+}
+
+//----------------------------------------
+//  Help routines
+//----------------------------------------
+
+void helpAll(const COMMAND_ENTRY * commandTable, int commandCount)
+{
+  displayParameters(NULL, 0, NULL, true);
+}
+
+void helpCommand(const COMMAND_ENTRY * commandTable, int commandCount)
+{
+  systemPrintln("Command summary:");
+  systemPrintln("  AT? - Print the command summary");
+  systemPrintln("  ATDn=xxx - Set debug parameter n's value to xxx");
+  systemPrintln("  ATDn? - Print debug parameter n's current value");
+  systemPrintln("  ATF - Enter training mode and return to factory defaults");
+  systemPrintln("  ATG - Generate new netID and encryption key");
+  systemPrintln("  ATI - Display the radio version");
+  systemPrintln("  ATI? - Display the information commands");
+  systemPrintln("  ATIn - Display system information");
+  systemPrintln("  ATO - Exit command mode");
+  systemPrintln("  ATRn=xxx - Set radio parameter n's value to xxx");
+  systemPrintln("  ATRn? - Print radio parameter n's current value");
+  systemPrintln("  ATSn=xxx - Set serial parameter n's value to xxx");
+  systemPrintln("  ATSn? - Print serial parameter n's current value");
+  systemPrintln("  ATT - Enter training mode");
+  systemPrintln("  ATV - VC link reset");
+  systemPrintln("  ATX - Stop the training server");
+  systemPrintln("  ATZ - Reboot the radio");
+  systemPrintln("  AT-Param=xxx - Set parameter's value to xxx by name (Param)");
+  systemPrintln("  AT-Param? - Print parameter's current value by name (Param)");
+  systemPrintln("  AT&F - Restore factory settings");
+  systemPrintln("  AT&W - Save current settings to NVM");
+}
+
+void helpRemote(const COMMAND_ENTRY * commandTable, int commandCount)
+{
+  systemPrintln("With any of the commands below, replace the leading 'A' with and 'R'");
+  systemPrintln("to enable the command to execute remotely.");
+  systemPrintln();
+  helpCommand(commandTable, commandCount);
 }
 
 //----------------------------------------
@@ -1030,17 +1066,155 @@ void displayEncryptionKey(uint8_t * key)
 }
 
 //Show current settings in user friendly way
-void displayParameters()
+void displayParameters(bool displayAll)
 {
-  for (int index = 0; index < prefixCount; index++)
-    if (prefixTable[index].commandTable)
-      displayParameters(prefixTable[index].commandTable,
-                        prefixTable[index].commandCount,
-                        &prefixTable[index].prefix[1]);
+  displayParameters(NULL, 0, NULL, displayAll);
 }
 
-void displayParameters(const COMMAND_ENTRY * commandTable, int commandCount, const char * suffix)
+void displayParameters(const COMMAND_ENTRY * commandTable, int commandCount, const char * suffix, bool displayAll)
 {
+  uint8_t * cmdNumber;
+  const COMMAND_ENTRY ** cmdTable;
+  int index;
+  int length;
+  const COMMAND_PREFIX ** prefix;
+  uint16_t * sortOrder;
+  uint16_t temp;
+  int x;
+
+  do
+  {
+    //Count all of the commands
+    if ((!commandCount) && (!commandTable))
+    {
+      commandCount = 0;
+      for (index = 0; index < prefixCount; index++)
+        if (displayAll || prefixTable[index].displayHelp)
+          commandCount += prefixTable[index].commandCount;
+    }
+
+    //Allocate the arrays
+    cmdNumber = NULL;
+    cmdTable = NULL;
+    prefix = NULL;
+    sortOrder = NULL;
+    length = commandCount * sizeof(cmdNumber);
+    cmdNumber = (uint8_t *)malloc(length);
+    if (cmdNumber == NULL)
+    {
+      systemPrint("ERROR: Failed to allocate ");
+      systemPrint(length);
+      systemPrintln(" bytes from heap for cmdNumber table");
+      break;
+    }
+    length = commandCount * sizeof(cmdTable);
+    cmdTable = (const COMMAND_ENTRY **)malloc(length);
+    if (cmdTable == NULL)
+    {
+      systemPrint("ERROR: Failed to allocate ");
+      systemPrint(length);
+      systemPrintln(" bytes from heap for cmdTable");
+      break;
+    }
+    length = commandCount * sizeof(prefix);
+    prefix = (const COMMAND_PREFIX **)malloc(length);
+    if (prefix == NULL)
+    {
+      systemPrint("ERROR: Failed to allocate ");
+      systemPrint(length);
+      systemPrintln(" bytes from heap for prefix table");
+      break;
+    }
+    length = commandCount * sizeof(sortOrder);
+    sortOrder = (uint16_t *)malloc(length);
+    if (sortOrder == NULL)
+    {
+      systemPrint("ERROR: Failed to allocate ");
+      systemPrint(length);
+      systemPrintln(" bytes from heap for sortOrder table");
+      break;
+    }
+
+    //Add all of the commands to the command table
+    if (commandTable)
+    {
+      for (index = 0; index < commandCount; index++)
+      {
+        cmdTable[index] = commandTable;
+        cmdNumber[index] = commandTable[index].number;
+      }
+    }
+    else
+    {
+      commandCount = 0;
+      for (index = 0; index < prefixCount; index++)
+        if (prefixTable[index].commandTable)
+        {
+          commandTable = prefixTable[index].commandTable;
+          for (int cmd = 0; cmd < prefixTable[index].commandCount; cmd++)
+          {
+            if (displayAll || prefixTable[index].displayHelp)
+            {
+              prefix[commandCount] = &prefixTable[index];
+              cmdTable[commandCount] = commandTable;
+              cmdNumber[commandCount] = commandTable[cmd].number;
+              commandCount += 1;
+            }
+          }
+          commandTable = NULL;
+        }
+    }
+
+    //Set the default sort order
+    for (index = 0; index < commandCount; index++)
+      sortOrder[index] = index;
+    petWDT();
+
+    //Perform a bubble sort
+    if (settings.sortParametersByName)
+      for (index = 0; index < commandCount; index++)
+        for (x = index + 1; x < commandCount; x++)
+          if (stricmp((cmdTable[sortOrder[index]])[cmdNumber[sortOrder[index]]].name,
+                       (cmdTable[sortOrder[x]])[cmdNumber[sortOrder[x]]].name) > 0)
+          {
+            temp = sortOrder[index];
+            sortOrder[index] = sortOrder[x];
+            sortOrder[x] = temp;
+          }
+
+    //Print the parameters
+    for (index = 0; index < commandCount; index++)
+    {
+      petWDT(); //Printing may take longer than WDT at 9600, so pet the WDT.
+
+      if (printerEndpoint == PRINT_TO_RF)
+        systemPrint("R"); //If someone is asking for our settings over RF, respond with 'R' style settings
+      else
+        systemPrint("A");
+
+      if (suffix)
+        systemPrint(suffix);
+      else
+        systemPrint(&prefix[sortOrder[index]]->prefix[1]);
+      systemPrint(cmdNumber[sortOrder[index]]);
+      systemPrint(":");
+      commandDisplay(cmdTable[sortOrder[index]],
+                     commandTable ? commandCount : prefix[sortOrder[index]]->commandCount,
+                     cmdNumber[sortOrder[index]],
+                     true);
+    }
+  } while (0);
+
+  //Free the allocated memory
+  if (cmdNumber)
+    free(cmdNumber);
+  if (cmdTable)
+    free((void *)cmdTable);
+  if (prefix)
+    free((void *)prefix);
+  if (sortOrder)
+    free(sortOrder);
+/*
   int index;
   uint8_t sortOrder[commandCount];
   uint8_t temp;
@@ -1076,4 +1250,5 @@ void displayParameters(const COMMAND_ENTRY * commandTable, int commandCount, con
     systemPrint(":");
     commandDisplay(commandTable, commandCount, commandTable[sortOrder[index]].number, true);
   }
+*/
 }

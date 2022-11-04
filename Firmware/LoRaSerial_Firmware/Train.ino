@@ -236,7 +236,7 @@ void endClientServerTraining(uint8_t event)
   settings = originalSettings; //Return to original radio settings
 
   if (settings.debugTraining)
-    displayParameters();
+    displayParameters(false);
 
   if (!settings.trainingServer)
   {
