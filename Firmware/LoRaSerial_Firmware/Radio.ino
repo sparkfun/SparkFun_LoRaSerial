@@ -207,7 +207,7 @@ void returnToReceiving()
   }
 
   if (state != RADIOLIB_ERR_NONE) {
-  if ((settings.debug == true) || (settings.debugRadio == true))
+    if ((settings.debug == true) || (settings.debugRadio == true))
     {
       systemPrint("Receive failed: ");
       systemPrintln(state);
@@ -370,13 +370,32 @@ uint16_t myRand()
 //Move to the next channel
 //This is called when the FHSS interrupt is received
 //at the beginning and during of a transmission or reception
+
 void hopChannel()
+{
+  hopChannel(true); //Move forward
+}
+
+void hopChannelReverse()
+{
+  hopChannel(false); //Move backward
+}
+
+void hopChannel(bool moveForwardThroughTable)
 {
   timeToHop = false;
   triggerEvent(TRIGGER_FREQ_CHANGE);
 
-  channelNumber++;
-  channelNumber %= settings.numberOfChannels;
+  if (moveForwardThroughTable)
+  {
+    channelNumber++;
+    channelNumber %= settings.numberOfChannels;
+  }
+  else
+  {
+    if (channelNumber == 0) channelNumber = settings.numberOfChannels;
+    channelNumber--;
+  }
 
   //Select the new frequency
   float frequency;
