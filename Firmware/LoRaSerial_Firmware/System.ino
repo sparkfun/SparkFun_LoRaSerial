@@ -623,3 +623,18 @@ int stricmp(const char * str1, const char * str2)
   //Return the difference between the two strings
   return char1 - char2;
 }
+
+void printPacketQuality()
+{
+  if (settings.displayPacketQuality == true)
+  {
+    systemPrintln();
+    systemPrint("R:");
+    systemPrint(radio.getRSSI());
+    systemPrint("\tS:");
+    systemPrint(radio.getSNR());
+    systemPrint("\tfE:");
+    systemPrint(radio.getFrequencyError());
+    systemPrintln();
+  }
+}

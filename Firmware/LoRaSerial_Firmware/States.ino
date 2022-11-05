@@ -165,18 +165,7 @@ void updateRadioState()
             break;
 
           case DATAGRAM_P2P_TRAINING_PING:
-            //Display the signal strength
-            if (settings.displayPacketQuality == true)
-            {
-              systemPrintln();
-              systemPrint("R:");
-              systemPrint(radio.getRSSI());
-              systemPrint("\tS:");
-              systemPrint(radio.getSNR());
-              systemPrint("\tfE:");
-              systemPrint(radio.getFrequencyError());
-              systemPrintln();
-            }
+            printPacketQuality();
 
             triggerEvent(TRIGGER_TRAINING_CONTROL_PACKET);
 
@@ -559,18 +548,7 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DUPLICATE:
-            //Display the signal strength
-            if (settings.displayPacketQuality == true)
-            {
-              systemPrintln();
-              systemPrint("R:");
-              systemPrint(radio.getRSSI());
-              systemPrint("\tS:");
-              systemPrint(radio.getSNR());
-              systemPrint("\tfE:");
-              systemPrint(radio.getFrequencyError());
-              systemPrintln();
-            }
+            printPacketQuality();
 
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
@@ -591,18 +569,7 @@ void updateRadioState()
             clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
             timestampOffset = clockOffset;
 
-            //Display the signal strength
-            if (settings.displayPacketQuality == true)
-            {
-              systemPrintln();
-              systemPrint("R:");
-              systemPrint(radio.getRSSI());
-              systemPrint("\tS:");
-              systemPrint(radio.getSNR());
-              systemPrint("\tfE:");
-              systemPrint(radio.getFrequencyError());
-              systemPrintln();
-            }
+            printPacketQuality();
 
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
@@ -615,18 +582,7 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DATA:
-            //Display the signal strength
-            if (settings.displayPacketQuality == true)
-            {
-              systemPrintln();
-              systemPrint("R:");
-              systemPrint(radio.getRSSI());
-              systemPrint("\tS:");
-              systemPrint(radio.getSNR());
-              systemPrint("\tfE:");
-              systemPrint(radio.getFrequencyError());
-              systemPrintln();
-            }
+            printPacketQuality();
 
             //Place the data in the serial output buffer
             serialBufferOutput(rxData, rxDataBytes);
@@ -793,18 +749,8 @@ void updateRadioState()
 
             setHeartbeatLong(); //Those who send an ACK have short time to next heartbeat. Those who send a heartbeat or data have long time to next heartbeat.
 
-            //Display the signal strength
-            if (settings.displayPacketQuality == true)
-            {
-              systemPrintln();
-              systemPrint("R:");
-              systemPrint(radio.getRSSI());
-              systemPrint("\tS:");
-              systemPrint(radio.getSNR());
-              systemPrint("\tfE:");
-              systemPrint(radio.getFrequencyError());
-              systemPrintln();
-            }
+            printPacketQuality();
+
 
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
@@ -824,18 +770,8 @@ void updateRadioState()
             clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
             timestampOffset = clockOffset;
 
-            //Display the signal strength
-            if (settings.displayPacketQuality == true)
-            {
-              systemPrintln();
-              systemPrint("R:");
-              systemPrint(radio.getRSSI());
-              systemPrint("\tS:");
-              systemPrint(radio.getSNR());
-              systemPrint("\tfE:");
-              systemPrint(radio.getFrequencyError());
-              systemPrintln();
-            }
+            printPacketQuality();
+
 
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
@@ -1011,17 +947,8 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DATAGRAM:
-            if (settings.displayPacketQuality == true)
-            {
-              systemPrintln();
-              systemPrint("R:");
-              systemPrint(radio.getRSSI());
-              systemPrint("\tS:");
-              systemPrint(radio.getSNR());
-              systemPrint("\tfE:");
-              systemPrint(radio.getFrequencyError());
-              systemPrintln();
-            }
+            printPacketQuality();
+
 
             //Place the data in the serial output buffer
             serialBufferOutput(rxData, rxDataBytes);
