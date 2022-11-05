@@ -145,6 +145,7 @@ typedef enum
 
   //Common datagram types
   DATAGRAM_BAD,
+  DATAGRAM_CRC_ERROR,
   DATAGRAM_NETID_MISMATCH,
   DATAGRAM_DUPLICATE,
 } PacketType;

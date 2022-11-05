@@ -577,7 +577,28 @@ PacketType rcvDatagram()
 
   //Get the received datagram
   framesReceived++;
-  radio.readData(incomingBuffer, MAX_PACKET_SIZE);
+  int state = radio.readData(incomingBuffer, MAX_PACKET_SIZE);
+
+  if (state == RADIOLIB_ERR_NONE)
+  {
+    //Do nothing
+  }
+  else if (state == RADIOLIB_ERR_CRC_MISMATCH)
+  {
+    if (setting.debug == true)
+      systemPrintln("Receive CRC error!");
+    return (DATAGRAM_CRC_ERROR);
+  }
+  else
+  {
+    if (settings.debug == true)
+    {
+      systemPrint("Receive error: "));
+      systemPrintln(state);
+    }
+    return (DATAGRAM_BAD);
+  }
+
   rxDataBytes = radio.getPacketLength();
   rxData = incomingBuffer;
 
@@ -736,7 +757,7 @@ PacketType rcvDatagram()
           dumpBuffer(incomingBuffer, rxDataBytes);
       }
       badCrc++;
-      return (DATAGRAM_BAD);
+      return (DATAGRAM_CRC_ERROR);
     }
   }
 
@@ -1533,8 +1554,8 @@ void syncChannelTimer()
 
   int16_t msToNextHop = msToNextHopRemote; //By default, we will adjust our clock to match our mate's
 
-  bool resetHop = false; //The hop ISR may occur while we are forcing a hop (case A and C). Reset timeToHop as needed. 
-  
+  bool resetHop = false; //The hop ISR may occur while we are forcing a hop (case A and C). Reset timeToHop as needed.
+
   //Below are the edge cases that occur when a hop occurs near ACK reception
 
   //msToNextHopLocal is small and msToNextHopRemote is negative
@@ -1593,9 +1614,9 @@ void syncChannelTimer()
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
 
-  if(resetHop) //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
+  if (resetHop) //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
     timeToHop = false;
-  
+
   channelTimer.enableTimer();
 
   triggerEvent(TRIGGER_SYNC_CHANNEL); //Trigger after adjustments to timer to avoid skew during debug
