@@ -422,7 +422,6 @@ typedef void (* ARCH_PET_WDT)();
 typedef Module * (* ARCH_RADIO)();
 typedef bool (* ARCH_SERIAL_AVAILABLE)();
 typedef void (* ARCH_SERIAL_FLUSH)();
-typedef void (* ARCH_SERIAL_PRINT)(const char * value);
 typedef uint8_t (* ARCH_SERIAL_READ)();
 typedef void (* ARCH_SERIAL_WRITE)(uint8_t value);
 typedef void (* ARCH_SYSTEM_RESET)();
@@ -439,7 +438,6 @@ typedef struct _ARCH_TABLE
   ARCH_RADIO radio;               //Initialize the radio
   ARCH_SERIAL_AVAILABLE serialAvailable;  //Determine if serial data is available
   ARCH_SERIAL_FLUSH serialFlush;  //Flush the serial port
-  ARCH_SERIAL_PRINT serialPrint;  //Print the specified string value
   ARCH_SERIAL_READ serialRead;    //Read a byte from the serial port
   ARCH_SERIAL_WRITE serialWrite;  //Print the specified character
   ARCH_SYSTEM_RESET systemReset;  //Reset the system

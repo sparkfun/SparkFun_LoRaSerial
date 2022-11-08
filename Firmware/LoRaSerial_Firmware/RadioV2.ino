@@ -924,7 +924,7 @@ PacketType rcvDatagram()
         }
 
         //Verify that there is sufficient space in the serialTransmitBuffer
-        if ((sizeof(serialTransmitBuffer) - availableTXBytes()) < rxDataBytes)
+        if (inCommandMode || ((sizeof(serialTransmitBuffer) - availableTXBytes()) < rxDataBytes))
         {
           if (settings.debugReceive)
           {

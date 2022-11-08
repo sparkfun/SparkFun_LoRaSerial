@@ -129,6 +129,7 @@ bool commandAT(const char * commandString)
         break;
       case ('Z'): //Reboots the radio
         reportOK();
+        outputSerialData(true);
         systemFlush();
         systemReset();
         break;
