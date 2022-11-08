@@ -19,20 +19,6 @@ enum {
   TYPE_U32,
 };
 
-typedef bool (* VALIDATION_ROUTINE)(void * value, uint32_t valMin, uint32_t valMax);
-
-typedef struct _COMMAND_ENTRY
-{
-  uint8_t number;
-  uint32_t minValue;
-  uint32_t maxValue;
-  uint8_t digits;
-  uint8_t type;
-  VALIDATION_ROUTINE validate;
-  const char * name;
-  void * setting;
-} COMMAND_ENTRY;
-
 typedef bool (* COMMAND_ROUTINE)(const char * commandString);
 typedef struct
 {
@@ -75,6 +61,8 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATT - Enter training mode");
         systemPrintln("  ATX - Stop the training server");
         systemPrintln("  ATZ - Reboot the radio");
+        systemPrintln("  AT-Param=xxx - Set parameter's value to xxx by name (Param)");
+        systemPrintln("  AT-Param? - Print parameter's current value by name (Param)");
         systemPrintln("  AT&F - Restore factory settings");
         systemPrintln("  AT&W - Save current settings to NVM");
         break;
@@ -411,6 +399,7 @@ bool sendRemoteCommand(const char * commandString)
 
 const COMMAND_PREFIX prefixTable[] = {
   {"ATS", commandSet},
+  {"AT-", commandSetByName},
   {"AT", commandAT},
   {"RT", sendRemoteCommand},
 };
@@ -645,7 +634,7 @@ const COMMAND_ENTRY commands[] =
   {15,   5,   8,     0, TYPE_U8,           valOverride,    "CodingRate",           &settings.radioCodingRate},
   {16,   0, 255,     0, TYPE_U8,           valInt,         "SyncWord",             &settings.radioSyncWord},
   {17,   6, 65535,   0, TYPE_U16,          valInt,         "PreambleLength",       &settings.radioPreambleLength},
-  {18,   0, MAX_VC,  0, TYPE_U8,           valInt,         "CmdVC",                &cmdVc},
+  {18,   0, MAX_VC-1,0, TYPE_U8,           valInt,         "CmdVC",                &cmdVc},
   {19,  10, 2000,    0, TYPE_U16,          valInt,         "FrameTimeout",         &settings.serialTimeoutBeforeSendingFrame_ms},
 
   {20,    0,   1,    0, TYPE_BOOL,         valInt,         "Debug",                &settings.debug},
@@ -672,8 +661,8 @@ const COMMAND_ENTRY commands[] =
   {38,    1, 255,    0, TYPE_U8,           valInt,         "TriggerWidth",         &settings.triggerWidth},
   {39,    0,   1,    0, TYPE_BOOL,         valInt,         "TriggerWidthIsMultiplier", &settings.triggerWidthIsMultiplier},
 
-  {40,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable: 31-0",  &settings.triggerEnable},
-  {41,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable2: 63-32", &settings.triggerEnable2},
+  {40,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable_31-0",   &settings.triggerEnable},
+  {41,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable_63-32",  &settings.triggerEnable2},
   {42,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugReceive",         &settings.debugReceive},
   {43,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &settings.debugTransmit},
   {44,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTxErrors",        &settings.printTxErrors},
@@ -778,27 +767,87 @@ void commandDisplay(uint8_t number, bool printName)
   systemPrintln();
 }
 
+//Set or display the parameter by name
+bool commandSetByName(const char * commandString)
+{
+  const char * buffer;
+  const COMMAND_ENTRY * command;
+  int index;
+  int nameLength;
+  int number;
+  const char * param;
+  int paramLength;
+  int table;
+
+  //Determine the parameter name length
+  param = &commandString[3];
+  buffer = param;
+  paramLength = 0;
+  while (*buffer && (*buffer != '=') && (*buffer != '?'))
+  {
+    buffer++;
+    paramLength += 1;
+  }
+
+  command = NULL;
+  for (index = 0; index < commandCount; index++)
+  {
+    nameLength = strlen(commands[index].name);
+    if (nameLength == paramLength)
+    {
+      //Compare the parameter names
+      if (strnicmp(param, commands[index].name, nameLength) == 0)
+      {
+        command = &commands[index];
+        break;
+      }
+    }
+  }
+
+  //Verify that the parameter was found
+  if (!command)
+    //Report the error
+    return false;
+
+  //Process this command
+  return commandSetOrDisplayValue(command, buffer);
+}
+
 //Set or display the command
 bool commandSet(const char * commandString)
 {
   const char * buffer;
   const COMMAND_ENTRY * command;
-  double doubleSettingValue;
   int index;
   uint32_t number;
+
+  //Validate the command number
+  buffer = commandGetNumber(&commandString[3], &number);
+  command = NULL;
+  for (index = 0; index < commandCount; index++)
+    if (number == commands[index].number)
+    {
+      command = &commands[index];
+      break;
+    }
+
+  //Verify that the parameter was found
+  if (!command)
+    //Report the error
+    return false;
+
+  //Process this command
+  return commandSetOrDisplayValue(command, buffer);
+}
+
+//Set or display the command
+bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer)
+{
+  double doubleSettingValue;
   uint32_t settingValue;
   bool valid;
 
   do {
-    //Validate the command number
-    buffer = commandGetNumber(&commandString[3], &number);
-    for (index = 0; index < commandCount; index++)
-      if (number == commands[index].number)
-        break;
-    if (index >= commandCount)
-      break;
-    command = &commands[index];
-
     //Is this a display request
     if (strcmp(buffer, "?") == 0)
     {

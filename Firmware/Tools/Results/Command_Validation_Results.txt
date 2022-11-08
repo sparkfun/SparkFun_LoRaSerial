@@ -20,6 +20,8 @@ Command summary:
   ATT - Enter training mode
   ATX - Stop the training server
   ATZ - Reboot the radio
+  AT-Param=xxx - Set parameter's value to xxx by name (Param)
+  AT-Param? - Print parameter's current value by name (Param)
   AT&F - Restore factory settings
   AT&W - Save current settings to NVM
 ati?
@@ -60,31 +62,31 @@ SparkFun LoRaSerial SAMD21 1W 915MHz
 	ati2
 2.0
 ati3
--4
+-157
 ati4
-122
+205
 ati5
 506
 ati6
 37782141A665734E4475672AE6308308
 ati7
-10
+0
 ati8
-E5D60B0B4A34555020312E34212815FF
+B2A99BF24A34555020312E34162815FF
 ati9
-Total datagrams sent: 3
+Total datagrams sent: 678
 ati10
-Total datagrams received: 1
+Total datagrams received: 0
 ati11
-Total frames sent: 1
+Total frames sent: 0
 ati12
-Total frames sent: 1
+Total frames sent: 0
 ati13
 Total bad frames received: 0
 ati14
 Total duplicate frames received: 0
 ati15
-Total lost TX frames: 1
+Total lost TX frames: 0
 ati16
 Maximum datagram size: 253
 ati17
@@ -150,8 +152,8 @@ ATS36:PrintPktData=0
 ATS37:VerifyRxNetID=0
 ATS38:TriggerWidth=25
 ATS39:TriggerWidthIsMultiplier=1
-ATS40:TriggerEnable: 31-0=-1
-ATS41:TriggerEnable2: 63-32=-1
+ATS40:TriggerEnable_31-0=-1
+ATS41:TriggerEnable_63-32=-1
 ATS42:DebugReceive=0
 ATS43:DebugTransmit=0
 ATS44:PrintTxErrors=0
@@ -171,11 +173,9 @@ ATS57:PrintLinkUpDown=0
 ATS58:InvertCts=0
 ATS59:InvertRts=0
 ATS60:AlternateLedUsage=0
-ats28=0
+at-PrintParameterName=0
 OK
-# SerialSpeed
-ERROR
-ats0=0
+at-SerialSpeed=0
 ERROR
 ats0=1
 ERROR
@@ -197,7 +197,7 @@ ats0=600
 ERROR
 ats0=1200
 ERROR
-ats0=2400
+at-SerialSpeed=2400
 OK
 ats0=4800
 OK
@@ -251,11 +251,11 @@ ats0=57600
 OK
 ats0?
 57600
-# AirSpeed
-ERROR
+at-SerialSpeed?
+57600
 ats1=1
 ERROR
-ats1=40
+at-AirSpeed=40
 OK
 ats1=50
 ERROR
@@ -327,9 +327,9 @@ ats1=0
 OK
 ats1?
 0
-# NetID
-ERROR
-ats2=0
+at-AirSpeed?
+0
+at-NetID=0
 OK
 ats2=255
 OK
@@ -337,9 +337,9 @@ ats2=192
 OK
 ats2?
 192
-# OperatingMode
-ERROR
-ats3=0
+at-NetID?
+192
+at-OperatingMode=0
 OK
 ats3=2
 OK
@@ -349,9 +349,9 @@ ats3=1
 OK
 ats3?
 1
-# EncryptData
-ERROR
-ats4=0
+at-OperatingMode?
+1
+at-EncryptData=0
 OK
 ats4=2
 ERROR
@@ -359,9 +359,9 @@ ats4=1
 OK
 ats4?
 1
-# EncryptionKey
-ERROR
-ats5=00112233445566778899aabbccddeeff
+at-EncryptData?
+1
+at-EncryptionKey=00112233445566778899aabbccddeeff
 OK
 ats5?
 00112233445566778899AABBCCDDEEFF
@@ -375,9 +375,9 @@ ats5=37782141A665734E4475672AE6308308
 OK
 ats5?
 37782141A665734E4475672AE6308308
-# DataScrambling
-ERROR
-ats6=1
+at-EncryptionKey?
+37782141A665734E4475672AE6308308
+at-DataScrambling=1
 OK
 ats6=2
 ERROR
@@ -385,11 +385,11 @@ ats6=0
 OK
 ats6?
 0
-# TxPower
-ERROR
+at-DataScrambling?
+0
 ats7=13
 ERROR
-ats7=14
+at-TxPower=14
 OK
 ats7=31
 ERROR
@@ -397,9 +397,9 @@ ats7=30
 OK
 ats7?
 30
-# FrequencyMin
-ERROR
-ats9=928
+at-TxPower?
+30
+at-FrequencyMin=928
 OK
 ats8=0
 ERROR
@@ -415,13 +415,13 @@ ats8=902
 OK
 ats8?
 902.000
-# FrequencyMax
-ERROR
+at-FrequencyMin?
+902.000
 ats9=0
 ERROR
 ats9=901.9
 ERROR
-ats9=902
+at-FrequencyMin=902
 OK
 ats9=902.1
 OK
@@ -433,11 +433,11 @@ ats9=928
 OK
 ats9?
 928.000
-# NumberOfChannels
-ERROR
+at-FrequencyMin?
+902.000
 ats10=0
 ERROR
-ats10=1
+at-NumberOfChannels=1
 OK
 ats10=255
 OK
@@ -447,9 +447,9 @@ ats10=50
 OK
 ats10?
 50
-# FrequencyHop
-ERROR
-ats11=0
+at-NumberOfChannels?
+50
+at-FrequencyHop=0
 OK
 ats11=2
 ERROR
@@ -457,11 +457,11 @@ ats11=1
 OK
 ats11?
 1
-# MaxDwellTime
-ERROR
+at-FrequencyHop?
+1
 ats12=9
 ERROR
-ats12=10
+at-MaxDwellTime=10
 OK
 ats12=65535
 OK
@@ -471,12 +471,12 @@ ats12=400
 OK
 ats12?
 400
-# Bandwidth
-ERROR
-ats1=4800
+at-MaxDwellTime?
+400
+at-AirSpeed=4800
 Warning: AirSpeed override of bandwidth, spread factor, and coding rate
 OK
-ats13=0
+at-Bandwidth=0
 OK
 ats13=10.4
 AirSpeed is overriding
@@ -505,7 +505,7 @@ ERROR
 ats13=500
 AirSpeed is overriding
 ERROR
-ats1=0
+at-AirSpeed=0
 OK
 ats13=0
 ERROR
@@ -529,12 +529,12 @@ ats13=500
 OK
 ats13?
 500.00
-ats1=4800
+at-Bandwidth?
+500.00
+at-AirSpeed=4800
 Warning: AirSpeed override of bandwidth, spread factor, and coding rate
 OK
-# SpreadFactor
-ERROR
-ats14=5
+at-SpreadFactor=5
 AirSpeed is overriding
 ERROR
 ats14=6
@@ -549,11 +549,11 @@ ERROR
 ats14=9
 AirSpeed is overriding
 ERROR
-ats1=0
+at-AirSpeed=0
 OK
 ats14=5
 ERROR
-ats14=6
+at-SpreadFactor=6
 OK
 ats14=12
 OK
@@ -563,17 +563,17 @@ ats14=9
 OK
 ats14?
 9
-# CodingRate
-ERROR
+at-SpreadFactor?
+9
 ats15=4
 ERROR
-ats15=5
+at-CodingRate=5
 OK
 ats15=9
 ERROR
 ats15=8
 OK
-ats1=4800
+at-AirSpeed=4800
 Warning: AirSpeed override of bandwidth, spread factor, and coding rate
 OK
 ats15=4
@@ -590,9 +590,9 @@ AirSpeed is overriding
 ERROR
 ats15?
 8
-# SyncWord
-ERROR
-ats16=0
+at-CodingRate?
+8
+at-SyncWord=0
 OK
 ats16=255
 OK
@@ -602,11 +602,11 @@ ats16=18
 OK
 ats16?
 18
-# PreambleLength
-ERROR
+at-SyncWord?
+18
 ats17=5
 ERROR
-ats17=6
+at-PreambleLength=6
 OK
 ats17=255
 OK
@@ -620,17 +620,21 @@ ats17=8
 OK
 ats17?
 8
-# FrameSize
-ERROR
-ats18=0
+at-PreambleLength?
+8
+at-CmdVC=0
 OK
-ats18?
-0
-# FrameTimeout
+ats18=7;
+OK
+ats18=8;
 ERROR
+ats18?
+7
+at-CmdVC?
+7
 ats19=9
 ERROR
-ats19=10
+at-FrameTimeout=10
 OK
 ats19=2000
 OK
@@ -640,9 +644,9 @@ ats19=50
 OK
 ats19?
 50
-# Debug
-ERROR
-ats20=1
+at-FrameTimeout?
+50
+at-Debug=1
 OK
 ats20=2
 ERROR
@@ -650,9 +654,9 @@ ats20=0
 OK
 ats20?
 0
-# Echo
-ERROR
-ats21=1
+at-Debug?
+0
+at-Echo=1
 OK
 ats21=2
 ERROR
@@ -660,11 +664,11 @@ ats21=0
 OK
 ats21?
 0
-# HeartBeatTimeout
-ERROR
+at-Echo?
+0
 ats22=249
 ERROR
-ats22=250
+at-HeartBeatTimeout=250
 OK
 ats22=65535
 OK
@@ -674,9 +678,9 @@ ats22=5000
 OK
 ats22?
 5000
-# FlowControl
-ERROR
-ats23=1
+at-HeartBeatTimeout?
+5000
+at-FlowControl=1
 OK
 ats23=2
 ERROR
@@ -684,9 +688,9 @@ ats23=0
 OK
 ats23?
 0
-# AutoTune
-ERROR
-ats24=1
+at-FlowControl?
+0
+at-AutoTune=1
 OK
 ats24=2
 ERROR
@@ -694,9 +698,9 @@ ats24=0
 OK
 ats24?
 0
-# DisplayPacketQuality
-ERROR
-ats25=1
+at-AutoTune?
+0
+at-DisplayPacketQuality=1
 OK
 ats25=2
 ERROR
@@ -704,9 +708,9 @@ ats25=0
 OK
 ats25?
 0
-# MaxResends
-ERROR
-ats26=0
+at-DisplayPacketQuality?
+0
+at-MaxResends=0
 OK
 ats26=255
 OK
@@ -716,9 +720,9 @@ ats26=2
 OK
 ats26?
 2
-# SortParametersByName
-ERROR
-ats27=0
+at-MaxResends?
+2
+at-SortParametersByName=0
 OK
 ats27=2
 ERROR
@@ -726,9 +730,9 @@ ats27=1
 OK
 ats27?
 1
-# ParameterName
-ERROR
-ats28=0
+at-SortParametersByName?
+1
+at-PrintParameterName=0
 OK
 ats28=2
 ERROR
@@ -737,9 +741,9 @@ PrintParameterName=1
 OK
 ats28?
 PrintParameterName=1
-# PrintFrequency
-ERROR
-ats29=1
+at-PrintParameterName?
+PrintParameterName=1
+at-PrintFrequency=1
 PrintFrequency=1
 OK
 ats29=2
@@ -749,9 +753,9 @@ PrintFrequency=0
 OK
 ats29?
 PrintFrequency=0
-# DebugRadio
-ERROR
-ats30=1
+at-PrintFrequency?
+PrintFrequency=0
+at-DebugRadio=1
 DebugRadio=1
 OK
 ats30=2
@@ -761,9 +765,9 @@ DebugRadio=0
 OK
 ats30?
 DebugRadio=0
-# DebugStates
-ERROR
-ats31=1
+at-DebugRadio?
+DebugRadio=0
+at-DebugStates=1
 DebugStates=1
 OK
 ats31=2
@@ -773,9 +777,9 @@ DebugStates=0
 OK
 ats31?
 DebugStates=0
-# DebugTraining
-ERROR
-ats32=1
+at-DebugStates?
+DebugStates=0
+at-DebugTraining=1
 DebugTraining=1
 OK
 ats32=2
@@ -785,9 +789,9 @@ DebugTraining=0
 OK
 ats32?
 DebugTraining=0
-# DebugTrigger
-ERROR
-ats33=1
+at-DebugTraining?
+DebugTraining=0
+at-DebugTrigger=1
 DebugTrigger=1
 OK
 ats33=2
@@ -797,9 +801,9 @@ DebugTrigger=0
 OK
 ats33?
 DebugTrigger=0
-# UsbSerialWait
-ERROR
-ats34=1
+at-DebugTrigger?
+DebugTrigger=0
+at-UsbSerialWait=1
 UsbSerialWait=1
 OK
 ats34=2
@@ -809,9 +813,9 @@ UsbSerialWait=0
 OK
 ats34?
 UsbSerialWait=0
-# PrintRfData
-ERROR
-ats35=1
+at-UsbSerialWait?
+UsbSerialWait=0
+at-PrintRfData=1
 PrintRfData=1
 OK
 ats35=2
@@ -821,9 +825,9 @@ PrintRfData=0
 OK
 ats35?
 PrintRfData=0
-# PrintPktData
-ERROR
-ats36=1
+at-PrintRfData?
+PrintRfData=0
+at-PrintPktData=1
 PrintPktData=1
 OK
 ats36=2
@@ -833,9 +837,9 @@ PrintPktData=0
 OK
 ats36?
 PrintPktData=0
-# VerifyRxNetID
-ERROR
-ats37=1
+at-PrintPktData?
+PrintPktData=0
+at-VerifyRxNetID=1
 VerifyRxNetID=1
 OK
 ats37=2
@@ -845,11 +849,11 @@ VerifyRxNetID=0
 OK
 ats37?
 VerifyRxNetID=0
-# TriggerWidth
-ERROR
+at-VerifyRxNetID?
+VerifyRxNetID=0
 ats38=0
 ERROR
-ats38=1
+at-TriggerWidth=1
 TriggerWidth=1
 OK
 ats38=255
@@ -862,9 +866,9 @@ TriggerWidth=25
 OK
 ats38?
 TriggerWidth=25
-# TriggerWidthIsMultiplier
-ERROR
-ats39=0
+at-TriggerWidth?
+TriggerWidth=25
+at-TriggerWidthIsMultiplier=0
 TriggerWidthIsMultiplier=0
 OK
 ats39=2
@@ -874,29 +878,29 @@ TriggerWidthIsMultiplier=1
 OK
 ats39?
 TriggerWidthIsMultiplier=1
-# TriggerEnable: 31-0
-ERROR
-ats40=0
-TriggerEnable: 31-0=0
+at-TriggerWidthIsMultiplier?
+TriggerWidthIsMultiplier=1
+at-TriggerEnable_31-0=0
+TriggerEnable_31-0=0
 OK
 ats40=4294967295
-TriggerEnable: 31-0=-1
+TriggerEnable_31-0=-1
 OK
 ats40?
-TriggerEnable: 31-0=-1
-# TriggerEnable: 63-32
-ERROR
-ats41=0
-TriggerEnable2: 63-32=0
+TriggerEnable_31-0=-1
+at-TriggerEnable_31-0?
+TriggerEnable_31-0=-1
+at-TriggerEnable_63-32=0
+TriggerEnable_63-32=0
 OK
 ats41=4294967295
-TriggerEnable2: 63-32=-1
+TriggerEnable_63-32=-1
 OK
 ats41?
-TriggerEnable2: 63-32=-1
-# DebugReceive
-ERROR
-ats42=1
+TriggerEnable_63-32=-1
+at-TriggerEnable_63-32?
+TriggerEnable_63-32=-1
+at-DebugReceive=1
 DebugReceive=1
 OK
 ats42=2
@@ -906,9 +910,9 @@ DebugReceive=0
 OK
 ats42?
 DebugReceive=0
-# DebugTransmit
-ERROR
-ats43=1
+at-DebugReceive?
+DebugReceive=0
+at-DebugTransmit=1
 DebugTransmit=1
 OK
 ats43=2
@@ -918,9 +922,9 @@ DebugTransmit=0
 OK
 ats43?
 DebugTransmit=0
-# PrintTxErrors
-ERROR
-ats44=1
+at-DebugTransmit?
+DebugTransmit=0
+at-PrintTxErrors=1
 PrintTxErrors=1
 OK
 ats44=2
@@ -930,22 +934,22 @@ PrintTxErrors=0
 OK
 ats44?
 PrintTxErrors=0
-# radioProtocolVersion
-ERROR
+at-PrintTxErrors?
+PrintTxErrors=0
 ats45=0
 ERROR
 ats45=1
 ERROR
-ats45=2
+at-radioProtocolVersion=2
 radioProtocolVersion=2
 OK
 ats45=3
 ERROR
 ats45?
 radioProtocolVersion=2
-# PrintTimestamp
-ERROR
-ats46=1
+at-radioProtocolVersion?
+radioProtocolVersion=2
+at-PrintTimestamp=1
 PrintTimestamp=1
 OK
 ats46=2
@@ -955,9 +959,9 @@ PrintTimestamp=0
 OK
 ats46?
 PrintTimestamp=0
-# debugDatagrams
-ERROR
-ats47=1
+at-PrintTimestamp?
+PrintTimestamp=0
+at-debugDatagrams=1
 DebugDatagrams=1
 OK
 ats47=2
@@ -967,22 +971,21 @@ DebugDatagrams=0
 OK
 ats47?
 DebugDatagrams=0
-# txAckMillis
-ERROR
-ats48=1
-OverHeadtime=1
-OK
-ats48=2
-OverHeadtime=2
-OK
-ats48=0
+at-debugDatagrams?
+DebugDatagrams=0
+at-OverHeadtime=0
 OverHeadtime=0
 OK
+ats48=1000
+OverHeadtime=1000
+OK
+ats48=1001
+ERROR
 ats48?
-OverHeadtime=0
-# enableCRC16
-ERROR
-ats49=1
+OverHeadtime=1000
+at-OverHeadtime?
+OverHeadtime=1000
+at-enableCRC16=1
 EnableCRC16=1
 OK
 ats49=2
@@ -992,9 +995,9 @@ EnableCRC16=0
 OK
 ats49?
 EnableCRC16=0
-# DisplayRealMillis
-ERROR
-ats50=1
+at-enableCRC16?
+EnableCRC16=0
+at-DisplayRealMillis=1
 DisplayRealMillis=1
 OK
 ats50=2
@@ -1004,9 +1007,9 @@ DisplayRealMillis=0
 OK
 ats50?
 DisplayRealMillis=0
-# TrainingServer
-ERROR
-ats51=1
+at-DisplayRealMillis?
+DisplayRealMillis=0
+at-TrainingServer=1
 TrainingServer=1
 OK
 ats51=2
@@ -1016,9 +1019,9 @@ TrainingServer=0
 OK
 ats51?
 TrainingServer=0
-# ClientRetryInterval
-ERROR
-ats52=1
+at-TrainingServer?
+TrainingServer=0
+at-ClientRetryInterval=1
 ClientRetryInterval=1
 OK
 ats52=2
@@ -1028,9 +1031,9 @@ ats52=0
 ERROR
 ats52?
 ClientRetryInterval=2
-# CopyDebug
-ERROR
-ats53=1
+at-ClientRetryInterval?
+ClientRetryInterval=2
+at-CopyDebug=1
 CopyDebug=1
 OK
 ats53=2
@@ -1040,9 +1043,9 @@ CopyDebug=0
 OK
 ats53?
 CopyDebug=0
-# CopySerial
-ERROR
-ats54=1
+at-CopyDebug?
+CopyDebug=0
+at-CopySerial=1
 CopySerial=1
 OK
 ats54=2
@@ -1052,9 +1055,9 @@ CopySerial=0
 OK
 ats54?
 CopySerial=0
-# CopyTriggers
-ERROR
-ats55=1
+at-CopySerial?
+CopySerial=0
+at-CopyTriggers=1
 CopyTriggers=1
 OK
 ats55=2
@@ -1064,9 +1067,9 @@ CopyTriggers=0
 OK
 ats55?
 CopyTriggers=0
-# TrainingKey
-ERROR
-ats56=01020304050607080910111213141516
+at-CopyTriggers?
+CopyTriggers=0
+at-TrainingKey=01020304050607080910111213141516
 TrainingKey=01020304050607080910111213141516
 OK
 ats56=0102030405060708091011121314151
@@ -1075,9 +1078,9 @@ ats56=010203040506070809101112131415160
 ERROR
 ats56?
 TrainingKey=01020304050607080910111213141516
-# PrintLinkUpDown
-ERROR
-ats57=1
+at-TrainingKey?
+TrainingKey=01020304050607080910111213141516
+at-PrintLinkUpDown=1
 PrintLinkUpDown=1
 OK
 ats57=2
@@ -1087,9 +1090,9 @@ PrintLinkUpDown=0
 OK
 ats57?
 PrintLinkUpDown=0
-# InvertCts
-ERROR
-ats58=1
+at-PrintLinkUpDown?
+PrintLinkUpDown=0
+at-InvertCts=1
 InvertCts=1
 OK
 ats58=2
@@ -1099,9 +1102,9 @@ InvertCts=0
 OK
 ats58?
 InvertCts=0
-# InvertRts
-ERROR
-ats59=1
+at-InvertCts?
+InvertCts=0
+at-InvertRts=1
 InvertRts=1
 OK
 ats59=2
@@ -1111,9 +1114,9 @@ InvertRts=0
 OK
 ats59?
 InvertRts=0
-# AlternateLedUsage
-ERROR
-ats60=1
+at-InvertRts?
+InvertRts=0
+at-AlternateLedUsage=1
 AlternateLedUsage=1
 OK
 ats60=2
@@ -1122,6 +1125,8 @@ ats60=0
 AlternateLedUsage=0
 OK
 ats60?
+AlternateLedUsage=0
+at-AlternateLedUsage?
 AlternateLedUsage=0
 # Invalid commands
 ERROR
@@ -1133,13 +1138,17 @@ ats255=1
 ERROR
 ats255?
 ERROR
+at-foobar=1
+ERROR
+at-foobar?
+ERROR
 ati0
 ATS1:AirSpeed=4800
 ATS60:AlternateLedUsage=0
 ATS24:AutoTune=0
 ATS13:Bandwidth=500.00
 ATS52:ClientRetryInterval=2
-ATS18:CmdVC=0
+ATS18:CmdVC=7
 ATS15:CodingRate=8
 ATS53:CopyDebug=0
 ATS54:CopySerial=0
@@ -1172,7 +1181,7 @@ ATS26:MaxResends=2
 ATS2:netID=192
 ATS10:NumberOfChannels=50
 ATS3:OperatingMode=1
-ATS48:OverHeadtime=0
+ATS48:OverHeadtime=1000
 ATS17:PreambleLength=8
 ATS29:PrintFrequency=0
 ATS57:PrintLinkUpDown=0
@@ -1188,8 +1197,8 @@ ATS14:SpreadFactor=9
 ATS16:SyncWord=18
 ATS56:TrainingKey=01020304050607080910111213141516
 ATS51:TrainingServer=0
-ATS41:TriggerEnable2: 63-32=-1
-ATS40:TriggerEnable: 31-0=-1
+ATS40:TriggerEnable_31-0=-1
+ATS41:TriggerEnable_63-32=-1
 ATS38:TriggerWidth=25
 ATS39:TriggerWidthIsMultiplier=1
 ATS7:TxPower=30
