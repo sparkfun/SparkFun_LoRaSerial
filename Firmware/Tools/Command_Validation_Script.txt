@@ -37,10 +37,9 @@ ati26
 ati27
 ati0
 
-ats28=0
+at-PrintParameterName=0
 
-# SerialSpeed
-ats0=0
+at-SerialSpeed=0
 ats0=1
 ats0=40
 ats0=50
@@ -51,7 +50,7 @@ ats0=300
 ats0=400
 ats0=600
 ats0=1200
-ats0=2400
+at-SerialSpeed=2400
 ats0=4800
 ats0=9600
 ats0=14400
@@ -78,10 +77,10 @@ ats0=3686400
 ats0=4000000
 ats0=57600
 ats0?
+at-SerialSpeed?
 
-# AirSpeed
 ats1=1
-ats1=40
+at-AirSpeed=40
 ats1=50
 ats1=110
 ats1=134
@@ -117,50 +116,50 @@ ats1=3686400
 ats1=4000000
 ats1=0
 ats1?
+at-AirSpeed?
 
-# NetID
-ats2=0
+at-NetID=0
 ats2=255
 ats2=192
 ats2?
+at-NetID?
 
-# OperatingMode
-ats3=0
+at-OperatingMode=0
 ats3=2
 ats3=3
 ats3=1
 ats3?
+at-OperatingMode?
 
-# EncryptData
-ats4=0
+at-EncryptData=0
 ats4=2
 ats4=1
 ats4?
+at-EncryptData?
 
-# EncryptionKey
-ats5=00112233445566778899aabbccddeeff
+at-EncryptionKey=00112233445566778899aabbccddeeff
 ats5?
 ats5=00112233445566778899aabbccddeef
 ats5=00112233445566778899aabbccddeefff
 ats5=00112233445566778899aabbccddeefg
 ats5=37782141A665734E4475672AE6308308
 ats5?
+at-EncryptionKey?
 
-# DataScrambling
-ats6=1
+at-DataScrambling=1
 ats6=2
 ats6=0
 ats6?
+at-DataScrambling?
 
-# TxPower
 ats7=13
-ats7=14
+at-TxPower=14
 ats7=31
 ats7=30
 ats7?
+at-TxPower?
 
-# FrequencyMin
-ats9=928
+at-FrequencyMin=928
 ats8=0
 ats8=928.1
 ats8=928
@@ -168,43 +167,43 @@ ats8=927.9
 ats8=901.9
 ats8=902
 ats8?
+at-FrequencyMin?
 
-# FrequencyMax
 ats9=0
 ats9=901.9
-ats9=902
+at-FrequencyMin=902
 ats9=902.1
 ats9=927.9
 ats9=928.1
 ats9=928
 ats9?
+at-FrequencyMin?
 
-# NumberOfChannels
 ats10=0
-ats10=1
+at-NumberOfChannels=1
 ats10=255
 ats10=256
 ats10=50
 ats10?
+at-NumberOfChannels?
 
-# FrequencyHop
-ats11=0
+at-FrequencyHop=0
 ats11=2
 ats11=1
 ats11?
+at-FrequencyHop?
 
-# MaxDwellTime
 ats12=9
-ats12=10
+at-MaxDwellTime=10
 ats12=65535
 ast12=65536
 ats12=400
 ats12?
+at-MaxDwellTime?
 
-# Bandwidth
-ats1=4800
+at-AirSpeed=4800
 
-ats13=0
+at-Bandwidth=0
 ats13=10.4
 ats13=15.6
 ats13=20
@@ -215,7 +214,7 @@ ats13=125
 ats13=250
 ats13=500
 
-ats1=0
+at-AirSpeed=0
 
 ats13=0
 ats13=10.4
@@ -228,317 +227,320 @@ ats13=125
 ats13=250
 ats13=500
 ats13?
+at-Bandwidth?
 
-ats1=4800
+at-AirSpeed=4800
 
-# SpreadFactor
-ats14=5
+at-SpreadFactor=5
 ats14=6
 ats14=12
 ats14=13
 ats14=9
 
-ats1=0
+at-AirSpeed=0
 
 ats14=5
-ats14=6
+at-SpreadFactor=6
 ats14=12
 ats14=13
 ats14=9
 ats14?
+at-SpreadFactor?
 
-# CodingRate
 ats15=4
-ats15=5
+at-CodingRate=5
 ats15=9
 ats15=8
 
-ats1=4800
+at-AirSpeed=4800
 
 ats15=4
 ats15=5
 ats15=9
 ats15=8
 ats15?
+at-CodingRate?
 
-# SyncWord
-ats16=0
+at-SyncWord=0
 ats16=255
 ats16=256
 ats16=18
 ats16?
+at-SyncWord?
 
-# PreambleLength
 ats17=5
-ats17=6
+at-PreambleLength=6
 ats17=255
 ats17=256
 ats17=65535
 ats17=65536
 ats17=8
 ats17?
+at-PreambleLength?
 
-# FrameSize
-ats18=0
+at-CmdVC=0
+ats18=7;
+ats18=8;
 ats18?
+at-CmdVC?
 
-# FrameTimeout
 ats19=9
-ats19=10
+at-FrameTimeout=10
 ats19=2000
 ats19=2001
 ats19=50
 ats19?
+at-FrameTimeout?
 
-# Debug
-ats20=1
+at-Debug=1
 ats20=2
 ats20=0
 ats20?
+at-Debug?
 
-# Echo
-ats21=1
+at-Echo=1
 ats21=2
 ats21=0
 ats21?
+at-Echo?
 
-# HeartBeatTimeout
 ats22=249
-ats22=250
+at-HeartBeatTimeout=250
 ats22=65535
 ats22=65536
 ats22=5000
 ats22?
+at-HeartBeatTimeout?
 
-# FlowControl
-ats23=1
+at-FlowControl=1
 ats23=2
 ats23=0
 ats23?
+at-FlowControl?
 
-# AutoTune
-ats24=1
+at-AutoTune=1
 ats24=2
 ats24=0
 ats24?
+at-AutoTune?
 
-# DisplayPacketQuality
-ats25=1
+at-DisplayPacketQuality=1
 ats25=2
 ats25=0
 ats25?
+at-DisplayPacketQuality?
 
-# MaxResends
-ats26=0
+at-MaxResends=0
 ats26=255
 ats26=256
 ats26=2
 ats26?
+at-MaxResends?
 
-# SortParametersByName
-ats27=0
+at-SortParametersByName=0
 ats27=2
 ats27=1
 ats27?
+at-SortParametersByName?
 
-# ParameterName
-ats28=0
+at-PrintParameterName=0
 ats28=2
 ats28=1
 ats28?
+at-PrintParameterName?
 
-# PrintFrequency
-ats29=1
+at-PrintFrequency=1
 ats29=2
 ats29=0
 ats29?
+at-PrintFrequency?
 
-# DebugRadio
-ats30=1
+at-DebugRadio=1
 ats30=2
 ats30=0
 ats30?
+at-DebugRadio?
 
-# DebugStates
-ats31=1
+at-DebugStates=1
 ats31=2
 ats31=0
 ats31?
+at-DebugStates?
 
-# DebugTraining
-ats32=1
+at-DebugTraining=1
 ats32=2
 ats32=0
 ats32?
+at-DebugTraining?
 
-# DebugTrigger
-ats33=1
+at-DebugTrigger=1
 ats33=2
 ats33=0
 ats33?
+at-DebugTrigger?
 
-# UsbSerialWait
-ats34=1
+at-UsbSerialWait=1
 ats34=2
 ats34=0
 ats34?
+at-UsbSerialWait?
 
-# PrintRfData
-ats35=1
+at-PrintRfData=1
 ats35=2
 ats35=0
 ats35?
+at-PrintRfData?
 
-# PrintPktData
-ats36=1
+at-PrintPktData=1
 ats36=2
 ats36=0
 ats36?
+at-PrintPktData?
 
-# VerifyRxNetID
-ats37=1
+at-VerifyRxNetID=1
 ats37=2
 ats37=0
 ats37?
+at-VerifyRxNetID?
 
-# TriggerWidth
 ats38=0
-ats38=1
+at-TriggerWidth=1
 ats38=255
 ats38=256
 ats38=25
 ats38?
+at-TriggerWidth?
 
-# TriggerWidthIsMultiplier
-ats39=0
+at-TriggerWidthIsMultiplier=0
 ats39=2
 ats39=1
 ats39?
+at-TriggerWidthIsMultiplier?
 
-# TriggerEnable: 31-0
-ats40=0
+at-TriggerEnable_31-0=0
 ats40=4294967295
 ats40?
+at-TriggerEnable_31-0?
 
-# TriggerEnable: 63-32
-ats41=0
+at-TriggerEnable_63-32=0
 ats41=4294967295
 ats41?
+at-TriggerEnable_63-32?
 
-# DebugReceive
-ats42=1
+at-DebugReceive=1
 ats42=2
 ats42=0
 ats42?
+at-DebugReceive?
 
-# DebugTransmit
-ats43=1
+at-DebugTransmit=1
 ats43=2
 ats43=0
 ats43?
+at-DebugTransmit?
 
-# PrintTxErrors
-ats44=1
+at-PrintTxErrors=1
 ats44=2
 ats44=0
 ats44?
+at-PrintTxErrors?
 
-# radioProtocolVersion
 ats45=0
 ats45=1
-ats45=2
+at-radioProtocolVersion=2
 ats45=3
 ats45?
+at-radioProtocolVersion?
 
-# PrintTimestamp
-ats46=1
+at-PrintTimestamp=1
 ats46=2
 ats46=0
 ats46?
+at-PrintTimestamp?
 
-# debugDatagrams
-ats47=1
+at-debugDatagrams=1
 ats47=2
 ats47=0
 ats47?
+at-debugDatagrams?
 
-# txAckMillis
-ats48=1
-ats48=2
-ats48=0
+at-OverHeadtime=0
+ats48=1000
+ats48=1001
 ats48?
+at-OverHeadtime?
 
-# enableCRC16
-ats49=1
+at-enableCRC16=1
 ats49=2
 ats49=0
 ats49?
+at-enableCRC16?
 
-# DisplayRealMillis
-ats50=1
+at-DisplayRealMillis=1
 ats50=2
 ats50=0
 ats50?
+at-DisplayRealMillis?
 
-# TrainingServer
-ats51=1
+at-TrainingServer=1
 ats51=2
 ats51=0
 ats51?
+at-TrainingServer?
 
-# ClientRetryInterval
-ats52=1
+at-ClientRetryInterval=1
 ats52=2
 ats52=0
 ats52?
+at-ClientRetryInterval?
 
-# CopyDebug
-ats53=1
+at-CopyDebug=1
 ats53=2
 ats53=0
 ats53?
+at-CopyDebug?
 
-# CopySerial
-ats54=1
+at-CopySerial=1
 ats54=2
 ats54=0
 ats54?
+at-CopySerial?
 
-# CopyTriggers
-ats55=1
+at-CopyTriggers=1
 ats55=2
 ats55=0
 ats55?
+at-CopyTriggers?
 
-# TrainingKey
-ats56=01020304050607080910111213141516
+at-TrainingKey=01020304050607080910111213141516
 ats56=0102030405060708091011121314151
 ats56=010203040506070809101112131415160
 ats56?
+at-TrainingKey?
 
-# PrintLinkUpDown
-ats57=1
+at-PrintLinkUpDown=1
 ats57=2
 ats57=0
 ats57?
+at-PrintLinkUpDown?
 
-# InvertCts
-ats58=1
+at-InvertCts=1
 ats58=2
 ats58=0
 ats58?
+at-InvertCts?
 
-# InvertRts
-ats59=1
+at-InvertRts=1
 ats59=2
 ats59=0
 ats59?
+at-InvertRts?
 
-# AlternateLedUsage
-ats60=1
+at-AlternateLedUsage=1
 ats60=2
 ats60=0
 ats60?
+at-AlternateLedUsage?
 
 # Invalid commands
 ats61=1
@@ -546,6 +548,9 @@ ats61?
 
 ats255=1
 ats255?
+
+at-foobar=1
+at-foobar?
 
 ati0
 

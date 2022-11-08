@@ -624,6 +624,21 @@ int stricmp(const char * str1, const char * str2)
   return char1 - char2;
 }
 
+int strnicmp(const char * str1, const char * str2, int length)
+{
+  char char1;
+  char char2;
+
+  //Do a case insensitive comparison between the two strings
+  do {
+    char1 = toupper(*str1++);
+    char2 = toupper(*str2++);
+  } while (char1 && (char1 == char2) && --length);
+
+  //Return the difference between the two strings
+  return char1 - char2;
+}
+
 void printPacketQuality()
 {
   if (settings.displayPacketQuality == true)

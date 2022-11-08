@@ -585,7 +585,7 @@ PacketType rcvDatagram()
   }
   else if (state == RADIOLIB_ERR_CRC_MISMATCH)
   {
-    if (setting.debug == true)
+    if (settings.debug == true)
       systemPrintln("Receive CRC error!");
     return (DATAGRAM_CRC_ERROR);
   }
@@ -593,7 +593,7 @@ PacketType rcvDatagram()
   {
     if (settings.debug == true)
     {
-      systemPrint("Receive error: "));
+      systemPrint("Receive error: ");
       systemPrintln(state);
     }
     return (DATAGRAM_BAD);
