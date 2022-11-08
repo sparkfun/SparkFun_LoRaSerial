@@ -192,7 +192,6 @@ void commonTrainingInitialization()
     settings.debugRadio = originalSettings.debugRadio;
     settings.debugStates = originalSettings.debugStates;
     settings.debugTraining = originalSettings.debugTraining;
-    settings.debugTrigger = originalSettings.debugTrigger;
 
     settings.printRfData = originalSettings.printRfData;
     settings.printPktData = originalSettings.printPktData;

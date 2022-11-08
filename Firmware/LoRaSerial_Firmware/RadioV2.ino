@@ -443,7 +443,6 @@ void updateRadioParameters(uint8_t * rxData)
     originalSettings.debugRadio = params.debugRadio;
     originalSettings.debugStates = params.debugStates;
     originalSettings.debugTraining = params.debugTraining;
-    originalSettings.debugTrigger = params.debugTrigger;
     originalSettings.printRfData = params.printRfData;
     originalSettings.printPktData = params.printPktData;
     originalSettings.debugReceive = params.debugReceive;
