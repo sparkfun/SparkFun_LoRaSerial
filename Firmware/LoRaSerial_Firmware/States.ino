@@ -1858,6 +1858,40 @@ void v2EnterLinkUp()
     systemPrintln("========== Link UP ==========");
 }
 
+void vcSendLinkStatus(bool linkUp, int8_t srcVc)
+{
+  //Build the message
+  VC_LINK_STATUS_MESSAGE message;
+  message.linkStatus = linkUp ? LINK_UP : LINK_DOWN;
+
+  //Build the message header
+  VC_SERIAL_MESSAGE_HEADER header;
+  header.start = START_OF_HEADING;
+  header.radio.length = sizeof(header) + sizeof(message);
+  header.radio.destVc = PC_LINK_STATUS;
+  header.radio.srcVc = srcVc;
+
+  //Send the message
+  systemWrite((uint8_t *)&header, sizeof(header));
+  systemWrite((uint8_t *)&message, sizeof(message));
+
+  if (settings.printLinkUpDown)
+  {
+    if (linkUp)
+    {
+      systemPrint("========== Link ");
+      systemPrint(srcVc);
+      systemPrintln(" UP ==========");
+    }
+    else
+    {
+      systemPrint("--------- Link ");
+      systemPrint(srcVc);
+      systemPrintln(" Down ---------");
+    }
+  }
+}
+
 //Break the virtual-circuit link
 void vcBreakLink(int8_t vcIndex)
 {
@@ -1873,13 +1907,8 @@ void vcBreakLink(int8_t vcIndex)
   }
   linkFailures++;
 
-  //Display the link failure
-  if (settings.printLinkUpDown)
-  {
-    systemPrint("---------  Link ");
-    systemPrint(vcIndex);
-    systemPrintln(" Down  ---------");
-  }
+  //Send the status message
+  vcSendLinkStatus(false, myVc);
 
   //Stop the transmit timer
   transmitTimer = 0;
@@ -1905,14 +1934,10 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
     if (memcmp(vc->uniqueId, id, UNIQUE_ID_BYTES) == 0)
     {
       if (!vc->linkUp)
-      {
-        if (settings.printLinkUpDown)
-        {
-          systemPrint("==========  Link ");
-          systemPrint(srcAddr);
-          systemPrintln(" up  ==========");
-        }
-      }
+	//Send the status message
+        vcSendLinkStatus(true, myVc);
+
+      //Update the link status
       vc->linkUp = true;
       vc->lastHeartbeatMillis = millis();
       return index;
@@ -1967,12 +1992,9 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
   vc->linkUp = true;
   vc->lastHeartbeatMillis = millis();
   memcpy(&vc->uniqueId, id, UNIQUE_ID_BYTES);
-  if (settings.printLinkUpDown)
-  {
-    systemPrint("==========  Link ");
-    systemPrint(index);
-    systemPrintln(" up  ==========");
-  }
+
+  //Send the status message
+  vcSendLinkStatus(true, myVc);
 
   //Returned the assigned address
   return index;

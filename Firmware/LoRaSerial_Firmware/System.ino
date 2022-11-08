@@ -190,6 +190,16 @@ void systemWrite(uint8_t value)
   arch.serialWrite(value);
 }
 
+void systemWrite(uint8_t * buffer, uint16_t length)
+{
+  uint8_t * end;
+
+  //Output the entire buffer ignoring contents
+  end = &buffer[length];
+  while (buffer < end)
+    arch.serialWrite(*buffer);
+}
+
 void systemFlush()
 {
   arch.serialFlush();
