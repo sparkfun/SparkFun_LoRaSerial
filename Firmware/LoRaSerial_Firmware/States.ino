@@ -31,6 +31,7 @@ void updateRadioState()
   static uint8_t rexmtFrameSentCount;
   static uint8_t rexmtTxDestVc;
   VIRTUAL_CIRCUIT * vc;
+  VC_RADIO_MESSAGE_HEADER * vcHeader;
 
   switch (radioState)
   {
@@ -1322,9 +1323,11 @@ void updateRadioState()
             serialBufferOutput(rxData, rxDataBytes);
 
             //Acknowledge the data frame
-            *endOfTxData++ = VC_HEADER_BYTES + ACK_BYTES;
-            *endOfTxData++ = rxSrcVc;
-            *endOfTxData++ = myVc;
+            vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
+            vcHeader->length = VC_RADIO_HEADER_BYTES + ACK_BYTES;
+            vcHeader->destVc = rxSrcVc;
+            vcHeader->srcVc = myVc;
+            endOfTxData += VC_RADIO_HEADER_BYTES;
             xmitDatagramP2PAck();
             changeState(RADIO_VC_WAIT_TX_DONE);
             break;
@@ -1423,9 +1426,11 @@ void updateRadioState()
             serialBufferOutput(rxData, rxDataBytes);
 
             //Acknowledge the data frame
-            *endOfTxData++ = VC_HEADER_BYTES + ACK_BYTES;
-            *endOfTxData++ = rxSrcVc;
-            *endOfTxData++ = myVc;
+            vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
+            vcHeader->length = VC_RADIO_HEADER_BYTES + ACK_BYTES;
+            vcHeader->destVc = rxSrcVc;
+            vcHeader->srcVc = myVc;
+            endOfTxData += VC_RADIO_HEADER_BYTES;
             xmitDatagramP2PAck();
             changeState(RADIO_VC_WAIT_TX_DONE_ACK);
             break;
