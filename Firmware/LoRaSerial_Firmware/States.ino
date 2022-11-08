@@ -274,17 +274,8 @@ void updateRadioState()
         radio.setFrequency(channels[channelNumber]);
       }
 
-      //Is it time to send the PING to the remote system
-      if ((millis() - heartbeatTimer) >= pingRandomTime)
-      {
-        //Transmit the PING
-        triggerEvent(TRIGGER_HANDSHAKE_SEND_PING);
-        xmitDatagramP2PPing();
-        changeState(RADIO_P2P_WAIT_TX_PING_DONE);
-      }
-
       //Determine if a PING was received
-      else if (transactionComplete)
+      if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
 
@@ -309,6 +300,15 @@ void updateRadioState()
           xmitDatagramP2PAck1();
           changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
         }
+      }
+
+      //Is it time to send the PING to the remote system
+      else if ((receiveInProcess() == false) && ((millis() - heartbeatTimer) >= pingRandomTime))
+      {
+        //Transmit the PING
+        triggerEvent(TRIGGER_HANDSHAKE_SEND_PING);
+        xmitDatagramP2PPing();
+        changeState(RADIO_P2P_WAIT_TX_PING_DONE);
       }
       break;
 
@@ -791,9 +791,9 @@ void updateRadioState()
         }
       }
 
-      //Check for ACK timeout
-      else if ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime))
-        //Set at end of transmit, measures ACK timeout
+      //Check for ACK timeout, set at end of transmit, measures ACK timeout
+      else if ((receiveInProcess() == false)
+	&& ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime)))
       {
         if (settings.debugDatagrams)
         {
@@ -1778,7 +1778,7 @@ void changeState(RadioStates newState)
     unsigned int seconds = (millis() - lastLinkUpTime) / 1000;
     unsigned int minutes = seconds / 60;
     seconds -= (minutes * 60);
-    unsigned int hours = minutes / 60; 
+    unsigned int hours = minutes / 60;
     minutes -= (hours * 60);
     unsigned int days = hours / 24;
     hours -= (days * 24);
