@@ -397,6 +397,7 @@ typedef struct struct_settings {
   bool invertCts = false; //Invert the input of CTS
   bool invertRts = false; //Invert the output of RTS
   bool alternateLedUsage = false; //Enable alternate LED usage
+  uint8_t trainingTimeout = 1; //Timeout in minutes to complete the training
 
   //Add new parameters immediately before this line
   //-- Add commands to set the parameters
