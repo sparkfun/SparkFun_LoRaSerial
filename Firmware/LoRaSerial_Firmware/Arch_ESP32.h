@@ -87,11 +87,6 @@ void esp32SerialFlush()
   Serial.flush();
 }
 
-void esp32SerialPrint(const char * value)
-{
-  Serial.print(value);
-}
-
 uint8_t esp32SerialRead()
 {
   return (Serial.read());
@@ -123,7 +118,6 @@ const ARCH_TABLE arch = {
   esp32Radio,               //radio
   esp32SerialAvailable,     //serialAvailable
   esp32SerialFlush,         //serialFlush
-  esp32SerialPrint,         //serialPrint
   esp32SerialRead,          //serialRead
   esp32SerialWrite,         //serialWrite
   esp32SystemReset,         //systemReset

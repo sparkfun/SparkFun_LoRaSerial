@@ -64,7 +64,7 @@ SparkFun LoRaSerial SAMD21 1W 915MHz
 ati3
 -157
 ati4
-151
+44
 ati5
 506
 ati6
@@ -74,7 +74,7 @@ ati7
 ati8
 B2A99BF24A34555020312E34162815FF
 ati9
-Total datagrams sent: 63
+Total datagrams sent: 70
 ati10
 Total datagrams received: 0
 ati11

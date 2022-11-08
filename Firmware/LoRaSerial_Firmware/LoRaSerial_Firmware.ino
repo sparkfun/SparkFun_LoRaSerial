@@ -474,6 +474,7 @@ void setup()
 
   systemPrintTimestamp();
   systemPrintln("LRS");
+  outputSerialData(true);
 
   verifyRadioStateTable(); //Verify that the state table contains all of the states in increasing order
 
@@ -495,6 +496,7 @@ void setup()
 
   systemPrintTimestamp();
   systemPrintln("LRS Setup Complete");
+  outputSerialData(true);
 
   triggerEvent(TRIGGER_RADIO_RESET);
 }

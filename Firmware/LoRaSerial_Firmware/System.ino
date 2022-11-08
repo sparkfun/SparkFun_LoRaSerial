@@ -1,15 +1,19 @@
-void systemPrint(const char* value)
+void systemPrint(const char* string)
 {
+  uint16_t length;
+
+  length = strlen(string);
   if (printerEndpoint == PRINT_TO_SERIAL)
   {
-    arch.serialPrint(value);
+    for (uint16_t x = 0 ; x < length ; x++)
+      serialOutputByte(string[x]);
   }
   else if (printerEndpoint == PRINT_TO_RF)
   {
     //Move these characters into the transmit buffer
-    for (uint16_t x = 0 ; x < strlen(value) ; x++)
+    for (uint16_t x = 0 ; x < length ; x++)
     {
-      commandTXBuffer[commandTXHead++] = value[x];
+      commandTXBuffer[commandTXHead++] = string[x];
       commandTXHead %= sizeof(commandTXBuffer);
     }
   }
@@ -187,7 +191,7 @@ void systemPrintUniqueID(uint8_t * uniqueID)
 
 void systemWrite(uint8_t value)
 {
-  arch.serialWrite(value);
+  serialOutputByte(value);
 }
 
 void systemWrite(uint8_t * buffer, uint16_t length)

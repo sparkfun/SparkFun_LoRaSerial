@@ -24,8 +24,6 @@ bool isCTS()
 //Return number of bytes sitting in the serial transmit buffer
 uint16_t availableTXBytes()
 {
-  if (inCommandMode == true) return (0); //If we are in command mode, block printing of data from the TXBuffer
-
   if (txHead >= txTail) return (txHead - txTail);
   return (sizeof(serialTransmitBuffer) - txTail + txHead);
 }
@@ -47,6 +45,13 @@ void serialBufferOutput(uint8_t * data, uint16_t dataLength)
   //Copy the remaining portion of the received datagram into the buffer
   memcpy(&serialTransmitBuffer[txHead], &data[length], dataLength - length);
   txHead += dataLength - length;
+  txHead %= sizeof(serialTransmitBuffer);
+}
+
+//Add a single byte to the output buffer
+void serialOutputByte(uint8_t data)
+{
+  serialTransmitBuffer[txHead++] = data;
   txHead %= sizeof(serialTransmitBuffer);
 }
 
@@ -182,7 +187,6 @@ void readyOutgoingCommandPacket()
 //Scan for escape characters
 void updateSerial()
 {
-  int dataBytes;
   int x;
 
   //Assert RTS when there is enough space in the receive buffer
@@ -190,23 +194,8 @@ void updateSerial()
     && (availableTXBytes() < (sizeof(serialTransmitBuffer) / 4)))
     updateRTS(true);
 
-  //Forget printing if there are ISRs to attend to
-  dataBytes = availableTXBytes();
-  while (dataBytes-- && isCTS() && (!transactionComplete))
-  {
-    txLED(true); //Turn on LED during serial transmissions
-
-    //Take a break if there are ISRs to attend to
-    petWDT();
-    if (timeToHop == true) hopChannel();
-
-    systemWrite(serialTransmitBuffer[txTail]);
-    systemFlush(); //Prevent serial hardware from blocking more than this one write
-
-    txTail++;
-    txTail %= sizeof(serialTransmitBuffer);
-  }
-  txLED(false); //Turn off LED
+  //Attempt to empty the serialTransmitBuffer
+  outputSerialData(false);
 
   //Look for local incoming serial
   while (rtsAsserted && arch.serialAvailable() && (transactionComplete == false))
@@ -240,7 +229,10 @@ void updateSerial()
     rxTail %= sizeof(serialReceiveBuffer);
 
     if ((settings.echo == true) || (inCommandMode == true))
+    {
       systemWrite(incoming);
+      outputSerialData(true);
+    }
 
     //Process serial into either rx buffer or command buffer
     if (inCommandMode == true)
@@ -250,6 +242,7 @@ void updateSerial()
         printerEndpoint = PRINT_TO_SERIAL;
         systemPrintln();
         checkCommand(); //Process command buffer
+        outputSerialData(true);
       }
       else if (incoming == '\n')
         ; //Do nothing
@@ -269,6 +262,7 @@ void updateSerial()
           }
           else
             systemWrite(7);
+          outputSerialData(true);
         }
         else
         {
@@ -291,6 +285,7 @@ void updateSerial()
           if (escapeCharsReceived == maxEscapeCharacters)
           {
             systemPrintln("\r\nOK");
+            outputSerialData(true);
 
             inCommandMode = true; //Allow AT parsing. Prevent received RF data from being printed.
 
@@ -342,6 +337,29 @@ void updateSerial()
         systemPrintln("Corrupt remote command received");
     }
   }
+}
+
+void outputSerialData(bool ignoreISR)
+{
+  int dataBytes;
+
+  //Forget printing if there are ISRs to attend to
+  dataBytes = availableTXBytes();
+  while (dataBytes-- && isCTS() && (ignoreISR || (!transactionComplete)))
+  {
+    txLED(true); //Turn on LED during serial transmissions
+
+    //Take a break if there are ISRs to attend to
+    petWDT();
+    if (timeToHop == true) hopChannel();
+
+    arch.serialWrite(serialTransmitBuffer[txTail]);
+    systemFlush(); //Prevent serial hardware from blocking more than this one write
+
+    txTail++;
+    txTail %= sizeof(serialTransmitBuffer);
+  }
+  txLED(false); //Turn off LED
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
