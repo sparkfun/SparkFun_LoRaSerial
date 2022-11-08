@@ -373,11 +373,11 @@ ats32=0
 ats32?
 at-DebugTraining?
 
-at-DebugTrigger=1
-ats33=2
+at-TrainingTimeout=1
+ats33=255
 ats33=0
 ats33?
-at-DebugTrigger?
+at-TrainingTimeout?
 
 at-UsbSerialWait=1
 ats34=2
