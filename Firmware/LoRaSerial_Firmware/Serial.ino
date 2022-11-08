@@ -223,9 +223,6 @@ void updateSerial()
 
     byte incoming = systemRead();
 
-    if (settings.echo == true)
-      systemWrite(incoming);
-
     serialReceiveBuffer[rxHead++] = incoming; //Push char to holding buffer
     rxHead %= sizeof(serialReceiveBuffer);
   } //End Serial.available()
@@ -241,6 +238,9 @@ void updateSerial()
 
     byte incoming = serialReceiveBuffer[rxTail++];
     rxTail %= sizeof(serialReceiveBuffer);
+
+    if ((settings.echo == true) || (inCommandMode == true))
+      systemWrite(incoming);
 
     //Process serial into either rx buffer or command buffer
     if (inCommandMode == true)
@@ -272,8 +272,6 @@ void updateSerial()
         }
         else
         {
-          systemWrite(incoming); //Always echo during command mode
-
           //Move this character into the command buffer
           commandBuffer[commandLength++] = toupper(incoming);
           commandLength %= sizeof(commandBuffer);
