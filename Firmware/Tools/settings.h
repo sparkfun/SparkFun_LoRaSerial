@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,19 +17,17 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include "../LoRaSerial_Firmware/Virtual_Circuit_Protocol.h"
+
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 //Defines
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#define ADDR_SERVER         0
-#define ADDR_BROADCAST      -1
-#define ADDR_UNASSIGNED     -2
-
 #define PORT                7272
 #define UNIQUE_ID_BYTES     16
 
-#define false               0
-#define true                1
+//#define false               0
+//#define true                1
 
 #define BROADCAST_IPV4_ADDRESS  inet_addr("192.168.86.255") //INADDR_BROADCAST
 
@@ -53,8 +52,6 @@ typedef enum
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 typedef uint8_t ADDRESS_MASK;
-
-typedef uint8_t bool;
 
 typedef struct _RESERVED_ADDRESS
 {
