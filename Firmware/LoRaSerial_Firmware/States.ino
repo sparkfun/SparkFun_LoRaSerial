@@ -83,28 +83,24 @@ void updateRadioState()
       //Stop the transmit timer
       transmitTimer = 0;
 
-      //Start the link between the radios
-      if (settings.radioProtocolVersion >= 2)
+      //Start the V2 protocol
+      if (settings.operatingMode == MODE_POINT_TO_POINT)
+        changeState(RADIO_P2P_LINK_DOWN);
+      else if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
       {
-        //Start the V2 protocol
-        if (settings.operatingMode == MODE_POINT_TO_POINT)
-          changeState(RADIO_P2P_LINK_DOWN);
-        else if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
-        {
-          if (settings.trainingServer)
-            //Reserve the server's address (0)
-            myVc = vcIdToAddressByte(VC_SERVER, myUniqueId);
-          else
-            //Unknown client address
-            myVc = VC_UNASSIGNED;
-
-          //Start sending heartbeats
-          xmitVcHeartbeat(myVc, myUniqueId);
-          changeState(RADIO_VC_WAIT_TX_DONE);
-        }
+        if (settings.trainingServer)
+          //Reserve the server's address (0)
+          myVc = vcIdToAddressByte(VC_SERVER, myUniqueId);
         else
-          changeState(RADIO_MP_STANDBY);
+          //Unknown client address
+          myVc = VC_UNASSIGNED;
+
+        //Start sending heartbeats
+        xmitVcHeartbeat(myVc, myUniqueId);
+        changeState(RADIO_VC_WAIT_TX_DONE);
       }
+      else
+        changeState(RADIO_MP_STANDBY);
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

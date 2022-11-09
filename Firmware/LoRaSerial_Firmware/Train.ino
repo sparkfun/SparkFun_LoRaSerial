@@ -1,25 +1,14 @@
 //Select the training protocol
 void selectTraining(bool defaultTraining)
 {
-  if (settings.radioProtocolVersion >= 2)
-  {
-    if (settings.operatingMode == MODE_POINT_TO_POINT)
-      beginTrainingPointToPoint(defaultTraining);
-    else
-    {
-      if (settings.trainingServer)
-        beginTrainingServer();
-      else
-        beginTrainingClient();
-    }
-  }
+  if (settings.operatingMode == MODE_POINT_TO_POINT)
+    beginTrainingPointToPoint(defaultTraining);
   else
   {
-    //Handle unknown future versions
-    systemPrint("Unknown protocol version: ");
-    systemPrintln(settings.radioProtocolVersion);
-    while (1)
-      petWDT();
+    if (settings.trainingServer)
+      beginTrainingServer();
+    else
+      beginTrainingClient();
   }
 }
 
@@ -175,7 +164,6 @@ void commonTrainingInitialization()
   settings.dataScrambling = true;         // 6: Scramble the data
   settings.radioBroadcastPower_dbm = 14;  // 7: Minimum, assume radios are near each other
   settings.frequencyHop = false;          //11: Stay on the training frequency
-  settings.printParameterName = true;     //28: Print the parameter names
   settings.verifyRxNetID = false;         //37: Disable netID checking
   settings.enableCRC16 = true;            //49: Use CRC-16
   memcpy(&settings.trainingKey, &originalSettings.trainingKey, AES_KEY_BYTES); //56: Common training key
@@ -188,7 +176,6 @@ void commonTrainingInitialization()
   {
     settings.debug = originalSettings.debug;
     settings.displayPacketQuality = originalSettings.displayPacketQuality;
-    settings.printParameterName = originalSettings.printParameterName;
     settings.printFrequency = originalSettings.printFrequency;
 
     settings.debugRadio = originalSettings.debugRadio;
@@ -236,7 +223,7 @@ void endClientServerTraining(uint8_t event)
   settings = originalSettings; //Return to original radio settings
 
   if (settings.debugTraining)
-    displayParameters();
+    displayParameters(0, settings.copyDebug || settings.copyTriggers);
 
   if (!settings.trainingServer)
   {

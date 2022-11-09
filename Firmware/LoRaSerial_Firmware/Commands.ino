@@ -49,20 +49,24 @@ bool commandAT(const char * commandString)
       case ('?'): //Display the command help
         systemPrintln("Command summary:");
         systemPrintln("  AT? - Print the command summary");
+        systemPrintln("  ATD - Display the debug settings");
         systemPrintln("  ATF - Enter training mode and return to factory defaults");
         systemPrintln("  ATG - Generate new netID and encryption key");
         systemPrintln("  ATI - Display the radio version");
         systemPrintln("  ATI? - Display the information commands");
         systemPrintln("  ATIn - Display system information");
+        systemPrintln("  ATL - VC link reset");
         systemPrintln("  ATO - Exit command mode");
-        systemPrintln("  ATR - VC link reset");
+        systemPrintln("  ATP - Display probe trigger settings");
         systemPrintln("  ATSn=xxx - Set parameter n's value to xxx");
         systemPrintln("  ATSn? - Print parameter n's current value");
         systemPrintln("  ATT - Enter training mode");
+        systemPrintln("  ATV - Display virtual circuit settings");
         systemPrintln("  ATX - Stop the training server");
         systemPrintln("  ATZ - Reboot the radio");
         systemPrintln("  AT-Param=xxx - Set parameter's value to xxx by name (Param)");
         systemPrintln("  AT-Param? - Print parameter's current value by name (Param)");
+        systemPrintln("  AT-? - Display the setting values");
         systemPrintln("  AT&F - Restore factory settings");
         systemPrintln("  AT&W - Save current settings to NVM");
         break;
@@ -173,7 +177,7 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI26 - Display the total number of bad CRC frames");
         break;
       case ('0'): //ATI0 - Show user settable parameters
-        displayParameters();
+        displayParameters(0, true);
         break;
       case ('1'): //ATI1 - Show board variant
         systemPrint("SparkFun LoRaSerial ");
@@ -399,7 +403,12 @@ bool sendRemoteCommand(const char * commandString)
 //----------------------------------------
 
 const COMMAND_PREFIX prefixTable[] = {
-  {"ATS", commandSet},
+  {"ATD", commandDisplayDebug},
+  {"ATP", commandDisplayProbe},
+  {"ATR", commandDisplayRadio},
+  {"ATS", commandDisplaySerial},
+  {"ATV", commandDisplayVirtualCircuit},
+  {"AT-?", commandDisplayAll},
   {"AT-", commandSetByName},
   {"AT", commandAT},
   {"RT", sendRemoteCommand},
@@ -467,6 +476,42 @@ char * trimCommand()
     commandLength--;
   }
   return commandString;
+}
+
+bool commandDisplayAll(const char * commandString)
+{
+  displayParameters(0, false);
+  return true;
+}
+
+bool commandDisplayDebug(const char * commandString)
+{
+  displayParameters('D', false);
+  return true;
+}
+
+bool commandDisplayProbe(const char * commandString)
+{
+  displayParameters('P', false);
+  return true;
+}
+
+bool commandDisplayRadio(const char * commandString)
+{
+  displayParameters('R', false);
+  return true;
+}
+
+bool commandDisplaySerial(const char * commandString)
+{
+  displayParameters('S', false);
+  return true;
+}
+
+bool commandDisplayVirtualCircuit(const char * commandString)
+{
+  displayParameters('V', false);
+  return true;
 }
 
 //----------------------------------------
@@ -613,82 +658,85 @@ bool valSpeedSerial (void * value, uint32_t valMin, uint32_t valMax)
 //----------------------------------------
 
 const COMMAND_ENTRY commands[] =
-{ //#, min, max, digits,   type,            validation,        name,                setting addr
-  {0,   0,   0,      0, TYPE_SPEED_SERIAL, valSpeedSerial, "SerialSpeed",          &settings.serialSpeed},
-  {1,   0,   0,      0, TYPE_SPEED_AIR,    valSpeedAir,    "AirSpeed",             &settings.airSpeed},
-  {2,   0, 255,      0, TYPE_U8,           valInt,         "netID",                &settings.netID},
-  {3,   0,   2,      0, TYPE_U8,           valInt,         "OperatingMode",        &settings.operatingMode},
-  {4,   0,   1,      0, TYPE_BOOL,         valInt,         "EncryptData",          &settings.encryptData},
+{
+  /*Debug parameters
+   Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "AlternateLedUsage",    &settings.alternateLedUsage},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "CopyDebug",            &settings.copyDebug},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "Debug",                &settings.debug},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &settings.debugDatagrams},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugRadio",           &settings.debugRadio},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugReceive",         &settings.debugReceive},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugStates",          &settings.debugStates},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugTraining",        &settings.debugTraining},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &settings.debugTransmit},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DisplayPacketQuality", &settings.displayPacketQuality},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DisplayRealMillis",    &settings.displayRealMillis},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintFrequency",       &settings.printFrequency},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintLinkUpDown",      &settings.printLinkUpDown},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintPktData",         &settings.printPktData},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintRfData",          &settings.printRfData},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintTimestamp",       &settings.printTimestamp},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintTxErrors",        &settings.printTxErrors},
 
-  {5,   0,   0,      0, TYPE_KEY,          valKey,         "EncryptionKey",        &settings.encryptionKey},
-  {6,   0,   1,      0, TYPE_BOOL,         valInt,         "DataScrambling",       &settings.dataScrambling},
-  {7,  14,  30,      0, TYPE_U8,           valInt,         "TxPower",              &settings.radioBroadcastPower_dbm},
-  {8, 902,   0,      3, TYPE_FLOAT,        valFreqMin,     "FrequencyMin",         &settings.frequencyMin},
-  {9,   0, 928,      3, TYPE_FLOAT,        valFreqMax,     "FrequencyMax",         &settings.frequencyMax},
+  /*Radio parameters
+   Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
+  {'R',   0,   0,   0,    0, TYPE_SPEED_AIR,    valSpeedAir,    "AirSpeed",             &settings.airSpeed},
+  {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "AutoTune",             &settings.autoTuneFrequency},
+  {'R',   0,   0,   0,    2, TYPE_FLOAT,        valBandwidth,   "Bandwidth",            &settings.radioBandwidth},
+  {'R',   0,   5,   8,    0, TYPE_U8,           valOverride,    "CodingRate",           &settings.radioCodingRate},
+  {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "FrequencyHop",         &settings.frequencyHop},
+  {'R',   0,   0, 928,    3, TYPE_FLOAT,        valFreqMax,     "FrequencyMax",         &settings.frequencyMax},
+  {'R',   0, 902,   0,    3, TYPE_FLOAT,        valFreqMin,     "FrequencyMin",         &settings.frequencyMin},
+  {'R',   0,  10, 65535,  0, TYPE_U16,          valInt,         "MaxDwellTime",         &settings.maxDwellTime},
+  {'R',   0,   1, 255,    0, TYPE_U8,           valInt,         "NumberOfChannels",     &settings.numberOfChannels},
+  {'R',   0,   6, 65535,  0, TYPE_U16,          valInt,         "PreambleLength",       &settings.radioPreambleLength},
+  {'R',   0,   6,  12,    0, TYPE_U8,           valOverride,    "SpreadFactor",         &settings.radioSpreadFactor},
+  {'R',   0,   0, 255,    0, TYPE_U8,           valInt,         "SyncWord",             &settings.radioSyncWord},
+  {'R',   0,  14,  30,    0, TYPE_U8,           valInt,         "TxPower",              &settings.radioBroadcastPower_dbm},
 
-  {10,   1, 255,     0, TYPE_U8,           valInt,         "NumberOfChannels",     &settings.numberOfChannels},
-  {11,   0,   1,     0, TYPE_BOOL,         valInt,         "FrequencyHop",         &settings.frequencyHop},
-  {12,  10, 65535,   0, TYPE_U16,          valInt,         "MaxDwellTime",         &settings.maxDwellTime},
-  {13,   0,   0,     2, TYPE_FLOAT,        valBandwidth,   "Bandwidth",            &settings.radioBandwidth},
-  {14,   6,  12,     0, TYPE_U8,           valOverride,    "SpreadFactor",         &settings.radioSpreadFactor},
+  /*Radio protocol parameters
+   Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
+  {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "DataScrambling",       &settings.dataScrambling},
+  {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "EnableCRC16",          &settings.enableCRC16},
+  {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "EncryptData",          &settings.encryptData},
+  {'R',   0,   0,   0,    0, TYPE_KEY,          valKey,         "EncryptionKey",        &settings.encryptionKey},
+  {'R',   0,  10, 2000,   0, TYPE_U16,          valInt,         "FrameTimeout",         &settings.serialTimeoutBeforeSendingFrame_ms},
+  {'R',   0, 250, 65535,  0, TYPE_U16,          valInt,         "HeartBeatTimeout",     &settings.heartbeatTimeout},
+  {'R',   0,   0, 255,    0, TYPE_U8,           valInt,         "MaxResends",           &settings.maxResends},
+  {'R',   0,   0, 255,    0, TYPE_U8,           valInt,         "NetID",                &settings.netID},
+  {'R',   0,   0,   2,    0, TYPE_U8,           valInt,         "OperatingMode",        &settings.operatingMode},
+  {'R',   0,   0, 1000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &settings.overheadTime},
+  {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "VerifyRxNetID",        &settings.verifyRxNetID},
 
-  {15,   5,   8,     0, TYPE_U8,           valOverride,    "CodingRate",           &settings.radioCodingRate},
-  {16,   0, 255,     0, TYPE_U8,           valInt,         "SyncWord",             &settings.radioSyncWord},
-  {17,   6, 65535,   0, TYPE_U16,          valInt,         "PreambleLength",       &settings.radioPreambleLength},
-  {18,   0, MAX_VC-1,0, TYPE_U8,           valInt,         "CmdVC",                &cmdVc},
-  {19,  10, 2000,    0, TYPE_U16,          valInt,         "FrameTimeout",         &settings.serialTimeoutBeforeSendingFrame_ms},
+  /*Serial parameters
+   Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
+  {'S',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "CopySerial",           &settings.copySerial},
+  {'S',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "Echo",                 &settings.echo},
+  {'S',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "FlowControl",          &settings.flowControl},
+  {'S',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "InvertCts",            &settings.invertCts},
+  {'S',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "InvertRts",            &settings.invertRts},
+  {'S',   0,   0,   0,    0, TYPE_SPEED_SERIAL, valSpeedSerial, "SerialSpeed",          &settings.serialSpeed},
+  {'S',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "UsbSerialWait",        &settings.usbSerialWait},
 
-  {20,    0,   1,    0, TYPE_BOOL,         valInt,         "Debug",                &settings.debug},
-  {21,    0,   1,    0, TYPE_BOOL,         valInt,         "Echo",                 &settings.echo},
-  {22,  250, 65535,  0, TYPE_U16,          valInt,         "HeartBeatTimeout",     &settings.heartbeatTimeout},
-  {23,    0,   1,    0, TYPE_BOOL,         valInt,         "FlowControl",          &settings.flowControl},
-  {24,    0,   1,    0, TYPE_BOOL,         valInt,         "AutoTune",             &settings.autoTuneFrequency},
+  /*Training parameters
+   Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
+  {'R',   0,   1, 255,    0, TYPE_U8,           valInt,      "ClientPingRetryInterval", &settings.clientPingRetryInterval},
+  {'R',   0,   0,   0,    0, TYPE_KEY,          valKey,         "TrainingKey",          &settings.trainingKey},
+  {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "TrainingServer",       &settings.trainingServer},
+  {'R',   0,   1, 255,    0, TYPE_U8,           valInt,         "TrainingTimeout",      &settings.trainingTimeout},
 
-  {25,    0,   1,    0, TYPE_BOOL,         valInt,         "DisplayPacketQuality", &settings.displayPacketQuality},
-  {26,    0, 255,    0, TYPE_U8,           valInt,         "MaxResends",           &settings.maxResends},
-  {27,    0,   1,    0, TYPE_BOOL,         valInt,         "SortParametersByName", &settings.sortParametersByName},
-  {28,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintParameterName",   &settings.printParameterName},
-  {29,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintFrequency",       &settings.printFrequency},
+  /*Trigger parameters
+   Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
+  {'P',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "CopyTriggers",         &settings.copyTriggers},
+  {'P',   1,   0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable_31-0",   &settings.triggerEnable},
+  {'P',   1,   0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable_63-32",  &settings.triggerEnable2},
+  {'P',   1,   1, 255,    0, TYPE_U8,           valInt,         "TriggerWidth",         &settings.triggerWidth},
+  {'P',   1,   0,   1,    0, TYPE_BOOL,         valInt,     "TriggerWidthIsMultiplier", &settings.triggerWidthIsMultiplier},
 
-  {30,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugRadio",           &settings.debugRadio},
-  {31,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugStates",          &settings.debugStates},
-  {32,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTraining",        &settings.debugTraining},
-  {33,    1, 255,    0, TYPE_U8,           valInt,         "TrainingTimeout",      &settings.trainingTimeout},
-  {34,    0,   1,    0, TYPE_BOOL,         valInt,         "UsbSerialWait",        &settings.usbSerialWait},
-
-  {35,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintRfData",          &settings.printRfData},
-  {36,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintPktData",         &settings.printPktData},
-  {37,    0,   1,    0, TYPE_BOOL,         valInt,         "VerifyRxNetID",        &settings.verifyRxNetID},
-  {38,    1, 255,    0, TYPE_U8,           valInt,         "TriggerWidth",         &settings.triggerWidth},
-  {39,    0,   1,    0, TYPE_BOOL,         valInt,         "TriggerWidthIsMultiplier", &settings.triggerWidthIsMultiplier},
-
-  {40,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable_31-0",   &settings.triggerEnable},
-  {41,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable_63-32",  &settings.triggerEnable2},
-  {42,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugReceive",         &settings.debugReceive},
-  {43,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &settings.debugTransmit},
-  {44,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTxErrors",        &settings.printTxErrors},
-
-  {45,    2,   2,    0, TYPE_U8,           valInt,         "radioProtocolVersion", &settings.radioProtocolVersion},
-  {46,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTimestamp",       &settings.printTimestamp},
-  {47,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &settings.debugDatagrams},
-  {48,    0, 1000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &settings.overheadTime},
-  {49,    0,   1,    0, TYPE_BOOL,         valInt,         "EnableCRC16",          &settings.enableCRC16},
-
-  {50,    0,   1,    0, TYPE_BOOL,         valInt,         "DisplayRealMillis",    &settings.displayRealMillis},
-  {51,    0,   1,    0, TYPE_BOOL,         valInt,         "TrainingServer",       &settings.trainingServer},
-  {52,    1, 255,    0, TYPE_U8,           valInt,         "ClientRetryInterval",  &settings.clientPingRetryInterval},
-  {53,    0,   1,    0, TYPE_BOOL,         valInt,         "CopyDebug",            &settings.copyDebug},
-  {54,    0,   1,    0, TYPE_BOOL,         valInt,         "CopySerial",           &settings.copySerial},
-
-  {55,    0,   1,    0, TYPE_BOOL,         valInt,         "CopyTriggers",         &settings.copyTriggers},
-  {56,    0,   0,    0, TYPE_KEY,          valKey,         "TrainingKey",          &settings.trainingKey},
-  {57,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintLinkUpDown",      &settings.printLinkUpDown},
-  {58,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertCts",            &settings.invertCts},
-  {59,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertRts",            &settings.invertRts},
-
-  {60,    0,   1,    0, TYPE_BOOL,         valInt,         "AlternateLedUsage",    &settings.alternateLedUsage},
-
-  //Define any user parameters starting at 255 decrementing towards 0
+  /*Virtual circuit parameters
+   Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
+  {'V',   0,   0, MAX_VC-1, 0, TYPE_U8,         valInt,         "CmdVC",                &cmdVc},
 };
 
 const int commandCount = sizeof(commands) / sizeof(commands[0]);
@@ -697,50 +745,8 @@ const int commandCount = sizeof(commands) / sizeof(commands[0]);
 //  ATSxx routines
 //----------------------------------------
 
-const char * commandGetNumber(const char * buffer, uint32_t * value)
+void commandDisplay(const COMMAND_ENTRY * command)
 {
-  int number;
-
-  //Assume an invalid number
-  number = -1;
-  if ((*buffer >= '0') && (*buffer <= '9'))
-  {
-    //Get the number
-    number = 0;
-    while ((*buffer >= '0') && (*buffer <= '9'))
-      number = (number * 10) + *buffer++ - '0';
-  }
-
-  //Return the command number and the pointer to the next character
-  *value = number;
-  return buffer;
-}
-
-void commandDisplay(uint8_t number, bool printName)
-{
-  const COMMAND_ENTRY * command;
-  const COMMAND_ENTRY * commandEnd;
-
-  //Locate the command
-  command = &commands[0];
-  commandEnd = &commands[commandCount];
-  while (command < commandEnd)
-    if (command->number == number)
-      break;
-    else
-      command++;
-
-  //Verify the command number
-  if (command >= commandEnd)
-    return;
-
-  //Print the setting name
-  if (printName)
-  {
-    systemPrint(command->name);
-    systemPrint("=");
-  }
-
   //Print the setting value
   switch (command->type)
   {
@@ -815,33 +821,6 @@ bool commandSetByName(const char * commandString)
 }
 
 //Set or display the command
-bool commandSet(const char * commandString)
-{
-  const char * buffer;
-  const COMMAND_ENTRY * command;
-  int index;
-  uint32_t number;
-
-  //Validate the command number
-  buffer = commandGetNumber(&commandString[3], &number);
-  command = NULL;
-  for (index = 0; index < commandCount; index++)
-    if (number == commands[index].number)
-    {
-      command = &commands[index];
-      break;
-    }
-
-  //Verify that the parameter was found
-  if (!command)
-    //Report the error
-    return false;
-
-  //Process this command
-  return commandSetOrDisplayValue(command, buffer);
-}
-
-//Set or display the command
 bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer)
 {
   double doubleSettingValue;
@@ -852,7 +831,7 @@ bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer
     //Is this a display request
     if (strcmp(buffer, "?") == 0)
     {
-      commandDisplay(command->number, settings.printParameterName);
+      commandDisplay(command);
       return true;
     }
 
@@ -905,10 +884,6 @@ bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer
     if (valid == false)
       break;
 
-    //Display the parameter if requested
-    if (settings.printParameterName)
-      commandDisplay(command->number, true);
-
     //The parameter was successfully set
     reportOK();
     return true;
@@ -926,7 +901,7 @@ void displayEncryptionKey(uint8_t * key)
 }
 
 //Show current settings in user friendly way
-void displayParameters()
+void displayParameters(char letter, bool displayAll)
 {
   int index;
   uint8_t sortOrder[commandCount];
@@ -938,29 +913,32 @@ void displayParameters()
     sortOrder[index] = index;
 
   //Perform a bubble sort if requested
-  if (settings.sortParametersByName)
-    for (index = 0; index < commandCount; index++)
-      for (x = index + 1; x < commandCount; x++)
-        if (stricmp(commands[sortOrder[index]].name, commands[sortOrder[x]].name) > 0)
-        {
-          temp = sortOrder[index];
-          sortOrder[index] = sortOrder[x];
-          sortOrder[x] = temp;
-        }
+  for (index = 0; index < commandCount; index++)
+    for (x = index + 1; x < commandCount; x++)
+      if (stricmp(commands[sortOrder[index]].name, commands[sortOrder[x]].name) > 0)
+      {
+        temp = sortOrder[index];
+        sortOrder[index] = sortOrder[x];
+        sortOrder[x] = temp;
+      }
 
   //Print the parameters
   for (index = 0; index < commandCount; index++)
   {
-    petWDT(); //Printing may take longer than WDT at 9600, so pet the WDT.
+    if (displayAll || (letter == commands[sortOrder[index]].letter)
+      || ((letter == 0) && (!commands[sortOrder[index]].requireAll)))
+    {
+      petWDT(); //Printing may take longer than WDT at 9600, so pet the WDT.
 
-    if (printerEndpoint == PRINT_TO_RF)
-      systemPrint("R"); //If someone is asking for our settings over RF, respond with 'R' style settings
-    else
-      systemPrint("A");
+      if (printerEndpoint == PRINT_TO_RF)
+        systemPrint("R"); //If someone is asking for our settings over RF, respond with 'R' style settings
+      else
+        systemPrint("A");
 
-    systemPrint("TS");
-    systemPrint(commands[sortOrder[index]].number);
-    systemPrint(":");
-    commandDisplay(commands[sortOrder[index]].number, true);
+      systemPrint("T-");
+      systemPrint(commands[sortOrder[index]].name);
+      systemPrint("=");
+      commandDisplay(&commands[sortOrder[index]]);
+    }
   }
 }

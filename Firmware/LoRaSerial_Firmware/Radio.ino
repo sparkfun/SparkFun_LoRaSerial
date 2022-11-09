@@ -305,7 +305,6 @@ void generateHopTable()
              + (uint16_t)settings.radioBandwidth
              + settings.radioSpreadFactor
              + settings.verifyRxNetID
-             + settings.radioProtocolVersion
              + settings.overheadTime
              + settings.enableCRC16
              + settings.clientPingRetryInterval;

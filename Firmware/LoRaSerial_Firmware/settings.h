@@ -323,7 +323,8 @@ typedef bool (* VALIDATION_ROUTINE)(void * value, uint32_t valMin, uint32_t valM
 
 typedef struct _COMMAND_ENTRY
 {
-  uint8_t number;
+  char letter;
+  char requireAll;
   uint32_t minValue;
   uint32_t maxValue;
   uint8_t digits;
@@ -364,8 +365,6 @@ typedef struct struct_settings {
   bool autoTuneFrequency = false; //Based on the last packets frequency error, adjust our next transaction frequency
   bool displayPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
   uint8_t maxResends = 0; //Attempt resends up to this number, 0 = infinite retries
-  bool sortParametersByName = false; //Sort the parameter list (ATI0) by parameter name
-  bool printParameterName = false; //Print the parameter name in the ATSx? response
   bool printFrequency = false; //Print the updated frequency
   bool debugRadio = false; //Print radio info
   bool debugStates = false; //Print state changes
@@ -381,7 +380,6 @@ typedef struct struct_settings {
   bool debugReceive = false; //Print receive processing
   bool debugTransmit = false; //Print transmit processing
   bool printTxErrors = false; //Print any transmit errors
-  uint8_t radioProtocolVersion = 2; //Select the radio protocol
   bool printTimestamp = false; //Print a timestamp: days hours:minutes:seconds.milliseconds
   bool debugDatagrams = false; //Print the datagrams
   uint16_t overheadTime = 10; //ms added to ack and datagram times before ACK timeout occurs
