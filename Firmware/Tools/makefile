@@ -12,7 +12,7 @@ EXECUTABLES  = Client
 EXECUTABLES += Server
 EXECUTABLES += VcServerTest
 
-INCLUDES = settings.h
+INCLUDES = settings.h ../LoRaSerial_Firmware/Virtual_Circuit_Protocol.h
 
 COMMON_LIB = Common_Lib.a
 
