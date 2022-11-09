@@ -1878,7 +1878,7 @@ void vcSendLinkStatus(bool linkUp, int8_t srcVc)
 
   //Build the message header
   VC_SERIAL_MESSAGE_HEADER header;
-  header.start = START_OF_HEADING;
+  header.start = START_OF_VC_SERIAL;
   header.radio.length = sizeof(header) + sizeof(message);
   header.radio.destVc = PC_LINK_STATUS;
   header.radio.srcVc = srcVc;
