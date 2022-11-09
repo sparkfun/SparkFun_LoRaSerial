@@ -695,26 +695,29 @@ PacketType rcvDatagram()
   if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
   {
     receivedNetID = *rxData++;
-    if (settings.debugReceive)
+    if (receivedNetID != settings.netID)
     {
-      systemPrintTimestamp();
-      systemPrint("RX: NetID ");
-      systemPrint(receivedNetID);
-      systemPrint(" (0x");
-      systemPrint(receivedNetID, HEX);
-      systemPrint(")");
+      if (settings.debugReceive)
+      {
+        systemPrintTimestamp();
+        systemPrint("RX: NetID ");
+        systemPrint(receivedNetID);
+        systemPrint(" (0x");
+        systemPrint(receivedNetID, HEX);
+        systemPrint(")");
+        if (receivedNetID != settings.netID)
+        {
+          systemPrint(" expecting ");
+          systemPrint(settings.netID);
+        }
+        systemPrintln();
+      }
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
-      if (receivedNetID != settings.netID)
-      {
-        systemPrint(" expecting ");
-        systemPrintln(settings.netID);
-        petWDT();
-        if (settings.printPktData && rxDataBytes)
-          dumpBuffer(incomingBuffer, rxDataBytes);
-        return (DATAGRAM_NETID_MISMATCH);
-      }
-      systemPrintln();
+      petWDT();
+      if (settings.debugReceive && settings.printPktData && rxDataBytes)
+        dumpBuffer(incomingBuffer, rxDataBytes);
+      return (DATAGRAM_NETID_MISMATCH);
     }
   }
 
