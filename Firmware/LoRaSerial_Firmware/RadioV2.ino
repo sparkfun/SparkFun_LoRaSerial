@@ -960,7 +960,7 @@ PacketType rcvDatagram()
     }
 
     //Parse the virtual circuit header
-    vcHeader = (VC_RADIO_MESSAGE_HEADER *)&rxData[1];
+    vcHeader = (VC_RADIO_MESSAGE_HEADER *)rxData;
     rxDestVc = vcHeader->destVc;
     rxSrcVc = vcHeader->srcVc;
     rxVcData = &rxData[3];
@@ -978,6 +978,8 @@ PacketType rcvDatagram()
           systemPrintln(rxSrcVc);
           if (timeToHop == true) //If the channelTimer has expired, move to next frequency
             hopChannel();
+          if (settings.printRfData && rxDataBytes)
+            dumpBuffer(incomingBuffer, rxDataBytes);
         }
         badFrames++;
         return DATAGRAM_BAD;
