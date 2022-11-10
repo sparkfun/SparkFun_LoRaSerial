@@ -1,15 +1,19 @@
-void systemPrint(const char* value)
+void systemPrint(const char* string)
 {
+  uint16_t length;
+
+  length = strlen(string);
   if (printerEndpoint == PRINT_TO_SERIAL)
   {
-    arch.serialPrint(value);
+    for (uint16_t x = 0 ; x < length ; x++)
+      serialOutputByte(string[x]);
   }
   else if (printerEndpoint == PRINT_TO_RF)
   {
     //Move these characters into the transmit buffer
-    for (uint16_t x = 0 ; x < strlen(value) ; x++)
+    for (uint16_t x = 0 ; x < length ; x++)
     {
-      commandTXBuffer[commandTXHead++] = value[x];
+      commandTXBuffer[commandTXHead++] = string[x];
       commandTXHead %= sizeof(commandTXBuffer);
     }
   }
@@ -187,7 +191,17 @@ void systemPrintUniqueID(uint8_t * uniqueID)
 
 void systemWrite(uint8_t value)
 {
-  arch.serialWrite(value);
+  serialOutputByte(value);
+}
+
+void systemWrite(uint8_t * buffer, uint16_t length)
+{
+  uint8_t * end;
+
+  //Output the entire buffer ignoring contents
+  end = &buffer[length];
+  while (buffer < end)
+    arch.serialWrite(*buffer);
 }
 
 void systemFlush()
@@ -319,6 +333,10 @@ void triggerEvent(uint8_t triggerNumber)
   uint32_t triggerEnable;
   uint16_t triggerWidth;
 
+  //Determine if the trigger pin is enabled
+  if (pin_trigger != PIN_UNDEFINED)
+    return;
+
   //Determine which trigger enable to use
   triggerBitNumber = triggerNumber;
   triggerEnable = settings.triggerEnable;
@@ -329,24 +347,17 @@ void triggerEvent(uint8_t triggerNumber)
   }
 
   //Determine if the trigger is enabled
-  if ((pin_trigger != PIN_UNDEFINED) && (triggerEnable & (1 << triggerBitNumber)))
+  if (triggerEnable & (1 << triggerBitNumber))
   {
-    //Determine if the trigger pin is enabled
-    if (pin_trigger != PIN_UNDEFINED)
-    {
-      if ((settings.debug == true) || (settings.debugTrigger == true))
-      {
-        //Determine the trigger pulse width
-        triggerWidth = settings.triggerWidth;
-        if (settings.triggerWidthIsMultiplier)
-          triggerWidth *= (triggerNumber + 1);
+    //Determine the trigger pulse width
+    triggerWidth = settings.triggerWidth;
+    if (settings.triggerWidthIsMultiplier)
+      triggerWidth *= (triggerNumber + 1);
 
-        //Output the trigger pulse
-        digitalWrite(pin_trigger, LOW);
-        delayMicroseconds(triggerWidth);
-        digitalWrite(pin_trigger, HIGH);
-      }
-    }
+    //Output the trigger pulse
+    digitalWrite(pin_trigger, LOW);
+    delayMicroseconds(triggerWidth);
+    digitalWrite(pin_trigger, HIGH);
   }
 }
 
@@ -619,6 +630,21 @@ int stricmp(const char * str1, const char * str2)
     char1 = toupper(*str1++);
     char2 = toupper(*str2++);
   } while (char1 && (char1 == char2));
+
+  //Return the difference between the two strings
+  return char1 - char2;
+}
+
+int strnicmp(const char * str1, const char * str2, int length)
+{
+  char char1;
+  char char2;
+
+  //Do a case insensitive comparison between the two strings
+  do {
+    char1 = toupper(*str1++);
+    char2 = toupper(*str2++);
+  } while (char1 && (char1 == char2) && --length);
 
   //Return the difference between the two strings
   return char1 - char2;

@@ -4,73 +4,8 @@ void configureRadio()
 {
   bool success = true;
 
-  //Determine if we are using AirSpeed or custom settings
-  if (settings.airSpeed != 0)
-  {
-    switch (settings.airSpeed)
-    {
-      case (0):
-        //Custom settings - use settings without modification
-        break;
-      case (40):
-        settings.radioSpreadFactor = 11;
-        settings.radioBandwidth = 62.5;
-        settings.radioCodingRate = 8;
-        break;
-      case (150):
-        settings.radioSpreadFactor = 10;
-        settings.radioBandwidth = 62.5;
-        settings.radioCodingRate = 8;
-        break;
-      case (400):
-        settings.radioSpreadFactor = 10;
-        settings.radioBandwidth = 125;
-        settings.radioCodingRate = 8;
-        break;
-      case (1200):
-        settings.radioSpreadFactor = 9;
-        settings.radioBandwidth = 125;
-        settings.radioCodingRate = 8;
-        break;
-      case (2400):
-        settings.radioSpreadFactor = 10;
-        settings.radioBandwidth = 500;
-        settings.radioCodingRate = 8;
-        break;
-      case (4800):
-        settings.radioSpreadFactor = 9;
-        settings.radioBandwidth = 500;
-        settings.radioCodingRate = 8;
-        break;
-      case (9600):
-        settings.radioSpreadFactor = 8;
-        settings.radioBandwidth = 500;
-        settings.radioCodingRate = 7;
-        break;
-      case (19200):
-        settings.radioSpreadFactor = 7;
-        settings.radioBandwidth = 500;
-        settings.radioCodingRate = 7;
-        break;
-      case (28800):
-        settings.radioSpreadFactor = 6;
-        settings.radioBandwidth = 500;
-        settings.radioCodingRate = 6;
-        break;
-      case (38400):
-        settings.radioSpreadFactor = 6;
-        settings.radioBandwidth = 500;
-        settings.radioCodingRate = 5;
-        break;
-      default:
-        if ((settings.debug == true) || (settings.debugRadio == true))
-        {
-          systemPrint("Unknown airSpeed: ");
-          systemPrintln(settings.airSpeed);
-        }
-        break;
-    }
-  }
+  //Update the settings based upon the air speed
+  convertAirSpeedToSettings();
 
   if (radio.setFrequency(channels[0]) == RADIOLIB_ERR_INVALID_FREQUENCY)
     success = false;
@@ -163,6 +98,78 @@ void configureRadio()
   }
   if ((settings.debug == true) || (settings.debugRadio == true))
     systemPrintln("Radio configured");
+}
+
+//Update the settings based upon the airSpeed value
+void convertAirSpeedToSettings()
+{
+  //Determine if we are using AirSpeed or custom settings
+  if (settings.airSpeed != 0)
+  {
+    switch (settings.airSpeed)
+    {
+      case (0):
+        //Custom settings - use settings without modification
+        break;
+      case (40):
+        settings.radioSpreadFactor = 11;
+        settings.radioBandwidth = 62.5;
+        settings.radioCodingRate = 8;
+        break;
+      case (150):
+        settings.radioSpreadFactor = 10;
+        settings.radioBandwidth = 62.5;
+        settings.radioCodingRate = 8;
+        break;
+      case (400):
+        settings.radioSpreadFactor = 10;
+        settings.radioBandwidth = 125;
+        settings.radioCodingRate = 8;
+        break;
+      case (1200):
+        settings.radioSpreadFactor = 9;
+        settings.radioBandwidth = 125;
+        settings.radioCodingRate = 8;
+        break;
+      case (2400):
+        settings.radioSpreadFactor = 10;
+        settings.radioBandwidth = 500;
+        settings.radioCodingRate = 8;
+        break;
+      case (4800):
+        settings.radioSpreadFactor = 9;
+        settings.radioBandwidth = 500;
+        settings.radioCodingRate = 8;
+        break;
+      case (9600):
+        settings.radioSpreadFactor = 8;
+        settings.radioBandwidth = 500;
+        settings.radioCodingRate = 7;
+        break;
+      case (19200):
+        settings.radioSpreadFactor = 7;
+        settings.radioBandwidth = 500;
+        settings.radioCodingRate = 7;
+        break;
+      case (28800):
+        settings.radioSpreadFactor = 6;
+        settings.radioBandwidth = 500;
+        settings.radioCodingRate = 6;
+        break;
+      case (38400):
+        settings.radioSpreadFactor = 6;
+        settings.radioBandwidth = 500;
+        settings.radioCodingRate = 5;
+        break;
+      default:
+        if ((settings.debug == true) || (settings.debugRadio == true))
+        {
+          systemPrint("Unknown airSpeed: ");
+          systemPrintln(settings.airSpeed);
+        }
+        break;
+    }
+  }
 }
 
 //Set radio frequency
@@ -270,6 +277,9 @@ void generateHopTable()
   if (channels != NULL) free(channels);
   channels = (float *)malloc(settings.numberOfChannels * sizeof(float));
 
+  //Update the settings based upon the air speed
+  convertAirSpeedToSettings();
+
   float channelSpacing = (settings.frequencyMax - settings.frequencyMin) / (float)(settings.numberOfChannels + 2);
 
   //Keep away from edge of available spectrum
@@ -282,11 +292,23 @@ void generateHopTable()
   //Feed random number generator with our specific platform settings
   //Use settings that must be identical to have a functioning link.
   //For example, we do not use coding rate because two radios can communicate with different coding rate values
-  myRandSeed = settings.airSpeed + settings.netID + settings.operatingMode + settings.encryptData
-               + settings.dataScrambling
-               + (uint16_t)settings.frequencyMin + (uint16_t)settings.frequencyMax
-               + settings.numberOfChannels + settings.frequencyHop + settings.maxDwellTime
-               + (uint16_t)settings.radioBandwidth + settings.radioSpreadFactor;
+  myRandSeed = settings.airSpeed
+             + settings.netID
+             + settings.operatingMode
+             + settings.encryptData
+             + settings.dataScrambling
+             + (uint16_t)settings.frequencyMin
+             + (uint16_t)settings.frequencyMax
+             + settings.numberOfChannels
+             + settings.frequencyHop
+             + settings.maxDwellTime
+             + (uint16_t)settings.radioBandwidth
+             + settings.radioSpreadFactor
+             + settings.verifyRxNetID
+             + settings.radioProtocolVersion
+             + settings.overheadTime
+             + settings.enableCRC16
+             + settings.clientPingRetryInterval;
 
   if (settings.encryptData == true)
   {

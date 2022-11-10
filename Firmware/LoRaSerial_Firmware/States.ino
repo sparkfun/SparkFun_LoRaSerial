@@ -31,6 +31,7 @@ void updateRadioState()
   static uint8_t rexmtFrameSentCount;
   static uint8_t rexmtTxDestVc;
   VIRTUAL_CIRCUIT * vc;
+  VC_RADIO_MESSAGE_HEADER * vcHeader;
 
   switch (radioState)
   {
@@ -137,6 +138,7 @@ void updateRadioState()
 
     //Wait for the PING to complete transmission
     case RADIO_P2P_TRAINING_WAIT_PING_DONE:
+      updateCylonLEDs();
       if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
@@ -146,7 +148,7 @@ void updateRadioState()
       break;
 
     case RADIO_P2P_WAIT_FOR_TRAINING_PARAMS:
-      updateRSSI();
+      updateCylonLEDs();
 
       //Check for a received datagram
       if (transactionComplete == true)
@@ -180,6 +182,8 @@ void updateRadioState()
             //Update the parameters
             updateRadioParameters(rxData);
             endPointToPointTraining(true);
+            if (settings.debugTraining)
+              systemPrintln("Training successful, received parameters!");
             changeState(RADIO_RESET);
         }
       }
@@ -195,14 +199,27 @@ void updateRadioState()
           lostFrames++;
           changeState(RADIO_P2P_TRAINING_WAIT_PING_DONE);
         }
+
+        //Check for done the training
+        else if ((millis() - trainingTimer) > (settings.trainingTimeout * 60 * 1000))
+        {
+          //Failed to complete the training
+          if (settings.debugTraining)
+            systemPrintln("Training timeout, returning to previous mode!");
+          endPointToPointTraining(false);
+          changeState(RADIO_RESET);
+        }
       }
       break;
 
     case RADIO_P2P_WAIT_TRAINING_PARAMS_DONE:
+      updateCylonLEDs();
       if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
         endPointToPointTraining(false);
+        if (settings.debugTraining)
+          systemPrintln("Training successful, sent parameters!");
         changeState(RADIO_RESET);
       }
       break;
@@ -274,17 +291,8 @@ void updateRadioState()
         radio.setFrequency(channels[channelNumber]);
       }
 
-      //Is it time to send the PING to the remote system
-      if ((millis() - heartbeatTimer) >= pingRandomTime)
-      {
-        //Transmit the PING
-        triggerEvent(TRIGGER_HANDSHAKE_SEND_PING);
-        xmitDatagramP2PPing();
-        changeState(RADIO_P2P_WAIT_TX_PING_DONE);
-      }
-
       //Determine if a PING was received
-      else if (transactionComplete)
+      if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
 
@@ -309,6 +317,15 @@ void updateRadioState()
           xmitDatagramP2PAck1();
           changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
         }
+      }
+
+      //Is it time to send the PING to the remote system
+      else if ((receiveInProcess() == false) && ((millis() - heartbeatTimer) >= pingRandomTime))
+      {
+        //Transmit the PING
+        triggerEvent(TRIGGER_HANDSHAKE_SEND_PING);
+        xmitDatagramP2PPing();
+        changeState(RADIO_P2P_WAIT_TX_PING_DONE);
       }
       break;
 
@@ -801,9 +818,9 @@ void updateRadioState()
         }
       }
 
-      //Check for ACK timeout
-      else if ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime))
-        //Set at end of transmit, measures ACK timeout
+      //Check for ACK timeout, set at end of transmit, measures ACK timeout
+      else if ((receiveInProcess() == false)
+	&& ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime)))
       {
         if (settings.debugDatagrams)
         {
@@ -1332,9 +1349,11 @@ void updateRadioState()
             serialBufferOutput(rxData, rxDataBytes);
 
             //Acknowledge the data frame
-            *endOfTxData++ = VC_HEADER_BYTES + ACK_BYTES;
-            *endOfTxData++ = rxSrcVc;
-            *endOfTxData++ = myVc;
+            vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
+            vcHeader->length = VC_RADIO_HEADER_BYTES + ACK_BYTES;
+            vcHeader->destVc = rxSrcVc;
+            vcHeader->srcVc = myVc;
+            endOfTxData += VC_RADIO_HEADER_BYTES;
             xmitDatagramP2PAck();
             changeState(RADIO_VC_WAIT_TX_DONE);
             break;
@@ -1433,9 +1452,11 @@ void updateRadioState()
             serialBufferOutput(rxData, rxDataBytes);
 
             //Acknowledge the data frame
-            *endOfTxData++ = VC_HEADER_BYTES + ACK_BYTES;
-            *endOfTxData++ = rxSrcVc;
-            *endOfTxData++ = myVc;
+            vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
+            vcHeader->length = VC_RADIO_HEADER_BYTES + ACK_BYTES;
+            vcHeader->destVc = rxSrcVc;
+            vcHeader->srcVc = myVc;
+            endOfTxData += VC_RADIO_HEADER_BYTES;
             xmitDatagramP2PAck();
             changeState(RADIO_VC_WAIT_TX_DONE_ACK);
             break;
@@ -1788,7 +1809,7 @@ void changeState(RadioStates newState)
     unsigned int seconds = (millis() - lastLinkUpTime) / 1000;
     unsigned int minutes = seconds / 60;
     seconds -= (minutes * 60);
-    unsigned int hours = minutes / 60; 
+    unsigned int hours = minutes / 60;
     minutes -= (hours * 60);
     unsigned int days = hours / 24;
     hours -= (days * 24);
@@ -1863,6 +1884,40 @@ void v2EnterLinkUp()
     systemPrintln("========== Link UP ==========");
 }
 
+void vcSendLinkStatus(bool linkUp, int8_t srcVc)
+{
+  //Build the message
+  VC_LINK_STATUS_MESSAGE message;
+  message.linkStatus = linkUp ? LINK_UP : LINK_DOWN;
+
+  //Build the message header
+  VC_SERIAL_MESSAGE_HEADER header;
+  header.start = START_OF_HEADING;
+  header.radio.length = sizeof(header) + sizeof(message);
+  header.radio.destVc = PC_LINK_STATUS;
+  header.radio.srcVc = srcVc;
+
+  //Send the message
+  systemWrite((uint8_t *)&header, sizeof(header));
+  systemWrite((uint8_t *)&message, sizeof(message));
+
+  if (settings.printLinkUpDown)
+  {
+    if (linkUp)
+    {
+      systemPrint("========== Link ");
+      systemPrint(srcVc);
+      systemPrintln(" UP ==========");
+    }
+    else
+    {
+      systemPrint("--------- Link ");
+      systemPrint(srcVc);
+      systemPrintln(" Down ---------");
+    }
+  }
+}
+
 //Break the virtual-circuit link
 void vcBreakLink(int8_t vcIndex)
 {
@@ -1878,13 +1933,8 @@ void vcBreakLink(int8_t vcIndex)
   }
   linkFailures++;
 
-  //Display the link failure
-  if (settings.printLinkUpDown)
-  {
-    systemPrint("---------  Link ");
-    systemPrint(vcIndex);
-    systemPrintln(" Down  ---------");
-  }
+  //Send the status message
+  vcSendLinkStatus(false, myVc);
 
   //Stop the transmit timer
   transmitTimer = 0;
@@ -1910,14 +1960,10 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
     if (memcmp(vc->uniqueId, id, UNIQUE_ID_BYTES) == 0)
     {
       if (!vc->linkUp)
-      {
-        if (settings.printLinkUpDown)
-        {
-          systemPrint("==========  Link ");
-          systemPrint(srcAddr);
-          systemPrintln(" up  ==========");
-        }
-      }
+	//Send the status message
+        vcSendLinkStatus(true, myVc);
+
+      //Update the link status
       vc->linkUp = true;
       vc->lastHeartbeatMillis = millis();
       return index;
@@ -1972,12 +2018,9 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
   vc->linkUp = true;
   vc->lastHeartbeatMillis = millis();
   memcpy(&vc->uniqueId, id, UNIQUE_ID_BYTES);
-  if (settings.printLinkUpDown)
-  {
-    systemPrint("==========  Link ");
-    systemPrint(index);
-    systemPrintln(" up  ==========");
-  }
+
+  //Send the status message
+  vcSendLinkStatus(true, myVc);
 
   //Returned the assigned address
   return index;

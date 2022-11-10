@@ -106,6 +106,7 @@ void beginTrainingPointToPoint(bool defaultTraining)
 
   //Transmit general ping packet to see if anyone else is sitting on the training channel
   xmitDatagramP2PTrainingPing();
+  trainingTimer = millis();
 
   //Set the next state
   changeState(RADIO_P2P_TRAINING_WAIT_PING_DONE);
@@ -131,6 +132,7 @@ void beginTrainingClient()
 
   //Transmit client ping to the training server
   xmitDatagramMpTrainingPing();
+  trainingTimer = millis();
 
   //Set the next state
   changeState(RADIO_MP_WAIT_TX_TRAINING_PING_DONE);
@@ -192,7 +194,6 @@ void commonTrainingInitialization()
     settings.debugRadio = originalSettings.debugRadio;
     settings.debugStates = originalSettings.debugStates;
     settings.debugTraining = originalSettings.debugTraining;
-    settings.debugTrigger = originalSettings.debugTrigger;
 
     settings.printRfData = originalSettings.printRfData;
     settings.printPktData = originalSettings.printPktData;

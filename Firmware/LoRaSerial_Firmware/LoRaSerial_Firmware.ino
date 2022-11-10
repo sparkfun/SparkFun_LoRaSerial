@@ -434,6 +434,7 @@ bool trainingPreviousRxInProgress = false; //Previous RX status
 float originalChannel; //Original channel from HOP table while training is in progress
 uint8_t trainingPartnerID[UNIQUE_ID_BYTES]; //Unique ID of the training partner
 uint8_t myUniqueId[UNIQUE_ID_BYTES]; // Unique ID of this system
+unsigned long trainingTimer;
 
 //Virtual-Circuit
 int8_t cmdVc;   //VC index for ATI commands only
@@ -473,6 +474,7 @@ void setup()
 
   systemPrintTimestamp();
   systemPrintln("LRS");
+  outputSerialData(true);
 
   verifyRadioStateTable(); //Verify that the state table contains all of the states in increasing order
 
@@ -494,6 +496,7 @@ void setup()
 
   systemPrintTimestamp();
   systemPrintln("LRS Setup Complete");
+  outputSerialData(true);
 
   triggerEvent(TRIGGER_RADIO_RESET);
 }

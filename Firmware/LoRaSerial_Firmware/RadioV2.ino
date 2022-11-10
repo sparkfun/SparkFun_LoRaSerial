@@ -443,7 +443,6 @@ void updateRadioParameters(uint8_t * rxData)
     originalSettings.debugRadio = params.debugRadio;
     originalSettings.debugStates = params.debugStates;
     originalSettings.debugTraining = params.debugTraining;
-    originalSettings.debugTrigger = params.debugTrigger;
     originalSettings.printRfData = params.printRfData;
     originalSettings.printPktData = params.printPktData;
     originalSettings.debugReceive = params.debugReceive;
@@ -571,6 +570,7 @@ PacketType rcvDatagram()
   uint8_t receivedNetID;
   CONTROL_U8 rxControl;
   VIRTUAL_CIRCUIT * vc;
+  VC_RADIO_MESSAGE_HEADER * vcHeader;
 
   //Save the receive time
   rcvTimeMillis = millis();
@@ -585,7 +585,7 @@ PacketType rcvDatagram()
   }
   else if (state == RADIOLIB_ERR_CRC_MISMATCH)
   {
-    if (setting.debug == true)
+    if (settings.debug == true)
       systemPrintln("Receive CRC error!");
     return (DATAGRAM_CRC_ERROR);
   }
@@ -593,7 +593,7 @@ PacketType rcvDatagram()
   {
     if (settings.debug == true)
     {
-      systemPrint("Receive error: "));
+      systemPrint("Receive error: ");
       systemPrintln(state);
     }
     return (DATAGRAM_BAD);
@@ -924,7 +924,7 @@ PacketType rcvDatagram()
         }
 
         //Verify that there is sufficient space in the serialTransmitBuffer
-        if ((sizeof(serialTransmitBuffer) - availableTXBytes()) < rxDataBytes)
+        if (inCommandMode || ((sizeof(serialTransmitBuffer) - availableTXBytes()) < rxDataBytes))
         {
           if (settings.debugReceive)
           {
@@ -965,8 +965,9 @@ PacketType rcvDatagram()
     }
 
     //Parse the virtual circuit header
-    rxDestVc = rxData[1];
-    rxSrcVc = rxData[2];
+    vcHeader = (VC_RADIO_MESSAGE_HEADER *)&rxData[1];
+    rxDestVc = vcHeader->destVc;
+    rxSrcVc = vcHeader->srcVc;
     rxVcData = &rxData[3];
 
     //Validate the source VC
@@ -990,11 +991,11 @@ PacketType rcvDatagram()
     }
 
     //Validate the length
-    if (*rxData != rxDataBytes)
+    if (vcHeader->length != rxDataBytes)
     {
       systemPrintTimestamp();
       systemPrint("Invalid VC length, received ");
-      systemPrint(*rxData);
+      systemPrint(vcHeader->length);
       systemPrint(" expecting ");
       systemPrintln(rxDataBytes);
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
@@ -1018,7 +1019,7 @@ PacketType rcvDatagram()
     {
       systemPrintTimestamp();
       systemPrint("    VC Length: ");
-      systemPrintln(*rxData);
+      systemPrintln(vcHeader->length);
       systemPrint("    DestAddr: ");
       if (rxDestVc == VC_BROADCAST)
         systemPrintln("Broadcast");
@@ -1115,8 +1116,8 @@ void transmitDatagram()
   uint8_t length;
   int8_t srcVc;
   uint8_t * vcData;
-  uint8_t vcLength;
   VIRTUAL_CIRCUIT * vc;
+  VC_RADIO_MESSAGE_HEADER * vcHeader;
 
   if (timeToHop == true) //If the channelTimer has expired, move to next frequency
     hopChannel();
@@ -1125,15 +1126,15 @@ void transmitDatagram()
   vc = NULL;
   if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
   {
-    vcData = &outgoingPacket[headerBytes];
-    vcLength = *vcData++;
-    txDestVc = *vcData++;
-    srcVc = *vcData++;
-    if ((uint8_t)srcVc <= MAX_VC)
+    vcHeader = (VC_RADIO_MESSAGE_HEADER *)&outgoingPacket[headerBytes];
+    txDestVc = vcHeader->destVc;
+    srcVc = vcHeader->srcVc;
+    if ((uint8_t)vcHeader->srcVc <= MAX_VC)
     {
       vc = &virtualCircuitList[srcVc];
       vc->messagesSent++;
     }
+    vcData = (uint8_t *)&vcHeader[1];
   }
 
   //Determine the packet size
@@ -1270,7 +1271,7 @@ void transmitDatagram()
   {
     systemPrintTimestamp();
     systemPrint("    Length: ");
-    systemPrintln(vcLength);
+    systemPrintln(vcHeader->length);
     systemPrint("    DestAddr: ");
     if (txDestVc == VC_BROADCAST)
       systemPrintln("Broadcast");

@@ -219,80 +219,7 @@ typedef struct _VIRTUAL_CIRCUIT
                           //incremented when successfully acknowledged via DATA_ACK frame
 } VIRTUAL_CIRCUIT;
 
-typedef struct _VC_MESSAGE_HEADER
-{
-  uint8_t length;         //Length in bytes of the VC message
-  int8_t destVc;          //Destination VC
-  int8_t srcVc;           //Source VC
-} VC_MESSAGE_HEADER;
-
-#define VC_HEADER_BYTES     (sizeof(VC_MESSAGE_HEADER)) //Length of the VC header in bytes
-
-//Virtual-Circuit source and destination index values
-#define MAX_VC              8
-#define VC_SERVER           0
-#define VC_BROADCAST        -1
-#define VC_UNASSIGNED       -2
-
-//Source and destinations reserved for the local host
-#define VC_LINK_RESET       -3    //Force link reset
-#define VC_LINK_STATUS      -4    //Asynchronous link status output
-#define VC_COMMAND          -5    //Command input and command response
-#define VC_DEBUG            -6    //Debug input and output
-
-/*
-Host Interaction using Virtual-Circuits
-
-       Host A                   LoRa A      LoRa B               Host B
-
-All output goes to serial                                           .
-                                                                    .
-              +++ ---->                                             .
-                  <---- OK
-              .
-              .
-              .
-                  <---- Command responses
-                  <---- Debug message
-
-         Mode: VC ---->
-                  <---- OK
-
-       (VC debug) <---- Debug message
-
-        CMD: AT&W ---->
-     (VC command) <---- OK
-
-  CMD: LINK_RESET ---->
-                         HEARTBEAT -2 ---->
-      (VC status) <---- Link A up             Link A Up ----> (link status)
-
-       (VC debug) <---- Debug message
-
-                                      <---- HEARTBEAT B
-      (VC status) <---- Link B Up
-
-       (VC debug) <---- Debug message
-
-  MSG: Data for B ---->
-                           Data for B ---->
-                                      <---- ACK
-                                             Data for B ----> MSG: Data for B
-                                                        <---- MSG: Resp for A
-                                      <---- Resp for A
-                                  ACK ---->
-  MSG: Resp for A <---- Resp for A
-
-*/
-
-//Field offsets in the VC HEARTBEAT frame
-#define VC_HB_UNIQUE_ID     0
-#define VC_HB_MILLIS        (VC_HB_UNIQUE_ID + UNIQUE_ID_BYTES)
-#define VC_HB_CHANNEL_TIMER (VC_HB_MILLIS + sizeof(uint32_t))
-#define VC_HB_CHANNEL       (VC_HB_CHANNEL_TIMER + sizeof(uint16_t))
-#define VC_HB_END           (VC_HB_CHANNEL + sizeof(uint8_t))
-
-#define VC_LINK_BREAK_MULTIPLIER    3 //Number of missing HEARTBEAT timeouts
+#include "Virtual_Circuit_Protocol.h"
 
 //Train button states
 typedef enum
@@ -392,6 +319,20 @@ typedef struct _CONTROL_U8
   uint8_t filler : 2;
 } CONTROL_U8;
 
+typedef bool (* VALIDATION_ROUTINE)(void * value, uint32_t valMin, uint32_t valMax);
+
+typedef struct _COMMAND_ENTRY
+{
+  uint8_t number;
+  uint32_t minValue;
+  uint32_t maxValue;
+  uint8_t digits;
+  uint8_t type;
+  VALIDATION_ROUTINE validate;
+  const char * name;
+  void * setting;
+} COMMAND_ENTRY;
+
 //These are all the settings that can be set on Serial Terminal Radio. It's recorded to NVM.
 typedef struct struct_settings {
   uint16_t sizeOfSettings = 0; //sizeOfSettings **must** be the first entry and must be int
@@ -429,15 +370,14 @@ typedef struct struct_settings {
   bool debugRadio = false; //Print radio info
   bool debugStates = false; //Print state changes
   bool debugTraining = false; //Print training info
-  bool debugTrigger = false; //Print triggers
   bool usbSerialWait = false; //Wait for USB serial initialization
   bool printRfData = false; //Print RX and TX data
   bool printPktData = false; //Print data, before encryption and after decryption
   bool verifyRxNetID = false; //Verify RX netID value when not operating in point-to-point mode
   uint8_t triggerWidth = 25; //Trigger width in microSeconds or multipler for trigger width
   bool triggerWidthIsMultiplier = true; //Use the trigger width as a multiplier
-  uint32_t triggerEnable = 0xffffffff; //Determine which triggers are enabled: 31 - 0
-  uint32_t triggerEnable2 = 0xffffffff; //Determine which triggers are enabled: 63 - 32
+  uint32_t triggerEnable = 0; //Determine which triggers are enabled: 31 - 0
+  uint32_t triggerEnable2 = 0; //Determine which triggers are enabled: 63 - 32
   bool debugReceive = false; //Print receive processing
   bool debugTransmit = false; //Print transmit processing
   bool printTxErrors = false; //Print any transmit errors
@@ -457,6 +397,7 @@ typedef struct struct_settings {
   bool invertCts = false; //Invert the input of CTS
   bool invertRts = false; //Invert the output of RTS
   bool alternateLedUsage = false; //Enable alternate LED usage
+  uint8_t trainingTimeout = 1; //Timeout in minutes to complete the training
 
   //Add new parameters immediately before this line
   //-- Add commands to set the parameters
@@ -481,7 +422,6 @@ typedef void (* ARCH_PET_WDT)();
 typedef Module * (* ARCH_RADIO)();
 typedef bool (* ARCH_SERIAL_AVAILABLE)();
 typedef void (* ARCH_SERIAL_FLUSH)();
-typedef void (* ARCH_SERIAL_PRINT)(const char * value);
 typedef uint8_t (* ARCH_SERIAL_READ)();
 typedef void (* ARCH_SERIAL_WRITE)(uint8_t value);
 typedef void (* ARCH_SYSTEM_RESET)();
@@ -498,7 +438,6 @@ typedef struct _ARCH_TABLE
   ARCH_RADIO radio;               //Initialize the radio
   ARCH_SERIAL_AVAILABLE serialAvailable;  //Determine if serial data is available
   ARCH_SERIAL_FLUSH serialFlush;  //Flush the serial port
-  ARCH_SERIAL_PRINT serialPrint;  //Print the specified string value
   ARCH_SERIAL_READ serialRead;    //Read a byte from the serial port
   ARCH_SERIAL_WRITE serialWrite;  //Print the specified character
   ARCH_SYSTEM_RESET systemReset;  //Reset the system

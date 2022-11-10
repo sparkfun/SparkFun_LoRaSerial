@@ -181,12 +181,6 @@ void samdSerialFlush()
   Serial1.flush();
 }
 
-void samdSerialPrint(const char * value)
-{
-  Serial.print(value);
-  Serial1.print(value);
-}
-
 uint8_t samdSerialRead()
 {
   byte incoming = 0;
@@ -231,7 +225,6 @@ const ARCH_TABLE arch = {
   samdRadio,                  //radio
   samdSerialAvailable,        //serialAvailable
   samdSerialFlush,            //serialFlush
-  samdSerialPrint,            //serialPrint
   samdSerialRead,             //serialRead
   samdSerialWrite,            //serialWrite
   samdSystemReset,            //systemReset
