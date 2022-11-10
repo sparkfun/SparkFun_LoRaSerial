@@ -49,8 +49,8 @@ void configureRadio()
       success = false;
   }
 
-  radio.setDio0Action(dio0ISR); //Called when transmission is finished
-  radio.setDio1Action(dio1ISR); //Called after a transmission has started, so we can move to next freq
+  radio.setDio0Action(transactionCompleteISR); //Called when transmission is finished
+  radio.setDio1Action(hopISR); //Called after a transmission has started, so we can move to next freq
 
   if (pin_rxen != PIN_UNDEFINED)
     radio.setRfSwitchPins(pin_rxen, pin_txen);
@@ -224,7 +224,7 @@ void returnToReceiving()
 
 //ISR when DIO0 goes low
 //Called when transmission is complete or when RX is received
-void dio0ISR(void)
+void transactionCompleteISR(void)
 {
   transactionComplete = true;
 }
@@ -232,7 +232,7 @@ void dio0ISR(void)
 //ISR when DIO1 goes low
 //Called when FhssChangeChannel interrupt occurs (at regular HoppingPeriods)
 //We do not use SX based channel hopping, and instead use a synchronized hardware timer
-void dio1ISR(void)
+void hopISR(void)
 {
   clearDIO1 = true;
 }
