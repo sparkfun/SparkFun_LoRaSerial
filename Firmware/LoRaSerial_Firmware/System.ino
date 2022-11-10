@@ -334,7 +334,7 @@ void triggerEvent(uint8_t triggerNumber)
   uint16_t triggerWidth;
 
   //Determine if the trigger pin is enabled
-  if (pin_trigger != PIN_UNDEFINED)
+  if (pin_trigger == PIN_UNDEFINED)
     return;
 
   //Determine which trigger enable to use
