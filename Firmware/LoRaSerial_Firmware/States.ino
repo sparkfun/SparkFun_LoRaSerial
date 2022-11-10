@@ -2154,7 +2154,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
     {
       if (!vc->linkUp)
         //Send the status message
-        vcSendLinkStatus(true, myVc);
+        vcSendLinkStatus(true, index);
 
       //Update the link status
       vc->linkUp = true;
@@ -2188,6 +2188,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
       systemPrintln("ERROR: Too many clients, no free addresses!\n");
       return -2;
     }
+    srcAddr = index;
   }
 
   //Check for an address conflict
@@ -2213,7 +2214,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
   memcpy(&vc->uniqueId, id, UNIQUE_ID_BYTES);
 
   //Send the status message
-  vcSendLinkStatus(true, myVc);
+  vcSendLinkStatus(true, index);
 
   //Returned the assigned address
   return index;
