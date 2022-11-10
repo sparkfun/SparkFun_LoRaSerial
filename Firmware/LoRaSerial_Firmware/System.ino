@@ -284,6 +284,19 @@ void systemReset()
   arch.systemReset();
 }
 
+void waitForever()
+{
+  //Output the remaining serial data
+  outputSerialData(true);
+
+  //Empty the USB serial device
+  systemFlush();
+
+  //Wait forever
+  while (1)
+    petWDT();
+}
+
 //Encrypt a given array in place
 void encryptBuffer(uint8_t *bufferToEncrypt, uint8_t arraySize)
 {

@@ -320,8 +320,7 @@ void generateHopTable()
   {
     systemPrint("ERROR - Wrong AES IV size in bytes, please set AES_IV_BYTES = ");
     systemPrintln(gcm.ivSize());
-    while (1)
-      petWDT();
+    waitForever();
   }
 
   //Verify the AES key length
@@ -329,8 +328,7 @@ void generateHopTable()
   {
     systemPrint("ERROR - Wrong AES key size in bytes, please set AES_KEY_BYTES = ");
     systemPrintln(gcm.keySize());
-    while (1)
-      petWDT();
+    waitForever();
   }
 
   //Set new initial values for AES using settings based random seed
