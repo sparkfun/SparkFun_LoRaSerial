@@ -106,7 +106,7 @@ bool commandAT(const char * commandString)
           changeState(RADIO_RESET);
         }
         break;
-      case ('R'): //VC link reset
+      case ('L'): //VC link reset
         reportOK();
         if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
         {
