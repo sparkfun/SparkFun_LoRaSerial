@@ -7,8 +7,8 @@
 
 int myVcAddr;
 int remoteVcAddr;
-uint8_t inputBuffer[BUFFER_SIZE + 3];
-uint8_t outputBuffer[BUFFER_SIZE + 3];
+uint8_t inputBuffer[VC_SERIAL_HEADER_BYTES + BUFFER_SIZE];
+uint8_t outputBuffer[VC_SERIAL_HEADER_BYTES + BUFFER_SIZE];
 
 int stdinToRadio()
 {
@@ -25,7 +25,7 @@ int stdinToRadio()
   {
     //Read the console input data into the local buffer.
     vcData = inputBuffer;
-    bytesRead = read(STDIN, &inputBuffer[3], BUFFER_SIZE);
+    bytesRead = read(STDIN, &inputBuffer[VC_SERIAL_HEADER_BYTES], BUFFER_SIZE);
     if (bytesRead < 0)
     {
       perror("ERROR: Read from stdin failed!");
@@ -42,11 +42,17 @@ int stdinToRadio()
       if (bytesToSend > MAX_MESSAGE_SIZE)
         bytesToSend = MAX_MESSAGE_SIZE;
 
+      //Build the virtual circuit serial header
+      vcData[0] = START_OF_VC_SERIAL;
+      vcData[1] = bytesToSend + VC_RADIO_HEADER_BYTES;
+      vcData[2] = remoteVcAddr;
+      vcData[3] = myVcAddr;
+
       //Send the data
-      vcData[0] = bytesToSend + 3;
-      vcData[1] = remoteVcAddr;
-      vcData[2] = myVcAddr;
-      bytesToSend = write(tty, vcData, *vcData);
+printf("Sending the message:\n");
+dumpBuffer(vcData, vcData[1] + 1);
+      bytesToSend = write(tty, vcData, vcData[1] + 1);
+printf("bytesToSend: %d\n", bytesToSend);
       if (bytesToSend < 0)
       {
         perror("ERROR: Write to radio failed!");
