@@ -406,13 +406,20 @@ bool vcSerialMessageReceived()
     //Verify that the entire message is in the serial buffer
     msgLength = vcSerialMsgGetLengthByte();
     if (availableRadioTXBytes() < msgLength)
+    {
       //The entire message is not in the buffer
+      if (settings.debugSerial)
+        systemPrintln("VC serial RX: Waiting for entire buffer");
       break;
+    }
 
     //Determine if the message is too large
     vcDest = vcSerialMsgGetVcDest();
     if (msgLength > maxDatagramSize)
     {
+      if (settings.debugSerial || settings.debugTransmit)
+        systemPrintln("VC serial RX: Message too long, discarded");
+
       //Discard this message, it is too long to transmit over the radio link
       radioTxTail += msgLength;
       if (radioTxTail >= sizeof(radioTxBuffer))
@@ -430,7 +437,7 @@ bool vcSerialMessageReceived()
     //Validate the destination VC
     if ((vcDest < VC_BROADCAST) || (vcDest >= MAX_VC))
     {
-      if (settings.debugTransmit)
+      if (settings.debugSerial || settings.debugTransmit)
       {
         systemPrint("ERROR: Invalid vcDest ");
         systemPrint(vcDest);
@@ -445,9 +452,17 @@ bool vcSerialMessageReceived()
     }
 
     //If sending to ourself, just place the data in the serial output buffer
+    if (settings.debugSerial)
+    {
+      systemPrint("Readying ");
+      systemPrint(msgLength);
+      systemPrintln(" byte for transmission");
+    }
     readyOutgoingPacket(msgLength);
     if (vcDest == myVc)
     {
+      if (settings.debugSerial)
+        systemPrintln("VC serial RX: Sending to ourself");
       serialBufferOutput(outgoingPacket, msgLength);
       endOfTxData -= msgLength;
       break;
