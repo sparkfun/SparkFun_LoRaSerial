@@ -543,6 +543,11 @@ void updateRadioState()
             returnToReceiving();
             break;
 
+          case DATAGRAM_CRC_ERROR:
+            triggerEvent(TRIGGER_CRC_ERROR);
+            returnToReceiving();
+            break;
+
           case DATAGRAM_PING:
             v2BreakLink();
             break;
@@ -733,6 +738,11 @@ void updateRadioState()
 
           case DATAGRAM_BAD:
             triggerEvent(TRIGGER_BAD_PACKET);
+            returnToReceiving();
+            break;
+
+          case DATAGRAM_CRC_ERROR:
+            triggerEvent(TRIGGER_CRC_ERROR);
             returnToReceiving();
             break;
 
