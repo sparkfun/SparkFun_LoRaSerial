@@ -206,6 +206,10 @@ void systemWrite(uint8_t * buffer, uint16_t length)
 
 void systemFlush()
 {
+  //Output the remaining serial data
+  outputSerialData(true);
+
+  //Empty the USB serial device
   arch.serialFlush();
 }
 
