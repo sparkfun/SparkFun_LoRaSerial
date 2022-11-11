@@ -222,21 +222,6 @@ void returnToReceiving()
   }
 }
 
-//ISR when DIO0 goes low
-//Called when transmission is complete or when RX is received
-void transactionCompleteISR(void)
-{
-  transactionComplete = true;
-}
-
-//ISR when DIO1 goes low
-//Called when FhssChangeChannel interrupt occurs (at regular HoppingPeriods)
-//We do not use SX based channel hopping, and instead use a synchronized hardware timer
-void hopISR(void)
-{
-  clearDIO1 = true;
-}
-
 //Given spread factor, bandwidth, coding rate and number of bytes, return total Air Time in ms for packet
 uint16_t calcAirTime(uint8_t bytesToSend)
 {
@@ -529,3 +514,18 @@ void printSX1276Registers ()
 }
 
 #endif  //RADIOLIB_LOW_LEVEL
+
+//ISR when DIO0 goes low
+//Called when transmission is complete or when RX is received
+void transactionCompleteISR(void)
+{
+  transactionComplete = true;
+}
+
+//ISR when DIO1 goes low
+//Called when FhssChangeChannel interrupt occurs (at regular HoppingPeriods)
+//We do not use SX based channel hopping, and instead use a synchronized hardware timer
+void hopISR(void)
+{
+  hop = true;
+}

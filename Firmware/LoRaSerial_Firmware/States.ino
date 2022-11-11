@@ -103,7 +103,16 @@ void updateRadioState()
           changeState(RADIO_VC_WAIT_TX_DONE);
         }
         else
-          changeState(RADIO_MP_STANDBY);
+        {
+          if (settings.multipointServer == true)
+          {
+            startChannelTimer(); //Start hopping
+            changeState(RADIO_MP_STANDBY);
+          }
+          else
+            changeState(RADIO_MP_BEGIN_SCAN);
+        }
+
       }
       break;
 
@@ -820,7 +829,7 @@ void updateRadioState()
 
       //Check for ACK timeout, set at end of transmit, measures ACK timeout
       else if ((receiveInProcess() == false)
-	&& ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime)))
+               && ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime)))
       {
         if (settings.debugDatagrams)
         {
@@ -938,15 +947,21 @@ void updateRadioState()
     //V2 - Multi-Point Data Exchange
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-    case RADIO_MP_STANDBY:
-      //Hop channels when required
-      if (timeToHop == true)
-        hopChannel();
+    case RADIO_MP_BEGIN_SCAN:
+      stopChannelTimer(); //Stop hopping
 
-      //Process the receive packet
-      if (transactionComplete == true)
+      multipointChannelLoops = 0;
+      multipointAttempts = 0;
+
+      triggerEvent(TRIGGER_MP_SCAN);
+      changeState(RADIO_MP_SCANNING);
+      break;
+
+    //Walk through channel table transmitting a Ping and looking for an Ack
+    case RADIO_MP_SCANNING:
+
+      if (transactionComplete)
       {
-        triggerEvent(TRIGGER_BROADCAST_PACKET_RECEIVED);
         transactionComplete = false; //Reset ISR flag
 
         //Decode the received datagram
@@ -956,55 +971,243 @@ void updateRadioState()
         switch (packetType)
         {
           default:
+            triggerEvent(TRIGGER_UNKNOWN_PACKET);
             returnToReceiving();
-            changeState(RADIO_MP_STANDBY);
             break;
 
-          case DATAGRAM_ACK_1:
+          case DATAGRAM_BAD:
+            triggerEvent(TRIGGER_BAD_PACKET);
+            returnToReceiving();
+            break;
+
+          case DATAGRAM_CRC_ERROR:
+            triggerEvent(TRIGGER_CRC_ERROR);
+            returnToReceiving();
+            break;
+
           case DATAGRAM_ACK_2:
           case DATAGRAM_DATA:
           case DATAGRAM_DATA_ACK:
-          case DATAGRAM_HEARTBEAT:
-          case DATAGRAM_PING:
+          case DATAGRAM_PING: //Clients do not respond to pings, only the server
           case DATAGRAM_REMOTE_COMMAND:
           case DATAGRAM_REMOTE_COMMAND_RESPONSE:
             //We should not be receiving these datagrams, but if we do, just ignore
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+            triggerEvent(TRIGGER_BAD_PACKET);
             returnToReceiving();
             break;
 
-          case DATAGRAM_DATAGRAM:
+          case DATAGRAM_ACK_1:
+            //Server has responded with ack
+            syncChannelTimer(); //Start and adjust freq hop ISR based on remote's remaining clock
+
+            channelNumber = rxData[0]; //Change to the server's channel number
+
             printPacketQuality();
-
-
-            //Place the data in the serial output buffer
-            serialBufferOutput(rxData, rxDataBytes);
 
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-            returnToReceiving(); //No response when in broadcasting mode
 
-            lastPacketReceived = millis(); //Update timestamp for Link LED
+            lastPacketReceived = millis(); //Reset
+
+            triggerEvent(TRIGGER_LINK_ACK_RECEIVED);
+            returnToReceiving();
+            changeState(RADIO_MP_STANDBY);
             break;
         }
       }
 
-      else //Process waiting serial
+      //Nothing received
+      else if (receiveInProcess() == false)
       {
-        //If the radio is available, send any data in the serial buffer over the radio
-        if (receiveInProcess() == false)
+        //Check for a receive timeout
+        if ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime))
         {
-          if (availableRadioTXBytes()) //If we have bytes
+          if (settings.debugDatagrams)
           {
-            if (processWaitingSerial(false) == true) //If we've hit a frame size or frame-timed-out
+            systemPrintTimestamp();
+            systemPrintln("MP: ACK1 Timeout");
+          }
+
+          //Move to previous channel in table
+          hopChannelReverse();
+
+          if (channelNumber == 0) multipointChannelLoops++;
+
+          if (multipointChannelLoops > 10)
+          {
+            multipointChannelLoops = 0;
+
+            multipointAttempts++;
+            //Throttle the scanning. Stop transmitting for 60s times the number of attempts.
+            unsigned long startTime = millis();
+            while ((millis() - startTime) < (60 * 1000 * multipointAttempts))
             {
-              triggerEvent(TRIGGER_BROADCAST_DATA_PACKET);
-              xmitDatagramMpDatagram();
-              changeState(RADIO_MP_WAIT_TX_DONE);
+              delay(10);
+              petWDT();
             }
           }
+
+          //Send ping
+          xmitDatagramMpPing();
+          changeState(RADIO_MP_WAIT_TX_PING_DONE);
         }
-      } //End processWaitingSerial
+      }
+
+      break;
+
+    //Wait for the PING to complete transmission
+    case RADIO_MP_WAIT_TX_PING_DONE:
+      if (transactionComplete)
+      {
+        transactionComplete = false; //Reset ISR flag
+        returnToReceiving();
+        changeState(RADIO_MP_SCANNING);
+      }
+      break;
+
+    //Wait for the ACK to complete transmission
+    case RADIO_MP_WAIT_TX_ACK_DONE:
+      if (transactionComplete)
+      {
+        transactionComplete = false; //Reset ISR flag
+        returnToReceiving();
+        changeState(RADIO_MP_STANDBY);
+      }
+      break;
+
+    case RADIO_MP_STANDBY:
+      //Hop channels when required
+      if (timeToHop == true)
+        hopChannel();
+
+      //Process the receive packet
+      if (transactionComplete == true)
+      {
+        triggerEvent(TRIGGER_MP_PACKET_RECEIVED);
+        transactionComplete = false; //Reset ISR flag
+
+        //Decode the received datagram
+        PacketType packetType = rcvDatagram();
+
+        //Process the received datagram
+        switch (packetType)
+        {
+          default:
+            triggerEvent(TRIGGER_UNKNOWN_PACKET);
+            returnToReceiving();
+            break;
+
+          case DATAGRAM_BAD:
+            triggerEvent(TRIGGER_BAD_PACKET);
+            returnToReceiving();
+            break;
+
+          case DATAGRAM_CRC_ERROR:
+            triggerEvent(TRIGGER_CRC_ERROR);
+            returnToReceiving();
+            break;
+
+          case DATAGRAM_ACK_1:
+          case DATAGRAM_ACK_2:
+          case DATAGRAM_DATAGRAM:
+          case DATAGRAM_DATA_ACK:
+          case DATAGRAM_REMOTE_COMMAND:
+          case DATAGRAM_REMOTE_COMMAND_RESPONSE:
+            //We should not be receiving these datagrams, but if we do, just ignore
+            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+            triggerEvent(TRIGGER_BAD_PACKET);
+            returnToReceiving();
+            break;
+
+          case DATAGRAM_PING:
+            //A new radio is saying hello
+            if (settings.multipointServer == true)
+            {
+              //Ack their ping with sync data
+              xmitDatagramMpAck();
+              changeState(RADIO_MP_WAIT_TX_ACK_DONE);
+            }
+            else
+            {
+              returnToReceiving();
+              changeState(RADIO_MP_STANDBY);
+            }
+            break;
+
+          case DATAGRAM_HEARTBEAT:
+            //Received data or heartbeat. Sync clock, do not ack.
+            syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
+
+            printPacketQuality();
+
+            updateRSSI(); //Adjust LEDs to RSSI level
+            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+
+            lastPacketReceived = millis(); //Update timestamp for Link LED
+
+            returnToReceiving(); //No ack when in multipoint mode
+            changeState(RADIO_MP_STANDBY);
+            break;
+
+          case DATAGRAM_DATA:
+            //Received data or heartbeat. Sync clock, do not ack.
+            syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
+
+            setHeartbeatMultipoint(); //We're sync'd so reset heartbeat timer
+
+            printPacketQuality();
+
+            //Place any available data in the serial output buffer
+            serialBufferOutput(rxData, rxDataBytes - sizeof(uint16_t)); //Remove the two bytes of sync data
+
+            updateRSSI(); //Adjust LEDs to RSSI level
+            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+
+            triggerEvent(TRIGGER_MP_DATA_PACKET);
+            lastPacketReceived = millis(); //Update timestamp for Link LED
+
+            returnToReceiving(); //No ack when in multipoint mode
+            changeState(RADIO_MP_STANDBY);
+            break;
+        }
+      }
+
+      //If the radio is available, send any data in the serial buffer over the radio
+      else if (receiveInProcess() == false)
+      {
+        heartbeatTimeout = ((millis() - heartbeatTimer) > heartbeatRandomTime);
+
+        //Check for time to send serial data
+        if (availableRadioTXBytes() && (processWaitingSerial(heartbeatTimeout) == true))
+        {
+          triggerEvent(TRIGGER_MP_DATA_PACKET);
+          xmitDatagramMpData();
+          setHeartbeatMultipoint(); //We're sending something with clock data so reset heartbeat timer
+          changeState(RADIO_MP_WAIT_TX_DONE);
+        }
+
+        //Only the server transmits heartbeats
+        else if (settings.multipointServer == true)
+        {
+          if (heartbeatTimeout)
+          {
+            triggerEvent(TRIGGER_HEARTBEAT);
+            xmitDatagramMpHeartbeat();
+            setHeartbeatMultipoint(); //We're sending something with clock data so reset heartbeat timer
+            changeState(RADIO_MP_WAIT_TX_DONE); //Wait for heartbeat to transmit
+          }
+        }
+
+        //If the client hasn't received a packet in too long, return to scanning
+        else if (settings.multipointServer == false)
+        {
+          if ((millis() - lastPacketReceived) > (settings.heartbeatTimeout * 3))
+          {
+            changeState(RADIO_MP_BEGIN_SCAN);
+          }
+        }
+      }
 
       //Toggle 2 LEDs if we have recently transmitted
       if (millis() - datagramTimer < 5000)
@@ -1018,12 +1221,9 @@ void updateRadioState()
             setRSSI(0b0010);
         }
       }
-      else if (millis() - lastPacketReceived < 5000)
-        updateRSSI(); //Adjust LEDs to RSSI level
+      else if (millis() - lastPacketReceived > 5000)
+        setRSSI(0); //Turn off RSSI after 5 seconds of no new packets received
 
-      //Turn off RSSI after 5 seconds of no activity
-      else
-        setRSSI(0);
       break;
 
     case RADIO_MP_WAIT_TX_DONE:
@@ -1035,12 +1235,10 @@ void updateRadioState()
       if (transactionComplete == true)
       {
         transactionComplete = false; //Reset ISR flag
+        setRSSI(0b0001);
         returnToReceiving();
         changeState(RADIO_MP_STANDBY);
-        setRSSI(0b0001);
       }
-      else if (timeToHop == true) //If the dio1ISR has fired, move to next frequency
-        hopChannel();
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -1960,7 +2158,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
     if (memcmp(vc->uniqueId, id, UNIQUE_ID_BYTES) == 0)
     {
       if (!vc->linkUp)
-	//Send the status message
+        //Send the status message
         vcSendLinkStatus(true, myVc);
 
       //Update the link status

@@ -664,3 +664,11 @@ void printPacketQuality()
     systemPrintln();
   }
 }
+
+//Toggle a pin. Used for logic analyzer debugging.
+void triggerFrequency(uint16_t frequency)
+{
+  digitalWrite(pin_trigger, LOW);
+  delayMicroseconds(frequency);
+  digitalWrite(pin_trigger, HIGH);
+}

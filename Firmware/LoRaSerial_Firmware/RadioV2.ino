@@ -325,21 +325,95 @@ void xmitDatagramP2PAck()
 // Multi-Point Data Exchange
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-//Send a data datagram to the remote system
-void xmitDatagramMpDatagram()
+//Send a data datagram to the remote system, including sync data
+void xmitDatagramMpData()
 {
+  uint16_t msToNextHop = settings.maxDwellTime - (millis() - timerStart);
+  memcpy(endOfTxData, &msToNextHop, sizeof(msToNextHop));
+  endOfTxData += sizeof(msToNextHop);
+
   /*
-                          endOfTxData ---.
-                                         |
-                                         V
-      +----------+---------+---  ...  ---+----------+
-      | Optional |         |             | Optional |
-      |  NET ID  | Control |    Data     | Trailer  |
-      |  8 bits  | 8 bits  |   n bytes   | n Bytes  |
-      +----------+---------+-------------+----------+
+                                   endOfTxData ---.
+                                                  |
+                                                  V
+      +--------+---------+---  ...  ---+----------+----------+
+      |        |         |             | Channel  | Optional |
+      | NET ID | Control |    Data     |  Timer   | Trailer  |
+      | 8 bits | 8 bits  |   n bytes   | 2 bytes  | n Bytes  |
+      +--------+---------+-------------+----------+----------+
   */
 
-  txControl.datagramType = DATAGRAM_DATAGRAM;
+
+
+  txControl.datagramType = DATAGRAM_DATA;
+  transmitDatagram();
+}
+
+//Heartbeat packet to sync other units in multipoint mode
+void xmitDatagramMpHeartbeat()
+{
+  uint16_t msToNextHop = settings.maxDwellTime - (millis() - timerStart);
+  memcpy(endOfTxData, &msToNextHop, sizeof(msToNextHop));
+  endOfTxData += sizeof(msToNextHop);
+
+  /*
+                     endOfTxData ---.
+                                    |
+                                    V
+      +--------+---------+----------+----------+
+      |        |         | Channel  | Optional |
+      | NET ID | Control |  Timer   | Trailer  |
+      | 8 bits | 8 bits  | 2 bytes  | n Bytes  |
+      +--------+---------+----------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_HEARTBEAT;
+  transmitDatagram();
+}
+
+//Ack packet sent by server in response the client ping, includes sync data and channel number
+//During Multipoint scanning, it's possible for the client to get an ack but be 500kHz off
+//The channel Number ensures that the client gets the next hop correct
+void xmitDatagramMpAck()
+{
+  memcpy(endOfTxData, &channelNumber, sizeof(channelNumber));
+  endOfTxData += sizeof(channelNumber);
+
+  uint16_t msToNextHop = settings.maxDwellTime - (millis() - timerStart);
+  memcpy(endOfTxData, &msToNextHop, sizeof(msToNextHop));
+  endOfTxData += sizeof(msToNextHop);
+
+
+  /*
+                               endOfTxData ---.
+                                              |
+                                              V
+      +--------+---------+---------+----------+----------+
+      |        |         | Channel | Channel  | Optional |
+      | NET ID | Control | Number  |  Timer   | Trailer  |
+      | 8 bits | 8 bits  | 1 byte  | 2 bytes  | n Bytes  |
+      +--------+---------+---------+----------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_ACK_1;
+  transmitDatagram();
+}
+
+//Ping packet sent during scanning
+void xmitDatagramMpPing()
+{
+  /*
+          endOfTxData ---.
+                         |
+                         V
+      +--------+---------+----------+
+      |        |         | Optional |
+      | NET ID | Control | Trailer  |
+      | 8 bits | 8 bits  | n Bytes  |
+      +--------+---------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_PING;
   transmitDatagram();
 }
 
@@ -1098,7 +1172,7 @@ PacketType rcvDatagram()
   datagramsReceived++;
   linkDownTimer = millis();
 
-  //BLink the RX LED
+  //Blink the RX LED
   if (settings.alternateLedUsage)
     digitalWrite(ALT_LED_RX_DATA, LED_ON);
   return datagramType;
@@ -1543,7 +1617,7 @@ void stopChannelTimer()
 void syncChannelTimer()
 {
   int16_t msToNextHopRemote;
-  memcpy(&msToNextHopRemote, &rxVcData[0], sizeof(msToNextHopRemote));
+  memcpy(&msToNextHopRemote, &rxVcData[rxDataBytes - 2], sizeof(msToNextHopRemote));
   msToNextHopRemote -= ackAirTime;
   msToNextHopRemote -= SYNC_PROCESSING_OVERHEAD; //Can be negative
 
@@ -1637,4 +1711,12 @@ void setHeartbeatLong()
 {
   heartbeatTimer = millis();
   heartbeatRandomTime = random(settings.heartbeatTimeout * 8 / 10, settings.heartbeatTimeout); //80-100%
+}
+
+//Only the server sends heartbeats in multipoint mode
+//Not random, just the straight timeout
+void setHeartbeatMultipoint()
+{
+  heartbeatTimer = millis();
+  heartbeatRandomTime = settings.heartbeatTimeout;
 }

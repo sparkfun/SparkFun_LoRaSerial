@@ -338,7 +338,7 @@ bool expectingAck = false; //Used by various send packet functions
 
 float frequencyCorrection = 0; //Adjust receive freq based on the last packet received freqError
 
-volatile bool clearDIO1 = true; //Clear the DIO1 hop ISR when possible
+volatile bool hop = true; //Clear the DIO1 hop ISR when possible
 
 //RSSI must be above these negative numbers for LED to illuminate
 const int rssiLevelLow = -150;
@@ -446,6 +446,9 @@ int8_t txDestVc;
 unsigned long vcAckTimer;
 VIRTUAL_CIRCUIT virtualCircuitList[MAX_VC];
 
+unsigned int multipointChannelLoops = 0; //Count the number of times Multipoint scanning has traversed the table
+unsigned int multipointAttempts = 0; //Throttle back scanning when a server is not detected
+
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables
@@ -514,9 +517,9 @@ void loop()
 
   updateRadioState(); //Ping/ack/send packets as needed
 
-  if (clearDIO1) //Allow DIO1 hop ISR but use it only for debug
+  if (hop) //Allow DIO1 hop ISR but use it only for debug
   {
-    clearDIO1 = false;
+    hop = false;
     radio.clearFHSSInt(); //Clear the interrupt
   }
 }

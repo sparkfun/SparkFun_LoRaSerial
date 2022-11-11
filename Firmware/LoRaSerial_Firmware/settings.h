@@ -24,6 +24,10 @@ typedef enum
   RADIO_P2P_LINK_UP_HB_ACK_REXMT,
 
   //Multi-Point: Datagrams
+  RADIO_MP_BEGIN_SCAN,
+  RADIO_MP_SCANNING,
+  RADIO_MP_WAIT_TX_PING_DONE,
+  RADIO_MP_WAIT_TX_ACK_DONE,
   RADIO_MP_STANDBY,
   RADIO_MP_WAIT_TX_DONE,
 
@@ -86,25 +90,29 @@ const RADIO_STATE_ENTRY radioStateTable[] =
 
   //V2 - Multi-Point data exchange
   //    State                           RX      Name                              Description
-  {RADIO_MP_STANDBY,                     1, "MP_STANDBY",                     "V2 MP: Wait for TX or RX"},           //15
-  {RADIO_MP_WAIT_TX_DONE,                0, "MP_WAIT_TX_DONE",                "V2 MP: Waiting for TX done"},         //16
+  {RADIO_MP_BEGIN_SCAN,                  0, "MP_BEGIN_SCAN",                  "V2 MP: Setup for CAD Scanning"},      //15
+  {RADIO_MP_SCANNING,                    0, "MP_SCANNING",                    "V2 MP: Scanning for activity"},       //16
+  {RADIO_MP_WAIT_TX_PING_DONE,           0, "MP_WAIT_TX_PING_DONE",           "V2 MP: Wait for ping to xmit"},       //17
+  {RADIO_MP_WAIT_TX_ACK_DONE,            0, "MP_WAIT_TX_ACK_DONE",            "V2 MP: Wait for ACK to xmit"},        //18
+  {RADIO_MP_STANDBY,                     1, "MP_STANDBY",                     "V2 MP: Wait for TX or RX"},           //19
+  {RADIO_MP_WAIT_TX_DONE,                0, "MP_WAIT_TX_DONE",                "V2 MP: Waiting for TX done"},         //20
 
   //V2 - Multi-Point training client states
   //    State                           RX      Name                              Description
-  {RADIO_MP_WAIT_TX_TRAINING_PING_DONE,  0, "MP_WAIT_TX_TRAINING_PING_DONE",  "V2 MP: Wait TX training PING done"},  //17
-  {RADIO_MP_WAIT_RX_RADIO_PARAMETERS,    1, "MP_WAIT_RX_RADIO_PARAMETERS",    "V2 MP: Wait for radio parameters"},   //18
-  {RADIO_MP_WAIT_TX_PARAM_ACK_DONE,      0, "MP_WAIT_TX_PARAM_ACK_DONE",      "V2 MP: Wait for TX param ACK done"},  //19
+  {RADIO_MP_WAIT_TX_TRAINING_PING_DONE,  0, "MP_WAIT_TX_TRAINING_PING_DONE",  "V2 MP: Wait TX training PING done"},  //21
+  {RADIO_MP_WAIT_RX_RADIO_PARAMETERS,    1, "MP_WAIT_RX_RADIO_PARAMETERS",    "V2 MP: Wait for radio parameters"},   //22
+  {RADIO_MP_WAIT_TX_PARAM_ACK_DONE,      0, "MP_WAIT_TX_PARAM_ACK_DONE",      "V2 MP: Wait for TX param ACK done"},  //23
 
   //V2 - Multi-Point training server states
   //    State                           RX      Name                              Description
-  {RADIO_MP_WAIT_FOR_TRAINING_PING,      1, "MP_WAIT_FOR_TRAINING_PING",      "V2 MP: Wait for training PING"},      //20
-  {RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,   0, "MP_WAIT_TX_RADIO_PARAMS_DONE",   "V2 MP: Wait for TX params done"},     //21
+  {RADIO_MP_WAIT_FOR_TRAINING_PING,      1, "MP_WAIT_FOR_TRAINING_PING",      "V2 MP: Wait for training PING"},      //24
+  {RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,   0, "MP_WAIT_TX_RADIO_PARAMS_DONE",   "V2 MP: Wait for TX params done"},     //25
 
   //V2 - Virtual circuit states
-  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "V2 VC: Wait for TX done"},            //22
-  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "V2 VC: Wait for receive"},            //23
-  {RADIO_VC_WAIT_TX_DONE_ACK,            0, "VC_WAIT_TX_DONE_ACK",            "V2 VC: Wait for TX done then ACK"},   //24
-  {RADIO_VC_WAIT_ACK,                    1, "VC_WAIT_ACK",                    "V2 VC: Wait for ACK"},                //25
+  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "V2 VC: Wait for TX done"},            //26
+  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "V2 VC: Wait for receive"},            //27
+  {RADIO_VC_WAIT_TX_DONE_ACK,            0, "VC_WAIT_TX_DONE_ACK",            "V2 VC: Wait for TX done then ACK"},   //28
+  {RADIO_VC_WAIT_ACK,                    1, "VC_WAIT_ACK",                    "V2 VC: Wait for ACK"},                //29
 };
 
 //Possible types of packets received
@@ -151,7 +159,7 @@ typedef enum
 } PacketType;
 
 const char * const v2DatagramType[] =
-{//       0                    1
+{ //       0                    1
   "P2P_TRAINING_PING", "P2P_TRAINING_PARAMS",
   // 2       3        4
   "PING", "ACK-1", "ACK-2",
@@ -210,13 +218,13 @@ typedef struct _VIRTUAL_CIRCUIT
   */
 
   uint8_t rmtTxAckNumber; //Next expected ACK # from remote system in DATA frame,
-                          //incremented upon match to received DATA frame ACK number,
-                          //indicates frame was received and processed
-                          //Duplicate frame if received ACK # == (rmtTxAckNumber -1)
+  //incremented upon match to received DATA frame ACK number,
+  //indicates frame was received and processed
+  //Duplicate frame if received ACK # == (rmtTxAckNumber -1)
   uint8_t rxAckNumber;    //Received ACK # of the most recent acknowledged DATA frame,
-                          //does not get incremented, used to ACK the data frame
+  //does not get incremented, used to ACK the data frame
   uint8_t txAckNumber;    //# of next ACK to be sent by the local system in DATA frame,
-                          //incremented when successfully acknowledged via DATA_ACK frame
+  //incremented when successfully acknowledged via DATA_ACK frame
 } VIRTUAL_CIRCUIT;
 
 #include "Virtual_Circuit_Protocol.h"
@@ -250,6 +258,9 @@ enum
   TRIGGER_LINK_WAIT_FOR_ACK,
   TRIGGER_LINK_DATA_XMIT,
   TRIGGER_LINK_RETRANSMIT_FAIL,
+  TRIGGER_MP_SCAN,
+  TRIGGER_MP_DATA_PACKET,
+  TRIGGER_MP_PACKET_RECEIVED,
   TRIGGER_HANDSHAKE_ACK1_TIMEOUT,
   TRIGGER_HANDSHAKE_SEND_PING,
   TRIGGER_HANDSHAKE_SEND_PING_COMPLETE,
@@ -266,10 +277,9 @@ enum
   TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND,
   TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND_RESPONSE,
   TRIGGER_BAD_PACKET,
+  TRIGGER_CRC_ERROR,
   TRIGGER_RTR_2BYTE,
   TRIGGER_RTR_255BYTE,
-  TRIGGER_BROADCAST_DATA_PACKET,
-  TRIGGER_BROADCAST_PACKET_RECEIVED,
   TRIGGER_TRAINING_CONTROL_PACKET,
   TRIGGER_TRAINING_DATA_PACKET,
   TRIGGER_TRAINING_NO_ACK,
@@ -398,7 +408,8 @@ typedef struct struct_settings {
   bool invertRts = false; //Invert the output of RTS
   bool alternateLedUsage = false; //Enable alternate LED usage
   uint8_t trainingTimeout = 1; //Timeout in minutes to complete the training
-
+  bool multipointServer = false; //Only one radio can be the server in multipoint mode
+  
   //Add new parameters immediately before this line
   //-- Add commands to set the parameters
   //-- Add parameters to routine updateRadioParameters
