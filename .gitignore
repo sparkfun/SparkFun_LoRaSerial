@@ -52,6 +52,4 @@ Icon
 *.a
 
 # Executables
-Firmware/Tools/Client
-Firmware/Tools/Server
 Firmware/Tools/VcServerTest
