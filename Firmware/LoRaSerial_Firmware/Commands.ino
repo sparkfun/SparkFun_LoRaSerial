@@ -687,6 +687,7 @@ const COMMAND_ENTRY commands[] =
   {59,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertRts",            &settings.invertRts},
 
   {60,    0,   1,    0, TYPE_BOOL,         valInt,         "AlternateLedUsage",    &settings.alternateLedUsage},
+  {61,    0,   1,    0, TYPE_BOOL,         valInt,         "MultipointServer",     &settings.multipointServer},
 
   //Define any user parameters starting at 255 decrementing towards 0
 };
