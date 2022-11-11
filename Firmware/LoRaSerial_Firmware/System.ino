@@ -461,8 +461,15 @@ void dumpBuffer(uint8_t * data, int length)
 
 void updateRSSI()
 {
-  //Get the current signal level
-  rssi = radio.getRSSI();
+  //Calculate the average RSSI if possible
+  if(hopCount > 0)
+  {
+    rssi /= hopCount;
+    hopCount = 0;
+  }
+  else
+    rssi = radio.getRSSI();
+
   if (settings.alternateLedUsage)
     return;
 
@@ -656,7 +663,7 @@ void printPacketQuality()
   {
     systemPrintln();
     systemPrint("R:");
-    systemPrint(radio.getRSSI());
+    systemPrint(rssi);
     systemPrint("\tS:");
     systemPrint(radio.getSNR());
     systemPrint("\tfE:");

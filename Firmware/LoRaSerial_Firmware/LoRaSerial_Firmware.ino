@@ -339,13 +339,15 @@ bool expectingAck = false; //Used by various send packet functions
 float frequencyCorrection = 0; //Adjust receive freq based on the last packet received freqError
 
 volatile bool hop = true; //Clear the DIO1 hop ISR when possible
+int hopCount = 0; //Used to average the RSSI measured during hops
 
 //RSSI must be above these negative numbers for LED to illuminate
 const int rssiLevelLow = -150;
 const int rssiLevelMed = -70;
 const int rssiLevelHigh = -50;
 const int rssiLevelMax = -20;
-int rssi; //Signal level
+int rssi; //Average signal level, measured during reception of a packet
+int avgRssi;  //Average signal level, measured during reception of a packet
 
 //Link quality metrics
 uint32_t datagramsSent;     //Total number of datagrams sent
@@ -517,9 +519,11 @@ void loop()
 
   updateRadioState(); //Ping/ack/send packets as needed
 
-  if (hop) //Allow DIO1 hop ISR but use it only for debug
+  if (hop) //If the hop ISR has triggered, measure RSSI during reception
   {
     hop = false;
     radio.clearFHSSInt(); //Clear the interrupt
+    rssi = radio.getRSSI();
+    hopCount++;
   }
 }

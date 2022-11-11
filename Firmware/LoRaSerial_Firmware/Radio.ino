@@ -220,6 +220,10 @@ void returnToReceiving()
       systemPrintln(state);
     }
   }
+
+  //Reset RSSI measurements
+  rssi = 0;
+  hopCount = 0;
 }
 
 //Given spread factor, bandwidth, coding rate and number of bytes, return total Air Time in ms for packet
@@ -525,6 +529,7 @@ void transactionCompleteISR(void)
 //ISR when DIO1 goes low
 //Called when FhssChangeChannel interrupt occurs (at regular HoppingPeriods)
 //We do not use SX based channel hopping, and instead use a synchronized hardware timer
+//We use the hop ISR to measure RSSI during reception
 void hopISR(void)
 {
   hop = true;

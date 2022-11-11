@@ -543,8 +543,6 @@ void updateRadioState()
     */
 
     case RADIO_P2P_LINK_UP:
-      updateRSSI();
-
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
 
@@ -787,7 +785,6 @@ void updateRadioState()
 
             printPacketQuality();
 
-
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
@@ -807,7 +804,6 @@ void updateRadioState()
             timestampOffset = clockOffset;
 
             printPacketQuality();
-
 
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
