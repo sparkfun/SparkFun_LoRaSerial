@@ -2142,7 +2142,9 @@ void vcBreakLink(int8_t vcIndex)
   transmitTimer = 0;
 
   //Flush the buffers
-  resetSerial();
+  outputSerialData(true);
+  if (vcIndex == myVc)
+    resetSerial();
 }
 
 int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)

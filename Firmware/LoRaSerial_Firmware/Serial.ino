@@ -736,6 +736,9 @@ void resetSerial()
   uint32_t delayTime;
   uint32_t lastCharacterReceived;
 
+  //Display any debug output
+  outputSerialData(true);
+
   //Determine the amount of time needed to receive a character
   delayTime = 200;
   if (settings.airSpeed)
@@ -771,4 +774,5 @@ void resetSerial()
   commandRXHead = commandRXTail;
   commandTXHead = commandTXTail;
   endOfTxData = &outgoingPacket[headerBytes];
+  commandLength = 0;
 }

@@ -32,8 +32,9 @@ typedef struct
 
 bool commandAT(const char * commandString)
 {
-  VIRTUAL_CIRCUIT * vc;
+  uint32_t delayMillis;
   unsigned long timer;
+  VIRTUAL_CIRCUIT * vc;
 
   //'AT'
   if (commandLength == 2)
@@ -49,13 +50,13 @@ bool commandAT(const char * commandString)
       case ('?'): //Display the command help
         systemPrintln("Command summary:");
         systemPrintln("  AT? - Print the command summary");
+        systemPrintln("  ATB - Break the link");
         systemPrintln("  ATD - Display the debug settings");
         systemPrintln("  ATF - Enter training mode and return to factory defaults");
         systemPrintln("  ATG - Generate new netID and encryption key");
         systemPrintln("  ATI - Display the radio version");
         systemPrintln("  ATI? - Display the information commands");
         systemPrintln("  ATIn - Display system information");
-        systemPrintln("  ATL - VC link reset");
         systemPrintln("  ATO - Exit command mode");
         systemPrintln("  ATP - Display probe trigger settings");
         systemPrintln("  ATR - Display radio settings");
@@ -69,6 +70,44 @@ bool commandAT(const char * commandString)
         systemPrintln("  AT-? - Display the setting values");
         systemPrintln("  AT&F - Restore factory settings");
         systemPrintln("  AT&W - Save current settings to NVM");
+        break;
+      case ('B'): //Break the link
+        reportOK();
+
+        //Compute the time delay
+        delayMillis = (VC_LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout;
+
+        //Warn the user of the delay
+        if (settings.printLinkUpDown)
+        {
+          systemPrint("Delaying ");
+          systemPrint(delayMillis / 1000);
+          systemPrintln(" seconds to break the link");
+          outputSerialData(true);
+        }
+
+        //Flag the links as broken
+        if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+        {
+          for (int i=0; i < MAX_VC; i++)
+            if (virtualCircuitList[i].linkUp && (i != myVc))
+              vcBreakLink(i);
+        }
+        else if (settings.operatingMode == MODE_POINT_TO_POINT)
+        {
+          v2BreakLink();
+          outputSerialData(true);
+        }
+
+        //Idle the system to break the link
+        //This is required on the server system which does not request an VC number assignment
+        timer = millis();
+        while ((millis() - timer) < ((VC_LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout))
+          petWDT();
+
+        //Display the end of the delay
+        if (settings.printLinkUpDown)
+          systemPrintln("Delay done");
         break;
       case ('F'): //Enter training mode and return to factory defaults
         reportOK();
@@ -104,17 +143,6 @@ bool commandAT(const char * commandString)
           inCommandMode = false; //Return to printing normal RF serial data
           reportOK();
           changeState(RADIO_RESET);
-        }
-        break;
-      case ('L'): //VC link reset
-        reportOK();
-        if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
-        {
-          //Idle the system to break the link
-          //This is required on the server system which does not request an VC number assignment
-          timer = millis();
-          while ((millis() - timer) < ((VC_LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout))
-            petWDT();
         }
         break;
       case ('T'): //Enter training mode
@@ -457,6 +485,7 @@ void checkCommand()
   //Print the command failure
   if (!success)
     reportERROR();
+  outputSerialData(true);
 
   commandLength = 0; //Get ready for next command
 }
