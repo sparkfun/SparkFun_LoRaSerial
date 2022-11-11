@@ -334,7 +334,7 @@ void triggerEvent(uint8_t triggerNumber)
   uint16_t triggerWidth;
 
   //Determine if the trigger pin is enabled
-  if (pin_trigger != PIN_UNDEFINED)
+  if (pin_trigger == PIN_UNDEFINED)
     return;
 
   //Determine which trigger enable to use
@@ -663,4 +663,12 @@ void printPacketQuality()
     systemPrint(radio.getFrequencyError());
     systemPrintln();
   }
+}
+
+//Toggle a pin. Used for logic analyzer debugging.
+void triggerFrequency(uint16_t frequency)
+{
+  digitalWrite(pin_trigger, LOW);
+  delayMicroseconds(frequency);
+  digitalWrite(pin_trigger, HIGH);
 }
