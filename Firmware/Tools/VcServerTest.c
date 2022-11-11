@@ -46,7 +46,7 @@ int stdinToRadio()
       vcData[0] = START_OF_VC_SERIAL;
       vcData[1] = bytesToSend + VC_RADIO_HEADER_BYTES;
       vcData[2] = remoteVcAddr;
-      vcData[3] = myVcAddr;
+      vcData[3] = (remoteVcAddr == VC_COMMAND) ? PC_COMMAND : myVcAddr;
 
       //Send the data
       bytesToSend = write(tty, vcData, vcData[1] + 1);
@@ -142,6 +142,7 @@ main (
 {
   int maxfds;
   int status;
+  char * terminal;
   struct timeval timeout;
   uint8_t * vcData;
 
@@ -149,20 +150,52 @@ main (
   do
   {
     //Display the help text if necessary
-    if ((argc != 2) || (sscanf(argv[1], "/dev/ttyACM%d", &myVcAddr) != 1))
+    if (argc != 4)
     {
-      printf("%s   terminal\n", argv[0]);
+      printf("%s   terminal   my_VC   target_VC\n", argv[0]);
       printf("\n");
       printf("terminal - Name or path to the terminal device for the radio\n");
+      printf("my_VC:\n");
+      printf("    Server: 0\n");
+      printf("    Client: 1 - %d\n", MAX_VC - 1);
+      printf("target_VC:\n");
+      printf("    Server: 0\n");
+      printf("    Client: 1 - %d\n", MAX_VC - 1);
+      printf("    Loopback: my_VC\n");
+      printf("    Broadcast: %d\n", VC_BROADCAST);
+      printf("    Command: %d\n", VC_COMMAND);
       status = -1;
       break;
     }
 
-    //Determine the remote VC
-    if (myVcAddr)
-      remoteVcAddr = 0;
-    else
-      remoteVcAddr = 1;
+    //Get the path to the terminal
+    terminal = argv[1];
+
+    //Determine the local VC address
+    if ((sscanf(argv[2], "%d", &myVcAddr) != 1)
+      || ((myVcAddr < VC_SERVER) || (myVcAddr >= MAX_VC)))
+    {
+      fprintf(stderr, "ERROR: Invalid my VC address, please use one of the following:\n");
+      fprintf(stderr, "    Server: 0\n");
+      fprintf(stderr, "    Client: 1 - %d\n", MAX_VC - 1);
+      status = -1;
+      break;
+    }
+
+    //Determine the remote VC address
+    if ((sscanf(argv[3], "%d", &remoteVcAddr) != 1)
+      || (remoteVcAddr < VC_COMMAND) || (remoteVcAddr >= MAX_VC))
+    {
+      fprintf(stderr, "ERROR: Invalid target VC address, please use one of the following:\n");
+      if (myVcAddr)
+        fprintf(stderr, "    Server: 0\n");
+      fprintf(stderr, "    Client: 1 - %d\n", MAX_VC - 1);
+      fprintf(stderr, "    Loopback: my_VC\n");
+      fprintf(stderr, "    Broadcast: %d\n", VC_BROADCAST);
+      fprintf(stderr, "    Command: %d\n", VC_COMMAND);
+      status = -1;
+      break;
+    }
 
     //Update STDIN and STDOUT
 /*
@@ -176,7 +209,7 @@ main (
 
     //Open the terminal
     maxfds = STDIN;
-    status = openTty(argv[1]);
+    status = openTty(terminal);
     if (status)
       break;
     if (maxfds < tty)
