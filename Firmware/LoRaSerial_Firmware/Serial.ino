@@ -187,6 +187,8 @@ void readyOutgoingCommandPacket()
 //Scan for escape characters
 void updateSerial()
 {
+  uint16_t previousHead;
+  uint16_t radioHead;
   int x;
 
   //Assert RTS when there is enough space in the receive buffer
@@ -198,6 +200,7 @@ void updateSerial()
   outputSerialData(false);
 
   //Look for local incoming serial
+  previousHead = rxHead;
   while (rtsAsserted && arch.serialAvailable() && (transactionComplete == false))
   {
     rxLED(true); //Turn on LED during serial reception
@@ -217,7 +220,18 @@ void updateSerial()
   } //End Serial.available()
   rxLED(false); //Turn off LED
 
+  //Print the number of bytes received via serial
+  if (settings.debugSerial && (rxHead - previousHead))
+  {
+    systemPrint("updateSerial moved ");
+    systemPrint(rxHead - previousHead);
+    systemPrintln(" bytes into serialReceiveBuffer");
+    outputSerialData(true);
+    petWDT();
+  }
+
   //Process the serial data
+  radioHead = radioTxHead;
   while (availableRXBytes() && (availableRadioTXBytes() < (sizeof(radioTxBuffer) - 1))
     && (transactionComplete == false))
   {
@@ -312,6 +326,15 @@ void updateSerial()
     } //End process rx buffer
   } //End Serial.available()
 
+  //Print the number of bytes placed into the rxTxBuffer
+  if (settings.debugSerial && (radioTxHead != radioHead))
+  {
+    systemPrint("processSerialInput moved ");
+    systemPrint((radioTxHead - radioHead) % sizeof(radioTxBuffer));
+    systemPrintln(" bytes from serialReceiveBuffer into radioTxBuffer");
+    outputSerialData(true);
+  }
+
   //Process any remote commands sitting in buffer
   if (availableRXCommandBytes() && inCommandMode == false)
   {
@@ -321,6 +344,16 @@ void updateSerial()
     {
       commandBuffer[x] = commandRXBuffer[commandRXTail++];
       commandRXTail %= sizeof(commandRXBuffer);
+    }
+
+    //Print the number of bytes moved into the command buffer
+    if (settings.debugSerial && commandLength)
+    {
+      systemPrint("updateSerial moved ");
+      systemPrint(commandLength);
+      systemPrintln(" bytes from commandRXBuffer into commandBuffer");
+      outputSerialData(true);
+      petWDT();
     }
 
     if (commandBuffer[0] == 'R') //Error check
@@ -426,12 +459,25 @@ bool vcSerialMessageReceived()
       //The length byte is not available
       break;
 
+    //Print the message length and availableRadioTXBytes
+    if (settings.debugSerial)
+    {
+      systemPrint("msgLength: ");
+      systemPrintln(msgLength);
+      systemPrint("availableRadioTXBytes(): ");
+      systemPrintln(availableRadioTXBytes());
+      outputSerialData(true);
+    }
+
     //Verify that the entire message is in the serial buffer
     if (availableRadioTXBytes() < msgLength)
     {
       //The entire message is not in the buffer
       if (settings.debugSerial)
+      {
         systemPrintln("VC serial RX: Waiting for entire buffer");
+        outputSerialData(true);
+      }
       break;
     }
 
@@ -440,7 +486,10 @@ bool vcSerialMessageReceived()
     if (msgLength > maxDatagramSize)
     {
       if (settings.debugSerial || settings.debugTransmit)
+      {
         systemPrintln("VC serial RX: Message too long, discarded");
+        outputSerialData(true);
+      }
 
       //Discard this message, it is too long to transmit over the radio link
       radioTxTail += msgLength;
@@ -464,6 +513,7 @@ bool vcSerialMessageReceived()
         systemPrint("ERROR: Invalid vcDest ");
         systemPrint(vcDest);
         systemPrintln(", discarding message!");
+        outputSerialData(true);
       }
 
       //Discard this message
@@ -485,14 +535,15 @@ bool vcSerialMessageReceived()
       systemPrint("Readying ");
       systemPrint(msgLength);
       systemPrintln(" byte for transmission");
+      outputSerialData(true);
     }
     readyOutgoingPacket(msgLength);
     if (vcDest == myVc)
     {
       if (settings.debugSerial)
         systemPrintln("VC serial RX: Sending to ourself");
-      serialOutputByte(START_OF_VC_SERIAL);
-      serialBufferOutput(outgoingPacket, msgLength);
+      systemWrite(START_OF_VC_SERIAL);
+      systemWrite(outgoingPacket, msgLength);
       endOfTxData -= msgLength;
       break;
     }
