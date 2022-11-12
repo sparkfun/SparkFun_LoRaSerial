@@ -379,7 +379,12 @@ typedef struct struct_settings {
   bool debugRadio = false; //Print radio info
   bool debugStates = false; //Print state changes
   bool debugTraining = false; //Print training info
-  bool usbSerialWait = false; //Wait for USB serial initialization
+#if defined(ENABLE_DEVELOPER)
+#define WAIT_SERIAL_DEFAULT     true
+#else   //ENABLE_DEVELOPER
+#define WAIT_SERIAL_DEFAULT     false
+#endif  //ENABLE_DEVELOPER
+  bool usbSerialWait = WAIT_SERIAL_DEFAULT; //Wait for USB serial initialization
   bool printRfData = false; //Print RX and TX data
   bool printPktData = false; //Print data, before encryption and after decryption
   bool verifyRxNetID = false; //Verify RX netID value when not operating in point-to-point mode
