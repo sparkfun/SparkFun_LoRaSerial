@@ -58,8 +58,8 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATL - VC link reset");
         systemPrintln("  ATO - Exit command mode");
         systemPrintln("  ATP - Display probe trigger settings");
-        systemPrintln("  ATSn=xxx - Set parameter n's value to xxx");
-        systemPrintln("  ATSn? - Print parameter n's current value");
+        systemPrintln("  ATR - Display radio settings");
+        systemPrintln("  ATS - Display the serial settings");
         systemPrintln("  ATT - Enter training mode");
         systemPrintln("  ATV - Display virtual circuit settings");
         systemPrintln("  ATX - Stop the training server");
