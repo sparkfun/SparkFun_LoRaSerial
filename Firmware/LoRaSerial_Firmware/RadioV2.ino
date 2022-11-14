@@ -854,6 +854,12 @@ PacketType rcvDatagram()
     printControl(*((uint8_t *)&rxControl));
   if (datagramType >= MAX_V2_DATAGRAM_TYPE)
   {
+    if (settings.debugReceive)
+    {
+      systemPrintTimestamp();
+      systemPrint("RX: Invalid datagram type ");
+      systemPrintln(datagramType);
+    }
     badFrames++;
     return (DATAGRAM_BAD);
   }
@@ -1067,11 +1073,14 @@ PacketType rcvDatagram()
     //Validate the length
     if (vcHeader->length != rxDataBytes)
     {
-      systemPrintTimestamp();
-      systemPrint("Invalid VC length, received ");
-      systemPrint(vcHeader->length);
-      systemPrint(" expecting ");
-      systemPrintln(rxDataBytes);
+      if (settings.debugReceive)
+      {
+        systemPrintTimestamp();
+        systemPrint("Invalid VC length, received ");
+        systemPrint(vcHeader->length);
+        systemPrint(" expecting ");
+        systemPrintln(rxDataBytes);
+      }
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
       badFrames++;
