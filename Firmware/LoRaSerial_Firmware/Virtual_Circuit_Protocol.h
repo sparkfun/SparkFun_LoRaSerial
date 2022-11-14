@@ -9,11 +9,8 @@
 #define MAX_VC              8
 #define VC_SERVER           0
 #define VC_BROADCAST        -1
-#define VC_UNASSIGNED       -2
-
-//Source and destinations reserved for the local radio
-#define VC_LINK_RESET       -3    //Force link reset
-#define VC_COMMAND          -4    //Command input and command response
+#define VC_COMMAND          -2    //Command input and command response
+#define VC_UNASSIGNED       -3
 
 //Source and destinations reserved for the local host
 #define PC_COMMAND          -17   //Command input and command response
