@@ -2095,7 +2095,7 @@ void vcSendLinkStatus(bool linkUp, int8_t srcVc)
   //Build the message header
   VC_SERIAL_MESSAGE_HEADER header;
   header.start = START_OF_VC_SERIAL;
-  header.radio.length = sizeof(header) + sizeof(message);
+  header.radio.length = VC_RADIO_HEADER_BYTES + sizeof(message);
   header.radio.destVc = PC_LINK_STATUS;
   header.radio.srcVc = srcVc;
 
@@ -2136,7 +2136,7 @@ void vcBreakLink(int8_t vcIndex)
   linkFailures++;
 
   //Send the status message
-  vcSendLinkStatus(false, myVc);
+  vcSendLinkStatus(false, vcIndex);
 
   //Stop the transmit timer
   transmitTimer = 0;
