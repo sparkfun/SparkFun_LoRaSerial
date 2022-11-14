@@ -442,6 +442,8 @@ void updateRadioState()
           clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
           timestampOffset = clockOffset;
 
+          startChannelTimer(getLinkOffset()); //We are exiting the link last so adjust our starting Timer
+
           //Bring up the link
           v2EnterLinkUp();
         }
@@ -470,6 +472,8 @@ void updateRadioState()
       if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
+
+        startChannelTimer(); //We are exiting the link first so do not adjust our starting Timer
 
         //Bring up the link
         v2EnterLinkUp();
@@ -2065,7 +2069,6 @@ void v2EnterLinkUp()
 {
   //Bring up the link
   triggerEvent(TRIGGER_HANDSHAKE_COMPLETE);
-  startChannelTimer();
   hopChannel(); //Leave home
   setHeartbeatLong(); //Start link with long heartbeat
 

@@ -1608,8 +1608,13 @@ void retransmitDatagram(VIRTUAL_CIRCUIT * vc)
 
 void startChannelTimer()
 {
+  startChannelTimer(settings.maxDwellTime);
+}
+
+void startChannelTimer(int16_t startAmount)
+{
   channelTimer.disableTimer();
-  channelTimer.setInterval_MS(settings.maxDwellTime, channelTimerHandler);
+  channelTimer.setInterval_MS(startAmount, channelTimerHandler);
   channelTimer.enableTimer();
   timerStart = millis(); //ISR normally takes care of this but allow for correct ACK sync before first ISR
   triggerEvent(TRIGGER_HOP_TIMER_START);
@@ -1629,6 +1634,11 @@ void syncChannelTimer()
   memcpy(&msToNextHopRemote, &rxVcData[rxDataBytes - 2], sizeof(msToNextHopRemote));
   msToNextHopRemote -= ackAirTime;
   msToNextHopRemote -= SYNC_PROCESSING_OVERHEAD; //Can be negative
+
+  if (settings.airSpeed == 150)
+  {
+    msToNextHopRemote -= 145;
+  }
 
   int16_t msToNextHopLocal = settings.maxDwellTime - (millis() - timerStart);
 

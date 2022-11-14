@@ -84,7 +84,7 @@ void configureRadio()
     systemPrint("Freq: ");
     systemPrintln(channels[0], 3);
     systemPrint("radioBandwidth: ");
-    systemPrintln(settings.radioBandwidth);
+    systemPrintln(settings.radioBandwidth, 3);
     systemPrint("radioSpreadFactor: ");
     systemPrintln(settings.radioSpreadFactor);
     systemPrint("radioCodingRate: ");
@@ -294,21 +294,22 @@ void generateHopTable()
   //Use settings that must be identical to have a functioning link.
   //For example, we do not use coding rate because two radios can communicate with different coding rate values
   myRandSeed = settings.airSpeed
-             + settings.netID
-             + settings.operatingMode
-             + settings.encryptData
-             + settings.dataScrambling
-             + (uint16_t)settings.frequencyMin
-             + (uint16_t)settings.frequencyMax
-             + settings.numberOfChannels
-             + settings.frequencyHop
-             + settings.maxDwellTime
-             + (uint16_t)settings.radioBandwidth
-             + settings.radioSpreadFactor
-             + settings.verifyRxNetID
-             + settings.overheadTime
-             + settings.enableCRC16
-             + settings.clientPingRetryInterval;
+               + settings.netID
+               + settings.operatingMode
+               + settings.encryptData
+               + settings.dataScrambling
+               + (uint16_t)settings.frequencyMin
+               + (uint16_t)settings.frequencyMax
+               + settings.numberOfChannels
+               + settings.frequencyHop
+               + settings.maxDwellTime
+               + (uint16_t)settings.radioBandwidth
+               + settings.radioSpreadFactor
+               + settings.verifyRxNetID
+               + settings.radioProtocolVersion
+               + settings.overheadTime
+               + settings.enableCRC16
+               + settings.clientPingRetryInterval;
 
   if (settings.encryptData == true)
   {
@@ -542,4 +543,22 @@ void transactionCompleteISR(void)
 void hopISR(void)
 {
   hop = true;
+}
+
+//As we complete linkup, different airspeeds exit at different rates
+//We adjust the initial clock setup as needed
+int16_t getLinkOffset()
+{
+  int linkOffset = settings.maxDwellTime;
+
+  if (settings.airSpeed == 150)
+  {
+    linkOffset -= 13;
+  }
+
+  partialTimer = true;
+  
+  Serial.print("linkOffset: ");
+  Serial.println(linkOffset);
+  return(linkOffset);
 }
