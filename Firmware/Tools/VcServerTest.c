@@ -5,27 +5,120 @@
 #define STDIN                 0
 #define STDOUT                1
 
-int myVcAddr;
-int remoteVcAddr;
-uint8_t inputBuffer[BUFFER_SIZE + 3];
-uint8_t outputBuffer[BUFFER_SIZE + 3];
+#define LINK_RESET_COMMAND    "atb"
+
+#define DEBUG_PC_TO_RADIO     0
+#define DEBUG_RADIO_TO_PC     0
+
+int myVc;
+int remoteVc;
+uint8_t inputBuffer[BUFFER_SIZE];
+uint8_t outputBuffer[VC_SERIAL_HEADER_BYTES + BUFFER_SIZE];
+
+int cmdToRadio(uint8_t * buffer, int length)
+{
+  int bytesSent;
+  int bytesWritten;
+  VC_SERIAL_MESSAGE_HEADER header;
+
+  //Build the virtual circuit serial header
+  header.start = START_OF_VC_SERIAL;
+  header.radio.length = VC_RADIO_HEADER_BYTES + length;
+  header.radio.destVc = VC_COMMAND;
+  header.radio.srcVc = PC_COMMAND;
+
+  //Display the data being sent to the radio
+  if (DEBUG_PC_TO_RADIO)
+  {
+    dumpBuffer((uint8_t *)&header, VC_SERIAL_HEADER_BYTES);
+    dumpBuffer(buffer, length);
+  }
+
+  //Send the header
+  bytesWritten = write(tty, (uint8_t *)&header, VC_SERIAL_HEADER_BYTES);
+  if (bytesWritten < (int)VC_SERIAL_HEADER_BYTES)
+  {
+    perror("ERROR: Write of header to radio failed!");
+    return -1;
+  }
+
+  //Send the message
+  bytesSent = 0;
+  while (bytesSent < length)
+  {
+    bytesWritten = write(tty, buffer, length);
+    if (bytesWritten < 0)
+    {
+      perror("ERROR: Write of data to radio failed!");
+      return bytesWritten;
+    }
+    bytesSent += bytesWritten;
+  }
+
+  //Return the amount of the buffer that was sent
+  return length;
+}
+
+int hostToRadio(uint8_t destVc, uint8_t * buffer, int length)
+{
+  int bytesSent;
+  int bytesWritten;
+  VC_SERIAL_MESSAGE_HEADER header;
+
+  //Build the virtual circuit serial header
+  header.start = START_OF_VC_SERIAL;
+  header.radio.length = VC_RADIO_HEADER_BYTES + length;
+  header.radio.destVc = destVc;
+  header.radio.srcVc = myVc;
+
+  //Display the data being sent to the radio
+  if (DEBUG_PC_TO_RADIO)
+  {
+    dumpBuffer((uint8_t *)&header, VC_SERIAL_HEADER_BYTES);
+    dumpBuffer(buffer, length);
+  }
+
+  //Send the header
+  bytesWritten = write(tty, (uint8_t *)&header, VC_SERIAL_HEADER_BYTES);
+  if (bytesWritten < (int)VC_SERIAL_HEADER_BYTES)
+  {
+    perror("ERROR: Write of header to radio failed!");
+    return -1;
+  }
+
+  //Send the message
+  bytesSent = 0;
+  while (bytesSent < length)
+  {
+    bytesWritten = write(tty, buffer, length);
+    if (bytesWritten < 0)
+    {
+      perror("ERROR: Write of data to radio failed!");
+      return bytesWritten;
+    }
+    bytesSent += bytesWritten;
+  }
+
+  //Return the amount of the buffer that was sent
+  return length;
+}
 
 int stdinToRadio()
 {
   int bytesRead;
   int bytesSent;
   int bytesToSend;
+  int bytesWritten;
+  int length;
   int maxfds;
   int status;
   struct timeval timeout;
-  uint8_t * vcData;
 
   status = 0;
   do
   {
     //Read the console input data into the local buffer.
-    vcData = inputBuffer;
-    bytesRead = read(STDIN, &inputBuffer[3], BUFFER_SIZE);
+    bytesRead = read(STDIN, inputBuffer, BUFFER_SIZE);
     if (bytesRead < 0)
     {
       perror("ERROR: Read from stdin failed!");
@@ -43,91 +136,168 @@ int stdinToRadio()
         bytesToSend = MAX_MESSAGE_SIZE;
 
       //Send the data
-      vcData[0] = bytesToSend + 3;
-      vcData[1] = remoteVcAddr;
-      vcData[2] = myVcAddr;
-      bytesToSend = write(tty, vcData, *vcData);
-      if (bytesToSend < 0)
+      if (remoteVc == VC_COMMAND)
+        bytesWritten = cmdToRadio(&inputBuffer[bytesSent], bytesToSend);
+      else
+        bytesWritten = hostToRadio(remoteVc, &inputBuffer[bytesSent], bytesToSend);
+      if (bytesWritten < 0)
       {
         perror("ERROR: Write to radio failed!");
-        status = bytesToSend;
+        status = bytesWritten;
         break;
       }
 
       //Account for the bytes written
-      bytesSent += bytesToSend;
+      bytesSent += bytesWritten;
     }
   } while (0);
   return status;
 }
 
-int radioToStdout()
+int hostToStdout(uint8_t * data, uint8_t bytesToSend)
+{
+  int bytesSent;
+  int bytesWritten;
+  int status;
+
+  //Write this data to stdout
+  bytesSent = 0;
+  while (bytesSent < bytesToSend)
+  {
+    bytesWritten = write(STDOUT, &data[bytesSent], bytesToSend - bytesSent);
+    if (bytesWritten < 0)
+    {
+      perror("ERROR: Write to stdout!");
+      status = bytesWritten;
+      break;
+    }
+
+    //Account for the bytes written
+    bytesSent += bytesWritten;
+  }
+  return status;
+}
+
+void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t length)
+{
+  VC_LINK_STATUS_MESSAGE * linkStatus;
+
+  linkStatus = (VC_LINK_STATUS_MESSAGE *)&header[1];
+  if (linkStatus->linkStatus == LINK_UP)
+    printf("========== Link %d UP ==========\n", header->radio.srcVc);
+  else
+    printf("--------- Link %d DOWN ---------\n", header->radio.srcVc);
+}
+
+int radioToHost()
 {
   int bytesRead;
   int bytesSent;
+  int bytesToRead;
   int bytesToSend;
+  static uint8_t * data = outputBuffer;
+  static uint8_t * dataStart = outputBuffer;
+  static uint8_t * dataEnd = outputBuffer;
   int8_t destAddr;
+  static VC_SERIAL_MESSAGE_HEADER * header = (VC_SERIAL_MESSAGE_HEADER *)outputBuffer;
   uint8_t length;
   int maxfds;
   int status;
   int8_t srcAddr;
   struct timeval timeout;
-  uint8_t * vcData;
 
   status = 0;
   do
   {
     //Read the virtual circuit header into the local buffer.
-    vcData = outputBuffer;
-bytesRead = sizeof(outputBuffer);
-    bytesRead = read(tty, outputBuffer, bytesRead);
+    bytesToRead = &outputBuffer[sizeof(outputBuffer)] - dataEnd;
+    bytesRead = read(tty, dataEnd, bytesToRead);
+    if (bytesRead == 0)
+      break;
     if (bytesRead < 0)
     {
       perror("ERROR: Read from radio failed!");
       status = bytesRead;
       break;
     }
+    dataEnd += bytesRead;
 
-/*
-    //Display the VC header
-    length = vcData[0];
-    destAddr = vcData[1];
-    srcAddr = vcData[2];
-    printf("length: %d\n", length);
-    printf("destAddr: %d\n", destAddr);
-    printf("srcAddr: %d\n", srcAddr);
+    //Display the data received from the radio
+//    if (bytesRead) dumpBuffer(dataStart, dataEnd - dataStart);
 
-    //Read the message
-    vcData = outputBuffer;
-    bytesRead = read(STDIN, outputBuffer, length);
-    if (bytesRead < 0)
+    //The data read is a mix of debug serial output and virtual circuit messages
+    //Any data before the VC_SERIAL_MESSAGE_HEADER is considered debug serial output
+    data = dataStart;
+    while ((data < dataEnd) && (*data != START_OF_VC_SERIAL))
+      data++;
+
+    //Process any debug data
+    length = data - dataStart;
+    if (length)
+      //Output the debug data
+      hostToStdout(dataStart, length);
+
+    //Determine if this is the beginning of a virtual circuit message
+    length = dataEnd - data;
+    if (length <= 0)
     {
-      perror("ERROR: Read from radio failed!");
-      status = bytesRead;
+      //Refill the empty buffer
+      dataStart = outputBuffer;
+      data = dataStart;
+      dataEnd = data;
       break;
     }
-*/
 
-    //Send this data over the VC
-    bytesSent = 0;
-    while (bytesSent < bytesRead)
+    //This is the beginning of a virtual circuit message
+    //Move it to the beginning of the buffer to make things easier
+    if (data != outputBuffer)
+      memcpy(outputBuffer, data, length);
+    dataEnd = &outputBuffer[length];
+    dataStart = outputBuffer;
+    data = dataStart;
+
+    //Determine if the VC header is in the buffer
+    if (length < VC_SERIAL_HEADER_BYTES)
+      //Need more data
+      break;
+
+    //Determine if the entire message is in the buffer
+    if (length < (header->radio.length + 1))
+      //Need more data
+      break;
+
+    //Set the beginning of the message
+    data = &outputBuffer[VC_SERIAL_HEADER_BYTES];
+    length = header->radio.length - VC_RADIO_HEADER_BYTES;
+
+    //Display the VC header and message
+    if (DEBUG_RADIO_TO_PC)
     {
-      //Send the data
-      bytesToSend = bytesRead - bytesSent;
-      if (bytesToSend > MAX_MESSAGE_SIZE)
-        bytesToSend = MAX_MESSAGE_SIZE;
-      bytesToSend = write(STDOUT, &vcData[bytesSent], bytesToSend);
-      if (bytesToSend < 0)
-      {
-        perror("ERROR: Write to radio failed!");
-        status = bytesToSend;
-        break;
-      }
-
-      //Account for the bytes written
-      bytesSent += bytesToSend;
+      printf("VC Header:\n");
+      printf("    length: %d\n", header->radio.length);
+      printf("    destVc: %d\n", header->radio.destVc);
+      printf("    srcVc: %d\n", header->radio.srcVc);
+      if (length > 0)
+        dumpBuffer(data, length);
     }
-  } while (0);
+
+    //Process the message
+    switch (header->radio.destVc)
+    {
+    default:
+      //Discard this message
+      break;
+
+    case PC_LINK_STATUS:
+      radioToPcLinkStatus(header, VC_SERIAL_HEADER_BYTES + length);
+      break;
+    }
+
+    //Continue processing the rest of the data in the buffer
+    if (length > 0)
+      data += length;
+    dataStart = data;
+  } while(0);
   return status;
 }
 
@@ -139,6 +309,7 @@ main (
 {
   int maxfds;
   int status;
+  char * terminal;
   struct timeval timeout;
   uint8_t * vcData;
 
@@ -146,41 +317,69 @@ main (
   do
   {
     //Display the help text if necessary
-    if ((argc != 2) || (sscanf(argv[1], "/dev/ttyACM%d", &myVcAddr) != 1))
+    if (argc != 4)
     {
-      printf("%s   terminal\n", argv[0]);
+      printf("%s   terminal   my_VC   target_VC\n", argv[0]);
       printf("\n");
       printf("terminal - Name or path to the terminal device for the radio\n");
+      printf("my_VC:\n");
+      printf("    Server: 0\n");
+      printf("    Client: 1 - %d\n", MAX_VC - 1);
+      printf("target_VC:\n");
+      printf("    Server: 0\n");
+      printf("    Client: 1 - %d\n", MAX_VC - 1);
+      printf("    Loopback: my_VC\n");
+      printf("    Broadcast: %d\n", VC_BROADCAST);
+      printf("    Command: %d\n", VC_COMMAND);
       status = -1;
       break;
     }
 
-    //Determine the remote VC
-    if (myVcAddr)
-      remoteVcAddr = 0;
-    else
-      remoteVcAddr = 1;
+    //Get the path to the terminal
+    terminal = argv[1];
 
-    //Update STDIN and STDOUT
-/*
-    status = updateTerm(STDIN);
-    if (status)
+    //Determine the local VC address
+    if ((sscanf(argv[2], "%d", &myVc) != 1)
+      || ((myVc < VC_SERVER) || (myVc >= MAX_VC)))
+    {
+      fprintf(stderr, "ERROR: Invalid my VC address, please use one of the following:\n");
+      fprintf(stderr, "    Server: 0\n");
+      fprintf(stderr, "    Client: 1 - %d\n", MAX_VC - 1);
+      status = -1;
       break;
-    status = updateTerm(STDOUT);
-    if (status)
+    }
+
+    //Determine the remote VC address
+    if ((sscanf(argv[3], "%d", &remoteVc) != 1)
+      || (remoteVc < VC_COMMAND) || (remoteVc >= MAX_VC))
+    {
+      fprintf(stderr, "ERROR: Invalid target VC address, please use one of the following:\n");
+      if (myVc)
+        fprintf(stderr, "    Server: 0\n");
+      fprintf(stderr, "    Client: 1 - %d\n", MAX_VC - 1);
+      fprintf(stderr, "    Loopback: my_VC\n");
+      fprintf(stderr, "    Broadcast: %d\n", VC_BROADCAST);
+      fprintf(stderr, "    Command: %d\n", VC_COMMAND);
+      status = -1;
       break;
-*/
+    }
 
     //Open the terminal
     maxfds = STDIN;
-    status = openTty(argv[1]);
+    status = openTty(terminal);
     if (status)
       break;
     if (maxfds < tty)
       maxfds = tty;
 
-    //Display myVCAddr
-    printf("myVcAddr: %d\n", myVcAddr);
+    //Display myVc
+    printf("myVc: %d\n", myVc);
+
+    //Delay a while to let the radio complete its reset operation
+    sleep(2);
+
+    //Break the links to this node
+    cmdToRadio((uint8_t *)LINK_RESET_COMMAND, strlen(LINK_RESET_COMMAND));
 
     //Initialize the fd_sets
     FD_ZERO(&exceptfds);
@@ -209,8 +408,8 @@ main (
 
       if (FD_ISSET(tty, &readfds))
       {
-        //Write the radio data to console output
-        status = radioToStdout();
+        //Process the incoming data from the radio
+        status = radioToHost();
         if (status)
           break;
       }

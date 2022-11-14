@@ -2,13 +2,23 @@
 //Called after begin() and once user exits from command interface
 void configureRadio()
 {
+  float frequency;
   bool success = true;
 
   //Update the settings based upon the air speed
   convertAirSpeedToSettings();
 
-  if (radio.setFrequency(channels[0]) == RADIOLIB_ERR_INVALID_FREQUENCY)
+  frequency = channels[0];
+  if (radio.setFrequency(frequency) == RADIOLIB_ERR_INVALID_FREQUENCY)
     success = false;
+
+  //Print the frequency if requested
+  if (settings.printFrequency)
+  {
+    systemPrintTimestamp();
+    systemPrint(frequency);
+    systemPrintln(" MHz");
+  }
 
   channelNumber = 0;
 
@@ -180,13 +190,15 @@ void setRadioFrequency(bool rxAdjust)
   frequency = channels[channelNumber];
   if (rxAdjust)
     frequency -= frequencyCorrection;
+  radio.setFrequency(frequency);
+
+  //Print the frequency if requested
   if (settings.printFrequency)
   {
     systemPrintTimestamp();
     systemPrint(frequency);
     systemPrintln(" MHz");
   }
-  radio.setFrequency(frequency);
 }
 
 void returnToReceiving()
@@ -294,7 +306,6 @@ void generateHopTable()
              + (uint16_t)settings.radioBandwidth
              + settings.radioSpreadFactor
              + settings.verifyRxNetID
-             + settings.radioProtocolVersion
              + settings.overheadTime
              + settings.enableCRC16
              + settings.clientPingRetryInterval;
@@ -313,8 +324,7 @@ void generateHopTable()
   {
     systemPrint("ERROR - Wrong AES IV size in bytes, please set AES_IV_BYTES = ");
     systemPrintln(gcm.ivSize());
-    while (1)
-      petWDT();
+    waitForever();
   }
 
   //Verify the AES key length
@@ -322,8 +332,7 @@ void generateHopTable()
   {
     systemPrint("ERROR - Wrong AES key size in bytes, please set AES_KEY_BYTES = ");
     systemPrintln(gcm.keySize());
-    while (1)
-      petWDT();
+    waitForever();
   }
 
   //Set new initial values for AES using settings based random seed

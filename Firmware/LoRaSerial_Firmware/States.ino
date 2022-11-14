@@ -39,8 +39,7 @@ void updateRadioState()
       {
         systemPrint("Unknown state: ");
         systemPrintln(radioState);
-        while (1)
-          petWDT();
+        waitForever();
       }
       break;
 
@@ -50,6 +49,9 @@ void updateRadioState()
 
     case RADIO_RESET:
       petWDT();
+
+      //Empty the buffers
+      discardPreviousData();
 
       //Start the TX timer: time to delay before transmitting the PING
       setHeartbeatShort(); //Both radios start with short heartbeat period
@@ -84,35 +86,30 @@ void updateRadioState()
       transmitTimer = 0;
 
       //Start the link between the radios
-      if (settings.radioProtocolVersion >= 2)
+      if (settings.operatingMode == MODE_POINT_TO_POINT)
+        changeState(RADIO_P2P_LINK_DOWN);
+      else if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
       {
-        //Start the V2 protocol
-        if (settings.operatingMode == MODE_POINT_TO_POINT)
-          changeState(RADIO_P2P_LINK_DOWN);
-        else if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
-        {
-          if (settings.trainingServer)
-            //Reserve the server's address (0)
-            myVc = vcIdToAddressByte(VC_SERVER, myUniqueId);
-          else
-            //Unknown client address
-            myVc = VC_UNASSIGNED;
+        if (settings.trainingServer)
+          //Reserve the server's address (0)
+          myVc = vcIdToAddressByte(VC_SERVER, myUniqueId);
+        else
+          //Unknown client address
+          myVc = VC_UNASSIGNED;
 
-          //Start sending heartbeats
-          xmitVcHeartbeat(myVc, myUniqueId);
-          changeState(RADIO_VC_WAIT_TX_DONE);
+        //Start sending heartbeats
+        xmitVcHeartbeat(myVc, myUniqueId);
+        changeState(RADIO_VC_WAIT_TX_DONE);
+      }
+      else
+      {
+        if (settings.multipointServer == true)
+        {
+          startChannelTimer(); //Start hopping
+          changeState(RADIO_MP_STANDBY);
         }
         else
-        {
-          if (settings.multipointServer == true)
-          {
-            startChannelTimer(); //Start hopping
-            changeState(RADIO_MP_STANDBY);
-          }
-          else
-            changeState(RADIO_MP_BEGIN_SCAN);
-        }
-
+          changeState(RADIO_MP_BEGIN_SCAN);
       }
       break;
 
@@ -1819,7 +1816,7 @@ void verifyRadioStateTable()
     if (!order)
     {
       systemPrintln("ERROR - Failed to allocate the order table from the heap!");
-      while (1);
+      waitForever();
     }
 
     //Assume the table is in the correct order
@@ -1955,10 +1952,9 @@ void verifyRadioStateTable()
       systemPrintln(expectedState++);
     }
     systemPrintln("};");
-    systemFlush();
 
     //Wait forever
-    while (1);
+    waitForever();
   }
 }
 
@@ -1968,8 +1964,7 @@ void verifyV2DatagramType()
   if ((sizeof(v2DatagramType) / sizeof(v2DatagramType[0])) != MAX_V2_DATAGRAM_TYPE)
   {
     systemPrintln("ERROR - Please update the v2DatagramTable");
-    while (1)
-      petWDT();
+    waitForever();
   }
 }
 
@@ -2060,10 +2055,7 @@ void v2EnterLinkUp()
   txAckNumber = 0;
 
   //Discard any previous data
-  radioTxTail = radioTxHead;
-  txTail = txHead;
-  commandRXTail = commandRXHead;
-  commandTXTail = commandTXHead;
+  discardPreviousData();
 
   //Stop the transmit timer
   transmitTimer = 0;
@@ -2078,6 +2070,18 @@ void v2EnterLinkUp()
     systemPrintln("========== Link UP ==========");
 }
 
+void discardPreviousData()
+{
+  //Output any debug messages
+  outputSerialData(true);
+
+  //Discard any previous data
+  radioTxTail = radioTxHead;
+  txTail = txHead;
+  commandRXTail = commandRXHead;
+  commandTXTail = commandTXHead;
+}
+
 void vcSendLinkStatus(bool linkUp, int8_t srcVc)
 {
   //Build the message
@@ -2086,8 +2090,8 @@ void vcSendLinkStatus(bool linkUp, int8_t srcVc)
 
   //Build the message header
   VC_SERIAL_MESSAGE_HEADER header;
-  header.start = START_OF_HEADING;
-  header.radio.length = sizeof(header) + sizeof(message);
+  header.start = START_OF_VC_SERIAL;
+  header.radio.length = VC_RADIO_HEADER_BYTES + sizeof(message);
   header.radio.destVc = PC_LINK_STATUS;
   header.radio.srcVc = srcVc;
 
@@ -2128,13 +2132,15 @@ void vcBreakLink(int8_t vcIndex)
   linkFailures++;
 
   //Send the status message
-  vcSendLinkStatus(false, myVc);
+  vcSendLinkStatus(false, vcIndex);
 
   //Stop the transmit timer
   transmitTimer = 0;
 
   //Flush the buffers
-  resetSerial();
+  outputSerialData(true);
+  if (vcIndex == myVc)
+    resetSerial();
 }
 
 int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
@@ -2155,7 +2161,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
     {
       if (!vc->linkUp)
         //Send the status message
-        vcSendLinkStatus(true, myVc);
+        vcSendLinkStatus(true, index);
 
       //Update the link status
       vc->linkUp = true;
@@ -2189,6 +2195,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
       systemPrintln("ERROR: Too many clients, no free addresses!\n");
       return -2;
     }
+    srcAddr = index;
   }
 
   //Check for an address conflict
@@ -2214,7 +2221,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
   memcpy(&vc->uniqueId, id, UNIQUE_ID_BYTES);
 
   //Send the status message
-  vcSendLinkStatus(true, myVc);
+  vcSendLinkStatus(true, index);
 
   //Returned the assigned address
   return index;

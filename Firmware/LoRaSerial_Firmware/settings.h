@@ -333,7 +333,8 @@ typedef bool (* VALIDATION_ROUTINE)(void * value, uint32_t valMin, uint32_t valM
 
 typedef struct _COMMAND_ENTRY
 {
-  uint8_t number;
+  char letter;
+  char requireAll;
   uint32_t minValue;
   uint32_t maxValue;
   uint8_t digits;
@@ -374,13 +375,16 @@ typedef struct struct_settings {
   bool autoTuneFrequency = false; //Based on the last packets frequency error, adjust our next transaction frequency
   bool displayPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
   uint8_t maxResends = 0; //Attempt resends up to this number, 0 = infinite retries
-  bool sortParametersByName = false; //Sort the parameter list (ATI0) by parameter name
-  bool printParameterName = false; //Print the parameter name in the ATSx? response
   bool printFrequency = false; //Print the updated frequency
   bool debugRadio = false; //Print radio info
   bool debugStates = false; //Print state changes
   bool debugTraining = false; //Print training info
-  bool usbSerialWait = false; //Wait for USB serial initialization
+#if defined(ENABLE_DEVELOPER)
+#define WAIT_SERIAL_DEFAULT     true
+#else   //ENABLE_DEVELOPER
+#define WAIT_SERIAL_DEFAULT     false
+#endif  //ENABLE_DEVELOPER
+  bool usbSerialWait = WAIT_SERIAL_DEFAULT; //Wait for USB serial initialization
   bool printRfData = false; //Print RX and TX data
   bool printPktData = false; //Print data, before encryption and after decryption
   bool verifyRxNetID = false; //Verify RX netID value when not operating in point-to-point mode
@@ -391,7 +395,6 @@ typedef struct struct_settings {
   bool debugReceive = false; //Print receive processing
   bool debugTransmit = false; //Print transmit processing
   bool printTxErrors = false; //Print any transmit errors
-  uint8_t radioProtocolVersion = 2; //Select the radio protocol
   bool printTimestamp = false; //Print a timestamp: days hours:minutes:seconds.milliseconds
   bool debugDatagrams = false; //Print the datagrams
   uint16_t overheadTime = 10; //ms added to ack and datagram times before ACK timeout occurs
@@ -409,7 +412,8 @@ typedef struct struct_settings {
   bool alternateLedUsage = false; //Enable alternate LED usage
   uint8_t trainingTimeout = 1; //Timeout in minutes to complete the training
   bool multipointServer = false; //Only one radio can be the server in multipoint mode
-  
+  bool debugSerial = false; //Debug the serial input
+
   //Add new parameters immediately before this line
   //-- Add commands to set the parameters
   //-- Add parameters to routine updateRadioParameters

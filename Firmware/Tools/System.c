@@ -83,11 +83,11 @@ printf("\n");
   index = srcAddr;
 
   //Only the server can assign the address bytes
-  if ((srcAddr == ADDR_UNASSIGNED) && (!settings.trainingServer))
+  if ((srcAddr == VC_UNASSIGNED) && (!settings.trainingServer))
     return -1;
 
   //Assign an address if necessary
-  if (srcAddr == ADDR_UNASSIGNED)
+  if (srcAddr == VC_UNASSIGNED)
   {
     //Unknown client ID
     //Determine if there is a free address

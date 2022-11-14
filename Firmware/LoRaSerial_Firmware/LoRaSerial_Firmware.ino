@@ -192,8 +192,11 @@ bool rtsAsserted; //When RTS is asserted, host says it's ok to send data
                                   | Flow control: RTS for UART
                                   |      Off: Buffer full
                                   |      On: Buffer drops below half full
+                                  | updateSerial
                                   V
                          serialReceiveBuffer
+                                  |
+                                  | processSerialInput
                                   |
                                   | inCommandMode?
                                   |
@@ -252,11 +255,13 @@ bool rtsAsserted; //When RTS is asserted, host says it's ok to send data
                                   | Flow control: RTS for UART
                                   |      Off: Buffer full
                                   |      On: Buffer drops below half full
+                                  | updateSerial
                                   V
                          serialReceiveBuffer
                                   |
-                                  | Destination VC?
+                                  | vcProcessSerialInput
                                   |
+                                  | Destination VC?
                                   V                                    Other
                     .-------------+--------------->+---------------->+------> Discard
          VC_COMMAND |                         myVc |            >= 0 |
@@ -447,6 +452,7 @@ uint8_t *rxVcData;
 int8_t txDestVc;
 unsigned long vcAckTimer;
 VIRTUAL_CIRCUIT virtualCircuitList[MAX_VC];
+uint8_t serialOperatingMode;
 
 unsigned int multipointChannelLoops = 0; //Count the number of times Multipoint scanning has traversed the table
 unsigned int multipointAttempts = 0; //Throttle back scanning when a server is not detected
@@ -474,6 +480,7 @@ void setup()
   beginSerial(57600); //Default for debug messages before board begins
 
   loadSettings(); //Load settings from EEPROM
+  serialOperatingMode = settings.operatingMode;
 
   beginSerial(settings.serialSpeed);
 

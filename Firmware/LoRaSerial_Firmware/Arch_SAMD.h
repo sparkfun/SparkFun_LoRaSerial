@@ -134,9 +134,7 @@ void samdBeginBoard()
 
 void samdBeginSerial(uint16_t serialSpeed)
 {
-#if !defined(ENABLE_DEVELOPER)
   if (settings.usbSerialWait)
-#endif  //ENABLE_DEVELOPER
     //Wait for serial to come online for debug printing
     while (!Serial);
 

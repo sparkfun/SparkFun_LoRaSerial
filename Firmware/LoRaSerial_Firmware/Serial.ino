@@ -187,6 +187,7 @@ void readyOutgoingCommandPacket()
 //Scan for escape characters
 void updateSerial()
 {
+  uint16_t previousHead;
   int x;
 
   //Assert RTS when there is enough space in the receive buffer
@@ -198,6 +199,7 @@ void updateSerial()
   outputSerialData(false);
 
   //Look for local incoming serial
+  previousHead = rxHead;
   while (rtsAsserted && arch.serialAvailable() && (transactionComplete == false))
   {
     rxLED(true); //Turn on LED during serial reception
@@ -217,7 +219,65 @@ void updateSerial()
   } //End Serial.available()
   rxLED(false); //Turn off LED
 
+  //Print the number of bytes received via serial
+  if (settings.debugSerial && (rxHead - previousHead))
+  {
+    systemPrint("updateSerial moved ");
+    systemPrint(rxHead - previousHead);
+    systemPrintln(" bytes into serialReceiveBuffer");
+    outputSerialData(true);
+    petWDT();
+  }
+
   //Process the serial data
+  if (serialOperatingMode == MODE_VIRTUAL_CIRCUIT)
+    vcProcessSerialInput();
+  else
+    processSerialInput();
+
+  //Process any remote commands sitting in buffer
+  if (availableRXCommandBytes() && inCommandMode == false)
+  {
+    commandLength = availableRXCommandBytes();
+
+    for (x = 0 ; x < commandLength ; x++)
+    {
+      commandBuffer[x] = commandRXBuffer[commandRXTail++];
+      commandRXTail %= sizeof(commandRXBuffer);
+    }
+
+    //Print the number of bytes moved into the command buffer
+    if (settings.debugSerial && commandLength)
+    {
+      systemPrint("updateSerial moved ");
+      systemPrint(commandLength);
+      systemPrintln(" bytes from commandRXBuffer into commandBuffer");
+      outputSerialData(true);
+      petWDT();
+    }
+
+    if (commandBuffer[0] == 'R') //Error check
+    {
+      commandBuffer[0] = 'A'; //Convert this RT command to an AT command for local consumption
+      printerEndpoint = PRINT_TO_RF; //Send prints to RF link
+      checkCommand(); //Parse the command buffer
+      printerEndpoint = PRINT_TO_SERIAL;
+      remoteCommandResponse = true;
+    }
+    else
+    {
+      if (settings.debugRadio)
+        systemPrintln("Corrupt remote command received");
+    }
+  }
+}
+
+void processSerialInput()
+{
+  uint16_t radioHead;
+
+  //Process the serial data
+  radioHead = radioTxHead;
   while (availableRXBytes() && (availableRadioTXBytes() < (sizeof(radioTxBuffer) - 1))
     && (transactionComplete == false))
   {
@@ -310,32 +370,15 @@ void updateSerial()
       radioTxBuffer[radioTxHead++] = incoming;
       radioTxHead %= sizeof(radioTxBuffer);
     } //End process rx buffer
-  } //End Serial.available()
+  }
 
-  //Process any remote commands sitting in buffer
-  if (availableRXCommandBytes() && inCommandMode == false)
+  //Print the number of bytes placed into the rxTxBuffer
+  if (settings.debugSerial && (radioTxHead != radioHead))
   {
-    commandLength = availableRXCommandBytes();
-
-    for (x = 0 ; x < commandLength ; x++)
-    {
-      commandBuffer[x] = commandRXBuffer[commandRXTail++];
-      commandRXTail %= sizeof(commandRXBuffer);
-    }
-
-    if (commandBuffer[0] == 'R') //Error check
-    {
-      commandBuffer[0] = 'A'; //Convert this RT command to an AT command for local consumption
-      printerEndpoint = PRINT_TO_RF; //Send prints to RF link
-      checkCommand(); //Parse the command buffer
-      printerEndpoint = PRINT_TO_SERIAL;
-      remoteCommandResponse = true;
-    }
-    else
-    {
-      if (settings.debugRadio)
-        systemPrintln("Corrupt remote command received");
-    }
+    systemPrint("processSerialInput moved ");
+    systemPrint((radioTxHead - radioHead) % sizeof(radioTxBuffer));
+    systemPrintln(" bytes from serialReceiveBuffer into radioTxBuffer");
+    outputSerialData(true);
   }
 }
 
@@ -367,10 +410,11 @@ void outputSerialData(bool ignoreISR)
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Get the message length byte from the serial buffer
-uint8_t vcSerialMsgGetLengthByte()
+bool vcSerialMsgGetLengthByte(uint8_t * msgLength)
 {
-  //Get the length byte for the received serial message
-  return radioTxBuffer[radioTxTail];
+  //Get the length byte for the received serial message, account for the start byte
+  *msgLength = radioTxBuffer[radioTxTail];
+  return true;
 }
 
 //Get the destination virtual circuit byte from the serial buffer
@@ -388,8 +432,9 @@ uint8_t vcSerialMsgGetVcDest()
 //Determine if received serial data may be sent to the remote system
 bool vcSerialMessageReceived()
 {
-  int8_t vcDest;
+  uint16_t dataBytes;
   uint8_t msgLength;
+  int8_t vcDest;
 
   do
   {
@@ -398,21 +443,46 @@ bool vcSerialMessageReceived()
       //The radio is busy, wait until it is idle
       break;
 
-    //Wait until at least one byte is available
-    if (!availableRadioTXBytes())
-      //No data available
+    //Check for some data bytes
+    dataBytes = availableRadioTXBytes();
+    if (!dataBytes)
       break;
 
+    //Wait until the length byte is available
+    msgLength = radioTxBuffer[radioTxTail];
+
+    //Print the message length and availableRadioTXBytes
+    if (settings.debugSerial)
+    {
+      systemPrint("msgLength: ");
+      systemPrintln(msgLength);
+      systemPrint("availableRadioTXBytes(): ");
+      systemPrintln(availableRadioTXBytes());
+      outputSerialData(true);
+    }
+
     //Verify that the entire message is in the serial buffer
-    msgLength = vcSerialMsgGetLengthByte();
     if (availableRadioTXBytes() < msgLength)
+    {
       //The entire message is not in the buffer
+      if (settings.debugSerial)
+      {
+        systemPrintln("VC serial RX: Waiting for entire buffer");
+        outputSerialData(true);
+      }
       break;
+    }
 
     //Determine if the message is too large
     vcDest = vcSerialMsgGetVcDest();
     if (msgLength > maxDatagramSize)
     {
+      if (settings.debugSerial || settings.debugTransmit)
+      {
+        systemPrintln("VC serial RX: Message too long, discarded");
+        outputSerialData(true);
+      }
+
       //Discard this message, it is too long to transmit over the radio link
       radioTxTail += msgLength;
       if (radioTxTail >= sizeof(radioTxBuffer))
@@ -430,11 +500,12 @@ bool vcSerialMessageReceived()
     //Validate the destination VC
     if ((vcDest < VC_BROADCAST) || (vcDest >= MAX_VC))
     {
-      if (settings.debugTransmit)
+      if (settings.debugSerial || settings.debugTransmit)
       {
         systemPrint("ERROR: Invalid vcDest ");
         systemPrint(vcDest);
         systemPrintln(", discarding message!");
+        outputSerialData(true);
       }
 
       //Discard this message
@@ -444,11 +515,23 @@ bool vcSerialMessageReceived()
       break;
     }
 
+    //Print the data ready for transmission
+    if (settings.debugSerial)
+    {
+      systemPrint("Readying ");
+      systemPrint(msgLength);
+      systemPrintln(" byte for transmission");
+      outputSerialData(true);
+    }
+
     //If sending to ourself, just place the data in the serial output buffer
     readyOutgoingPacket(msgLength);
     if (vcDest == myVc)
     {
-      serialBufferOutput(outgoingPacket, msgLength);
+      if (settings.debugSerial)
+        systemPrintln("VC serial RX: Sending to ourself");
+      systemWrite(START_OF_VC_SERIAL);
+      systemWrite(outgoingPacket, msgLength);
       endOfTxData -= msgLength;
       break;
     }
@@ -461,10 +544,200 @@ bool vcSerialMessageReceived()
   return false;
 }
 
+void vcProcessSerialInput()
+{
+  char * cmd;
+  uint8_t data;
+  uint16_t dataBytes;
+  uint16_t index;
+  int8_t vcDest;
+  int8_t vcSrc;
+  uint8_t length;
+
+  //Process the serial data while there is space in radioTxBuffer
+  dataBytes = availableRXBytes();
+  while (dataBytes && (availableRadioTXBytes() < (sizeof(radioTxBuffer) - 256))
+    && (transactionComplete == false))
+  {
+    //Take a break if there are ISRs to attend to
+    petWDT();
+    if (timeToHop == true) hopChannel();
+
+    //Skip any garbage in the input stream
+    data = serialReceiveBuffer[rxTail++];
+    rxTail %= sizeof(radioTxBuffer);
+    if (data != START_OF_VC_SERIAL)
+    {
+      if (settings.debugSerial)
+      {
+        systemPrint("vcProcessSerialInput discarding 0x");
+        systemPrint(data, HEX);
+        systemPrintln();
+        outputSerialData(true);
+      }
+
+      //Discard this data byte
+      dataBytes = availableRXBytes();
+      continue;
+    }
+
+    //Get the virtual circuit header
+    //The start byte has already been removed
+    length = serialReceiveBuffer[rxTail];
+    if (length <= VC_SERIAL_HEADER_BYTES)
+    {
+      if (settings.debugSerial)
+      {
+        systemPrint("ERROR - Invalid length ");
+        systemPrint(length);
+        systemPrint(", discarding 0x");
+        systemPrint(data, HEX);
+        systemPrintln();
+        outputSerialData(true);
+      }
+
+      //Invalid message length, discard the START_OF_VC_SERIAL
+      dataBytes = availableRXBytes();
+      continue;
+    }
+
+    //Skip if there is not enough data
+    if (dataBytes < length)
+    {
+      if (settings.debugSerial)
+      {
+        systemPrint("ERROR - Invalid length ");
+        systemPrint(length);
+        systemPrint(", discarding 0x");
+        systemPrint(data, HEX);
+        systemPrintln();
+        outputSerialData(true);
+      }
+      dataBytes = availableRXBytes();
+      continue;
+    }
+
+    //Get the source and destination virtual circuits
+    index = (rxTail + 1) % sizeof(serialReceiveBuffer);
+    vcDest = serialReceiveBuffer[index];
+    index = (rxTail + 2) % sizeof(serialReceiveBuffer);
+    vcSrc = serialReceiveBuffer[index];
+
+    //Process this message
+    switch ((uint8_t)vcDest)
+    {
+      //Send data over the radio link
+      default:
+        //Validate the source virtual circuit
+        if ((vcSrc != myVc) || (myVc == VC_UNASSIGNED))
+        {
+          if (settings.debugSerial)
+          {
+            systemPrint("ERROR: Invalid myVc ");
+            systemPrint(myVc);
+            systemPrintln(" for data message, discarding message!");
+            outputSerialData(true);
+          }
+
+          //Discard this message
+          rxTail = (rxTail + length) % sizeof(radioTxBuffer);
+          break;
+        }
+
+        //Verify the destination virtual circuit
+        if ((vcDest < VC_BROADCAST) || (vcDest >= MAX_VC))
+        {
+          if (settings.debugSerial)
+          {
+            systemPrint("ERROR: Invalid vcDest ");
+            systemPrint(vcDest);
+            systemPrintln(" for data message, discarding message!");
+            outputSerialData(true);
+          }
+
+          //Discard this message
+          rxTail = (rxTail + length) % sizeof(radioTxBuffer);
+          break;
+        }
+
+        if (settings.debugSerial)
+        {
+          systemPrint("vcProcessSerialInput moving ");
+          systemPrint(length);
+          systemPrintln(" bytes into radioTxBuffer");
+          dumpCircularBuffer(serialReceiveBuffer, rxTail, sizeof(serialReceiveBuffer), length);
+          outputSerialData(true);
+        }
+
+        //Place the data in radioTxBuffer
+        for (; length > 0; length--)
+        {
+          radioTxBuffer[radioTxHead++] = serialReceiveBuffer[rxTail++];
+          radioTxHead %= sizeof(radioTxBuffer);
+          rxTail %= sizeof(serialReceiveBuffer);
+        }
+        break;
+
+      //Process this command
+      case (uint8_t)VC_COMMAND:
+        //Validate the source virtual circuit
+        if ((vcSrc != PC_COMMAND) || (length > (sizeof(commandBuffer) - 1)))
+        {
+          if (settings.debugSerial)
+          {
+            systemPrint("ERROR: Invalid vcSrc ");
+            systemPrint(myVc);
+            systemPrintln(" for command message, discarding message!");
+            outputSerialData(true);
+          }
+
+          //Discard this message
+          rxTail = (rxTail + length) % sizeof(radioTxBuffer);
+          break;
+        }
+
+        //Discard the VC header
+        length -= VC_RADIO_HEADER_BYTES;
+        rxTail = (rxTail + VC_RADIO_HEADER_BYTES) % sizeof(radioTxBuffer);
+
+        //Move this message into the command buffer
+        for (cmd = commandBuffer; length > 0; length--)
+        {
+          *cmd++ = toupper(serialReceiveBuffer[rxTail++]);
+          rxTail %= sizeof(serialReceiveBuffer);
+        }
+        commandLength = cmd - commandBuffer;
+
+        if (settings.debugSerial)
+        {
+          systemPrint("vcProcessSerialInput moving ");
+          systemPrint(commandLength);
+          systemPrintln(" bytes into commandBuffer");
+          outputSerialData(true);
+          dumpBuffer((uint8_t *)commandBuffer, commandLength);
+        }
+
+        //Process this command
+        checkCommand();
+        break;
+    }
+
+    //Determine how much data is left in the buffer
+    dataBytes = availableRXBytes();
+  }
+
+  //Take a break if there are ISRs to attend to
+  petWDT();
+  if (timeToHop == true) hopChannel();
+}
+
 void resetSerial()
 {
   uint32_t delayTime;
   uint32_t lastCharacterReceived;
+
+  //Display any debug output
+  outputSerialData(true);
 
   //Determine the amount of time needed to receive a character
   delayTime = 200;
@@ -501,4 +774,5 @@ void resetSerial()
   commandRXHead = commandRXTail;
   commandTXHead = commandTXTail;
   endOfTxData = &outgoingPacket[headerBytes];
+  commandLength = 0;
 }

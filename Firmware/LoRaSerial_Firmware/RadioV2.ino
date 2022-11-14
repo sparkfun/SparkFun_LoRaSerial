@@ -302,8 +302,7 @@ void xmitDatagramP2PAck()
   {
     systemPrint("ERROR - Please define ACK_BYTES = ");
     systemPrintln(ackLength);
-    while (1)
-      petWDT();
+    waitForever();
   }
 
   /*
@@ -499,14 +498,9 @@ void updateRadioParameters(uint8_t * rxData)
   originalSettings.autoTuneFrequency = params.autoTuneFrequency;
   originalSettings.maxResends = params.maxResends;
   originalSettings.verifyRxNetID = params.verifyRxNetID;
-  originalSettings.radioProtocolVersion = params.radioProtocolVersion;
   originalSettings.overheadTime = params.overheadTime;
   originalSettings.enableCRC16 = params.enableCRC16;
   originalSettings.clientPingRetryInterval = params.clientPingRetryInterval;
-
-  //Update the API parameters
-  originalSettings.sortParametersByName = params.sortParametersByName;
-  originalSettings.printParameterName = params.printParameterName;
 
   //Update the debug parameters
   if (params.copyDebug)
@@ -774,26 +768,29 @@ PacketType rcvDatagram()
   if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
   {
     receivedNetID = *rxData++;
-    if (settings.debugReceive)
+    if (receivedNetID != settings.netID)
     {
-      systemPrintTimestamp();
-      systemPrint("RX: NetID ");
-      systemPrint(receivedNetID);
-      systemPrint(" (0x");
-      systemPrint(receivedNetID, HEX);
-      systemPrint(")");
+      if (settings.debugReceive)
+      {
+        systemPrintTimestamp();
+        systemPrint("RX: NetID ");
+        systemPrint(receivedNetID);
+        systemPrint(" (0x");
+        systemPrint(receivedNetID, HEX);
+        systemPrint(")");
+        if (receivedNetID != settings.netID)
+        {
+          systemPrint(" expecting ");
+          systemPrint(settings.netID);
+        }
+        systemPrintln();
+      }
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
-      if (receivedNetID != settings.netID)
-      {
-        systemPrint(" expecting ");
-        systemPrintln(settings.netID);
-        petWDT();
-        if (settings.printPktData && rxDataBytes)
-          dumpBuffer(incomingBuffer, rxDataBytes);
-        return (DATAGRAM_NETID_MISMATCH);
-      }
-      systemPrintln();
+      petWDT();
+      if (settings.debugReceive && settings.printPktData && rxDataBytes)
+        dumpBuffer(incomingBuffer, rxDataBytes);
+      return (DATAGRAM_NETID_MISMATCH);
     }
   }
 
@@ -856,6 +853,12 @@ PacketType rcvDatagram()
     printControl(*((uint8_t *)&rxControl));
   if (datagramType >= MAX_V2_DATAGRAM_TYPE)
   {
+    if (settings.debugReceive)
+    {
+      systemPrintTimestamp();
+      systemPrint("RX: Invalid datagram type ");
+      systemPrintln(datagramType);
+    }
     badFrames++;
     return (DATAGRAM_BAD);
   }
@@ -1039,7 +1042,7 @@ PacketType rcvDatagram()
     }
 
     //Parse the virtual circuit header
-    vcHeader = (VC_RADIO_MESSAGE_HEADER *)&rxData[1];
+    vcHeader = (VC_RADIO_MESSAGE_HEADER *)rxData;
     rxDestVc = vcHeader->destVc;
     rxSrcVc = vcHeader->srcVc;
     rxVcData = &rxData[3];
@@ -1057,6 +1060,8 @@ PacketType rcvDatagram()
           systemPrintln(rxSrcVc);
           if (timeToHop == true) //If the channelTimer has expired, move to next frequency
             hopChannel();
+          if (settings.printRfData && rxDataBytes)
+            dumpBuffer(incomingBuffer, rxDataBytes);
         }
         badFrames++;
         return DATAGRAM_BAD;
@@ -1067,11 +1072,14 @@ PacketType rcvDatagram()
     //Validate the length
     if (vcHeader->length != rxDataBytes)
     {
-      systemPrintTimestamp();
-      systemPrint("Invalid VC length, received ");
-      systemPrint(vcHeader->length);
-      systemPrint(" expecting ");
-      systemPrintln(rxDataBytes);
+      if (settings.debugReceive)
+      {
+        systemPrintTimestamp();
+        systemPrint("Invalid VC length, received ");
+        systemPrint(vcHeader->length);
+        systemPrint(" expecting ");
+        systemPrintln(rxDataBytes);
+      }
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
       badFrames++;
