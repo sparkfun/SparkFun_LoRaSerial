@@ -188,7 +188,6 @@ void readyOutgoingCommandPacket()
 void updateSerial()
 {
   uint16_t previousHead;
-  uint16_t radioHead;
   int x;
 
   //Assert RTS when there is enough space in the receive buffer
@@ -229,6 +228,50 @@ void updateSerial()
     outputSerialData(true);
     petWDT();
   }
+
+  //Process the serial data
+  processSerialInput();
+
+  //Process any remote commands sitting in buffer
+  if (availableRXCommandBytes() && inCommandMode == false)
+  {
+    commandLength = availableRXCommandBytes();
+
+    for (x = 0 ; x < commandLength ; x++)
+    {
+      commandBuffer[x] = commandRXBuffer[commandRXTail++];
+      commandRXTail %= sizeof(commandRXBuffer);
+    }
+
+    //Print the number of bytes moved into the command buffer
+    if (settings.debugSerial && commandLength)
+    {
+      systemPrint("updateSerial moved ");
+      systemPrint(commandLength);
+      systemPrintln(" bytes from commandRXBuffer into commandBuffer");
+      outputSerialData(true);
+      petWDT();
+    }
+
+    if (commandBuffer[0] == 'R') //Error check
+    {
+      commandBuffer[0] = 'A'; //Convert this RT command to an AT command for local consumption
+      printerEndpoint = PRINT_TO_RF; //Send prints to RF link
+      checkCommand(); //Parse the command buffer
+      printerEndpoint = PRINT_TO_SERIAL;
+      remoteCommandResponse = true;
+    }
+    else
+    {
+      if (settings.debugRadio)
+        systemPrintln("Corrupt remote command received");
+    }
+  }
+}
+
+void processSerialInput()
+{
+  uint16_t radioHead;
 
   //Process the serial data
   radioHead = radioTxHead;
@@ -324,7 +367,7 @@ void updateSerial()
       radioTxBuffer[radioTxHead++] = incoming;
       radioTxHead %= sizeof(radioTxBuffer);
     } //End process rx buffer
-  } //End Serial.available()
+  }
 
   //Print the number of bytes placed into the rxTxBuffer
   if (settings.debugSerial && (radioTxHead != radioHead))
@@ -333,42 +376,6 @@ void updateSerial()
     systemPrint((radioTxHead - radioHead) % sizeof(radioTxBuffer));
     systemPrintln(" bytes from serialReceiveBuffer into radioTxBuffer");
     outputSerialData(true);
-  }
-
-  //Process any remote commands sitting in buffer
-  if (availableRXCommandBytes() && inCommandMode == false)
-  {
-    commandLength = availableRXCommandBytes();
-
-    for (x = 0 ; x < commandLength ; x++)
-    {
-      commandBuffer[x] = commandRXBuffer[commandRXTail++];
-      commandRXTail %= sizeof(commandRXBuffer);
-    }
-
-    //Print the number of bytes moved into the command buffer
-    if (settings.debugSerial && commandLength)
-    {
-      systemPrint("updateSerial moved ");
-      systemPrint(commandLength);
-      systemPrintln(" bytes from commandRXBuffer into commandBuffer");
-      outputSerialData(true);
-      petWDT();
-    }
-
-    if (commandBuffer[0] == 'R') //Error check
-    {
-      commandBuffer[0] = 'A'; //Convert this RT command to an AT command for local consumption
-      printerEndpoint = PRINT_TO_RF; //Send prints to RF link
-      checkCommand(); //Parse the command buffer
-      printerEndpoint = PRINT_TO_SERIAL;
-      remoteCommandResponse = true;
-    }
-    else
-    {
-      if (settings.debugRadio)
-        systemPrintln("Corrupt remote command received");
-    }
   }
 }
 
