@@ -472,6 +472,63 @@ void dumpBuffer(uint8_t * data, int length)
   }
 }
 
+void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, int length)
+{
+  int bytes;
+  uint8_t data;
+  const int displayWidth = 16;
+  uint16_t i;
+  int index;
+  uint16_t offset;
+
+  offset = tail;
+  while (length > 0)
+  {
+    // Display the offset
+    systemPrint("    0x");
+    systemPrint((uint16_t)(offset), HEX);
+    systemPrint(": ");
+
+    // Determine the number of bytes to display
+    bytes = length;
+    if (bytes > displayWidth)
+      bytes = displayWidth;
+
+    // Display the data bytes in hex
+    for (index = 0; index < bytes; index++)
+    {
+      systemWrite(' ');
+      data = buffer[(offset + index) % bufferLength];
+      systemPrint(data, HEX);
+      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+        hopChannel();
+      petWDT();
+    }
+
+    // Space over to the ASCII display
+    for (; index < displayWidth; index++)
+    {
+      systemPrint("   ");
+      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+        hopChannel();
+      petWDT();
+    }
+    systemPrint("  ");
+
+    // Display the ASCII bytes
+    for (index = 0; index < bytes; index++) {
+      data = buffer[(offset + index) % bufferLength];
+      systemWrite(((data < ' ') || (data >= 0x7f)) ? '.' : data);
+    }
+    systemPrintln();
+    if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+      hopChannel();
+    petWDT();
+    offset += bytes;
+    length -= bytes;
+  }
+}
+
 void updateRSSI()
 {
   //Get the current signal level
