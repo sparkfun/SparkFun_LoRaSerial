@@ -8,8 +8,6 @@
 # Source files
 ##########
 
-EXECUTABLES  = Client
-EXECUTABLES += Server
 EXECUTABLES += VcServerTest
 
 INCLUDES = settings.h ../LoRaSerial_Firmware/Virtual_Circuit_Protocol.h
@@ -51,12 +49,6 @@ $(COMMON_LIB): $(LIB_OBJS)
 ##########
 # Build the executables
 ##########
-
-Client: Client.c $(COMMON_LIB)
-	$(CC) -o $@ $^
-
-Server: Server.c $(COMMON_LIB)
-	$(CC) -o $@ $^
 
 VcServerTest: VcServerTest.c $(COMMON_LIB)
 	$(CC) -o $@ $^
