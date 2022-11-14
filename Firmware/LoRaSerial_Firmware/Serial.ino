@@ -367,10 +367,33 @@ void outputSerialData(bool ignoreISR)
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Get the message length byte from the serial buffer
-uint8_t vcSerialMsgGetLengthByte()
+bool vcSerialMsgGetLengthByte(uint8_t * msgLength)
 {
-  //Get the length byte for the received serial message
-  return radioTxBuffer[radioTxTail];
+  uint16_t dataBytes;
+  uint16_t index;
+
+  //Discard any garbage bytes
+  dataBytes = availableRadioTXBytes();
+  while (dataBytes && (radioTxBuffer[radioTxTail] != START_OF_VC_SERIAL))
+  {
+    radioTxTail = (radioTxTail + 1) % sizeof(radioTxBuffer);
+    dataBytes -= 1;
+  }
+
+  //The second byte is the length which does not include the start byte
+  if (dataBytes < 2)
+    return false;
+
+  //The first byte is the start serial byte
+  if (availableRadioTXBytes() < 2)
+    return false;
+
+  //Get the length byte for the received serial message, account for the start byte
+  index = radioTxTail + 1;
+  if (index >= sizeof(radioTxBuffer))
+    index -= sizeof(radioTxBuffer);
+  *msgLength = radioTxBuffer[index] + 1;
+  return true;
 }
 
 //Get the destination virtual circuit byte from the serial buffer
@@ -379,7 +402,7 @@ uint8_t vcSerialMsgGetVcDest()
   uint16_t index;
 
   //Get the destination address byte
-  index = radioTxTail + 1;
+  index = radioTxTail + 2;
   if (index >= sizeof(radioTxBuffer))
     index -= sizeof(radioTxBuffer);
   return radioTxBuffer[index];
@@ -388,8 +411,8 @@ uint8_t vcSerialMsgGetVcDest()
 //Determine if received serial data may be sent to the remote system
 bool vcSerialMessageReceived()
 {
-  int8_t vcDest;
   uint8_t msgLength;
+  int8_t vcDest;
 
   do
   {
@@ -398,13 +421,12 @@ bool vcSerialMessageReceived()
       //The radio is busy, wait until it is idle
       break;
 
-    //Wait until at least one byte is available
-    if (!availableRadioTXBytes())
-      //No data available
+    //Wait until the length byte is available
+    if (!vcSerialMsgGetLengthByte(&msgLength))
+      //The length byte is not available
       break;
 
     //Verify that the entire message is in the serial buffer
-    msgLength = vcSerialMsgGetLengthByte();
     if (availableRadioTXBytes() < msgLength)
     {
       //The entire message is not in the buffer
@@ -451,6 +473,12 @@ bool vcSerialMessageReceived()
       break;
     }
 
+    //Skip over the start byte
+    radioTxTail += 1;
+    if (radioTxTail >= sizeof(radioTxBuffer))
+      radioTxTail -= sizeof(radioTxBuffer);
+    msgLength -= 1;
+
     //If sending to ourself, just place the data in the serial output buffer
     if (settings.debugSerial)
     {
@@ -463,6 +491,7 @@ bool vcSerialMessageReceived()
     {
       if (settings.debugSerial)
         systemPrintln("VC serial RX: Sending to ourself");
+      serialOutputByte(START_OF_VC_SERIAL);
       serialBufferOutput(outgoingPacket, msgLength);
       endOfTxData -= msgLength;
       break;
