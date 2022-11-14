@@ -670,6 +670,7 @@ const COMMAND_ENTRY commands[] =
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugStates",          &settings.debugStates},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugTraining",        &settings.debugTraining},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &settings.debugTransmit},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugSerial",          &settings.debugSerial},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DisplayPacketQuality", &settings.displayPacketQuality},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DisplayRealMillis",    &settings.displayRealMillis},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintFrequency",       &settings.printFrequency},

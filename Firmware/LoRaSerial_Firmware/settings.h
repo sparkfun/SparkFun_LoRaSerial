@@ -407,7 +407,8 @@ typedef struct struct_settings {
   bool alternateLedUsage = false; //Enable alternate LED usage
   uint8_t trainingTimeout = 1; //Timeout in minutes to complete the training
   bool multipointServer = false; //Only one radio can be the server in multipoint mode
-  
+  bool debugSerial = false; //Debug the serial input
+
   //Add new parameters immediately before this line
   //-- Add commands to set the parameters
   //-- Add parameters to routine updateRadioParameters
