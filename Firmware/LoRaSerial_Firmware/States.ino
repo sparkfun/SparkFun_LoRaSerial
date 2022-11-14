@@ -50,6 +50,9 @@ void updateRadioState()
     case RADIO_RESET:
       petWDT();
 
+      //Empty the buffers
+      discardPreviousData();
+
       //Start the TX timer: time to delay before transmitting the PING
       setHeartbeatShort(); //Both radios start with short heartbeat period
       pingRandomTime = random(ackAirTime, ackAirTime * 2); //Fast ping
@@ -2056,10 +2059,7 @@ void v2EnterLinkUp()
   txAckNumber = 0;
 
   //Discard any previous data
-  radioTxTail = radioTxHead;
-  txTail = txHead;
-  commandRXTail = commandRXHead;
-  commandTXTail = commandTXHead;
+  discardPreviousData();
 
   //Stop the transmit timer
   transmitTimer = 0;
@@ -2072,6 +2072,18 @@ void v2EnterLinkUp()
   changeState(RADIO_P2P_LINK_UP);
   if (settings.printLinkUpDown)
     systemPrintln("========== Link UP ==========");
+}
+
+void discardPreviousData()
+{
+  //Output any debug messages
+  outputSerialData(true);
+
+  //Discard any previous data
+  radioTxTail = radioTxHead;
+  txTail = txHead;
+  commandRXTail = commandRXHead;
+  commandTXTail = commandTXHead;
 }
 
 void vcSendLinkStatus(bool linkUp, int8_t srcVc)
