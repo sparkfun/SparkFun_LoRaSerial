@@ -19,7 +19,7 @@ void xmitVcHeartbeat(int8_t addr, uint8_t * id)
   txData = txBuffer;
   *txData++ = FRAME_VC_HEARTBEAT;
   *txData++ = 0; //Reserve for length
-  *txData++ = ADDR_BROADCAST;
+  *txData++ = VC_BROADCAST;
   *txData++ = addr;
   memcpy(txData, id, UNIQUE_ID_BYTES);
   txData += UNIQUE_ID_BYTES;

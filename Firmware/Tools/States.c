@@ -31,10 +31,10 @@ void loop()
   case STATE_RESET:
     if (settings.trainingServer)
       //Reserve the server's address (0)
-      myAddr = idToAddressByte(ADDR_SERVER, myUniqueId);
+      myAddr = idToAddressByte(VC_SERVER, myUniqueId);
     else
       //Unknown client address
-      myAddr = ADDR_UNASSIGNED;
+      myAddr = VC_UNASSIGNED;
 
     //Start sending heartbeats
     xmitVcHeartbeat(myAddr, myUniqueId);
@@ -73,7 +73,7 @@ void loop()
 
       case FRAME_VC_HEARTBEAT:
         //Save our address
-        if ((myAddr == ADDR_UNASSIGNED) && (memcmp(myUniqueId, &rxData[3], UNIQUE_ID_BYTES) == 0))
+        if ((myAddr == VC_UNASSIGNED) && (memcmp(myUniqueId, &rxData[3], UNIQUE_ID_BYTES) == 0))
         {
           myAddr = srcAddr;
 printf("myAddr: %d\n", myAddr);
@@ -82,7 +82,7 @@ printf("myAddr: %d\n", myAddr);
         //Translate the unique ID into an address byte
         addressByte = idToAddressByte(srcAddr, &rxData[3]);
 
-        if (settings.trainingServer && (srcAddr == ADDR_UNASSIGNED) && (addressByte >= 0))
+        if (settings.trainingServer && (srcAddr == VC_UNASSIGNED) && (addressByte >= 0))
           //Assign the address to the client
           xmitVcHeartbeat(addressByte, &rxData[3]);
 
@@ -90,7 +90,7 @@ printf("myAddr: %d\n", myAddr);
         break;
 
       case FRAME_VC_DATA:
-        if ((destAddr != myAddr) && (destAddr != ADDR_BROADCAST))
+        if ((destAddr != myAddr) && (destAddr != VC_BROADCAST))
           returnToReceiving();
         else
         {
