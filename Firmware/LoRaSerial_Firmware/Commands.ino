@@ -430,6 +430,12 @@ void checkCommand()
 
   //Verify the command length
   commandString = trimCommand(); //Remove any leading whitespace
+
+  //Remove trailing CR and LF
+  while ((commandLength > 0) && ((commandString[commandLength - 1] == '\r')
+    || (commandString[commandLength -1] == '\n')))
+    commandLength -= 1;
+
   commandString[commandLength] = '\0'; //Terminate buffer
   if (commandLength < 2) //Too short
     reportERROR();
