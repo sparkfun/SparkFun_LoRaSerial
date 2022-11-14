@@ -201,7 +201,7 @@ void systemWrite(uint8_t * buffer, uint16_t length)
   //Output the entire buffer ignoring contents
   end = &buffer[length];
   while (buffer < end)
-    arch.serialWrite(*buffer);
+    serialOutputByte(*buffer++);
 }
 
 void systemFlush()
