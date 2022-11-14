@@ -49,10 +49,7 @@ int stdinToRadio()
       vcData[3] = myVcAddr;
 
       //Send the data
-printf("Sending the message:\n");
-dumpBuffer(vcData, vcData[1] + 1);
       bytesToSend = write(tty, vcData, vcData[1] + 1);
-printf("bytesToSend: %d\n", bytesToSend);
       if (bytesToSend < 0)
       {
         perror("ERROR: Write to radio failed!");
@@ -85,7 +82,7 @@ int radioToStdout()
   {
     //Read the virtual circuit header into the local buffer.
     vcData = outputBuffer;
-bytesRead = sizeof(outputBuffer);
+    bytesRead = sizeof(outputBuffer);
     bytesRead = read(tty, outputBuffer, bytesRead);
     if (bytesRead < 0)
     {
