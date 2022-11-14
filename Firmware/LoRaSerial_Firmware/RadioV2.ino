@@ -302,8 +302,7 @@ void xmitDatagramP2PAck()
   {
     systemPrint("ERROR - Please define ACK_BYTES = ");
     systemPrintln(ackLength);
-    while (1)
-      petWDT();
+    waitForever();
   }
 
   /*

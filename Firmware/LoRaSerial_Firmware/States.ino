@@ -39,8 +39,7 @@ void updateRadioState()
       {
         systemPrint("Unknown state: ");
         systemPrintln(radioState);
-        while (1)
-          petWDT();
+        waitForever();
       }
       break;
 
@@ -1818,7 +1817,7 @@ void verifyRadioStateTable()
     if (!order)
     {
       systemPrintln("ERROR - Failed to allocate the order table from the heap!");
-      while (1);
+      waitForever();
     }
 
     //Assume the table is in the correct order
@@ -1954,10 +1953,9 @@ void verifyRadioStateTable()
       systemPrintln(expectedState++);
     }
     systemPrintln("};");
-    systemFlush();
 
     //Wait forever
-    while (1);
+    waitForever();
   }
 }
 
@@ -1967,8 +1965,7 @@ void verifyV2DatagramType()
   if ((sizeof(v2DatagramType) / sizeof(v2DatagramType[0])) != MAX_V2_DATAGRAM_TYPE)
   {
     systemPrintln("ERROR - Please update the v2DatagramTable");
-    while (1)
-      petWDT();
+    waitForever();
   }
 }
 
