@@ -44,9 +44,7 @@ void esp32BeginBoard()
 
 void esp32BeginSerial(uint16_t serialSpeed)
 {
-#if !defined(ENABLE_DEVELOPER)
   if (settings.usbSerialWait)
-#endif  //ENABLE_DEVELOPER
     //Wait for serial to come online for debug printing
     delay(500);
 }
