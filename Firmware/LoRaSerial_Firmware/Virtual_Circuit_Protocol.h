@@ -29,7 +29,7 @@
 #define VC_LINK_BREAK_MULTIPLIER    3 //Number of missing HEARTBEAT timeouts
 
 //ASCII characters
-#define START_OF_HEADING      0x01      //From ASCII table
+#define START_OF_VC_SERIAL  0x02      //From ASCII table - Start of Text
 
 //------------------------------------------------------------------------------
 // Protocol Exchanges
