@@ -365,6 +365,7 @@ uint32_t lostFrames;        //Total number of lost TX frames
 uint32_t linkFailures;      //Total number of link failures
 uint32_t insufficientSpace; //Total number of times the buffer did not have enough space
 uint32_t badCrc;            //Total number of bad CRC frames
+uint32_t netIdMismatch;     //Total number of mismatched Net ID frames
 
 unsigned long lastLinkUpTime = 0; //Mark when link was first established
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
