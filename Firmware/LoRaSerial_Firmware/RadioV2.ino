@@ -790,6 +790,7 @@ PacketType rcvDatagram()
       petWDT();
       if (settings.debugReceive && settings.printPktData && rxDataBytes)
         dumpBuffer(incomingBuffer, rxDataBytes);
+      netIdMismatch++;
       return (DATAGRAM_NETID_MISMATCH);
     }
   }

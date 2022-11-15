@@ -1,4 +1,4 @@
-#define SAVE_TX_BUFFER()                                \
+#define SAVE_TX_BUFFER()                                  \
   {                                                       \
     memcpy(rexmtBuffer, outgoingPacket, MAX_PACKET_SIZE); \
     rexmtControl = txControl;                             \
@@ -6,7 +6,7 @@
     rexmtFrameSentCount = frameSentCount;                 \
   }
 
-#define RESTORE_TX_BUFFER()                             \
+#define RESTORE_TX_BUFFER()                               \
   {                                                       \
     memcpy(outgoingPacket, rexmtBuffer, MAX_PACKET_SIZE); \
     txControl = rexmtControl;                             \
@@ -571,6 +571,11 @@ void updateRadioState()
             returnToReceiving();
             break;
 
+          case DATAGRAM_NETID_MISMATCH:
+            triggerEvent(TRIGGER_NETID_MISMATCH);
+            returnToReceiving();
+            break;
+
           case DATAGRAM_PING:
             v2BreakLink();
             break;
@@ -766,6 +771,11 @@ void updateRadioState()
 
           case DATAGRAM_CRC_ERROR:
             triggerEvent(TRIGGER_CRC_ERROR);
+            returnToReceiving();
+            break;
+
+          case DATAGRAM_NETID_MISMATCH:
+            triggerEvent(TRIGGER_NETID_MISMATCH);
             returnToReceiving();
             break;
 
@@ -982,6 +992,11 @@ void updateRadioState()
             returnToReceiving();
             break;
 
+          case DATAGRAM_NETID_MISMATCH:
+            triggerEvent(TRIGGER_NETID_MISMATCH);
+            returnToReceiving();
+            break;
+
           case DATAGRAM_ACK_2:
           case DATAGRAM_DATA:
           case DATAGRAM_DATA_ACK:
@@ -1102,6 +1117,11 @@ void updateRadioState()
 
           case DATAGRAM_CRC_ERROR:
             triggerEvent(TRIGGER_CRC_ERROR);
+            returnToReceiving();
+            break;
+
+          case DATAGRAM_NETID_MISMATCH:
+            triggerEvent(TRIGGER_NETID_MISMATCH);
             returnToReceiving();
             break;
 
