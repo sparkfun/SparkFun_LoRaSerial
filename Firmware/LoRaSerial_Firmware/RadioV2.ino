@@ -1611,6 +1611,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   }
 
   datagramTimer = millis(); //Move timestamp even if error
+  retransmitTimeout = random(ackAirTime, frameAirTime + ackAirTime); //Wait this number of ms between retransmits. Increases with each re-transmit.
 
   //BLink the RX LED
   if (settings.alternateLedUsage)

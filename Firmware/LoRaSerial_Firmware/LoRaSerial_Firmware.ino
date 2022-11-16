@@ -458,6 +458,8 @@ uint8_t serialOperatingMode;
 unsigned int multipointChannelLoops = 0; //Count the number of times Multipoint scanning has traversed the table
 unsigned int multipointAttempts = 0; //Throttle back scanning when a server is not detected
 
+unsigned long retransmitTimeout = 0; //Throttle back re-transmits
+
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables

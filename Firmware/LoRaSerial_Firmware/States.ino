@@ -886,37 +886,43 @@ void updateRadioState()
         //Retransmit the packet
         if ((!settings.maxResends) || (frameSentCount < settings.maxResends))
         {
-          triggerEvent(TRIGGER_LINK_RETRANSMIT);
-          if (settings.debugDatagrams)
+          //Throttle back retransmits based on the number of retransmits we've attempted
+          //retransmitTimeout is a random number, set when the first datagram is sent
+          if (millis() - datagramTimer > (frameSentCount * retransmitTimeout))
           {
-            systemPrintTimestamp();
-            systemPrint("TX: Retransmit ");
-            systemPrint(frameSentCount);
-            systemPrint(", ");
-            systemPrint(v2DatagramType[txControl.datagramType]);
-            switch (txControl.datagramType)
+            triggerEvent(TRIGGER_LINK_RETRANSMIT);
+            if (settings.debugDatagrams)
             {
-              default:
-                systemPrintln();
-                break;
+              systemPrintTimestamp();
+              systemPrint("TX: Retransmit ");
+              systemPrint(frameSentCount);
+              systemPrint(", ");
+              systemPrint(v2DatagramType[txControl.datagramType]);
+              switch (txControl.datagramType)
+              {
+                default:
+                  systemPrintln();
+                  break;
 
-              case DATAGRAM_DATA:
-              case DATAGRAM_DATA_ACK:
-              case DATAGRAM_REMOTE_COMMAND:
-              case DATAGRAM_REMOTE_COMMAND_RESPONSE:
-              case DATAGRAM_HEARTBEAT:
-                systemPrint(" (ACK #");
-                systemPrint(txControl.ackNumber);
-                systemPrint(")");
-                systemPrintln();
-                break;
+                case DATAGRAM_DATA:
+                case DATAGRAM_DATA_ACK:
+                case DATAGRAM_REMOTE_COMMAND:
+                case DATAGRAM_REMOTE_COMMAND_RESPONSE:
+                case DATAGRAM_HEARTBEAT:
+                  systemPrint(" (ACK #");
+                  systemPrint(txControl.ackNumber);
+                  systemPrint(")");
+                  systemPrintln();
+                  break;
+              }
             }
-          }
-          if (receiveInProcess() == false)
-          {
-            retransmitDatagram(NULL);
-            lostFrames++;
-            changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+
+            if (retransmitDatagram(NULL) == true)
+            {
+              setHeartbeatLong(); //We're re-sending data, so don't be the first to send next heartbeat
+              lostFrames++;
+              changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+            }
           }
         }
         else
@@ -2122,7 +2128,6 @@ void v2EnterLinkUp()
   //Bring up the link
   triggerEvent(TRIGGER_HANDSHAKE_COMPLETE);
   hopChannel(); //Leave home
-  setHeartbeatLong(); //Start link with long heartbeat
 
   //Synchronize the ACK numbers
   rmtTxAckNumber = 0;
