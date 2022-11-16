@@ -1737,12 +1737,20 @@ void setHeartbeatShort()
 {
   heartbeatTimer = millis();
   heartbeatRandomTime = random(settings.heartbeatTimeout * 2 / 10, settings.heartbeatTimeout / 2); //20-50%
+
+  //Slow datarates can have significant ack transmission times
+  //Add the amount of time it takes to send an ack
+  heartbeatRandomTime += frameAirTime + ackAirTime + settings.overheadTime;
 }
 
 void setHeartbeatLong()
 {
   heartbeatTimer = millis();
   heartbeatRandomTime = random(settings.heartbeatTimeout * 8 / 10, settings.heartbeatTimeout); //80-100%
+
+  //Slow datarates can have significant ack transmission times
+  //Add the amount of time it takes to send an ack
+  heartbeatRandomTime += frameAirTime + ackAirTime + settings.overheadTime;
 }
 
 //Only the server sends heartbeats in multipoint mode
@@ -1751,4 +1759,8 @@ void setHeartbeatMultipoint()
 {
   heartbeatTimer = millis();
   heartbeatRandomTime = settings.heartbeatTimeout;
+
+  //Slow datarates can have significant ack transmission times
+  //Add the amount of time it takes to send an ack
+  heartbeatRandomTime += frameAirTime + ackAirTime + settings.overheadTime;
 }
