@@ -713,6 +713,12 @@ void updateRadioState()
           {
             setHeartbeatLong(); //We're sending data, so don't be the first to send next heartbeat
             transmitTimer = datagramTimer;
+
+            //Save the previous transmit in case the previous ACK was lost or a
+            //HEARTBEAT must be transmitted.  Restore the buffer when a retransmission
+            //is necessary.
+            petWDT();
+            SAVE_TX_BUFFER();
             changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
           }
         }
@@ -871,13 +877,6 @@ void updateRadioState()
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
-            //An ACK was expected for a previous transmission that must have been
-            //lost. Save the current transmit buffer for later retransmission
-            //and ACK the heartbeat. Later perform the retransmission for the
-            //datagram that was lost.
-            petWDT();
-            SAVE_TX_BUFFER();
-
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
             if (xmitDatagramP2PAck() == true) //Transmit ACK
             {
@@ -896,13 +895,6 @@ void updateRadioState()
 
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-
-            //An ACK was expected for a previous transmission that must have been
-            //lost. Save the current transmit buffer for later retransmission
-            //and ACK the data. Later perform the retransmission for the
-            //datagram that was lost.
-            petWDT();
-            SAVE_TX_BUFFER();
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DATA);
             if (xmitDatagramP2PAck() == true) //Transmit ACK
@@ -999,8 +991,7 @@ void updateRadioState()
         //Retransmit the packet
         if ((!settings.maxResends) || (rexmtFrameSentCount < settings.maxResends))
         {
-
-          RESTORE_TX_BUFFER(); //This should only be called once otherwise corruption occurs
+          RESTORE_TX_BUFFER();
           if (settings.debugDatagrams)
           {
             systemPrintTimestamp();
