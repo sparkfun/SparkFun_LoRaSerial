@@ -1644,10 +1644,10 @@ void stopChannelTimer()
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
 void syncChannelTimer()
 {
-  int16_t msToNextHopRemote;
+  int16_t msToNextHopRemote; //Can be negative
   memcpy(&msToNextHopRemote, &rxVcData[rxDataBytes - 2], sizeof(msToNextHopRemote));
   msToNextHopRemote -= ackAirTime;
-  msToNextHopRemote -= SYNC_PROCESSING_OVERHEAD; //Can be negative
+  msToNextHopRemote -= SYNC_PROCESSING_OVERHEAD;
 
   if (settings.airSpeed == 150)
   {
@@ -1668,8 +1668,10 @@ void syncChannelTimer()
 
   //msToNextHopLocal is small and msToNextHopRemote is negative
   //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRemote comes in negative then the remote has hopped
+  //msToNextHopLocal is small and msToNextHopRemote is negative (and small)
+  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRemote comes in negative (and small) then the remote has hopped
   //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRemote + dwellTime)
-  if (msToNextHopLocal < smallAmount && msToNextHopRemote <= 0)
+  if (msToNextHopLocal < smallAmount && (msToNextHopRemote <= 0 && msToNextHopRemote >= (smallAmount * -1)))
   {
     hopChannel();
     msToNextHop = msToNextHopRemote + settings.maxDwellTime;
@@ -1685,7 +1687,7 @@ void syncChannelTimer()
   }
 
   //msToNextHopLocal is small and msToNextHopRemote is large
-  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRemote comes in large then the remote has hopped
+  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRemote comes in large then the remote has hopped recently
   //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRemote)
   else if (msToNextHopLocal < smallAmount && msToNextHopRemote > largeAmount)
   {
@@ -1716,6 +1718,20 @@ void syncChannelTimer()
   else if (msToNextHopLocal < smallAmount && msToNextHopRemote < smallAmount)
   {
     msToNextHop = msToNextHopRemote;
+  }
+
+  //Insure against negative times
+  while (msToNextHop < 0) msToNextHop += settings.maxDwellTime;
+
+  if (settings.debugSync)
+  {
+    systemPrint("msToNextHopRemote: ");
+    systemPrint(msToNextHopRemote);
+    systemPrint(" msToNextHopLocal: ");
+    systemPrint(msToNextHopLocal);
+    systemPrint(" msToNextHop: ");
+    systemPrint(msToNextHop);
+    systemPrintln();
   }
 
   partialTimer = true;
