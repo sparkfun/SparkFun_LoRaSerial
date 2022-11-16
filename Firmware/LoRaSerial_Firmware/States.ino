@@ -450,6 +450,8 @@ void updateRadioState()
 
           startChannelTimer(getLinkOffset()); //We are exiting the link last so adjust our starting Timer
 
+          setHeartbeatLong(); //We sent ACK1 and they sent ACK2, so don't be the first to send heartbeat
+
           //Bring up the link
           v2EnterLinkUp();
         }
@@ -480,6 +482,8 @@ void updateRadioState()
         transactionComplete = false; //Reset ISR flag
 
         startChannelTimer(); //We are exiting the link first so do not adjust our starting Timer
+
+        setHeartbeatShort(); //We sent the last ack so be responsible for sending the next heartbeat
 
         //Bring up the link
         v2EnterLinkUp();
