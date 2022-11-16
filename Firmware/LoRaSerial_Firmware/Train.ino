@@ -94,11 +94,13 @@ void beginTrainingPointToPoint(bool defaultTraining)
   commonTrainingInitialization();
 
   //Transmit general ping packet to see if anyone else is sitting on the training channel
-  xmitDatagramP2PTrainingPing();
-  trainingTimer = millis();
+  if (xmitDatagramP2PTrainingPing() == true)
+  {
+    trainingTimer = millis();
 
-  //Set the next state
-  changeState(RADIO_P2P_TRAINING_WAIT_PING_DONE);
+    //Set the next state
+    changeState(RADIO_P2P_TRAINING_WAIT_PING_DONE);
+  }
 }
 
 void endPointToPointTraining(bool saveParams)
@@ -120,11 +122,13 @@ void beginTrainingClient()
   commonTrainingInitialization();
 
   //Transmit client ping to the training server
-  xmitDatagramMpTrainingPing();
-  trainingTimer = millis();
+  if (xmitDatagramMpTrainingPing() == true)
+  {
+    trainingTimer = millis();
 
-  //Set the next state
-  changeState(RADIO_MP_WAIT_TX_TRAINING_PING_DONE);
+    //Set the next state
+    changeState(RADIO_MP_WAIT_TX_TRAINING_PING_DONE);
+  }
 }
 
 void beginTrainingServer()

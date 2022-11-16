@@ -39,7 +39,7 @@ const uint16_t crc16Table[256] =
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Ping the other radio in the point-to-point configuration
-void xmitDatagramP2PTrainingPing()
+bool xmitDatagramP2PTrainingPing()
 {
   /*
             endOfTxData ---.
@@ -53,11 +53,11 @@ void xmitDatagramP2PTrainingPing()
   */
 
   txControl.datagramType = DATAGRAM_P2P_TRAINING_PING;
-  transmitDatagram();
+  return (transmitDatagram());
 }
 
 //Build the parameters packet used for training
-void xmitDatagramP2pTrainingParams()
+bool xmitDatagramP2pTrainingParams()
 {
   Settings params;
 
@@ -81,7 +81,7 @@ void xmitDatagramP2pTrainingParams()
   */
 
   txControl.datagramType = DATAGRAM_P2P_TRAINING_PARAMS;
-  transmitDatagram();
+  return (transmitDatagram());
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -141,7 +141,7 @@ void xmitDatagramP2pTrainingParams()
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //First packet in the three way handshake to bring up the link
-void xmitDatagramP2PPing()
+bool xmitDatagramP2PPing()
 {
   unsigned long currentMillis = millis();
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
@@ -159,11 +159,11 @@ void xmitDatagramP2PPing()
   */
 
   txControl.datagramType = DATAGRAM_PING;
-  transmitDatagram();
+  return (transmitDatagram());
 }
 
 //Second packet in the three way handshake to bring up the link
-void xmitDatagramP2PAck1()
+bool xmitDatagramP2PAck1()
 {
   unsigned long currentMillis = millis();
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
@@ -181,11 +181,11 @@ void xmitDatagramP2PAck1()
   */
 
   txControl.datagramType = DATAGRAM_ACK_1;
-  transmitDatagram();
+  return (transmitDatagram());
 }
 
 //Last packet in the three way handshake to bring up the link
-void xmitDatagramP2PAck2()
+bool xmitDatagramP2PAck2()
 {
   unsigned long currentMillis = millis();
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
@@ -203,7 +203,7 @@ void xmitDatagramP2PAck2()
   */
 
   txControl.datagramType = DATAGRAM_ACK_2;
-  transmitDatagram();
+  return (transmitDatagram());
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -211,7 +211,7 @@ void xmitDatagramP2PAck2()
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Send a command datagram to the remote system
-void xmitDatagramP2PCommand()
+bool xmitDatagramP2PCommand()
 {
   /*
                        endOfTxData ---.
@@ -225,11 +225,11 @@ void xmitDatagramP2PCommand()
   */
 
   txControl.datagramType = DATAGRAM_REMOTE_COMMAND;
-  transmitDatagram();
+  return (transmitDatagram());
 }
 
 //Send a command response datagram to the remote system
-void xmitDatagramP2PCommandResponse()
+bool xmitDatagramP2PCommandResponse()
 {
   /*
                        endOfTxData ---.
@@ -243,11 +243,11 @@ void xmitDatagramP2PCommandResponse()
   */
 
   txControl.datagramType = DATAGRAM_REMOTE_COMMAND_RESPONSE;
-  transmitDatagram();
+  return (transmitDatagram());
 }
 
 //Send a data datagram to the remote system
-void xmitDatagramP2PData()
+bool xmitDatagramP2PData()
 {
   /*
                        endOfTxData ---.
@@ -261,11 +261,11 @@ void xmitDatagramP2PData()
   */
 
   txControl.datagramType = DATAGRAM_DATA;
-  transmitDatagram();
+  return (transmitDatagram());
 }
 
 //Heartbeat packet to keep the link up
-void xmitDatagramP2PHeartbeat()
+bool xmitDatagramP2PHeartbeat()
 {
   unsigned long currentMillis = millis();
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
@@ -283,11 +283,11 @@ void xmitDatagramP2PHeartbeat()
   */
 
   txControl.datagramType = DATAGRAM_HEARTBEAT;
-  transmitDatagram();
+  return (transmitDatagram());
 }
 
 //Create short packet of 2 control bytes - do not expect ack
-void xmitDatagramP2PAck()
+bool xmitDatagramP2PAck()
 {
   int ackLength;
 
@@ -317,7 +317,7 @@ void xmitDatagramP2PAck()
   */
 
   txControl.datagramType = DATAGRAM_DATA_ACK;
-  transmitDatagram();
+  return(transmitDatagram());
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -325,7 +325,7 @@ void xmitDatagramP2PAck()
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Send a data datagram to the remote system, including sync data
-void xmitDatagramMpData()
+bool xmitDatagramMpData()
 {
   uint16_t msToNextHop = settings.maxDwellTime - (millis() - timerStart);
   memcpy(endOfTxData, &msToNextHop, sizeof(msToNextHop));
@@ -345,11 +345,11 @@ void xmitDatagramMpData()
 
 
   txControl.datagramType = DATAGRAM_DATA;
-  transmitDatagram();
+  return(transmitDatagram());
 }
 
 //Heartbeat packet to sync other units in multipoint mode
-void xmitDatagramMpHeartbeat()
+bool xmitDatagramMpHeartbeat()
 {
   uint16_t msToNextHop = settings.maxDwellTime - (millis() - timerStart);
   memcpy(endOfTxData, &msToNextHop, sizeof(msToNextHop));
@@ -367,13 +367,13 @@ void xmitDatagramMpHeartbeat()
   */
 
   txControl.datagramType = DATAGRAM_HEARTBEAT;
-  transmitDatagram();
+  return(transmitDatagram());
 }
 
 //Ack packet sent by server in response the client ping, includes sync data and channel number
 //During Multipoint scanning, it's possible for the client to get an ack but be 500kHz off
 //The channel Number ensures that the client gets the next hop correct
-void xmitDatagramMpAck()
+bool xmitDatagramMpAck()
 {
   memcpy(endOfTxData, &channelNumber, sizeof(channelNumber));
   endOfTxData += sizeof(channelNumber);
@@ -395,11 +395,11 @@ void xmitDatagramMpAck()
   */
 
   txControl.datagramType = DATAGRAM_ACK_1;
-  transmitDatagram();
+  return(transmitDatagram());
 }
 
 //Ping packet sent during scanning
-void xmitDatagramMpPing()
+bool xmitDatagramMpPing()
 {
   /*
           endOfTxData ---.
@@ -413,7 +413,7 @@ void xmitDatagramMpPing()
   */
 
   txControl.datagramType = DATAGRAM_PING;
-  transmitDatagram();
+  return(transmitDatagram());
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -421,7 +421,7 @@ void xmitDatagramMpPing()
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Build the client ping packet used for training
-void xmitDatagramMpTrainingPing()
+bool xmitDatagramMpTrainingPing()
 {
   //Add the source (server) ID
   memcpy(endOfTxData, myUniqueId, UNIQUE_ID_BYTES);
@@ -439,11 +439,11 @@ void xmitDatagramMpTrainingPing()
   */
 
   txControl.datagramType = DATAGRAM_TRAINING_PING;
-  transmitDatagram();
+  return(transmitDatagram());
 }
 
 //Build the client ACK packet used for training
-void xmitDatagramMpTrainingAck(uint8_t * serverID)
+bool xmitDatagramMpTrainingAck(uint8_t * serverID)
 {
   //Add the destination (server) ID
   memcpy(endOfTxData, serverID, UNIQUE_ID_BYTES);
@@ -465,7 +465,7 @@ void xmitDatagramMpTrainingAck(uint8_t * serverID)
   */
 
   txControl.datagramType = DATAGRAM_TRAINING_ACK;
-  transmitDatagram();
+  return(transmitDatagram());
 }
 
 void updateRadioParameters(uint8_t * rxData)
@@ -546,7 +546,7 @@ void updateRadioParameters(uint8_t * rxData)
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Build the server parameters packet used for training
-void xmitDatagramMpRadioParameters(const uint8_t * clientID)
+bool xmitDatagramMpRadioParameters(const uint8_t * clientID)
 {
   Settings params;
 
@@ -579,14 +579,14 @@ void xmitDatagramMpRadioParameters(const uint8_t * clientID)
   */
 
   txControl.datagramType = DATAGRAM_TRAINING_PARAMS;
-  transmitDatagram();
+  return(transmitDatagram());
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Virtual Circuit frames
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-void xmitVcHeartbeat(int8_t addr, uint8_t * id)
+bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
 {
   uint8_t * txData;
 
@@ -616,7 +616,6 @@ void xmitVcHeartbeat(int8_t addr, uint8_t * id)
 
   txControl.datagramType = DATAGRAM_VC_HEARTBEAT;
   txControl.ackNumber = 0;
-  transmitDatagram();
 
   //Determine the time that it took to pass this frame to the radio
   //This time is used to adjust the time offset
@@ -624,6 +623,8 @@ void xmitVcHeartbeat(int8_t addr, uint8_t * id)
 
   //Select a random for the next heartbeat
   setHeartbeatLong(); //Those who send a heartbeat or data have long time before next heartbeat. Those who send ACKs, have short wait to next heartbeat.
+
+  return(transmitDatagram());
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -1192,7 +1193,8 @@ PacketType rcvDatagram()
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Push the outgoing packet to the air
-void transmitDatagram()
+//Returns false if we could not start tranmission due to packet received or RX in process
+bool transmitDatagram()
 {
   uint8_t control;
   uint8_t * header;
@@ -1495,7 +1497,7 @@ void transmitDatagram()
 
   //Transmit this datagram
   frameSentCount = 0; //This is the first time this frame is being sent
-  retransmitDatagram(vc);
+  return (retransmitDatagram(vc));
 }
 
 //Print the control byte value
@@ -1528,7 +1530,8 @@ void printControl(uint8_t value)
 }
 
 //The previous transmission was not received, retransmit the datagram
-void retransmitDatagram(VIRTUAL_CIRCUIT * vc)
+//Returns false if we could not start tranmission due to packet received or RX in process
+bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
 {
   /*
       +----------+----------+------------+---  ...  ---+----------+
@@ -1564,7 +1567,15 @@ void retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   //Transmit this frame
   if (timeToHop == true) //If the channelTimer has expired, move to next frequency
     hopChannel();
+
+  if (receiveInProcess() == true || transactionComplete == true)
+  {
+    triggerEvent(TRIGGER_TRANSMIT_CANCELED);
+    return (false); //Do not start transmit while RX is or has occured
+  }
+
   int state = radio.startTransmit(outgoingPacket, txDatagramSize);
+
   if (state == RADIOLIB_ERR_NONE)
   {
     frameSentCount++;
@@ -1604,6 +1615,8 @@ void retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   //BLink the RX LED
   if (settings.alternateLedUsage)
     digitalWrite(ALT_LED_TX_DATA, LED_ON);
+
+  return(true); //Tranmission has started
 }
 
 void startChannelTimer()

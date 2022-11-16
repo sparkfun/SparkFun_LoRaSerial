@@ -326,8 +326,8 @@ void updateRadioState()
 
           //Acknowledge the PING
           triggerEvent(TRIGGER_SEND_ACK1);
-          xmitDatagramP2PAck1();
-          changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
+          if (xmitDatagramP2PAck1() == true)
+            changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
         }
       }
 
@@ -336,8 +336,8 @@ void updateRadioState()
       {
         //Transmit the PING
         triggerEvent(TRIGGER_HANDSHAKE_SEND_PING);
-        xmitDatagramP2PPing();
-        changeState(RADIO_P2P_WAIT_TX_PING_DONE);
+        if (xmitDatagramP2PPing() == true)
+          changeState(RADIO_P2P_WAIT_TX_PING_DONE);
       }
       break;
 
@@ -373,8 +373,8 @@ void updateRadioState()
 
           //Acknowledge the PING
           triggerEvent(TRIGGER_SEND_ACK1);
-          xmitDatagramP2PAck1();
-          changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
+          if (xmitDatagramP2PAck1() == true)
+            changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
         }
         else if (packetType != DATAGRAM_ACK_1)
           returnToReceiving();
@@ -392,8 +392,8 @@ void updateRadioState()
 
           //Acknowledge the ACK1
           triggerEvent(TRIGGER_SEND_ACK2);
-          xmitDatagramP2PAck2();
-          changeState(RADIO_P2P_WAIT_TX_ACK_2_DONE);
+          if (xmitDatagramP2PAck2() == true)
+            changeState(RADIO_P2P_WAIT_TX_ACK_2_DONE);
         }
       }
       else
@@ -595,9 +595,11 @@ void updateRadioState()
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DUP);
-            xmitDatagramP2PAck(); //Transmit ACK
-
-            changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
+            if (xmitDatagramP2PAck() == true) //Transmit ACK
+            {
+              setHeartbeatShort(); //We ack'd the packet (again) so be responsible for sending the next heartbeat
+              changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
+            }
             break;
 
           case DATAGRAM_HEARTBEAT:
@@ -615,11 +617,12 @@ void updateRadioState()
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
-            setHeartbeatShort(); //We ack'd this heartbeat so be responsible for sending the next heartbeat
-
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
-            xmitDatagramP2PAck(); //Transmit ACK
-            changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
+            if (xmitDatagramP2PAck() == true) //Transmit ACK
+            {
+              setHeartbeatShort(); //We ack'd this heartbeat so be responsible for sending the next heartbeat
+              changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
+            }
             break;
 
           case DATAGRAM_DATA:
@@ -631,11 +634,12 @@ void updateRadioState()
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
-            setHeartbeatShort(); //We ack'd this data, so be responsible for sending the next heartbeat
-
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DATA);
-            xmitDatagramP2PAck(); //Transmit ACK
-            changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
+            if (xmitDatagramP2PAck() == true) //Transmit ACK
+            {
+              setHeartbeatShort(); //We ack'd this data, so be responsible for sending the next heartbeat
+              changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
+            }
             break;
 
           case DATAGRAM_REMOTE_COMMAND:
@@ -656,9 +660,13 @@ void updateRadioState()
 
             updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND);
-            xmitDatagramP2PAck(); //Transmit ACK
-            changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
+            if (xmitDatagramP2PAck() == true) //Transmit ACK
+            {
+              setHeartbeatShort(); //We ack'd the packet so be responsible for sending the next heartbeat
+              changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
+            }
             break;
 
           case DATAGRAM_REMOTE_COMMAND_RESPONSE:
@@ -670,8 +678,11 @@ void updateRadioState()
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND_RESPONSE);
-            xmitDatagramP2PAck(); //Transmit ACK
-            changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
+            if (xmitDatagramP2PAck() == true) //Transmit ACK
+            {
+              setHeartbeatShort(); //We ack'd the packet so be responsible for sending the next heartbeat
+              changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
+            }
             break;
         }
       }
@@ -685,9 +696,13 @@ void updateRadioState()
         if (availableRadioTXBytes() && (processWaitingSerial(heartbeatTimeout) == true))
         {
           triggerEvent(TRIGGER_LINK_DATA_XMIT);
-          xmitDatagramP2PData();
-          transmitTimer = datagramTimer;
-          changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+
+          if (xmitDatagramP2PData() == true)
+          {
+            setHeartbeatLong(); //We're sending data, so don't be the first to send next heartbeat
+            transmitTimer = datagramTimer;
+            changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+          }
         }
         else if (availableTXCommandBytes()) //If we have command bytes to send out
         {
@@ -698,20 +713,31 @@ void updateRadioState()
 
           //We now have the commandTXBuffer loaded
           if (remoteCommandResponse)
-            xmitDatagramP2PCommandResponse();
+          {
+            if (xmitDatagramP2PCommandResponse() == true)
+            {
+              setHeartbeatLong(); //We're sending command, so don't be the first to send next heartbeat
+              changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+            }
+          }
           else
-            xmitDatagramP2PCommand();
+          {
+            if (xmitDatagramP2PCommand() == true)
+            {
+              setHeartbeatLong(); //We're sending command, so don't be the first to send next heartbeat
+              changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+            }
+          }
 
-          changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
         }
         else if (heartbeatTimeout)
         {
           triggerEvent(TRIGGER_HEARTBEAT);
-          if (receiveInProcess() == false && transactionComplete == false) //Avoid race condition
-          {
-            xmitDatagramP2PHeartbeat();
 
+          if (xmitDatagramP2PHeartbeat() == true)
+          {
             setHeartbeatLong(); //We're sending a heartbeat, so don't be the first to send next heartbeat
+
             transmitTimer = datagramTimer;
 
             //Wait for heartbeat to transmit
@@ -826,15 +852,18 @@ void updateRadioState()
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             //An ACK was expected for a previous transmission that must have been
-            //lost.  Save the current transmit buffer for later retransmission
-            //and ACK the heartbeat.  Later perform the retransmission for the
+            //lost. Save the current transmit buffer for later retransmission
+            //and ACK the heartbeat. Later perform the retransmission for the
             //datagram that was lost.
             petWDT();
             SAVE_TX_BUFFER();
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
-            xmitDatagramP2PAck(); //Transmit ACK
-            changeState(RADIO_P2P_LINK_UP_HB_ACK_REXMT);
+            if (xmitDatagramP2PAck() == true) //Transmit ACK
+            {
+              setHeartbeatShort(); //We ack'd the packet so be responsible for sending the next heartbeat
+              changeState(RADIO_P2P_LINK_UP_HB_ACK_REXMT);
+            }
 
             break;
         }
@@ -911,16 +940,16 @@ void updateRadioState()
         hopChannel();
 
       //An ACK was expected for a previous transmission that must have been
-      //lost.  A heartbeat was received instead which was ACKed.  Once the ACK
+      //lost. A heartbeat was received instead which was ACKed. Once the ACK
       //completes transmission, retransmit the previously lost datagram.
       if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
-
         //Retransmit the packet
         if ((!settings.maxResends) || (rexmtFrameSentCount < settings.maxResends))
         {
-          RESTORE_TX_BUFFER();
+
+          RESTORE_TX_BUFFER(); //This should only be called once otherwise corruption occurs
           if (settings.debugDatagrams)
           {
             systemPrintTimestamp();
@@ -946,9 +975,15 @@ void updateRadioState()
                 break;
             }
           }
-          retransmitDatagram(NULL);
-          lostFrames++;
-          changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+
+          triggerEvent(TRIGGER_LINK_HB_ACK_REXMIT);
+
+          if (retransmitDatagram(NULL) == true)
+          {
+            setHeartbeatLong(); //We're re-sending data, so don't be the first to send next heartbeat
+            lostFrames++;
+            changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+          }
         }
         else
           //Failed to reach the other system, break the link
@@ -1067,8 +1102,8 @@ void updateRadioState()
           }
 
           //Send ping
-          xmitDatagramMpPing();
-          changeState(RADIO_MP_WAIT_TX_PING_DONE);
+          if (xmitDatagramMpPing() == true)
+            changeState(RADIO_MP_WAIT_TX_PING_DONE);
         }
       }
 
@@ -1148,8 +1183,8 @@ void updateRadioState()
             if (settings.multipointServer == true)
             {
               //Ack their ping with sync data
-              xmitDatagramMpAck();
-              changeState(RADIO_MP_WAIT_TX_ACK_DONE);
+              if (xmitDatagramMpAck() == true)
+                changeState(RADIO_MP_WAIT_TX_ACK_DONE);
             }
             else
             {
@@ -1205,9 +1240,11 @@ void updateRadioState()
         if (availableRadioTXBytes() && (processWaitingSerial(heartbeatTimeout) == true))
         {
           triggerEvent(TRIGGER_MP_DATA_PACKET);
-          xmitDatagramMpData();
-          setHeartbeatMultipoint(); //We're sending something with clock data so reset heartbeat timer
-          changeState(RADIO_MP_WAIT_TX_DONE);
+          if (xmitDatagramMpData() == true)
+          {
+            setHeartbeatMultipoint(); //We're sending something with clock data so reset heartbeat timer
+            changeState(RADIO_MP_WAIT_TX_DONE);
+          }
         }
 
         //Only the server transmits heartbeats
@@ -1216,9 +1253,11 @@ void updateRadioState()
           if (heartbeatTimeout)
           {
             triggerEvent(TRIGGER_HEARTBEAT);
-            xmitDatagramMpHeartbeat();
-            setHeartbeatMultipoint(); //We're sending something with clock data so reset heartbeat timer
-            changeState(RADIO_MP_WAIT_TX_DONE); //Wait for heartbeat to transmit
+            if (xmitDatagramMpHeartbeat() == true)
+            {
+              setHeartbeatMultipoint(); //We're sending something with clock data so reset heartbeat timer
+              changeState(RADIO_MP_WAIT_TX_DONE); //Wait for heartbeat to transmit
+            }
           }
         }
 
@@ -1354,8 +1393,8 @@ void updateRadioState()
             updateRadioParameters(&rxData[UNIQUE_ID_BYTES * 2]);
 
             //Acknowledge the radio parameters
-            xmitDatagramMpTrainingAck(&rxData[UNIQUE_ID_BYTES]);
-            changeState(RADIO_MP_WAIT_TX_PARAM_ACK_DONE);
+            if (xmitDatagramMpTrainingAck(&rxData[UNIQUE_ID_BYTES]) == true)
+              changeState(RADIO_MP_WAIT_TX_PARAM_ACK_DONE);
             break;
         }
       }
@@ -1372,7 +1411,9 @@ void updateRadioState()
 
       //Check for a receive timeout
       else if ((millis() - datagramTimer) > (settings.clientPingRetryInterval * 1000))
+      {
         xmitDatagramMpTrainingPing();
+      }
       break;
 
     case RADIO_MP_WAIT_TX_PARAM_ACK_DONE:
@@ -1441,10 +1482,9 @@ void updateRadioState()
           case DATAGRAM_TRAINING_PING:
             //Save the client ID
             memcpy(trainingPartnerID, rxData, UNIQUE_ID_BYTES);
-            xmitDatagramMpRadioParameters(trainingPartnerID);
-
             //Wait for the transmit to complete
-            changeState(RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE);
+            if (xmitDatagramMpRadioParameters(trainingPartnerID) == true)
+              changeState(RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE);
             break;
 
           case DATAGRAM_TRAINING_ACK:
@@ -1575,8 +1615,8 @@ void updateRadioState()
             vcHeader->destVc = rxSrcVc;
             vcHeader->srcVc = myVc;
             endOfTxData += VC_RADIO_HEADER_BYTES;
-            xmitDatagramP2PAck();
-            changeState(RADIO_VC_WAIT_TX_DONE);
+            if (xmitDatagramP2PAck() == true)
+              changeState(RADIO_VC_WAIT_TX_DONE);
             break;
 
           case DATAGRAM_DATA_ACK:
@@ -1600,15 +1640,17 @@ void updateRadioState()
       {
         //Transmit the packet
         triggerEvent(TRIGGER_VC_TX_DATA);
-        xmitDatagramP2PData();
-        vcAckTimer = datagramTimer;
-        if (!vcAckTimer)
-          vcAckTimer = 1;
+        if (xmitDatagramP2PData() == true)
+        {
+          vcAckTimer = datagramTimer;
+          if (!vcAckTimer)
+            vcAckTimer = 1;
 
-        //Save the message for retransmission
-        SAVE_TX_BUFFER();
-        rexmtTxDestVc = txDestVc;
-        changeState(RADIO_VC_WAIT_TX_DONE_ACK);
+          //Save the message for retransmission
+          SAVE_TX_BUFFER();
+          rexmtTxDestVc = txDestVc;
+          changeState(RADIO_VC_WAIT_TX_DONE_ACK);
+        }
       }
 
       //Check for link timeout
@@ -1678,8 +1720,8 @@ void updateRadioState()
             vcHeader->destVc = rxSrcVc;
             vcHeader->srcVc = myVc;
             endOfTxData += VC_RADIO_HEADER_BYTES;
-            xmitDatagramP2PAck();
-            changeState(RADIO_VC_WAIT_TX_DONE_ACK);
+            if (xmitDatagramP2PAck() == true)
+              changeState(RADIO_VC_WAIT_TX_DONE_ACK);
             break;
 
           case DATAGRAM_DATA_ACK:
