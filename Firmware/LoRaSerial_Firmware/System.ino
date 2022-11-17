@@ -766,13 +766,13 @@ int16_t getReceiveCompletionOffset()
       return(12); //Tsym: 16
       break;
     case (400):
-      return(0); //Tsym: 8
+      return(6); //Tsym: 8
       break;
     case (1200):
-      return(0); //Tsym: 4
+      return(3); //Tsym: 4
       break;
     case (2400):
-      return(0); //Tsym: 2
+      return(1); //Tsym: 2
       break;
     case (4800):
       return(0); //Tsym: 1
