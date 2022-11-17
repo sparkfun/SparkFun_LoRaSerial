@@ -71,6 +71,7 @@ void updateRadioState()
 
       //Initialize the radio
       rssi = -200;
+      setRSSI(0b0000); //Turn off LEDs
       radioSeed = radio.randomByte(); //Puts radio into standy-by state
       randomSeed(radioSeed);
       if ((settings.debug == true) || (settings.debugRadio == true))
@@ -2182,6 +2183,8 @@ void v2EnterLinkUp()
   //Bring up the link
   triggerEvent(TRIGGER_HANDSHAKE_COMPLETE);
   hopChannel(); //Leave home
+
+  updateRSSI();
 
   //Synchronize the ACK numbers
   rmtTxAckNumber = 0;
