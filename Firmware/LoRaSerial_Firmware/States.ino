@@ -398,7 +398,7 @@ void updateRadioState()
       }
       else
       {
-        if ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime))
+        if ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
         {
           if (settings.debugDatagrams)
           {
@@ -448,7 +448,7 @@ void updateRadioState()
           clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
           timestampOffset = clockOffset;
 
-          startChannelTimer(getLinkOffset()); //We are exiting the link last so adjust our starting Timer
+          startChannelTimer(getLinkupOffset()); //We are exiting the link last so adjust our starting Timer
 
           setHeartbeatLong(); //We sent ACK1 and they sent ACK2, so don't be the first to send heartbeat
 
@@ -458,7 +458,7 @@ void updateRadioState()
       }
       else
       {
-        if ((millis() - datagramTimer) >= (frameAirTime +  ackAirTime + settings.overheadTime))
+        if ((millis() - datagramTimer) >= (frameAirTime +  ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
         {
           if (settings.debugDatagrams)
           {
@@ -570,6 +570,13 @@ void updateRadioState()
         {
           default:
             triggerEvent(TRIGGER_UNKNOWN_PACKET);
+            if (settings.debugDatagrams)
+            {
+              systemPrintTimestamp();
+              systemPrint("LinkUp: Unhandled packet type ");
+              systemPrint(v2DatagramType[packetType]);
+              systemPrintln();
+            }
             returnToReceiving();
             break;
 
@@ -799,6 +806,13 @@ void updateRadioState()
         {
           default:
             triggerEvent(TRIGGER_UNKNOWN_PACKET);
+            if (settings.debugDatagrams)
+            {
+              systemPrintTimestamp();
+              systemPrint("RX: Unhandled packet type ");
+              systemPrint(v2DatagramType[packetType]);
+              systemPrintln();
+            }
             returnToReceiving();
             break;
 
@@ -823,6 +837,7 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DATA_ACK:
+            //The datagram we are expecting
             syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
 
             //Stop the transmit timer
@@ -870,19 +885,38 @@ void updateRadioState()
             }
 
             break;
+
+          case DATAGRAM_DATA:
+            //Received data while waiting for ack.
+            printPacketQuality();
+
+            //Place the data in the serial output buffer
+            serialBufferOutput(rxData, rxDataBytes);
+
+            updateRSSI(); //Adjust LEDs to RSSI level
+            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+
+            //An ACK was expected for a previous transmission that must have been
+            //lost. Save the current transmit buffer for later retransmission
+            //and ACK the data. Later perform the retransmission for the
+            //datagram that was lost.
+            petWDT();
+            SAVE_TX_BUFFER();
+
+            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DATA);
+            if (xmitDatagramP2PAck() == true) //Transmit ACK
+            {
+              setHeartbeatShort(); //We ack'd this data, so be responsible for sending the next heartbeat
+              changeState(RADIO_P2P_LINK_UP_HB_ACK_REXMT);
+            }
+            break;
         }
       }
 
       //Check for ACK timeout, set at end of transmit, measures ACK timeout
       else if ((receiveInProcess() == false)
-               && ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime)))
+               && ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset())))
       {
-        if (settings.debugDatagrams)
-        {
-          systemPrintTimestamp();
-          systemPrintln("RX: ACK Timeout");
-        }
-
         //Retransmit the packet
         if ((!settings.maxResends) || (frameSentCount < settings.maxResends))
         {
@@ -890,6 +924,12 @@ void updateRadioState()
           //retransmitTimeout is a random number, set when the first datagram is sent
           if (millis() - datagramTimer > (frameSentCount * retransmitTimeout))
           {
+            if (settings.debugDatagrams)
+            {
+              systemPrintTimestamp();
+              systemPrintln("RX: ACK Timeout");
+            }
+
             triggerEvent(TRIGGER_LINK_RETRANSMIT);
             if (settings.debugDatagrams)
             {
@@ -1030,6 +1070,13 @@ void updateRadioState()
         {
           default:
             triggerEvent(TRIGGER_UNKNOWN_PACKET);
+            if (settings.debugDatagrams)
+            {
+              systemPrintTimestamp();
+              systemPrint("Scan: Unhandled packet type ");
+              systemPrint(v2DatagramType[packetType]);
+              systemPrintln();
+            }
             returnToReceiving();
             break;
 
@@ -1084,7 +1131,7 @@ void updateRadioState()
       else if (receiveInProcess() == false)
       {
         //Check for a receive timeout
-        if ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime))
+        if ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
         {
           if (settings.debugDatagrams)
           {
@@ -1158,6 +1205,13 @@ void updateRadioState()
         {
           default:
             triggerEvent(TRIGGER_UNKNOWN_PACKET);
+            if (settings.debugDatagrams)
+            {
+              systemPrintTimestamp();
+              systemPrint("MP Standby: Unhandled packet type ");
+              systemPrint(v2DatagramType[packetType]);
+              systemPrintln();
+            }
             returnToReceiving();
             break;
 
@@ -1752,7 +1806,7 @@ void updateRadioState()
       }
 
       //Check for retransmit needed
-      else if (vcAckTimer && ((currentMillis - vcAckTimer) >= (frameAirTime + ackAirTime + settings.overheadTime)))
+      else if (vcAckTimer && ((currentMillis - vcAckTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset())))
       {
         //Determine if another retransmit is allowed
         txDestVc = rexmtTxDestVc;

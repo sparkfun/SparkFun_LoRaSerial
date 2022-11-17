@@ -317,7 +317,7 @@ bool xmitDatagramP2PAck()
   */
 
   txControl.datagramType = DATAGRAM_DATA_ACK;
-  return(transmitDatagram());
+  return (transmitDatagram());
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -345,7 +345,7 @@ bool xmitDatagramMpData()
 
 
   txControl.datagramType = DATAGRAM_DATA;
-  return(transmitDatagram());
+  return (transmitDatagram());
 }
 
 //Heartbeat packet to sync other units in multipoint mode
@@ -367,7 +367,7 @@ bool xmitDatagramMpHeartbeat()
   */
 
   txControl.datagramType = DATAGRAM_HEARTBEAT;
-  return(transmitDatagram());
+  return (transmitDatagram());
 }
 
 //Ack packet sent by server in response the client ping, includes sync data and channel number
@@ -395,7 +395,7 @@ bool xmitDatagramMpAck()
   */
 
   txControl.datagramType = DATAGRAM_ACK_1;
-  return(transmitDatagram());
+  return (transmitDatagram());
 }
 
 //Ping packet sent during scanning
@@ -413,7 +413,7 @@ bool xmitDatagramMpPing()
   */
 
   txControl.datagramType = DATAGRAM_PING;
-  return(transmitDatagram());
+  return (transmitDatagram());
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -439,7 +439,7 @@ bool xmitDatagramMpTrainingPing()
   */
 
   txControl.datagramType = DATAGRAM_TRAINING_PING;
-  return(transmitDatagram());
+  return (transmitDatagram());
 }
 
 //Build the client ACK packet used for training
@@ -465,7 +465,7 @@ bool xmitDatagramMpTrainingAck(uint8_t * serverID)
   */
 
   txControl.datagramType = DATAGRAM_TRAINING_ACK;
-  return(transmitDatagram());
+  return (transmitDatagram());
 }
 
 void updateRadioParameters(uint8_t * rxData)
@@ -579,7 +579,7 @@ bool xmitDatagramMpRadioParameters(const uint8_t * clientID)
   */
 
   txControl.datagramType = DATAGRAM_TRAINING_PARAMS;
-  return(transmitDatagram());
+  return (transmitDatagram());
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -624,7 +624,7 @@ bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
   //Select a random for the next heartbeat
   setHeartbeatLong(); //Those who send a heartbeat or data have long time before next heartbeat. Those who send ACKs, have short wait to next heartbeat.
 
-  return(transmitDatagram());
+  return (transmitDatagram());
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -1617,7 +1617,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   if (settings.alternateLedUsage)
     digitalWrite(ALT_LED_TX_DATA, LED_ON);
 
-  return(true); //Tranmission has started
+  return (true); //Tranmission has started
 }
 
 void startChannelTimer()
@@ -1649,10 +1649,22 @@ void syncChannelTimer()
   msToNextHopRemote -= ackAirTime;
   msToNextHopRemote -= SYNC_PROCESSING_OVERHEAD;
 
-  if (settings.airSpeed == 150)
+  //Different airspeeds complete the transmitComplete ISR at different rates
+  //We adjust the clock setup as needed
+  switch (settings.airSpeed)
   {
-    msToNextHopRemote -= 145;
+    default:
+      break;
+    case (40):
+      msToNextHopRemote -= getReceiveCompletionOffset();
+      break;
+    case (150):
+      msToNextHopRemote -= 145;
+      break;
   }
+
+  //Calculate the remote's absolute distance to its next hop
+  //A remote hop may be very negative for
 
   int16_t msToNextHopLocal = settings.maxDwellTime - (millis() - timerStart);
 
@@ -1666,8 +1678,6 @@ void syncChannelTimer()
 
   //Below are the edge cases that occur when a hop occurs near ACK reception
 
-  //msToNextHopLocal is small and msToNextHopRemote is negative
-  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRemote comes in negative then the remote has hopped
   //msToNextHopLocal is small and msToNextHopRemote is negative (and small)
   //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRemote comes in negative (and small) then the remote has hopped
   //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRemote + dwellTime)
@@ -1718,10 +1728,21 @@ void syncChannelTimer()
   else if (msToNextHopLocal < smallAmount && msToNextHopRemote < smallAmount)
   {
     msToNextHop = msToNextHopRemote;
+
+    //If we have a negative remote hop time that is larger than a dwell time then the remote has hopped again
+    //This is seen at lower air speeds
+    //Hop now, and adjust our clock to the remote's next hop (msToNextHopRemote + dwellTime)
+    if (msToNextHop < (settings.maxDwellTime * -1)) //-402 < -400
+    {
+      hopChannel();
+      msToNextHop += settings.maxDwellTime;
+      resetHop = true; //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
+    }
   }
 
-  //Insure against negative times
-  while (msToNextHop < 0) msToNextHop += settings.maxDwellTime;
+  //Insure against negative timer values
+  while (msToNextHop < 0)
+    msToNextHop += settings.maxDwellTime;
 
   if (settings.debugSync)
   {
@@ -1757,7 +1778,7 @@ void setHeartbeatShort()
 
   //Slow datarates can have significant ack transmission times
   //Add the amount of time it takes to send an ack
-  heartbeatRandomTime += frameAirTime + ackAirTime + settings.overheadTime;
+  heartbeatRandomTime += frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset();
 }
 
 void setHeartbeatLong()
@@ -1767,7 +1788,7 @@ void setHeartbeatLong()
 
   //Slow datarates can have significant ack transmission times
   //Add the amount of time it takes to send an ack
-  heartbeatRandomTime += frameAirTime + ackAirTime + settings.overheadTime;
+  heartbeatRandomTime += frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset();
 }
 
 //Only the server sends heartbeats in multipoint mode
@@ -1779,5 +1800,5 @@ void setHeartbeatMultipoint()
 
   //Slow datarates can have significant ack transmission times
   //Add the amount of time it takes to send an ack
-  heartbeatRandomTime += frameAirTime + ackAirTime + settings.overheadTime;
+  heartbeatRandomTime += frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset();
 }

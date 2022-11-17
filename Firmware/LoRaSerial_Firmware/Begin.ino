@@ -23,6 +23,7 @@ void beginBoard()
     digitalWrite(pin_rxLED, LOW);
     delay(50);
   }
+
 }
 
 void beginLoRa()

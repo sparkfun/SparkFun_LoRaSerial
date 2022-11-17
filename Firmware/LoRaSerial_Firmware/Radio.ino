@@ -547,18 +547,9 @@ void hopISR(void)
 
 //As we complete linkup, different airspeeds exit at different rates
 //We adjust the initial clock setup as needed
-int16_t getLinkOffset()
+int16_t getLinkupOffset()
 {
-  int linkOffset = settings.maxDwellTime;
+  partialTimer = true; //Mark timer so that it runs only once with less than dwell time
 
-  if (settings.airSpeed == 150)
-  {
-    linkOffset -= 13;
-  }
-
-  partialTimer = true;
-  
-  Serial.print("linkOffset: ");
-  Serial.println(linkOffset);
-  return(linkOffset);
+  return (settings.maxDwellTime - getReceiveCompletionOffset()); //Reduce the default window by the offset
 }
