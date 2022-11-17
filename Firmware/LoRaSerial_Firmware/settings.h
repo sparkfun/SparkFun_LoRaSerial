@@ -261,6 +261,7 @@ enum
   TRIGGER_MP_SCAN,
   TRIGGER_MP_DATA_PACKET,
   TRIGGER_MP_PACKET_RECEIVED,
+  TRIGGER_TRANSMIT_CANCELED,
   TRIGGER_HANDSHAKE_ACK1_TIMEOUT,
   TRIGGER_HANDSHAKE_SEND_PING,
   TRIGGER_HANDSHAKE_SEND_PING_COMPLETE,
@@ -273,6 +274,7 @@ enum
   TRIGGER_HANDSHAKE_ACK2_TIMEOUT,
   TRIGGER_RECEIVE_IN_PROCESS_START,
   TRIGGER_RECEIVE_IN_PROCESS_END,
+  TRIGGER_LINK_HB_ACK_REXMIT,
   TRIGGER_UNKNOWN_PACKET,
   TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND,
   TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND_RESPONSE,
@@ -414,6 +416,7 @@ typedef struct struct_settings {
   uint8_t trainingTimeout = 1; //Timeout in minutes to complete the training
   bool multipointServer = false; //Only one radio can be the server in multipoint mode
   bool debugSerial = false; //Debug the serial input
+  bool debugSync = false; //Print clock sync processing
 
   //Add new parameters immediately before this line
   //-- Add commands to set the parameters

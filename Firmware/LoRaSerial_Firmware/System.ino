@@ -532,7 +532,7 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
 void updateRSSI()
 {
   //Calculate the average RSSI if possible
-  if(hopCount > 0)
+  if (hopCount > 0)
   {
     rssi /= hopCount;
     hopCount = 0;
@@ -748,4 +748,34 @@ void triggerFrequency(uint16_t frequency)
   digitalWrite(pin_trigger, LOW);
   delayMicroseconds(frequency);
   digitalWrite(pin_trigger, HIGH);
+}
+
+//The difference between when a transmitter is finished and when the receiver is finished 
+//is different between airSpeeds and affects things like ACK timeouts at lower airSpeeds
+//Offsets were found using a logic analyzer but it looks like (1 * Tsym) or calcSymbolTime()
+int16_t getReceiveCompletionOffset()
+{
+  switch (settings.airSpeed)
+  {
+    default:
+      break;
+    case (40):
+      return(26); //Tsym: 32. Measured: 26 ms between a TX complete and the RX complete
+      break;
+    case (150):
+      return(12); //Tsym: 16
+      break;
+    case (400):
+      return(6); //Tsym: 8
+      break;
+    case (1200):
+      return(3); //Tsym: 4
+      break;
+    case (2400):
+      return(1); //Tsym: 2
+      break;
+    case (4800):
+      return(0); //Tsym: 1
+      break;
+  }
 }
