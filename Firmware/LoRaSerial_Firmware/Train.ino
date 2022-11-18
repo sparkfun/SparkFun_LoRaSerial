@@ -206,6 +206,8 @@ void commonTrainingInitialization()
   startCylonLEDs();
 
   petWDT();
+  convertAirSpeedToSettings(); //Update the settings based upon the air speed
+
   generateHopTable(); //Generate frequency table based on current settings
 
   //Select the training frequency, a multiple of channels down from the maximum

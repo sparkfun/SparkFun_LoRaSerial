@@ -472,6 +472,17 @@ void dumpBuffer(uint8_t * data, int length)
   }
 }
 
+void dumpBufferRaw(uint8_t * data, int length)
+{
+  systemPrint("0x ");
+  for(int x = 0 ; x < length ; x++)
+  {
+    systemPrint(data[x], HEX);
+    systemPrint(" ");
+  }
+  systemPrintln();
+}
+
 void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, int length)
 {
   int bytes;

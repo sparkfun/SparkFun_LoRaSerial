@@ -5,9 +5,6 @@ void configureRadio()
   float frequency;
   bool success = true;
 
-  //Update the settings based upon the air speed
-  convertAirSpeedToSettings();
-
   frequency = channels[0];
   if (radio.setFrequency(frequency) == RADIOLIB_ERR_INVALID_FREQUENCY)
     success = false;
@@ -278,9 +275,6 @@ void generateHopTable()
   if (channels != NULL) free(channels);
   channels = (float *)malloc(settings.numberOfChannels * sizeof(float));
 
-  //Update the settings based upon the air speed
-  convertAirSpeedToSettings();
-
   float channelSpacing = (settings.frequencyMax - settings.frequencyMin) / (float)(settings.numberOfChannels + 2);
 
   //Keep away from edge of available spectrum
@@ -430,6 +424,7 @@ void hopChannel(bool moveForwardThroughTable)
     frequency = channels[channelNumber];
 
   radio.setFrequency(frequency);
+  //triggerFrequency(frequency);
 
   //Print the frequency if requested
   if (settings.printFrequency)

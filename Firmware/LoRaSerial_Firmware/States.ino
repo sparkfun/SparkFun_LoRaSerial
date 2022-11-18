@@ -59,15 +59,8 @@ void updateRadioState()
       //Empty the buffers
       discardPreviousData();
 
-      //Start the TX timer: time to delay before transmitting the PING
-      setHeartbeatShort(); //Both radios start with short heartbeat period
-      pingRandomTime = random(ackAirTime, ackAirTime * 2); //Fast ping
-
       //Set all of the ACK numbers to zero
       *(uint8_t *)(&txControl) = 0;
-
-      //Determine the components of the frame header and trailer
-      selectHeaderAndTrailerBytes();
 
       //Initialize the radio
       rssi = -200;
@@ -80,12 +73,21 @@ void updateRadioState()
         systemPrintln(radioSeed);
       }
 
-      generateHopTable(); //Generate frequency table based on user settings
+      convertAirSpeedToSettings(); //Update the settings based upon the air speed
+
+      generateHopTable(); //Generate frequency table based on user settings.
+
+      selectHeaderAndTrailerBytes(); //Determine the components of the frame header and trailer
 
       stopChannelTimer(); //Prevent radio from frequency hopping
 
+      configureRadio(); //Setup radio, set freq to channel 0, calculate air times
+
+      //Start the TX timer: time to delay before transmitting the PING
+      setHeartbeatShort(); //Both radios start with short heartbeat period
+      pingRandomTime = random(ackAirTime, ackAirTime * 2); //Fast ping
+
       petWDT();
-      configureRadio(); //Setup radio, set freq to channel 0
 
       returnToReceiving(); //Start receiving
 
@@ -1897,7 +1899,7 @@ void selectHeaderAndTrailerBytes()
   //Add the control byte to the header
   headerBytes += 1;
 
-  //Determine the maximum frame size
+  //Add the byte containing the frame size (only needed in SF6)
   if (settings.radioSpreadFactor == 6)
     headerBytes += 1;
 
