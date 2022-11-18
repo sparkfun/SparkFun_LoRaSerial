@@ -545,5 +545,43 @@ int16_t getLinkupOffset()
 {
   partialTimer = true; //Mark timer so that it runs only once with less than dwell time
 
-  return (settings.maxDwellTime - getReceiveCompletionOffset()); //Reduce the default window by the offset
+  int linkupOffset = 0;
+  
+  switch (settings.airSpeed)
+  {
+    default:
+      break;
+    case (40):
+      linkupOffset = 0;
+      break;
+    case (150):
+      linkupOffset = 0;
+      break;
+    case (400):
+      linkupOffset = 0;
+      break;
+    case (1200):
+      linkupOffset = 0;
+      break;
+    case (2400):
+      linkupOffset = 0;
+      break;
+    case (4800):
+      linkupOffset = 0;
+      break;
+    case (9600):
+      linkupOffset = 0;
+      break;
+    case (19200):
+      linkupOffset = 0;
+      break;
+    case (28800):
+      linkupOffset = 6;
+      break;
+    case (38400):
+      linkupOffset = 6;
+      break;
+  }
+
+  return (settings.maxDwellTime - getReceiveCompletionOffset() - linkupOffset); //Reduce the default window by the offset
 }

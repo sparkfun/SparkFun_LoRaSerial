@@ -1673,6 +1673,19 @@ void syncChannelTimer()
     case (2400):
       msToNextHopRemote -= getReceiveCompletionOffset();
       break;
+    case (4800):
+      break;
+    case (9600):
+      break;
+    case (19200):
+      break;
+    case (28800):
+      msToNextHopRemote -= 17;
+      break;
+    case (38400):
+      //msToNextHopRemote -= 0; //Unit sending HB is 16ms behind
+      msToNextHopRemote -= 16; //Unit sending HB is
+      break;
   }
 
   //Calculate the remote's absolute distance to its next hop
