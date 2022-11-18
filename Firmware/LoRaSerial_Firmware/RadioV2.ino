@@ -893,7 +893,9 @@ PacketType rcvDatagram()
   if (settings.radioSpreadFactor == 6)
   {
     if (rxDataBytes >= (*rxData + minDatagramSize))
+    {
       rxDataBytes = *rxData++;
+    }
     else
     {
       if (settings.debugReceive)
@@ -911,7 +913,8 @@ PacketType rcvDatagram()
       return (DATAGRAM_BAD);
     }
   }
-  rxDataBytes -= minDatagramSize;
+  else
+    rxDataBytes -= minDatagramSize;
 
   //Verify the packet number last so that the expected datagram or ACK number can be updated
   rxVcData = rxData;
@@ -1335,7 +1338,7 @@ bool transmitDatagram()
   if (settings.debugTransmit)
     printControl(control);
 
-  //Add the spread factor 6 length is required
+  //Add the spread factor 6 length if required
   if (settings.radioSpreadFactor == 6)
   {
     *header++ = length;
