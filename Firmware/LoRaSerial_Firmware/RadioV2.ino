@@ -656,6 +656,7 @@ PacketType rcvDatagram()
   {
     if (settings.debug == true)
       systemPrintln("Receive CRC error!");
+    badCrc++;
     return (DATAGRAM_CRC_ERROR);
   }
   else
