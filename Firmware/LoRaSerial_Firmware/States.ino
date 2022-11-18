@@ -172,7 +172,6 @@ void updateRadioState()
         {
           default:
             triggerEvent(TRIGGER_BAD_PACKET);
-            returnToReceiving();
             break;
 
           case DATAGRAM_P2P_TRAINING_PING:
@@ -307,9 +306,7 @@ void updateRadioState()
 
         //Decode the received packet
         PacketType packetType = rcvDatagram();
-        if (packetType != DATAGRAM_PING)
-          returnToReceiving();
-        else
+        if (packetType == DATAGRAM_PING)
         {
           //Received PING
           //Compute the common clock
@@ -373,9 +370,7 @@ void updateRadioState()
           if (xmitDatagramP2PAck1() == true)
             changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
         }
-        else if (packetType != DATAGRAM_ACK_1)
-          returnToReceiving();
-        else
+        else if (packetType == DATAGRAM_ACK_1)
         {
           //Received ACK 1
           //Compute the common clock
@@ -402,7 +397,6 @@ void updateRadioState()
             systemPrintTimestamp();
             systemPrintln("RX: ACK1 Timeout");
           }
-          returnToReceiving();
 
           //Start the TX timer: time to delay before transmitting the PING
           triggerEvent(TRIGGER_HANDSHAKE_ACK1_TIMEOUT);
@@ -431,9 +425,7 @@ void updateRadioState()
 
         //Decode the received packet
         PacketType packetType = rcvDatagram();
-        if (packetType != DATAGRAM_ACK_2)
-          returnToReceiving();
-        else
+        if (packetType == DATAGRAM_ACK_2)
         {
           //Received ACK 2
           //Compute the common clock
@@ -574,22 +566,18 @@ void updateRadioState()
               systemPrint(v2DatagramType[packetType]);
               systemPrintln();
             }
-            returnToReceiving();
             break;
 
           case DATAGRAM_BAD:
             triggerEvent(TRIGGER_BAD_PACKET);
-            returnToReceiving();
             break;
 
           case DATAGRAM_CRC_ERROR:
             triggerEvent(TRIGGER_CRC_ERROR);
-            returnToReceiving();
             break;
 
           case DATAGRAM_NETID_MISMATCH:
             triggerEvent(TRIGGER_NETID_MISMATCH);
-            returnToReceiving();
             break;
 
           case DATAGRAM_PING:
@@ -816,22 +804,18 @@ void updateRadioState()
               systemPrint(v2DatagramType[packetType]);
               systemPrintln();
             }
-            returnToReceiving();
             break;
 
           case DATAGRAM_BAD:
             triggerEvent(TRIGGER_BAD_PACKET);
-            returnToReceiving();
             break;
 
           case DATAGRAM_CRC_ERROR:
             triggerEvent(TRIGGER_CRC_ERROR);
-            returnToReceiving();
             break;
 
           case DATAGRAM_NETID_MISMATCH:
             triggerEvent(TRIGGER_NETID_MISMATCH);
-            returnToReceiving();
             break;
 
           case DATAGRAM_PING:
@@ -854,7 +838,6 @@ void updateRadioState()
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             triggerEvent(TRIGGER_LINK_ACK_RECEIVED);
-            returnToReceiving();
             changeState(RADIO_P2P_LINK_UP);
             break;
 
@@ -983,7 +966,6 @@ void updateRadioState()
       //completes transmission, retransmit the previously lost datagram.
       if (transactionComplete)
       {
-        transactionComplete = false; //Reset ISR flag
         //Retransmit the packet
         if ((!settings.maxResends) || (rexmtFrameSentCount < settings.maxResends))
         {
@@ -1018,6 +1000,8 @@ void updateRadioState()
 
           if (retransmitDatagram(NULL) == true)
           {
+            transactionComplete = false; //Reset ISR flag
+            
             setHeartbeatLong(); //We're re-sending data, so don't be the first to send next heartbeat
             lostFrames++;
             changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
@@ -1065,22 +1049,18 @@ void updateRadioState()
               systemPrint(v2DatagramType[packetType]);
               systemPrintln();
             }
-            returnToReceiving();
             break;
 
           case DATAGRAM_BAD:
             triggerEvent(TRIGGER_BAD_PACKET);
-            returnToReceiving();
             break;
 
           case DATAGRAM_CRC_ERROR:
             triggerEvent(TRIGGER_CRC_ERROR);
-            returnToReceiving();
             break;
 
           case DATAGRAM_NETID_MISMATCH:
             triggerEvent(TRIGGER_NETID_MISMATCH);
-            returnToReceiving();
             break;
 
           case DATAGRAM_ACK_2:
@@ -1092,7 +1072,6 @@ void updateRadioState()
             //We should not be receiving these datagrams, but if we do, just ignore
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
             triggerEvent(TRIGGER_BAD_PACKET);
-            returnToReceiving();
             break;
 
           case DATAGRAM_ACK_1:
@@ -1109,7 +1088,6 @@ void updateRadioState()
             lastPacketReceived = millis(); //Reset
 
             triggerEvent(TRIGGER_LINK_ACK_RECEIVED);
-            returnToReceiving();
             changeState(RADIO_MP_STANDBY);
             break;
         }
@@ -1200,22 +1178,18 @@ void updateRadioState()
               systemPrint(v2DatagramType[packetType]);
               systemPrintln();
             }
-            returnToReceiving();
             break;
 
           case DATAGRAM_BAD:
             triggerEvent(TRIGGER_BAD_PACKET);
-            returnToReceiving();
             break;
 
           case DATAGRAM_CRC_ERROR:
             triggerEvent(TRIGGER_CRC_ERROR);
-            returnToReceiving();
             break;
 
           case DATAGRAM_NETID_MISMATCH:
             triggerEvent(TRIGGER_NETID_MISMATCH);
-            returnToReceiving();
             break;
 
           case DATAGRAM_ACK_1:
@@ -1227,7 +1201,6 @@ void updateRadioState()
             //We should not be receiving these datagrams, but if we do, just ignore
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
             triggerEvent(TRIGGER_BAD_PACKET);
-            returnToReceiving();
             break;
 
           case DATAGRAM_PING:
@@ -1240,7 +1213,6 @@ void updateRadioState()
             }
             else
             {
-              returnToReceiving();
               changeState(RADIO_MP_STANDBY);
             }
             break;
@@ -1256,7 +1228,6 @@ void updateRadioState()
 
             lastPacketReceived = millis(); //Update timestamp for Link LED
 
-            returnToReceiving(); //No ack when in multipoint mode
             changeState(RADIO_MP_STANDBY);
             break;
 
@@ -1277,7 +1248,6 @@ void updateRadioState()
             triggerEvent(TRIGGER_MP_DATA_PACKET);
             lastPacketReceived = millis(); //Update timestamp for Link LED
 
-            returnToReceiving(); //No ack when in multipoint mode
             changeState(RADIO_MP_STANDBY);
             break;
         }
@@ -1425,7 +1395,6 @@ void updateRadioState()
         {
           default:
             triggerEvent(TRIGGER_BAD_PACKET);
-            returnToReceiving();
             break;
 
           case DATAGRAM_TRAINING_PARAMS:
@@ -1434,7 +1403,6 @@ void updateRadioState()
                 && (memcmp(rxData, myUniqueId, UNIQUE_ID_BYTES) != 0))
             {
               triggerEvent(TRIGGER_BAD_PACKET);
-              returnToReceiving();
               break;
             }
 
@@ -1528,7 +1496,6 @@ void updateRadioState()
         {
           default:
             triggerEvent(TRIGGER_BAD_PACKET);
-            returnToReceiving();
             break;
 
           case DATAGRAM_TRAINING_PING:
@@ -1551,7 +1518,6 @@ void updateRadioState()
               systemPrintUniqueID(trainingPartnerID);
               systemPrintln(" Trained");
             }
-            returnToReceiving();
             break;
         }
       }
@@ -1650,7 +1616,6 @@ void updateRadioState()
         {
           default:
             triggerEvent(TRIGGER_BAD_PACKET);
-            returnToReceiving();
             break;
 
           case DATAGRAM_VC_HEARTBEAT:
@@ -1673,7 +1638,6 @@ void updateRadioState()
 
           case DATAGRAM_DATA_ACK:
             vcAckTimer = 0;
-            returnToReceiving();
             break;
         }
       }
@@ -1755,7 +1719,6 @@ void updateRadioState()
         {
           default:
             triggerEvent(TRIGGER_BAD_PACKET);
-            returnToReceiving();
             break;
 
           case DATAGRAM_VC_HEARTBEAT:
@@ -1778,7 +1741,6 @@ void updateRadioState()
 
           case DATAGRAM_DATA_ACK:
             vcAckTimer = 0;
-            returnToReceiving();
             changeState(RADIO_VC_WAIT_RECEIVE);
             break;
         }

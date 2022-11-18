@@ -475,7 +475,7 @@ void dumpBuffer(uint8_t * data, int length)
 void dumpBufferRaw(uint8_t * data, int length)
 {
   systemPrint("0x ");
-  for(int x = 0 ; x < length ; x++)
+  for (int x = 0 ; x < length ; x++)
   {
     systemPrint(data[x], HEX);
     systemPrint(" ");
@@ -544,10 +544,7 @@ void updateRSSI()
 {
   //Calculate the average RSSI if possible
   if (hopCount > 0)
-  {
     rssi /= hopCount;
-    hopCount = 0;
-  }
   else
     rssi = radio.getRSSI();
 
@@ -563,6 +560,13 @@ void updateRSSI()
     setRSSI(0b0111);
   if (rssi > rssiLevelMax)
     setRSSI(0b1111);
+
+  if (hopCount > 0)
+  {
+    //Reset RSSI measurements
+    hopCount = 0;
+    rssi = 0;
+  }
 }
 
 void setRSSI(uint8_t ledBits)
@@ -761,7 +765,7 @@ void triggerFrequency(uint16_t frequency)
   digitalWrite(pin_trigger, HIGH);
 }
 
-//The difference between when a transmitter is finished and when the receiver is finished 
+//The difference between when a transmitter is finished and when the receiver is finished
 //is different between airSpeeds and affects things like ACK timeouts at lower airSpeeds
 //Offsets were found using a logic analyzer but it looks like (1 * Tsym) or calcSymbolTime()
 int16_t getReceiveCompletionOffset()
@@ -771,22 +775,22 @@ int16_t getReceiveCompletionOffset()
     default:
       break;
     case (40):
-      return(26); //Tsym: 32. Measured: 26 ms between a TX complete and the RX complete
+      return (26); //Tsym: 32. Measured: 26 ms between a TX complete and the RX complete
       break;
     case (150):
-      return(12); //Tsym: 16
+      return (12); //Tsym: 16
       break;
     case (400):
-      return(6); //Tsym: 8
+      return (6); //Tsym: 8
       break;
     case (1200):
-      return(3); //Tsym: 4
+      return (3); //Tsym: 4
       break;
     case (2400):
-      return(1); //Tsym: 2
+      return (1); //Tsym: 2
       break;
     case (4800):
-      return(0); //Tsym: 1
+      return (0); //Tsym: 1
       break;
   }
 }

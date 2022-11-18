@@ -200,6 +200,8 @@ void setRadioFrequency(bool rxAdjust)
 
 void returnToReceiving()
 {
+  if(receiveInProcess() == true) return; //Do not touch the radio if it is already receiving
+  
   int state;
   if (settings.radioSpreadFactor > 6)
   {
@@ -229,10 +231,6 @@ void returnToReceiving()
       systemPrintln(state);
     }
   }
-
-  //Reset RSSI measurements
-  rssi = 0;
-  hopCount = 0;
 }
 
 //Given spread factor, bandwidth, coding rate and number of bytes, return total Air Time in ms for packet

@@ -670,6 +670,9 @@ PacketType rcvDatagram()
   }
 
   rxDataBytes = radio.getPacketLength();
+
+  returnToReceiving(); //Immediately begin listening while we process new data
+
   rxData = incomingBuffer;
 
   /*
