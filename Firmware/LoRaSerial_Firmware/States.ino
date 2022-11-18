@@ -4,19 +4,14 @@
     rexmtControl = txControl;                             \
     rexmtLength = txDatagramSize;                         \
     rexmtFrameSentCount = frameSentCount;                 \
-    bufferRestored = false;                               \
   }
 
 #define RESTORE_TX_BUFFER()                               \
   {                                                       \
-    if(bufferRestored == false)                             \
-    {                                                       \
-      memcpy(outgoingPacket, rexmtBuffer, MAX_PACKET_SIZE); \
-      txControl = rexmtControl;                             \
-      txDatagramSize = rexmtLength;                         \
-      frameSentCount = rexmtFrameSentCount;                 \
-      bufferRestored = true;                                \
-    }                                                       \
+    memcpy(outgoingPacket, rexmtBuffer, MAX_PACKET_SIZE); \
+    txControl = rexmtControl;                             \
+    txDatagramSize = rexmtLength;                         \
+    frameSentCount = rexmtFrameSentCount;                 \
   }
 
 void updateRadioState()
@@ -35,7 +30,6 @@ void updateRadioState()
   static uint8_t rexmtLength;
   static uint8_t rexmtFrameSentCount;
   static uint8_t rexmtTxDestVc;
-  static bool bufferRestored = false;
   VIRTUAL_CIRCUIT * vc;
   VC_RADIO_MESSAGE_HEADER * vcHeader;
 
