@@ -209,12 +209,8 @@ void returnToReceiving()
   {
     if (settings.operatingMode == MODE_POINT_TO_POINT)
     {
-
       radio.implicitHeader(sf6ExpectedSize);
-  radio.setCRC(true);
-
       state = radio.startReceive(sf6ExpectedSize); //Set the size we expect to see
-  radio.setCRC(true);
 
       if (sf6ExpectedSize < MAX_PACKET_SIZE)
         triggerEvent(TRIGGER_RTR_SHORT_PACKET);
@@ -545,7 +541,7 @@ int16_t getLinkupOffset()
   partialTimer = true; //Mark timer so that it runs only once with less than dwell time
 
   int linkupOffset = 0;
-  
+
   switch (settings.airSpeed)
   {
     default:
@@ -575,10 +571,10 @@ int16_t getLinkupOffset()
       linkupOffset = 0;
       break;
     case (28800):
-      linkupOffset = 6;
+      linkupOffset = 0;
       break;
     case (38400):
-      linkupOffset = 6;
+      linkupOffset = 0;
       break;
   }
 

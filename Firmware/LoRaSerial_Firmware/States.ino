@@ -461,7 +461,16 @@ void updateRadioState()
           //Start the TX timer: time to delay before transmitting the PING
           triggerEvent(TRIGGER_HANDSHAKE_ACK1_TIMEOUT);
           setHeartbeatShort();
-          pingRandomTime = random(ackAirTime * 4, ackAirTime * 8); //Slow ping
+
+          //Slow down pings
+          if (ackAirTime < settings.maxDwellTime)
+            pingRandomTime = random(settings.maxDwellTime * 2, settings.maxDwellTime * 4);
+          else
+            pingRandomTime = random(ackAirTime * 4, ackAirTime * 8);
+
+          sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive PING packet
+          returnToReceiving();
+
           changeState(RADIO_P2P_LINK_DOWN);
         }
       }
@@ -541,7 +550,16 @@ void updateRadioState()
           //Start the TX timer: time to delay before transmitting the PING
           triggerEvent(TRIGGER_HANDSHAKE_ACK2_TIMEOUT);
           setHeartbeatShort();
-          pingRandomTime = random(ackAirTime * 4, ackAirTime * 8); //Slow ping
+
+          //Slow down pings
+          if (ackAirTime < settings.maxDwellTime)
+            pingRandomTime = random(settings.maxDwellTime * 2, settings.maxDwellTime * 4);
+          else
+            pingRandomTime = random(ackAirTime * 4, ackAirTime * 8);
+
+          sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive PING packet
+          returnToReceiving();
+
           changeState(RADIO_P2P_LINK_DOWN);
         }
       }
