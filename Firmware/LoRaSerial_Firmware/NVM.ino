@@ -7,7 +7,10 @@ void loadSettings()
   if (EEPROM.get(0, testRead) == 0xFFFFFFFF)
   {
     if (settings.debug)
+    {
       systemPrintln("EEPROM is blank.");
+      outputSerialData(true);
+    }
     recordSystemSettings(); //Record default settings to EEPROM. At power on, settings are in default state
   }
 
@@ -18,7 +21,10 @@ void loadSettings()
   if (tempSize != sizeof(settings))
   {
     if (settings.debug)
+    {
       systemPrintln("Settings wrong size.");
+      outputSerialData(true);
+    }
     recordSystemSettings(); //Record default settings to EEPROM. At power on, settings are in default state
   }
 
@@ -28,13 +34,19 @@ void loadSettings()
   if (tempIdentifier != LRS_IDENTIFIER)
   {
     if (settings.debug)
+    {
       systemPrint("Settings are not valid for this variant of LoRaSerial.");
+      outputSerialData(true);
+    }
     recordSystemSettings(); //Record default settings to EEPROM. At power on, settings are in default state
   }
 
   //Read current settings
   if (settings.debug)
+  {
     systemPrintln("Reading the settings from EEPROM");
+    outputSerialData(true);
+  }
   EEPROM.get(0, settings);
 
   recordSystemSettings();
@@ -44,7 +56,10 @@ void loadSettings()
 void recordSystemSettings()
 {
   if (settings.debug)
+  {
     systemPrintln("Writing settings to EEPROM");
+    outputSerialData(true);
+  }
   settings.sizeOfSettings = sizeof(settings);
   EEPROM.put(0, settings);
 
@@ -54,7 +69,10 @@ void recordSystemSettings()
 void eepromErase()
 {
   if (settings.debug)
+  {
     systemPrintln("Erasing the EEPROM");
+    outputSerialData(true);
+  }
   for (uint16_t i = 0 ; i < EEPROM.length() ; i++)
   {
     petWDT();

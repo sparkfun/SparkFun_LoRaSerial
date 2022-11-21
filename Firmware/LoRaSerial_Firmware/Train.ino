@@ -18,7 +18,10 @@ void selectTraining(bool defaultTraining)
 void generateTrainingSettings()
 {
   if ((settings.debug == true) || (settings.debugTraining == true))
+  {
     systemPrintln("Generate New Training Settings");
+    outputSerialData(true);
+  }
 
   //Seed random number based on RF noise. We use Arduino random() because platform specific generation does not matter
   randomSeed(radio.randomByte());
@@ -44,6 +47,7 @@ void generateTrainingSettings()
       systemPrint(settings.encryptionKey[i], HEX);
     }
     systemPrintln();
+    outputSerialData(true);
   }
 }
 
@@ -229,7 +233,10 @@ void endClientServerTraining(uint8_t event)
   settings = originalSettings; //Return to original radio settings
 
   if (settings.debugTraining)
+  {
     displayParameters(0, settings.copyDebug || settings.copyTriggers);
+    outputSerialData(true);
+  }
 
   if (!settings.trainingServer)
   {

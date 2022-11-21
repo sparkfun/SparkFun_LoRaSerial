@@ -15,6 +15,7 @@ void configureRadio()
     systemPrintTimestamp();
     systemPrint(frequency);
     systemPrintln(" MHz");
+    outputSerialData(true);
   }
 
   channelNumber = 0;
@@ -96,6 +97,7 @@ void configureRadio()
     systemPrintln(hoppingPeriod);
     systemPrint("ackAirTime: ");
     systemPrintln(ackAirTime);
+    outputSerialData(true);
   }
 
   if (success == false)
@@ -104,7 +106,10 @@ void configureRadio()
     systemPrintln("Radio init failed. Check settings.");
   }
   if ((settings.debug == true) || (settings.debugRadio == true))
+  {
     systemPrintln("Radio configured");
+    outputSerialData(true);
+  }
 }
 
 //Update the settings based upon the airSpeed value
@@ -173,6 +178,7 @@ void convertAirSpeedToSettings()
         {
           systemPrint("Unknown airSpeed: ");
           systemPrintln(settings.airSpeed);
+          outputSerialData(true);
         }
         break;
     }
@@ -195,6 +201,7 @@ void setRadioFrequency(bool rxAdjust)
     systemPrintTimestamp();
     systemPrint(frequency);
     systemPrintln(" MHz");
+    outputSerialData(true);
   }
 }
 
@@ -229,6 +236,7 @@ void returnToReceiving()
     {
       systemPrint("Receive failed: ");
       systemPrintln(state);
+      outputSerialData(true);
     }
   }
 }
@@ -355,6 +363,7 @@ void generateHopTable()
       systemPrint(AESiv[i], HEX);
     }
     systemPrintln();
+    outputSerialData(true);
   }
 }
 
@@ -430,6 +439,7 @@ void hopChannel(bool moveForwardThroughTable)
     systemPrintTimestamp();
     systemPrint(frequency, 3);
     systemPrintln(" MHz");
+    outputSerialData(true);
   }
 }
 
