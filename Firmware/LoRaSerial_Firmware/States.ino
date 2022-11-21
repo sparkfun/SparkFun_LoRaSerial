@@ -1019,7 +1019,7 @@ void updateRadioState()
           if (retransmitDatagram(NULL) == true)
           {
             transactionComplete = false; //Reset ISR flag
-            
+
             setHeartbeatLong(); //We're re-sending data, so don't be the first to send next heartbeat
             lostFrames++;
             changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
@@ -2176,7 +2176,6 @@ void v2EnterLinkUp()
   lastLinkUpTime = millis();
 
   //Start the receiver
-  returnToReceiving();
   changeState(RADIO_P2P_LINK_UP);
   if (settings.printLinkUpDown)
   {
@@ -2373,6 +2372,4 @@ void vcReceiveHeartbeat(RadioStates nextState, uint32_t rxMillis)
     xmitVcHeartbeat(vcSrc, rxVcData);
     changeState(nextState);
   }
-  else
-    returnToReceiving();
 }
