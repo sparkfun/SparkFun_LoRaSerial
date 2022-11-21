@@ -717,6 +717,7 @@ const COMMAND_ENTRY commands[] =
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugSerial",          &settings.debugSerial},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DisplayPacketQuality", &settings.displayPacketQuality},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DisplayRealMillis",    &settings.displayRealMillis},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintAckNumbers",      &settings.printAckNumbers},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintFrequency",       &settings.printFrequency},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintLinkUpDown",      &settings.printLinkUpDown},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintPktData",         &settings.printPktData},

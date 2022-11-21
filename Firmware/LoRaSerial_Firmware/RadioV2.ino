@@ -961,7 +961,18 @@ PacketType rcvDatagram()
         }
 
         //Set the next TX ACK number
+        if (settings.printAckNumbers)
+        {
+          systemPrint("txAckNumber: ");
+          systemPrint(txAckNumber);
+          systemPrint(" --> ");
+        }
         txAckNumber = (txAckNumber + 1) & 3;
+        if (settings.printAckNumbers)
+        {
+          systemPrintln(txAckNumber);
+          outputSerialData(true);
+        }
         break;
 
       case DATAGRAM_REMOTE_COMMAND:
@@ -994,8 +1005,26 @@ PacketType rcvDatagram()
         }
 
         //Receive this data packet and set the next expected datagram number
+        if (settings.printAckNumbers)
+        {
+          systemPrint("rxAckNumber: ");
+          systemPrint(rxAckNumber);
+          systemPrint(" --> ");
+        }
         rxAckNumber = rmtTxAckNumber;
+        if (settings.printAckNumbers)
+        {
+          systemPrintln(rxAckNumber);
+          systemPrint("rmtTxAckNumber: ");
+          systemPrint(rmtTxAckNumber);
+          systemPrint(" --> ");
+        }
         rmtTxAckNumber = (rmtTxAckNumber + 1) & 3;
+        if (settings.printAckNumbers)
+        {
+          systemPrintln(rmtTxAckNumber);
+          outputSerialData(true);
+        }
         break;
 
       case DATAGRAM_DATA:
@@ -1041,7 +1070,18 @@ PacketType rcvDatagram()
         }
 
         //Receive this data packet and set the next expected datagram number
+        if (settings.printAckNumbers)
+        {
+          systemPrint("rxAckNumber: ");
+          systemPrint(rxAckNumber);
+          systemPrint(" --> ");
+        }
         rxAckNumber = rmtTxAckNumber;
+        if (settings.printAckNumbers)
+        {
+          systemPrintln(rxAckNumber);
+          outputSerialData(true);
+        }
         rmtTxAckNumber = (rmtTxAckNumber + 1) & 3;
         break;
     }
