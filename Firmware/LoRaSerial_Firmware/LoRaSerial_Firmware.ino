@@ -126,7 +126,6 @@ uint8_t AESiv[AES_IV_BYTES] = {0}; //Set during hop table generation
 Button *trainBtn = NULL; //We can't instantiate the button here because we don't yet know what pin number to use
 
 const int trainButtonTime = 2000; //ms press and hold before entering training
-const int trainWithDefaultsButtonTime = 5000; //ms press and hold before entering training
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Hardware Timers

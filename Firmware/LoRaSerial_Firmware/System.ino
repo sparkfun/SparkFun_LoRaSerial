@@ -217,6 +217,8 @@ uint8_t systemRead()
 //Check the train button and change state accordingly
 void updateButton()
 {
+  static TrainStates trainState = TRAIN_NO_PRESS;
+
   if (trainBtn != NULL)
   {
     trainBtn->read();
@@ -230,19 +232,7 @@ void updateButton()
     {
       setRSSI(0b1111);
 
-      selectTraining(false);
-
-      trainState = TRAIN_NO_PRESS;
-    }
-    else if (trainState == TRAIN_PRESSED_2S && trainBtn->pressedFor(trainWithDefaultsButtonTime))
-    {
-      trainState = TRAIN_PRESSED_5S;
-    }
-    else if (trainState == TRAIN_PRESSED_5S && trainBtn->wasReleased())
-    {
-      setRSSI(0b1111);
-
-      selectTraining(true);
+      selectTraining();
 
       trainState = TRAIN_NO_PRESS;
     }
@@ -253,19 +243,6 @@ void updateButton()
       if (millis() - lastTrainBlink > 500) //Slow blink
       {
         Serial.println("Train Blinking LEDs");
-        lastTrainBlink = millis();
-
-        //Toggle RSSI LEDs
-        if (digitalRead(pin_rssi1LED) == HIGH)
-          setRSSI(0);
-        else
-          setRSSI(0b1111);
-      }
-    }
-    else if (trainState == TRAIN_PRESSED_5S)
-    {
-      if (millis() - lastTrainBlink > 100) //Fast blink
-      {
         lastTrainBlink = millis();
 
         //Toggle RSSI LEDs

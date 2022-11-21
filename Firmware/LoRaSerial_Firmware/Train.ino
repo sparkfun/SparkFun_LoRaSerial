@@ -1,15 +1,10 @@
 //Select the training protocol
-void selectTraining(bool defaultTraining)
+void selectTraining()
 {
-  if (settings.operatingMode == MODE_POINT_TO_POINT)
-    beginTrainingPointToPoint(defaultTraining);
+  if (settings.server)
+    beginTrainingServer();
   else
-  {
-    if (settings.server)
-      beginTrainingServer();
-    else
-      beginTrainingClient();
-  }
+    beginTrainingClient();
 }
 
 //Generate new netID/AES key to share
@@ -79,42 +74,6 @@ void updateCylonLEDs()
 }
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-//V2 Point-To-Point Training
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-void beginTrainingPointToPoint(bool defaultTraining)
-{
-  if (defaultTraining)
-  {
-    settings = defaultSettings; //Upon completion we will return to default settings
-    systemPrint("Default ");
-  }
-  systemPrintln("Point-to-point training");
-
-  //Generate new netID and encryption key
-  generateTrainingSettings();
-
-  //Common initialization
-  commonTrainingInitialization();
-
-  //Transmit general ping packet to see if anyone else is sitting on the training channel
-  if (xmitDatagramP2PTrainingPing() == true)
-  {
-    trainingTimer = millis();
-
-    //Set the next state
-    changeState(RADIO_P2P_TRAINING_WAIT_PING_DONE);
-  }
-}
-
-void endPointToPointTraining(bool saveParams)
-{
-  memcpy(&settings, &originalSettings, sizeof(settings));
-  if (saveParams)
-    recordSystemSettings();
-}
-
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 //V2 Multi-Point Client/Server Training
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -127,22 +86,24 @@ void beginTrainingClient()
 
   //Transmit client ping to the training server
   if (xmitDatagramMpTrainingPing() == true)
-  {
-    trainingTimer = millis();
-
     //Set the next state
     changeState(RADIO_MP_WAIT_TX_TRAINING_PING_DONE);
-  }
+  else
+    changeState(RADIO_MP_WAIT_RX_RADIO_PARAMETERS);
+  trainingTimer = millis();
 }
 
 void beginTrainingServer()
 {
   trainingServerRunning = true;
 
+  //Record the settings used for training
+  petWDT();
+  recordSystemSettings();
+
   //Display the values to be used for the client/server training
-  systemPrintln("Multipoint server training");
-  systemPrintln("Using:");
-  systemPrint("  netID: ");
+  systemPrintln("Server training parameters");
+  systemPrint("  Training netID: ");
   systemPrintln(settings.netID);
   systemPrint("  Training key: ");
   displayEncryptionKey(settings.trainingKey);
@@ -151,6 +112,14 @@ void beginTrainingServer()
   //Common initialization
   commonTrainingInitialization();
   settings.server = true;         //52: Operate as the training server
+
+  systemPrintln("Server radio protocol parameters");
+  systemPrint("  netID: ");
+  systemPrintln(originalSettings.netID);
+  systemPrint("  Encryption key: ");
+  displayEncryptionKey(originalSettings.encryptionKey);
+  systemPrintln();
+  outputSerialData(true);
 
   //Start the receive operation
   returnToReceiving();
@@ -189,10 +158,10 @@ void commonTrainingInitialization()
     settings.debugNvm = originalSettings.debugNvm;
     settings.debugRadio = originalSettings.debugRadio;
     settings.debugReceive = originalSettings.debugReceive;
+    settings.debugSerial = originalSettings.debugSerial;
     settings.debugStates = originalSettings.debugStates;
     settings.debugTraining = originalSettings.debugTraining;
     settings.debugTransmit = originalSettings.debugTransmit;
-    settings.debugSerial = originalSettings.debugSerial;
     settings.displayPacketQuality = originalSettings.displayPacketQuality;
     settings.displayRealMillis = originalSettings.displayRealMillis;
     settings.printAckNumbers = originalSettings.printAckNumbers;

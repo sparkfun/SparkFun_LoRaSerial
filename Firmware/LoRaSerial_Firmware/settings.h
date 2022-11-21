@@ -2,12 +2,6 @@ typedef enum
 {
   RADIO_RESET = 0,
 
-  //V2
-  //Point-to-Point Training
-  RADIO_P2P_TRAINING_WAIT_PING_DONE,
-  RADIO_P2P_WAIT_FOR_TRAINING_PARAMS,
-  RADIO_P2P_WAIT_TRAINING_PARAMS_DONE,
-
   //Point-To-Point: Bring up the link
   RADIO_P2P_LINK_DOWN,
   RADIO_P2P_WAIT_TX_PING_DONE,
@@ -64,12 +58,6 @@ typedef struct _RADIO_STATE_ENTRY
 const RADIO_STATE_ENTRY radioStateTable[] =
 {
   {RADIO_RESET,                          0, "RESET",                          NULL},                         // 0
-
-  //V2 - Point-to-Point Training
-  //    State                           RX      Name                              Description
-  {RADIO_P2P_TRAINING_WAIT_PING_DONE,    0, "P2P_TRAINING_WAIT_PING_DONE",    "V2 P2P: Wait TX Training Ping Done"}, // 1
-  {RADIO_P2P_WAIT_FOR_TRAINING_PARAMS,   1, "P2P_WAIT_FOR_TRAINING_PARAMS",   "V2 P2P: Wait for Training params"},   // 2
-  {RADIO_P2P_WAIT_TRAINING_PARAMS_DONE,  0, "P2P_WAIT_TRAINING_PARAMS_DONE",  "V2 P2P: Wait training params done"},  // 3
 
   //V2 - Point-to-Point link handshake
   //    State                           RX      Name                              Description
@@ -234,10 +222,8 @@ typedef struct _VIRTUAL_CIRCUIT
 typedef enum
 {
   TRAIN_NO_PRESS = 0,
-  TRAIN_PRESSED_2S,
-  TRAIN_PRESSED_5S,
+  TRAIN_PRESSED_2S
 } TrainStates;
-TrainStates trainState = TRAIN_NO_PRESS;
 
 enum
 { //#, Width - Computed with:
@@ -411,9 +397,9 @@ typedef struct struct_settings {
   bool displayRealMillis = false; //true = Display the millis value without offset, false = use offset
   bool server = false; //Default to being a client, enable server for multipoint, VC and training
   uint8_t clientPingRetryInterval = 3; //Number of seconds before retransmiting the client PING
-  bool copyDebug = true; //Copy the debug parameters to the training client
-  bool copySerial = true; //Copy the serial parameters to the training client
-  bool copyTriggers = true; //Copy the trigger parameters to the training client
+  bool copyDebug = false; //Copy the debug parameters to the training client
+  bool copySerial = false; //Copy the serial parameters to the training client
+  bool copyTriggers = false; //Copy the trigger parameters to the training client
   uint8_t trainingKey[AES_KEY_BYTES] = { 0x53, 0x70, 0x61, 0x72, 0x6b, 0x46, 0x75, 0x6E, 0x54, 0x72, 0x61, 0x69, 0x6e, 0x69, 0x6e, 0x67 };
   bool printLinkUpDown = false; //Print the link up and link down messages
   bool invertCts = false; //Invert the input of CTS

@@ -52,7 +52,6 @@ bool commandAT(const char * commandString)
         systemPrintln("  AT? - Print the command summary");
         systemPrintln("  ATB - Break the link");
         systemPrintln("  ATD - Display the debug settings");
-        systemPrintln("  ATF - Enter training mode and return to factory defaults");
         systemPrintln("  ATG - Generate new netID and encryption key");
         systemPrintln("  ATI - Display the radio version");
         systemPrintln("  ATI? - Display the information commands");
@@ -63,7 +62,6 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATS - Display the serial settings");
         systemPrintln("  ATT - Enter training mode");
         systemPrintln("  ATV - Display virtual circuit settings");
-        systemPrintln("  ATX - Stop the training server");
         systemPrintln("  ATZ - Reboot the radio");
         systemPrintln("  AT-Param=xxx - Set parameter's value to xxx by name (Param)");
         systemPrintln("  AT-Param? - Print parameter's current value by name (Param)");
@@ -112,10 +110,6 @@ bool commandAT(const char * commandString)
           outputSerialData(true);
         }
         break;
-      case ('F'): //Enter training mode and return to factory defaults
-        reportOK();
-        selectTraining(true);
-        break;
       case ('G'): //Generate a new netID and encryption key
         generateTrainingSettings();
         reportOK();
@@ -150,17 +144,7 @@ bool commandAT(const char * commandString)
         break;
       case ('T'): //Enter training mode
         reportOK();
-        selectTraining(false);
-        break;
-      case ('X'): //Stop the training server
-        if (trainingServerRunning && settings.server
-            && (settings.operatingMode == MODE_DATAGRAM))
-        {
-          endClientServerTraining(TRIGGER_TRAINING_SERVER_STOPPED);
-          reportOK();
-        }
-        else
-          reportERROR();
+        selectTraining();
         break;
       case ('Z'): //Reboots the radio
         reportOK();
