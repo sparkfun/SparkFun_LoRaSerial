@@ -56,7 +56,8 @@ const int FIRMWARE_VERSION_MINOR = 0;
 //    the minor firmware version
 #define LRS_IDENTIFIER (FIRMWARE_VERSION_MAJOR * 0x10 + FIRMWARE_VERSION_MINOR)
 
-#define ACK_BYTES       2   //Length of the ACK in bytes
+#define CLOCK_SYNC_BYTES sizeof(uint16_t) //Number of bytes used within in ACK packet for clock sync (uint16_t msToNextHop)
+#define CLOCK_MILLIS_BYTES sizeof(unsigned long) //Number of bytes used within in various packets for system timestamps sync (unsigned long currentMillis)
 #define MAX_PACKET_SIZE 255 //Limited by SX127x
 #define AES_IV_BYTES    12  //Number of bytes for AESiv
 #define AES_KEY_BYTES   16  //Number of bytes in the encryption key
@@ -339,7 +340,7 @@ unsigned long lastLinkBlink = 0; //Controls link LED in broadcast mode
 
 volatile bool transactionComplete = false; //Used in dio0ISR
 volatile bool timeToHop = false; //Used in dio1ISR
-bool expectingAck = false; //Used by various send packet functions
+uint8_t sf6ExpectedSize = MAX_PACKET_SIZE; //Used during SF6 operation to reduce packet size when needed
 
 float frequencyCorrection = 0; //Adjust receive freq based on the last packet received freqError
 

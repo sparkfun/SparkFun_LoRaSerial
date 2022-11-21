@@ -298,9 +298,9 @@ bool xmitDatagramP2PAck()
 
   //Verify the ACK length
   ackLength = endOfTxData - ackStart;
-  if (ackLength != ACK_BYTES)
+  if (ackLength != CLOCK_SYNC_BYTES)
   {
-    systemPrint("ERROR - Please define ACK_BYTES = ");
+    systemPrint("ERROR - Please define CLOCK_SYNC_BYTES = ");
     systemPrintln(ackLength);
     waitForever();
   }
@@ -657,6 +657,7 @@ PacketType rcvDatagram()
     if (settings.debug == true)
       systemPrintln("Receive CRC error!");
     badCrc++;
+    returnToReceiving(); //Return to listening
     return (DATAGRAM_CRC_ERROR);
   }
   else
@@ -666,6 +667,7 @@ PacketType rcvDatagram()
       systemPrint("Receive error: ");
       systemPrintln(state);
     }
+    returnToReceiving(); //Return to listening
     return (DATAGRAM_BAD);
   }
 
@@ -715,6 +717,12 @@ PacketType rcvDatagram()
     decryptBuffer(incomingBuffer, rxDataBytes);
     if (timeToHop == true) //If the channelTimer has expired, move to next frequency
       hopChannel();
+  }
+
+  if (settings.debugTransmit)
+  {
+    systemPrint("in: ");
+    dumpBufferRaw(incomingBuffer, 14); //Print only the first few bytes when debugging packets
   }
 
   //Display the received data bytes
@@ -905,7 +913,7 @@ PacketType rcvDatagram()
       if (settings.debugReceive)
       {
         systemPrintTimestamp();
-        systemPrint("Invalid SF6 length, received SF6 length");
+        systemPrint("Invalid SF6 length, received SF6 length ");
         systemPrint(*rxData);
         systemPrint(" > ");
         systemPrint((int)rxDataBytes - minDatagramSize);
@@ -1346,16 +1354,40 @@ bool transmitDatagram()
   if (settings.radioSpreadFactor == 6)
   {
     *header++ = length;
-    txDatagramSize = MAX_PACKET_SIZE - trailerBytes; //We're now going to transmit a full size datagram
+
+    //Send either a short ACK or full length packet
+    switch (txControl.datagramType)
+    {
+      default:
+        txDatagramSize = MAX_PACKET_SIZE - trailerBytes; //We're now going to transmit a full size datagram
+        break;
+
+      case DATAGRAM_PING:
+      case DATAGRAM_ACK_1:
+      case DATAGRAM_ACK_2:
+        txDatagramSize = headerBytes + CLOCK_MILLIS_BYTES; //Short packet is 3 + 4
+        break;
+
+      case DATAGRAM_DATA_ACK:
+        txDatagramSize = headerBytes + CLOCK_SYNC_BYTES; //Short ACK packet is 3 + 2
+        break;
+    }
+
+
+    radio.implicitHeader(txDatagramSize); //Set header size so that hardware CRC is calculated correctly
+
     endOfTxData = &outgoingPacket[txDatagramSize];
     if (settings.debugTransmit)
     {
       systemPrintTimestamp();
       systemPrint("    SF6 Length: ");
       systemPrintln(length);
+      systemPrint("    SF6 TX Header Size: ");
+      systemPrintln(txDatagramSize);
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
     }
+
   }
 
   //Verify the Virtual-Circuit length
@@ -1461,6 +1493,13 @@ bool transmitDatagram()
     petWDT();
     if (settings.printRfData)
       dumpBuffer(outgoingPacket, txDatagramSize);
+  }
+
+  //Print before encryption
+  if (settings.debugTransmit)
+  {
+    systemPrint("out: ");
+    dumpBufferRaw(outgoingPacket, 14);
   }
 
   //Encrypt the datagram
@@ -1684,11 +1723,10 @@ void syncChannelTimer()
     case (19200):
       break;
     case (28800):
-      msToNextHopRemote -= 17;
+      msToNextHopRemote -= 2;
       break;
     case (38400):
-      //msToNextHopRemote -= 0; //Unit sending HB is 16ms behind
-      msToNextHopRemote -= 16; //Unit sending HB is
+      msToNextHopRemote -= 3;
       break;
   }
 

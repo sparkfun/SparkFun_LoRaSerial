@@ -81,6 +81,8 @@ void updateRadioState()
       setHeartbeatShort(); //Both radios start with short heartbeat period
       pingRandomTime = random(ackAirTime, ackAirTime * 2); //Fast ping
 
+      sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive PING packet
+
       petWDT();
 
       returnToReceiving(); //Start receiving
@@ -306,22 +308,48 @@ void updateRadioState()
 
         //Decode the received packet
         PacketType packetType = rcvDatagram();
-        if (packetType == DATAGRAM_PING)
-        {
-          //Received PING
-          //Compute the common clock
-          currentMillis = millis();
-          memcpy(&clockOffset, rxData, sizeof(currentMillis));
-          roundTripMillis = rcvTimeMillis - xmitTimeMillis;
-          clockOffset += currentMillis + roundTripMillis;
-          clockOffset >>= 1;
-          clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
-          timestampOffset = clockOffset;
 
-          //Acknowledge the PING
-          triggerEvent(TRIGGER_SEND_ACK1);
-          if (xmitDatagramP2PAck1() == true)
-            changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
+        //Process the received datagram
+        switch (packetType)
+        {
+          default:
+            triggerEvent(TRIGGER_UNKNOWN_PACKET);
+            if (settings.debugDatagrams)
+            {
+              systemPrintTimestamp();
+              systemPrint("Scan: Unhandled packet type ");
+              systemPrint(v2DatagramType[packetType]);
+              systemPrintln();
+            }
+            break;
+
+          case DATAGRAM_BAD:
+            triggerEvent(TRIGGER_BAD_PACKET);
+            break;
+
+          case DATAGRAM_CRC_ERROR:
+            triggerEvent(TRIGGER_CRC_ERROR);
+            break;
+
+          case DATAGRAM_PING:
+            //Received PING
+            //Compute the common clock
+            currentMillis = millis();
+            memcpy(&clockOffset, rxData, sizeof(currentMillis));
+            roundTripMillis = rcvTimeMillis - xmitTimeMillis;
+            clockOffset += currentMillis + roundTripMillis;
+            clockOffset >>= 1;
+            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
+            timestampOffset = clockOffset;
+
+            //Acknowledge the PING
+            triggerEvent(TRIGGER_SEND_ACK1);
+            if (xmitDatagramP2PAck1() == true)
+            {
+              sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect ACK2 to contain millis info
+              changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
+            }
+            break;
         }
       }
 
@@ -331,7 +359,10 @@ void updateRadioState()
         //Transmit the PING
         triggerEvent(TRIGGER_HANDSHAKE_SEND_PING);
         if (xmitDatagramP2PPing() == true)
+        {
+          sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect ACK1 to contain millis info
           changeState(RADIO_P2P_WAIT_TX_PING_DONE);
+        }
       }
       break;
 
@@ -353,39 +384,68 @@ void updateRadioState()
 
         //Decode the received packet
         PacketType packetType = rcvDatagram();
-        if (packetType == DATAGRAM_PING)
-        {
-          //Received PING
-          //Compute the common clock
-          currentMillis = millis();
-          memcpy(&clockOffset, rxData, sizeof(currentMillis));
-          roundTripMillis = rcvTimeMillis - xmitTimeMillis;
-          clockOffset += currentMillis + roundTripMillis;
-          clockOffset >>= 1;
-          clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
-          timestampOffset = clockOffset;
 
-          //Acknowledge the PING
-          triggerEvent(TRIGGER_SEND_ACK1);
-          if (xmitDatagramP2PAck1() == true)
-            changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
-        }
-        else if (packetType == DATAGRAM_ACK_1)
+        //Process the received datagram
+        switch (packetType)
         {
-          //Received ACK 1
-          //Compute the common clock
-          currentMillis = millis();
-          memcpy(&clockOffset, rxData, sizeof(currentMillis));
-          roundTripMillis = rcvTimeMillis - xmitTimeMillis;
-          clockOffset += currentMillis + roundTripMillis;
-          clockOffset >>= 1;
-          clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
-          timestampOffset = clockOffset;
+          default:
+            triggerEvent(TRIGGER_UNKNOWN_PACKET);
+            if (settings.debugDatagrams)
+            {
+              systemPrintTimestamp();
+              systemPrint("Scan: Unhandled packet type ");
+              systemPrint(v2DatagramType[packetType]);
+              systemPrintln();
+            }
+            break;
 
-          //Acknowledge the ACK1
-          triggerEvent(TRIGGER_SEND_ACK2);
-          if (xmitDatagramP2PAck2() == true)
-            changeState(RADIO_P2P_WAIT_TX_ACK_2_DONE);
+          case DATAGRAM_BAD:
+            triggerEvent(TRIGGER_BAD_PACKET);
+            break;
+
+          case DATAGRAM_CRC_ERROR:
+            triggerEvent(TRIGGER_CRC_ERROR);
+            break;
+
+          case DATAGRAM_PING:
+            //Received PING
+            //Compute the common clock
+            currentMillis = millis();
+            memcpy(&clockOffset, rxData, sizeof(currentMillis));
+            roundTripMillis = rcvTimeMillis - xmitTimeMillis;
+            clockOffset += currentMillis + roundTripMillis;
+            clockOffset >>= 1;
+            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
+            timestampOffset = clockOffset;
+
+            //Acknowledge the PING
+            triggerEvent(TRIGGER_SEND_ACK1);
+            if (xmitDatagramP2PAck1() == true)
+            {
+              sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect ACK2 to contain millis info
+              changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
+            }
+            break;
+
+          case DATAGRAM_ACK_1:
+            //Received ACK 1
+            //Compute the common clock
+            currentMillis = millis();
+            memcpy(&clockOffset, rxData, sizeof(currentMillis));
+            roundTripMillis = rcvTimeMillis - xmitTimeMillis;
+            clockOffset += currentMillis + roundTripMillis;
+            clockOffset >>= 1;
+            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
+            timestampOffset = clockOffset;
+
+            //Acknowledge the ACK1
+            triggerEvent(TRIGGER_SEND_ACK2);
+            if (xmitDatagramP2PAck2() == true)
+            {
+              sf6ExpectedSize = MAX_PACKET_SIZE; //Tell SF6 to return to max packet length
+              changeState(RADIO_P2P_WAIT_TX_ACK_2_DONE);
+            }
+            break;
         }
       }
       else
@@ -425,24 +485,47 @@ void updateRadioState()
 
         //Decode the received packet
         PacketType packetType = rcvDatagram();
-        if (packetType == DATAGRAM_ACK_2)
+
+        //Process the received datagram
+        switch (packetType)
         {
-          //Received ACK 2
-          //Compute the common clock
-          currentMillis = millis();
-          memcpy(&clockOffset, rxData, sizeof(currentMillis));
-          roundTripMillis = rcvTimeMillis - xmitTimeMillis;
-          clockOffset += currentMillis + roundTripMillis;
-          clockOffset >>= 1;
-          clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
-          timestampOffset = clockOffset;
+          default:
+            triggerEvent(TRIGGER_UNKNOWN_PACKET);
+            if (settings.debugDatagrams)
+            {
+              systemPrintTimestamp();
+              systemPrint("Scan: Unhandled packet type ");
+              systemPrint(v2DatagramType[packetType]);
+              systemPrintln();
+            }
+            break;
 
-          startChannelTimer(getLinkupOffset()); //We are exiting the link last so adjust our starting Timer
+          case DATAGRAM_BAD:
+            triggerEvent(TRIGGER_BAD_PACKET);
+            break;
 
-          setHeartbeatLong(); //We sent ACK1 and they sent ACK2, so don't be the first to send heartbeat
+          case DATAGRAM_CRC_ERROR:
+            triggerEvent(TRIGGER_CRC_ERROR);
+            break;
 
-          //Bring up the link
-          v2EnterLinkUp();
+          case DATAGRAM_ACK_2:
+            //Received ACK 2
+            //Compute the common clock
+            currentMillis = millis();
+            memcpy(&clockOffset, rxData, sizeof(currentMillis));
+            roundTripMillis = rcvTimeMillis - xmitTimeMillis;
+            clockOffset += currentMillis + roundTripMillis;
+            clockOffset >>= 1;
+            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
+            timestampOffset = clockOffset;
+
+            startChannelTimer(getLinkupOffset()); //We are exiting the link last so adjust our starting Timer
+
+            setHeartbeatLong(); //We sent ACK1 and they sent ACK2, so don't be the first to send heartbeat
+
+            //Bring up the link
+            v2EnterLinkUp();
+            break;
         }
       }
       else
@@ -773,6 +856,8 @@ void updateRadioState()
 
       if (transactionComplete)
       {
+        sf6ExpectedSize = headerBytes + CLOCK_SYNC_BYTES + trailerBytes; //Tell SF6 to receive ACK packet
+
         triggerEvent(TRIGGER_LINK_WAIT_FOR_ACK);
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
@@ -966,6 +1051,8 @@ void updateRadioState()
       //completes transmission, retransmit the previously lost datagram.
       if (transactionComplete)
       {
+        transactionComplete = false; //Reset ISR flag
+
         //Retransmit the packet
         if ((!settings.maxResends) || (rexmtFrameSentCount < settings.maxResends))
         {
@@ -1000,8 +1087,6 @@ void updateRadioState()
 
           if (retransmitDatagram(NULL) == true)
           {
-            transactionComplete = false; //Reset ISR flag
-            
             setHeartbeatLong(); //We're re-sending data, so don't be the first to send next heartbeat
             lostFrames++;
             changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
@@ -1628,7 +1713,7 @@ void updateRadioState()
 
             //Acknowledge the data frame
             vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
-            vcHeader->length = VC_RADIO_HEADER_BYTES + ACK_BYTES;
+            vcHeader->length = VC_RADIO_HEADER_BYTES + CLOCK_SYNC_BYTES;
             vcHeader->destVc = rxSrcVc;
             vcHeader->srcVc = myVc;
             endOfTxData += VC_RADIO_HEADER_BYTES;
@@ -1731,7 +1816,7 @@ void updateRadioState()
 
             //Acknowledge the data frame
             vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
-            vcHeader->length = VC_RADIO_HEADER_BYTES + ACK_BYTES;
+            vcHeader->length = VC_RADIO_HEADER_BYTES + CLOCK_SYNC_BYTES;
             vcHeader->destVc = rxSrcVc;
             vcHeader->srcVc = myVc;
             endOfTxData += VC_RADIO_HEADER_BYTES;
