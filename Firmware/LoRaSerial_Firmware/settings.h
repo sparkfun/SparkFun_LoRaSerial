@@ -423,6 +423,7 @@ typedef struct struct_settings {
   bool multipointServer = false; //Only one radio can be the server in multipoint mode
   bool debugSerial = false; //Debug the serial input
   bool debugSync = false; //Print clock sync processing
+  bool debugNvm = false; //Debug NVM operation
 
   //Add new parameters immediately before this line
   //-- Add commands to set the parameters
