@@ -94,7 +94,7 @@ void updateRadioState()
         changeState(RADIO_P2P_LINK_DOWN);
       else if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
       {
-        if (settings.trainingServer)
+        if (settings.server)
           //Reserve the server's address (0)
           myVc = vcIdToAddressByte(VC_SERVER, myUniqueId);
         else
@@ -107,7 +107,7 @@ void updateRadioState()
       }
       else
       {
-        if (settings.multipointServer == true)
+        if (settings.server == true)
         {
           startChannelTimer(); //Start hopping
           changeState(RADIO_MP_STANDBY);
@@ -1226,7 +1226,7 @@ void updateRadioState()
 
           case DATAGRAM_PING:
             //A new radio is saying hello
-            if (settings.multipointServer == true)
+            if (settings.server == true)
             {
               //Ack their ping with sync data
               if (xmitDatagramMpAck() == true)
@@ -1291,7 +1291,7 @@ void updateRadioState()
         }
 
         //Only the server transmits heartbeats
-        else if (settings.multipointServer == true)
+        else if (settings.server == true)
         {
           if (heartbeatTimeout)
           {
@@ -1305,7 +1305,7 @@ void updateRadioState()
         }
 
         //If the client hasn't received a packet in too long, return to scanning
-        else if (settings.multipointServer == false)
+        else if (settings.server == false)
         {
           if ((millis() - lastPacketReceived) > (settings.heartbeatTimeout * 3))
           {
@@ -2291,7 +2291,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
   vc = &virtualCircuitList[index];
 
   //Only the server can assign the address bytes
-  if ((srcAddr == VC_UNASSIGNED) && (!settings.trainingServer))
+  if ((srcAddr == VC_UNASSIGNED) && (!settings.server))
     return -1;
 
   //Assign an address if necessary
@@ -2366,7 +2366,7 @@ void vcReceiveHeartbeat(RadioStates nextState, uint32_t rxMillis)
   //Translate the unique ID into an address byte
   vcSrc = vcIdToAddressByte(rxSrcVc, rxVcData);
 
-  if (settings.trainingServer && (rxSrcVc == VC_UNASSIGNED) && (vcSrc >= 0))
+  if (settings.server && (rxSrcVc == VC_UNASSIGNED) && (vcSrc >= 0))
   {
     //Assign the address to the client
     xmitVcHeartbeat(vcSrc, rxVcData);

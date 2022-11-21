@@ -153,7 +153,7 @@ bool commandAT(const char * commandString)
         selectTraining(false);
         break;
       case ('X'): //Stop the training server
-        if (trainingServerRunning && settings.trainingServer
+        if (trainingServerRunning && settings.server
             && (settings.operatingMode == MODE_DATAGRAM))
         {
           endClientServerTraining(TRIGGER_TRAINING_SERVER_STOPPED);
@@ -750,10 +750,10 @@ const COMMAND_ENTRY commands[] =
   {'R',   0,  10, 2000,   0, TYPE_U16,          valInt,         "FrameTimeout",         &settings.serialTimeoutBeforeSendingFrame_ms},
   {'R',   0, 250, 65535,  0, TYPE_U16,          valInt,         "HeartBeatTimeout",     &settings.heartbeatTimeout},
   {'R',   0,   0, 255,    0, TYPE_U8,           valInt,         "MaxResends",           &settings.maxResends},
-  {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "MultipointServer",     &settings.multipointServer},
   {'R',   0,   0, 255,    0, TYPE_U8,           valInt,         "NetID",                &settings.netID},
   {'R',   0,   0,   2,    0, TYPE_U8,           valInt,         "OperatingMode",        &settings.operatingMode},
   {'R',   0,   0, 1000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &settings.overheadTime},
+  {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "Server",               &settings.server},
   {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "VerifyRxNetID",        &settings.verifyRxNetID},
 
   /*Serial parameters
@@ -770,7 +770,6 @@ const COMMAND_ENTRY commands[] =
    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
   {'R',   0,   1, 255,    0, TYPE_U8,           valInt,      "ClientPingRetryInterval", &settings.clientPingRetryInterval},
   {'R',   0,   0,   0,    0, TYPE_KEY,          valKey,         "TrainingKey",          &settings.trainingKey},
-  {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "TrainingServer",       &settings.trainingServer},
   {'R',   0,   1, 255,    0, TYPE_U8,           valInt,         "TrainingTimeout",      &settings.trainingTimeout},
 
   /*Trigger parameters

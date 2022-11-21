@@ -498,10 +498,10 @@ void updateRadioParameters(uint8_t * rxData)
   originalSettings.serialTimeoutBeforeSendingFrame_ms = params.serialTimeoutBeforeSendingFrame_ms;
   originalSettings.heartbeatTimeout = params.heartbeatTimeout;
   originalSettings.maxResends = params.maxResends;
-  originalSettings.multipointServer = params.multipointServer;
   originalSettings.netID = params.netID;
   originalSettings.operatingMode = params.operatingMode;
   originalSettings.overheadTime = params.overheadTime;
+  originalSettings.server = params.server;
   originalSettings.verifyRxNetID = params.verifyRxNetID;
 
   //Update the debug parameters
@@ -545,7 +545,6 @@ void updateRadioParameters(uint8_t * rxData)
   //Update the training values
   originalSettings.clientPingRetryInterval = params.clientPingRetryInterval;
   //The trainingKey is already the same
-  originalSettings.trainingServer = false;
   originalSettings.trainingTimeout = params.trainingTimeout;
 
   //Update the trigger parameters
@@ -571,7 +570,7 @@ bool xmitDatagramMpRadioParameters(const uint8_t * clientID)
   //Initialize the radio parameters
   memcpy(&params, &originalSettings, sizeof(settings));
   params.operatingMode = MODE_DATAGRAM;
-  params.trainingServer = false;
+  params.server = false;
 
   //Add the destination (client) ID
   memcpy(endOfTxData, clientID, UNIQUE_ID_BYTES);
