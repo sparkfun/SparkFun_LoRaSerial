@@ -182,28 +182,32 @@ void commonTrainingInitialization()
   //Debug training if requested
   if (originalSettings.debugTraining)
   {
+    settings.alternateLedUsage = originalSettings.alternateLedUsage;
+    //Ignore copyDebug
     settings.debug = originalSettings.debug;
-    settings.displayPacketQuality = originalSettings.displayPacketQuality;
-    settings.printFrequency = originalSettings.printFrequency;
-
+    settings.debugDatagrams = originalSettings.debugDatagrams;
+    settings.debugNvm = originalSettings.debugNvm;
     settings.debugRadio = originalSettings.debugRadio;
+    settings.debugReceive = originalSettings.debugReceive;
     settings.debugStates = originalSettings.debugStates;
     settings.debugTraining = originalSettings.debugTraining;
-
-    settings.printRfData = originalSettings.printRfData;
-    settings.printPktData = originalSettings.printPktData;
-    settings.triggerWidth = originalSettings.triggerWidth;
-    settings.triggerWidthIsMultiplier = originalSettings.triggerWidthIsMultiplier;
-
-    settings.triggerEnable = originalSettings.triggerEnable;
-    settings.triggerEnable2 = originalSettings.triggerEnable2;
-    settings.debugReceive = originalSettings.debugReceive;
     settings.debugTransmit = originalSettings.debugTransmit;
+    settings.debugSerial = originalSettings.debugSerial;
+    settings.displayPacketQuality = originalSettings.displayPacketQuality;
+    settings.displayRealMillis = originalSettings.displayRealMillis;
+    settings.printAckNumbers = originalSettings.printAckNumbers;
+    settings.printFrequency = originalSettings.printFrequency;
+    settings.printLinkUpDown = originalSettings.printLinkUpDown;
+    settings.printPktData = originalSettings.printPktData;
+    settings.printRfData = originalSettings.printRfData;
+    settings.printTimestamp = originalSettings.printTimestamp;
     settings.printTxErrors = originalSettings.printTxErrors;
 
-    settings.printTimestamp = originalSettings.printTimestamp;
-    settings.debugDatagrams = originalSettings.debugDatagrams;
-    settings.displayRealMillis = originalSettings.displayRealMillis;
+    //Ignore copyTriggers
+    settings.triggerEnable = originalSettings.triggerEnable;
+    settings.triggerEnable2 = originalSettings.triggerEnable2;
+    settings.triggerWidth = originalSettings.triggerWidth;
+    settings.triggerWidthIsMultiplier = originalSettings.triggerWidthIsMultiplier;
   }
 
   //Reset cylon variables

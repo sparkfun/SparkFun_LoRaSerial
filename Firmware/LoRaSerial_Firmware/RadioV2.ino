@@ -477,67 +477,85 @@ void updateRadioParameters(uint8_t * rxData)
 
   //Update the radio parameters
   originalSettings.airSpeed = params.airSpeed;
-  originalSettings.netID = params.netID;
-  originalSettings.operatingMode = params.operatingMode;
+  originalSettings.autoTuneFrequency = params.autoTuneFrequency;
+  originalSettings.radioBandwidth = params.radioBandwidth;
+  originalSettings.radioCodingRate = params.radioCodingRate;
+  originalSettings.frequencyHop = params.frequencyHop;
+  originalSettings.frequencyMax = params.frequencyMax;
+  originalSettings.frequencyMin = params.frequencyMin;
+  originalSettings.maxDwellTime = params.maxDwellTime;
+  originalSettings.numberOfChannels = params.numberOfChannels;
+  originalSettings.radioPreambleLength = params.radioPreambleLength;
+  originalSettings.radioSpreadFactor = params.radioSpreadFactor;
+  originalSettings.radioSyncWord = params.radioSyncWord;
+  originalSettings.radioBroadcastPower_dbm = params.radioBroadcastPower_dbm;
+
+  //Update the radio protocol parameters
+  originalSettings.dataScrambling = params.dataScrambling;
+  originalSettings.enableCRC16 = params.enableCRC16;
   originalSettings.encryptData = params.encryptData;
   memcpy(originalSettings.encryptionKey, params.encryptionKey, sizeof(originalSettings.encryptionKey));
-  originalSettings.dataScrambling = params.dataScrambling;
-  originalSettings.radioBroadcastPower_dbm = params.radioBroadcastPower_dbm;
-  originalSettings.frequencyMin = params.frequencyMin;
-  originalSettings.frequencyMax = params.frequencyMax;
-  originalSettings.numberOfChannels = params.numberOfChannels;
-  originalSettings.frequencyHop = params.frequencyHop;
-  originalSettings.maxDwellTime = params.maxDwellTime;
-  originalSettings.radioBandwidth = params.radioBandwidth;
-  originalSettings.radioSpreadFactor = params.radioSpreadFactor;
-  originalSettings.radioCodingRate = params.radioCodingRate;
-  originalSettings.radioSyncWord = params.radioSyncWord;
-  originalSettings.radioPreambleLength = params.radioPreambleLength;
   originalSettings.serialTimeoutBeforeSendingFrame_ms = params.serialTimeoutBeforeSendingFrame_ms;
   originalSettings.heartbeatTimeout = params.heartbeatTimeout;
-  originalSettings.autoTuneFrequency = params.autoTuneFrequency;
   originalSettings.maxResends = params.maxResends;
-  originalSettings.verifyRxNetID = params.verifyRxNetID;
+  originalSettings.multipointServer = params.multipointServer;
+  originalSettings.netID = params.netID;
+  originalSettings.operatingMode = params.operatingMode;
   originalSettings.overheadTime = params.overheadTime;
-  originalSettings.enableCRC16 = params.enableCRC16;
-  originalSettings.clientPingRetryInterval = params.clientPingRetryInterval;
+  originalSettings.verifyRxNetID = params.verifyRxNetID;
 
   //Update the debug parameters
   if (params.copyDebug)
   {
     originalSettings.debug = params.debug;
-    originalSettings.displayPacketQuality = params.displayPacketQuality;
-    originalSettings.printFrequency = params.printFrequency;
+    originalSettings.alternateLedUsage = params.alternateLedUsage;
+    originalSettings.copyDebug = params.copyDebug;
+    originalSettings.debug = params.debug;
+    originalSettings.debugDatagrams = params.debugDatagrams;
+    originalSettings.debugNvm = params.debugNvm;
     originalSettings.debugRadio = params.debugRadio;
+    originalSettings.debugReceive = params.debugReceive;
     originalSettings.debugStates = params.debugStates;
     originalSettings.debugTraining = params.debugTraining;
-    originalSettings.printRfData = params.printRfData;
-    originalSettings.printPktData = params.printPktData;
-    originalSettings.debugReceive = params.debugReceive;
     originalSettings.debugTransmit = params.debugTransmit;
-    originalSettings.printTxErrors = params.printTxErrors;
-    originalSettings.printTimestamp = params.printTimestamp;
-    originalSettings.debugDatagrams = params.debugDatagrams;
+    originalSettings.debugSerial = params.debugSerial;
+    originalSettings.displayPacketQuality = params.displayPacketQuality;
     originalSettings.displayRealMillis = params.displayRealMillis;
+    originalSettings.printAckNumbers = params.printAckNumbers;
+    originalSettings.printFrequency = params.printFrequency;
+    originalSettings.printLinkUpDown = params.printLinkUpDown;
+    originalSettings.printPktData = params.printPktData;
+    originalSettings.printRfData = params.printRfData;
+    originalSettings.printTimestamp = params.printTimestamp;
+    originalSettings.printTxErrors = params.printTxErrors;
   }
 
   //Update the serial parameters
   if (params.copySerial)
   {
-    originalSettings.serialSpeed = params.serialSpeed;
+    originalSettings.copySerial = params.copySerial;
     originalSettings.echo = params.echo;
     originalSettings.flowControl = params.flowControl;
+    originalSettings.invertCts = params.invertCts;
+    originalSettings.invertRts = params.invertRts;
+    originalSettings.serialSpeed = params.serialSpeed;
     originalSettings.usbSerialWait = params.usbSerialWait;
-    originalSettings.printLinkUpDown = params.printLinkUpDown;
   }
+
+  //Update the training values
+  originalSettings.clientPingRetryInterval = params.clientPingRetryInterval;
+  //The trainingKey is already the same
+  originalSettings.trainingServer = false;
+  originalSettings.trainingTimeout = params.trainingTimeout;
 
   //Update the trigger parameters
   if (params.copyTriggers)
   {
-    originalSettings.triggerWidth = params.triggerWidth;
-    originalSettings.triggerWidthIsMultiplier = params.triggerWidthIsMultiplier;
+    originalSettings.copyTriggers = params.copyTriggers;
     originalSettings.triggerEnable = params.triggerEnable;
     originalSettings.triggerEnable2 = params.triggerEnable2;
+    originalSettings.triggerWidth = params.triggerWidth;
+    originalSettings.triggerWidthIsMultiplier = params.triggerWidthIsMultiplier;
   }
 }
 
