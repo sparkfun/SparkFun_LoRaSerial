@@ -73,9 +73,7 @@ void configureRadio()
     success = false;
 
   //Precalculate the ACK packet time
-  ackAirTime = calcAirTime(headerBytes + ACK_BYTES + trailerBytes); //Used for response timeout during ACK
-  if (settings.radioSpreadFactor == 6)
-    ackAirTime = calcAirTime(MAX_PACKET_SIZE);
+  ackAirTime = calcAirTime(headerBytes + CLOCK_SYNC_BYTES + trailerBytes); //Used for response timeout during ACK
 
   if ((settings.debug == true) || (settings.debugRadio == true))
   {
@@ -207,8 +205,8 @@ void setRadioFrequency(bool rxAdjust)
 
 void returnToReceiving()
 {
-  if(receiveInProcess() == true) return; //Do not touch the radio if it is already receiving
-  
+  if (receiveInProcess() == true) return; //Do not touch the radio if it is already receiving
+
   int state;
   if (settings.radioSpreadFactor > 6)
   {
@@ -216,18 +214,17 @@ void returnToReceiving()
   }
   else
   {
-    if (expectingAck && (settings.operatingMode == MODE_POINT_TO_POINT))
+    if (settings.operatingMode == MODE_POINT_TO_POINT)
     {
-      radio.implicitHeader(2);
-      state = radio.startReceive(2); //Expect a control packet
-      triggerEvent(TRIGGER_RTR_2BYTE);
-      expectingAck = false; //Do not return to this receiving configuration if something goes wrong
-    }
-    else
-    {
-      radio.implicitHeader(MAX_PACKET_SIZE);
-      state = radio.startReceive(MAX_PACKET_SIZE); //Expect a full data packet
-      triggerEvent(TRIGGER_RTR_255BYTE);
+      radio.implicitHeader(sf6ExpectedSize);
+      state = radio.startReceive(sf6ExpectedSize); //Set the size we expect to see
+
+      if (sf6ExpectedSize < MAX_PACKET_SIZE)
+        triggerEvent(TRIGGER_RTR_SHORT_PACKET);
+      else
+        triggerEvent(TRIGGER_RTR_255BYTE);
+
+      sf6ExpectedSize = MAX_PACKET_SIZE; //Always return to expecing a full data packet
     }
   }
 
@@ -554,7 +551,7 @@ int16_t getLinkupOffset()
   partialTimer = true; //Mark timer so that it runs only once with less than dwell time
 
   int linkupOffset = 0;
-  
+
   switch (settings.airSpeed)
   {
     default:
@@ -584,10 +581,10 @@ int16_t getLinkupOffset()
       linkupOffset = 0;
       break;
     case (28800):
-      linkupOffset = 6;
+      linkupOffset = 0;
       break;
     case (38400):
-      linkupOffset = 6;
+      linkupOffset = 0;
       break;
   }
 
