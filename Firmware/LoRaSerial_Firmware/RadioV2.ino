@@ -702,11 +702,13 @@ PacketType rcvDatagram()
     systemPrint(" (0x");
     systemPrint(rxDataBytes, HEX);
     systemPrintln(") bytes");
+    outputSerialData(true);
     if (timeToHop == true) //If the channelTimer has expired, move to next frequency
       hopChannel();
     petWDT();
     if (settings.printRfData && rxDataBytes)
       dumpBuffer(incomingBuffer, rxDataBytes);
+    outputSerialData(true);
   }
 
   if (settings.dataScrambling == true)
@@ -735,11 +737,13 @@ PacketType rcvDatagram()
     systemPrint(" (0x");
     systemPrint(rxDataBytes, HEX);
     systemPrintln(") bytes");
+    outputSerialData(true);
     if (timeToHop == true) //If the channelTimer has expired, move to next frequency
       hopChannel();
     petWDT();
     if (settings.printRfData && rxDataBytes)
       dumpBuffer(incomingBuffer, rxDataBytes);
+    outputSerialData(true);
   }
 
   //All packets must include the 2-byte control header
@@ -754,11 +758,13 @@ PacketType rcvDatagram()
       systemPrint(" (0x");
       systemPrint(rxDataBytes, HEX);
       systemPrintln(") bytes");
+      outputSerialData(true);
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
       petWDT();
       if (settings.printRfData && rxDataBytes)
         dumpBuffer(incomingBuffer, rxDataBytes);
+      outputSerialData(true);
     }
     badFrames++;
     return (DATAGRAM_BAD);
@@ -797,12 +803,14 @@ PacketType rcvDatagram()
           systemPrint(settings.netID);
         }
         systemPrintln();
+        outputSerialData(true);
       }
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
       petWDT();
       if (settings.debugReceive && settings.printPktData && rxDataBytes)
         dumpBuffer(incomingBuffer, rxDataBytes);
+      outputSerialData(true);
       netIdMismatch++;
       return (DATAGRAM_NETID_MISMATCH);
     }
@@ -835,11 +843,13 @@ PacketType rcvDatagram()
         systemPrint(incomingBuffer[rxDataBytes - 1], HEX);
         systemPrint(" expected 0x");
         systemPrintln(crc, HEX);
+        outputSerialData(true);
         if (timeToHop == true) //If the channelTimer has expired, move to next frequency
           hopChannel();
         petWDT();
         if (settings.printRfData && rxDataBytes)
           dumpBuffer(incomingBuffer, rxDataBytes);
+        outputSerialData(true);
       }
       badCrc++;
       return (DATAGRAM_CRC_ERROR);
@@ -872,6 +882,7 @@ PacketType rcvDatagram()
       systemPrintTimestamp();
       systemPrint("RX: Invalid datagram type ");
       systemPrintln(datagramType);
+      outputSerialData(true);
     }
     badFrames++;
     return (DATAGRAM_BAD);
@@ -884,6 +895,7 @@ PacketType rcvDatagram()
     systemPrint("    CRC-16: 0x");
     systemPrint(incomingBuffer[rxDataBytes - 2], HEX);
     systemPrintln(incomingBuffer[rxDataBytes - 1], HEX);
+    outputSerialData(true);
     if (timeToHop == true) //If the channelTimer has expired, move to next frequency
       hopChannel();
   }
@@ -918,6 +930,7 @@ PacketType rcvDatagram()
         systemPrint(" > ");
         systemPrint((int)rxDataBytes - minDatagramSize);
         systemPrintln(" received bytes");
+        outputSerialData(true);
         if (timeToHop == true) //If the channelTimer has expired, move to next frequency
           hopChannel();
       }
@@ -947,6 +960,7 @@ PacketType rcvDatagram()
             systemPrint(ackNumber);
             systemPrint(" expecting ");
             systemPrintln(txAckNumber);
+            outputSerialData(true);
             if (timeToHop == true) //If the channelTimer has expired, move to next frequency
               hopChannel();
           }
@@ -979,6 +993,7 @@ PacketType rcvDatagram()
             systemPrint(ackNumber);
             systemPrint(" expecting ");
             systemPrintln(rmtTxAckNumber);
+            outputSerialData(true);
             if (timeToHop == true) //If the channelTimer has expired, move to next frequency
               hopChannel();
           }
@@ -1010,6 +1025,7 @@ PacketType rcvDatagram()
             systemPrint(ackNumber);
             systemPrint(" expecting ");
             systemPrintln(rmtTxAckNumber);
+            outputSerialData(true);
             if (timeToHop == true) //If the channelTimer has expired, move to next frequency
               hopChannel();
           }
@@ -1051,6 +1067,7 @@ PacketType rcvDatagram()
         systemPrint("Missing VC header bytes, received only ");
         systemPrint(rxDataBytes);
         systemPrintln(" bytes, expecting at least 3 bytes");
+        outputSerialData(true);
         if (timeToHop == true) //If the channelTimer has expired, move to next frequency
           hopChannel();
       }
@@ -1075,10 +1092,12 @@ PacketType rcvDatagram()
           systemPrintTimestamp();
           systemPrint("Invalid source VC: ");
           systemPrintln(rxSrcVc);
+          outputSerialData(true);
           if (timeToHop == true) //If the channelTimer has expired, move to next frequency
             hopChannel();
           if (settings.printRfData && rxDataBytes)
             dumpBuffer(incomingBuffer, rxDataBytes);
+          outputSerialData(true);
         }
         badFrames++;
         return DATAGRAM_BAD;
@@ -1096,6 +1115,7 @@ PacketType rcvDatagram()
         systemPrint(vcHeader->length);
         systemPrint(" expecting ");
         systemPrintln(rxDataBytes);
+        outputSerialData(true);
       }
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
@@ -1113,10 +1133,12 @@ PacketType rcvDatagram()
           systemPrintTimestamp();
           systemPrint("Not my VC: ");
           systemPrintln(rxDestVc);
+          outputSerialData(true);
           if (timeToHop == true) //If the channelTimer has expired, move to next frequency
             hopChannel();
           if (settings.printPktData && rxDataBytes)
             dumpBuffer(incomingBuffer, rxDataBytes);
+          outputSerialData(true);
         }
       return DATAGRAM_NOT_MINE;
     }
@@ -1145,6 +1167,7 @@ PacketType rcvDatagram()
         systemPrintln("Unassigned");
       else
         systemPrintln(rxSrcVc);
+      outputSerialData(true);
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
     }
@@ -1172,6 +1195,7 @@ PacketType rcvDatagram()
     systemPrint(" (0x");
     systemPrint(rxDataBytes, HEX);
     systemPrintln(") bytes");
+    outputSerialData(true);
     if (timeToHop == true) //If the channelTimer has expired, move to next frequency
       hopChannel();
     petWDT();
@@ -1205,6 +1229,7 @@ PacketType rcvDatagram()
         systemPrintln();
         break;
     }
+    outputSerialData(true);
   }
   if (timeToHop == true) //If the channelTimer has expired, move to next frequency
     hopChannel();
@@ -1290,6 +1315,7 @@ bool transmitDatagram()
         systemPrintln();
         break;
     }
+    outputSerialData(true);
     if (timeToHop == true) //If the channelTimer has expired, move to next frequency
       hopChannel();
   }
@@ -1322,6 +1348,7 @@ bool transmitDatagram()
     petWDT();
     if (settings.printPktData)
       dumpBuffer(&endOfTxData[-length], length);
+    outputSerialData(true);
   }
 
   //Build the datagram header
@@ -1334,6 +1361,7 @@ bool transmitDatagram()
     systemPrint(" (0x");
     systemPrint(headerBytes);
     systemPrintln(") bytes");
+    outputSerialData(true);
     if (timeToHop == true) //If the channelTimer has expired, move to next frequency
       hopChannel();
   }
@@ -1352,6 +1380,7 @@ bool transmitDatagram()
       systemPrint(" (0x");
       systemPrint(settings.netID, HEX);
       systemPrintln(")");
+      outputSerialData(true);
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
       petWDT();
@@ -1400,6 +1429,7 @@ bool transmitDatagram()
       systemPrintln(length);
       systemPrint("    SF6 TX Header Size: ");
       systemPrintln(txDatagramSize);
+      outputSerialData(true);
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
     }
@@ -1422,6 +1452,7 @@ bool transmitDatagram()
       systemPrintln("Unassigned");
     else
       systemPrintln(srcVc);
+    outputSerialData(true);
     if (timeToHop == true) //If the channelTimer has expired, move to next frequency
       hopChannel();
   }
@@ -1467,6 +1498,7 @@ bool transmitDatagram()
     systemPrint(" (0x");
     systemPrint(trailerBytes);
     systemPrintln(") bytes");
+    outputSerialData(true);
     if (timeToHop == true) //If the channelTimer has expired, move to next frequency
       hopChannel();
 
@@ -1477,6 +1509,7 @@ bool transmitDatagram()
       systemPrint("    CRC-16: 0x");
       systemPrint(endOfTxData[-2], HEX);
       systemPrintln(endOfTxData[-1], HEX);
+      outputSerialData(true);
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
     }
@@ -1504,11 +1537,13 @@ bool transmitDatagram()
     systemPrint(" (0x");
     systemPrint(txDatagramSize, HEX);
     systemPrintln(") bytes");
+    outputSerialData(true);
     if (timeToHop == true) //If the channelTimer has expired, move to next frequency
       hopChannel();
     petWDT();
     if (settings.printRfData)
       dumpBuffer(outgoingPacket, txDatagramSize);
+    outputSerialData(true);
   }
 
   //Print before encryption
@@ -1540,11 +1575,13 @@ bool transmitDatagram()
     systemPrint(" (0x");
     systemPrint(txDatagramSize, HEX);
     systemPrintln(") bytes");
+    outputSerialData(true);
     if (timeToHop == true) //If the channelTimer has expired, move to next frequency
       hopChannel();
     petWDT();
     if (settings.printRfData)
       dumpBuffer(outgoingPacket, txDatagramSize);
+    outputSerialData(true);
   }
 
   //If we are trainsmitting at high data rates the receiver is often not ready for new data. Pause for a few ms (measured with logic analyzer).
@@ -1586,6 +1623,7 @@ void printControl(uint8_t value)
     systemPrint("Unknown ");
     systemPrintln(control->datagramType);
   }
+  outputSerialData(true);
   if (timeToHop == true) //If the channelTimer has expired, move to next frequency
     hopChannel();
   petWDT();
@@ -1619,11 +1657,13 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
     systemPrint(" (0x");
     systemPrint(txDatagramSize, HEX);
     systemPrintln(") bytes");
+    outputSerialData(true);
     if (timeToHop == true) //If the channelTimer has expired, move to next frequency
       hopChannel();
     petWDT();
     if (settings.printRfData)
       dumpBuffer(outgoingPacket, txDatagramSize);
+    outputSerialData(true);
   }
 
   //Transmit this frame
@@ -1653,6 +1693,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
       systemPrint("TX: frameAirTime ");
       systemPrint(frameAirTime);
       systemPrintln(" mSec");
+      outputSerialData(true);
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
 
@@ -1660,6 +1701,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
       systemPrint("TX: responseDelay ");
       systemPrint(responseDelay);
       systemPrintln(" mSec");
+      outputSerialData(true);
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
     }
@@ -1670,6 +1712,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
     systemPrintTimestamp();
     systemPrint("TX: Transmit error, state ");
     systemPrintln(state);
+    outputSerialData(true);
   }
 
   datagramTimer = millis(); //Move timestamp even if error

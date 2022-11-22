@@ -65,6 +65,7 @@ void updateRadioState()
       {
         systemPrint("RadioSeed: ");
         systemPrintln(radioSeed);
+        outputSerialData(true);
       }
 
       convertAirSpeedToSettings(); //Update the settings based upon the air speed
@@ -193,7 +194,10 @@ void updateRadioState()
             updateRadioParameters(rxData);
             endPointToPointTraining(true);
             if (settings.debugTraining)
+            {
               systemPrintln("Training successful, received parameters!");
+              outputSerialData(true);
+            }
             changeState(RADIO_RESET);
         }
       }
@@ -215,7 +219,10 @@ void updateRadioState()
         {
           //Failed to complete the training
           if (settings.debugTraining)
+          {
             systemPrintln("Training timeout, returning to previous mode!");
+            outputSerialData(true);
+          }
           endPointToPointTraining(false);
           changeState(RADIO_RESET);
         }
@@ -229,7 +236,10 @@ void updateRadioState()
         transactionComplete = false; //Reset ISR flag
         endPointToPointTraining(false);
         if (settings.debugTraining)
+        {
           systemPrintln("Training successful, sent parameters!");
+          outputSerialData(true);
+        }
         changeState(RADIO_RESET);
       }
       break;
@@ -456,6 +466,7 @@ void updateRadioState()
           {
             systemPrintTimestamp();
             systemPrintln("RX: ACK1 Timeout");
+            outputSerialData(true);
           }
 
           //Start the TX timer: time to delay before transmitting the PING
@@ -545,6 +556,7 @@ void updateRadioState()
           {
             systemPrintTimestamp();
             systemPrintln("RX: ACK2 Timeout");
+            outputSerialData(true);
           }
 
           //Start the TX timer: time to delay before transmitting the PING
@@ -666,6 +678,7 @@ void updateRadioState()
               systemPrint("LinkUp: Unhandled packet type ");
               systemPrint(v2DatagramType[packetType]);
               systemPrintln();
+              outputSerialData(true);
             }
             break;
 
@@ -906,6 +919,7 @@ void updateRadioState()
               systemPrint("RX: Unhandled packet type ");
               systemPrint(v2DatagramType[packetType]);
               systemPrintln();
+              outputSerialData(true);
             }
             break;
 
@@ -1003,6 +1017,7 @@ void updateRadioState()
             {
               systemPrintTimestamp();
               systemPrintln("RX: ACK Timeout");
+              outputSerialData(true);
             }
 
             triggerEvent(TRIGGER_LINK_RETRANSMIT);
@@ -1030,6 +1045,7 @@ void updateRadioState()
                   systemPrintln();
                   break;
               }
+              outputSerialData(true);
             }
 
             if (retransmitDatagram(NULL) == true)
@@ -1082,6 +1098,7 @@ void updateRadioState()
             systemPrint(frameSentCount);
             systemPrint(", ");
             systemPrint(v2DatagramType[txControl.datagramType]);
+            outputSerialData(true);
             switch (txControl.datagramType)
             {
               default:
@@ -1097,6 +1114,7 @@ void updateRadioState()
                 systemPrint(txControl.ackNumber);
                 systemPrint(")");
                 systemPrintln();
+                outputSerialData(true);
                 break;
             }
           }
@@ -1151,6 +1169,7 @@ void updateRadioState()
               systemPrint("Scan: Unhandled packet type ");
               systemPrint(v2DatagramType[packetType]);
               systemPrintln();
+              outputSerialData(true);
             }
             break;
 
@@ -1206,6 +1225,7 @@ void updateRadioState()
           {
             systemPrintTimestamp();
             systemPrintln("MP: ACK1 Timeout");
+            outputSerialData(true);
           }
 
           //Move to previous channel in table
@@ -1280,6 +1300,7 @@ void updateRadioState()
               systemPrint("MP Standby: Unhandled packet type ");
               systemPrint(v2DatagramType[packetType]);
               systemPrintln();
+              outputSerialData(true);
             }
             break;
 
@@ -1893,6 +1914,7 @@ void updateRadioState()
                 systemPrintln();
                 break;
             }
+            outputSerialData(true);
           }
 
           //Retransmit the packet
@@ -2212,6 +2234,7 @@ void changeState(RadioStates newState)
   }
 
   systemPrintln();
+  outputSerialData(true);
 }
 
 void v2BreakLink()
@@ -2219,7 +2242,10 @@ void v2BreakLink()
   //Break the link
   linkFailures++;
   if (settings.printLinkUpDown)
+  {
     systemPrintln("--------- Link DOWN ---------");
+    outputSerialData(true);
+  }
   triggerEvent(TRIGGER_RADIO_RESET);
 
   //Stop the transmit timer
@@ -2256,7 +2282,10 @@ void v2EnterLinkUp()
   returnToReceiving();
   changeState(RADIO_P2P_LINK_UP);
   if (settings.printLinkUpDown)
+  {
     systemPrintln("========== Link UP ==========");
+    outputSerialData(true);
+  }
 }
 
 void discardPreviousData()
@@ -2302,6 +2331,7 @@ void vcSendLinkStatus(bool linkUp, int8_t srcVc)
       systemPrint(srcVc);
       systemPrintln(" Down ---------");
     }
+    outputSerialData(true);
   }
 }
 
@@ -2382,6 +2412,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
     if (index >= MAX_VC)
     {
       systemPrintln("ERROR: Too many clients, no free addresses!\n");
+      outputSerialData(true);
       return -2;
     }
     srcAddr = index;
@@ -2400,6 +2431,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
     for (int i = 0; i < UNIQUE_ID_BYTES; i++)
       systemPrint(vc->uniqueId[i], HEX);
     systemPrintln();
+    outputSerialData(true);
     return -3;
   }
 

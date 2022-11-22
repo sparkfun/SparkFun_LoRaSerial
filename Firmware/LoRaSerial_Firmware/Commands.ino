@@ -107,7 +107,10 @@ bool commandAT(const char * commandString)
 
         //Display the end of the delay
         if (settings.printLinkUpDown)
+        {
           systemPrintln("Delay done");
+          outputSerialData(true);
+        }
         break;
       case ('F'): //Enter training mode and return to factory defaults
         reportOK();
