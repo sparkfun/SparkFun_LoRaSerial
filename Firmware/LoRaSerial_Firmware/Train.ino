@@ -5,7 +5,7 @@ void selectTraining(bool defaultTraining)
     beginTrainingPointToPoint(defaultTraining);
   else
   {
-    if (settings.trainingServer)
+    if (settings.server)
       beginTrainingServer();
     else
       beginTrainingClient();
@@ -150,7 +150,7 @@ void beginTrainingServer()
 
   //Common initialization
   commonTrainingInitialization();
-  settings.trainingServer = true;         //52: Operate as the training server
+  settings.server = true;         //52: Operate as the training server
 
   //Start the receive operation
   returnToReceiving();
@@ -242,7 +242,7 @@ void endClientServerTraining(uint8_t event)
     outputSerialData(true);
   }
 
-  if (!settings.trainingServer)
+  if (!settings.server)
   {
     //Record the new client settings
     petWDT();

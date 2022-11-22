@@ -409,7 +409,7 @@ typedef struct struct_settings {
   uint16_t overheadTime = 10; //ms added to ack and datagram times before ACK timeout occurs
   bool enableCRC16 = false; //Append CRC-16 to packet, check CRC-16 upon receive
   bool displayRealMillis = false; //true = Display the millis value without offset, false = use offset
-  bool trainingServer = false; //Default to being a client
+  bool server = false; //Default to being a client, enable server for multipoint, VC and training
   uint8_t clientPingRetryInterval = 3; //Number of seconds before retransmiting the client PING
   bool copyDebug = true; //Copy the debug parameters to the training client
   bool copySerial = true; //Copy the serial parameters to the training client
@@ -420,7 +420,6 @@ typedef struct struct_settings {
   bool invertRts = false; //Invert the output of RTS
   bool alternateLedUsage = false; //Enable alternate LED usage
   uint8_t trainingTimeout = 1; //Timeout in minutes to complete the training
-  bool multipointServer = false; //Only one radio can be the server in multipoint mode
   bool debugSerial = false; //Debug the serial input
   bool debugSync = false; //Print clock sync processing
   bool debugNvm = false; //Debug NVM operation
