@@ -424,6 +424,7 @@ typedef struct struct_settings {
   bool debugSerial = false; //Debug the serial input
   bool debugSync = false; //Print clock sync processing
   bool debugNvm = false; //Debug NVM operation
+  bool printAckNumbers = false; //Print the ACK numbers
 
   //Add new parameters immediately before this line
   //-- Add commands to set the parameters
