@@ -569,7 +569,6 @@ bool xmitDatagramMpRadioParameters(const uint8_t * clientID)
 
   //Initialize the radio parameters
   memcpy(&params, &originalSettings, sizeof(settings));
-  params.operatingMode = MODE_DATAGRAM;
   params.server = false;
 
   //Add the destination (client) ID
