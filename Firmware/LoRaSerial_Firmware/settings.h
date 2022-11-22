@@ -156,6 +156,7 @@ typedef enum
   DATAGRAM_CRC_ERROR,
   DATAGRAM_NETID_MISMATCH,
   DATAGRAM_DUPLICATE,
+  DATAGRAM_NOT_MINE,
 } PacketType;
 
 const char * const v2DatagramType[] =

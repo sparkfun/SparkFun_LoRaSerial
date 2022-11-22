@@ -1105,6 +1105,22 @@ PacketType rcvDatagram()
       return DATAGRAM_BAD;
     }
 
+    //Validate the destination VC
+    if ((rxDestVc != VC_BROADCAST) && (rxDestVc != myVc))
+    {
+        if (settings.debugReceive)
+        {
+          systemPrintTimestamp();
+          systemPrint("Not my VC: ");
+          systemPrintln(rxDestVc);
+          if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+            hopChannel();
+          if (settings.printPktData && rxDataBytes)
+            dumpBuffer(incomingBuffer, rxDataBytes);
+        }
+      return DATAGRAM_NOT_MINE;
+    }
+
     //Account for this frame
     if (vc)
     {
