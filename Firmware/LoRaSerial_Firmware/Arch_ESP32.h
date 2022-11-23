@@ -51,7 +51,7 @@ void esp32BeginSerial(uint16_t serialSpeed)
 
 void esp32BeginWDT()
 {
-  petTimeoutHalf = 1000 / 2;
+  petTimeout = 1000 / 2;
 }
 
 void esp32EepromBegin()

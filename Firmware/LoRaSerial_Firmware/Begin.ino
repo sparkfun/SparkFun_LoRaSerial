@@ -76,9 +76,8 @@ void beginSerial(uint16_t serialSpeed)
 
 void petWDT()
 {
-  //Petting the dog takes a long time so its only done after we've passed the
-  //half way point
-  if (millis() - lastPet > petTimeoutHalf)
+  //Petting the dog takes a long time (~4.5ms on SAMD21) so it's only done after we've passed the timeout
+  if (millis() - lastPet > petTimeout)
   {
     lastPet = millis();
     arch.petWDT();

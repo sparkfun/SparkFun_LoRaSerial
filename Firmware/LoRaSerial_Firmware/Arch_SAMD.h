@@ -143,8 +143,8 @@ void samdBeginSerial(uint16_t serialSpeed)
 
 void samdBeginWDT()
 {
-  myWatchDog.setup(WDT_HARDCYCLE250m);  // Initialize WDT with 250ms timeout
-  petTimeoutHalf = 250 / 2;
+  myWatchDog.setup(WDT_HARDCYCLE2S);  // Initialize WDT with 2s timeout
+  petTimeout = 1800;
 }
 
 void samdEepromBegin()
