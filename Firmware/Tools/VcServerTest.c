@@ -5,11 +5,15 @@
 #define STDIN                 0
 #define STDOUT                1
 
-#define LINK_RESET_COMMAND    "atb"
+#define BREAK_LINKS_COMMAND   "atb"
+#define GET_MY_VC_ADDRESS     "atI28"
+#define LINK_RESET_COMMAND    "atz"
+#define MY_VC_ADDRESS         "myVc: "
 
 #define DEBUG_PC_TO_RADIO     0
 #define DEBUG_RADIO_TO_PC     0
 
+bool findMyVc = true;
 int myVc;
 int remoteVc;
 uint8_t inputBuffer[BUFFER_SIZE];
@@ -156,9 +160,57 @@ int stdinToRadio()
 
 int hostToStdout(uint8_t * data, uint8_t bytesToSend)
 {
+  uint8_t * buffer;
+  uint8_t * bufferEnd;
   int bytesSent;
   int bytesWritten;
+  static uint8_t compareBuffer[4 * BUFFER_SIZE];
+  static int offset;
   int status;
+  int vcNumber;
+
+  //Locate myVc if necessary
+  if (findMyVc)
+  {
+    //Place the data into the compare buffer
+    buffer = compareBuffer;
+    memcpy(&compareBuffer[offset], data, bytesToSend);
+    offset += bytesToSend;
+    bufferEnd = &buffer[offset];
+
+    //Walk through the buffer
+    while (buffer < bufferEnd)
+    {
+      if ((strncmp((const char *)buffer, MY_VC_ADDRESS, strlen(MY_VC_ADDRESS)) == 0)
+        && (&buffer[strlen(MY_VC_ADDRESS) + 3] <= bufferEnd))
+      {
+        if ((sscanf((const char *)&buffer[strlen(MY_VC_ADDRESS)], "%d", &vcNumber) == 1)
+          && ((uint8_t)vcNumber < MAX_VC))
+        {
+          findMyVc = false;
+          myVc = (int8_t)vcNumber;
+          break;
+        }
+      }
+
+      //Skip to the end of the line
+      while ((buffer < bufferEnd) && (*buffer != '\n'))
+        buffer++;
+
+      if ((buffer < bufferEnd) && (*buffer == '\n'))
+      {
+        //Skip to the next line
+        while ((buffer < bufferEnd) && (*buffer == '\n'))
+          buffer++;
+
+        //Move this data to the beginning of the buffer
+        offset = bufferEnd - buffer;
+        memcpy(compareBuffer, buffer, offset);
+        buffer = compareBuffer;
+        bufferEnd = &buffer[offset];
+      }
+    }
+  }
 
   //Write this data to stdout
   bytesSent = 0;
@@ -307,30 +359,33 @@ main (
   char ** argv
 )
 {
+  bool breakLinks;
   int maxfds;
+  bool reset;
   int status;
   char * terminal;
   struct timeval timeout;
   uint8_t * vcData;
 
+  maxfds = STDIN;
   status = 0;
   do
   {
     //Display the help text if necessary
-    if (argc != 4)
+    if (argc < 3)
     {
-      printf("%s   terminal   my_VC   target_VC\n", argv[0]);
+      printf("%s   terminal   target_VC   [options]\n", argv[0]);
       printf("\n");
       printf("terminal - Name or path to the terminal device for the radio\n");
-      printf("my_VC:\n");
-      printf("    Server: 0\n");
-      printf("    Client: 1 - %d\n", MAX_VC - 1);
       printf("target_VC:\n");
       printf("    Server: 0\n");
       printf("    Client: 1 - %d\n", MAX_VC - 1);
       printf("    Loopback: my_VC\n");
       printf("    Broadcast: %d\n", VC_BROADCAST);
       printf("    Command: %d\n", VC_COMMAND);
+      printf("Options:\n");
+      printf("    --reset    Reset the LoRaSerial radio and break the links\n");
+      printf("    --break    Use ATB command to break the links\n");
       status = -1;
       break;
     }
@@ -338,19 +393,8 @@ main (
     //Get the path to the terminal
     terminal = argv[1];
 
-    //Determine the local VC address
-    if ((sscanf(argv[2], "%d", &myVc) != 1)
-      || ((myVc < VC_SERVER) || (myVc >= MAX_VC)))
-    {
-      fprintf(stderr, "ERROR: Invalid my VC address, please use one of the following:\n");
-      fprintf(stderr, "    Server: 0\n");
-      fprintf(stderr, "    Client: 1 - %d\n", MAX_VC - 1);
-      status = -1;
-      break;
-    }
-
     //Determine the remote VC address
-    if ((sscanf(argv[3], "%d", &remoteVc) != 1)
+    if ((sscanf(argv[2], "%d", &remoteVc) != 1)
       || (remoteVc < VC_COMMAND) || (remoteVc >= MAX_VC))
     {
       fprintf(stderr, "ERROR: Invalid target VC address, please use one of the following:\n");
@@ -365,23 +409,54 @@ main (
     }
 
     //Open the terminal
-    maxfds = STDIN;
     status = openTty(terminal);
     if (status)
       break;
     if (maxfds < tty)
       maxfds = tty;
 
-    //Display myVc
-    printf("myVc: %d\n", myVc);
+    //Determine the options
+    reset = false;
+    if ((argc == 4) && (strcmp("--reset", argv[3]) == 0))
+      reset = true;
 
-    //Delay a while to let the radio complete its reset operation
-    sleep(2);
+    breakLinks = reset;
+    if ((argc == 4) && (strcmp("--break", argv[3]) == 0))
+      breakLinks = true;
 
-    //Break the links to this node
-    cmdToRadio((uint8_t *)LINK_RESET_COMMAND, strlen(LINK_RESET_COMMAND));
+    //Reset the LoRaSerial radio if requested
+    if (reset)
+    {
+      //Delay a while to let the radio complete its reset operation
+      sleep(2);
+
+      //Break the links to this node
+      cmdToRadio((uint8_t *)LINK_RESET_COMMAND, strlen(LINK_RESET_COMMAND));
+
+      //Allow the device to reset
+      close(tty);
+      do
+      {
+        sleep(1);
+
+        //Open the terminal
+        status = openTty(terminal);
+      } while (status);
+
+      //Delay a while to let the radio complete its reset operation
+      sleep(2);
+    }
+
+    //Get myVc address
+    cmdToRadio((uint8_t *)GET_MY_VC_ADDRESS, strlen(GET_MY_VC_ADDRESS));
+
+    //Break the links if requested
+    if (breakLinks)
+      cmdToRadio((uint8_t *)BREAK_LINKS_COMMAND, strlen(BREAK_LINKS_COMMAND));
 
     //Initialize the fd_sets
+    if (maxfds < tty)
+      maxfds = tty;
     FD_ZERO(&exceptfds);
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
