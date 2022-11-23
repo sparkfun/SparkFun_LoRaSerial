@@ -234,7 +234,17 @@ void updateButton()
 
       selectTraining();
 
-      trainState = TRAIN_NO_PRESS;
+      trainState = TRAIN_IN_PROCESS;
+    }
+    else if (trainState == TRAIN_IN_PROCESS && trainBtn->wasReleased())
+    {
+      //Exiting training
+      setRSSI(0b0000); //Turn off LEDs
+
+      //Reboot the radio
+      petWDT();
+      systemFlush();
+      systemReset();
     }
 
     //Blink LEDs according to our state while we wait for user to release button
@@ -242,7 +252,6 @@ void updateButton()
     {
       if (millis() - lastTrainBlink > 500) //Slow blink
       {
-        Serial.println("Train Blinking LEDs");
         lastTrainBlink = millis();
 
         //Toggle RSSI LEDs

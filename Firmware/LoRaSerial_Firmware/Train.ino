@@ -79,7 +79,7 @@ void updateCylonLEDs()
 
 void beginTrainingClient()
 {
-  systemPrintln("Multipoint client training");
+  systemPrintln("Begin client training");
 
   //Common initialization
   commonTrainingInitialization();
@@ -220,6 +220,8 @@ void endClientServerTraining(uint8_t event)
     systemPrint("Link trained from ");
     systemPrintUniqueID(trainingPartnerID);
     systemPrintln();
+
+    outputSerialData(true);
   }
 
   //Done with training

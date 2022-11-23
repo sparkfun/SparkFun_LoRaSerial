@@ -222,7 +222,8 @@ typedef struct _VIRTUAL_CIRCUIT
 typedef enum
 {
   TRAIN_NO_PRESS = 0,
-  TRAIN_PRESSED_2S
+  TRAIN_PRESSED_2S,
+  TRAIN_IN_PROCESS,
 } TrainStates;
 
 enum
