@@ -996,162 +996,9 @@ PacketType rcvDatagram()
   else
     rxDataBytes -= minDatagramSize;
 
-  //Verify the packet number last so that the expected datagram or ACK number can be updated
+  //Get the Virtual-Circuit header
   rxVcData = rxData;
-  if (settings.operatingMode == MODE_POINT_TO_POINT)
-  {
-    switch (datagramType)
-    {
-      default:
-        break;
-
-      case DATAGRAM_DATA_ACK:
-        if (ackNumber != vc->txAckNumber)
-        {
-          if (settings.debugReceive)
-          {
-            systemPrintTimestamp();
-            systemPrint("Invalid ACK number, received ");
-            systemPrint(ackNumber);
-            systemPrint(" expecting ");
-            systemPrintln(vc->txAckNumber);
-            outputSerialData(true);
-            if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-              hopChannel();
-          }
-          badFrames++;
-          return (DATAGRAM_BAD);
-        }
-
-        //Set the next TX ACK number
-        if (settings.printAckNumbers)
-        {
-          systemPrint("txAckNumber: ");
-          systemPrint(vc->txAckNumber);
-          systemPrint(" --> ");
-        }
-        vc->txAckNumber = (vc->txAckNumber + 1) & 3;
-        if (settings.printAckNumbers)
-        {
-          systemPrintln(vc->txAckNumber);
-          outputSerialData(true);
-        }
-        break;
-
-      case DATAGRAM_REMOTE_COMMAND:
-      case DATAGRAM_REMOTE_COMMAND_RESPONSE:
-      case DATAGRAM_HEARTBEAT:
-        if (ackNumber != vc->rmtTxAckNumber)
-        {
-          //Determine if this is a duplicate datagram
-          if (ackNumber == ((vc->rmtTxAckNumber - 1) & 3))
-          {
-            linkDownTimer = millis();
-            duplicateFrames++;
-            return DATAGRAM_DUPLICATE;
-          }
-
-          //Not a duplicate
-          if (settings.debugReceive)
-          {
-            systemPrintTimestamp();
-            systemPrint("Invalid datagram number, received ");
-            systemPrint(ackNumber);
-            systemPrint(" expecting ");
-            systemPrintln(vc->rmtTxAckNumber);
-            outputSerialData(true);
-            if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-              hopChannel();
-          }
-          badFrames++;
-          return DATAGRAM_BAD;
-        }
-
-        //Receive this data packet and set the next expected datagram number
-        if (settings.printAckNumbers)
-        {
-          systemPrint("rxAckNumber: ");
-          systemPrint(vc->rxAckNumber);
-          systemPrint(" --> ");
-        }
-        vc->rxAckNumber = vc->rmtTxAckNumber;
-        if (settings.printAckNumbers)
-        {
-          systemPrintln(vc->rxAckNumber);
-          systemPrint("rmtTxAckNumber: ");
-          systemPrint(vc->rmtTxAckNumber);
-          systemPrint(" --> ");
-        }
-        vc->rmtTxAckNumber = (vc->rmtTxAckNumber + 1) & 3;
-        if (settings.printAckNumbers)
-        {
-          systemPrintln(vc->rmtTxAckNumber);
-          outputSerialData(true);
-        }
-        break;
-
-      case DATAGRAM_DATA:
-        if (ackNumber != vc->rmtTxAckNumber)
-        {
-          //Determine if this is a duplicate datagram
-          if (ackNumber == ((vc->rmtTxAckNumber - 1) & 3))
-          {
-            linkDownTimer = millis();
-            duplicateFrames++;
-            return DATAGRAM_DUPLICATE;
-          }
-
-          //Not a duplicate
-          if (settings.debugReceive)
-          {
-            systemPrintTimestamp();
-            systemPrint("Invalid datagram number, received ");
-            systemPrint(ackNumber);
-            systemPrint(" expecting ");
-            systemPrintln(vc->rmtTxAckNumber);
-            outputSerialData(true);
-            if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-              hopChannel();
-          }
-          badFrames++;
-          return DATAGRAM_BAD;
-        }
-
-        //Verify that there is sufficient space in the serialTransmitBuffer
-        if (inCommandMode || ((sizeof(serialTransmitBuffer) - availableTXBytes()) < rxDataBytes))
-        {
-          if (settings.debugReceive)
-          {
-            systemPrintTimestamp();
-            systemPrintln("Insufficient space in the serialTransmitBuffer");
-          }
-          insufficientSpace++;
-
-          //Apply back pressure to the other radio by dropping this packet and
-          //forcing the other radio to retransmit the packet.
-          return DATAGRAM_BAD;
-        }
-
-        //Receive this data packet and set the next expected datagram number
-        if (settings.printAckNumbers)
-        {
-          systemPrint("vc->rxAckNumber: ");
-          systemPrint(vc->rxAckNumber);
-          systemPrint(" --> ");
-        }
-        vc->rxAckNumber = vc->rmtTxAckNumber;
-        if (settings.printAckNumbers)
-        {
-          systemPrintln(vc->rxAckNumber);
-          outputSerialData(true);
-        }
-        vc->rmtTxAckNumber = (vc->rmtTxAckNumber + 1) & 3;
-        break;
-    }
-  }
-
-  //Verify the Virtual-Circuit length
-  else if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+  if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
   {
     //Verify that the virtual circuit header is present
     if (rxDataBytes < 3)
@@ -1258,35 +1105,82 @@ PacketType rcvDatagram()
         }
       return DATAGRAM_NOT_MINE;
     }
+  }
+
+  //Verify the packet number last so that the expected datagram or ACK number can be updated
+  if (vc && (settings.operatingMode != MODE_DATAGRAM))
+  {
+    switch (datagramType)
+    {
+      default:
+        break;
+
+      case DATAGRAM_DATA_ACK:
+        if (ackNumber != vc->txAckNumber)
+        {
+          if (settings.debugReceive)
+          {
+            systemPrintTimestamp();
+            systemPrint("Invalid ACK number, received ");
+            systemPrint(ackNumber);
+            systemPrint(" expecting ");
+            systemPrintln(vc->txAckNumber);
+            outputSerialData(true);
+            if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+              hopChannel();
+          }
+          badFrames++;
+          return (DATAGRAM_BAD);
+        }
+
+        //Set the next TX ACK number
+        if (settings.printAckNumbers)
+        {
+          systemPrint("txAckNumber: ");
+          systemPrint(vc->txAckNumber);
+          systemPrint(" --> ");
+        }
+        vc->txAckNumber = (vc->txAckNumber + 1) & 3;
+        if (settings.printAckNumbers)
+        {
+          systemPrintln(vc->txAckNumber);
+          outputSerialData(true);
+        }
+        break;
+
+      case DATAGRAM_HEARTBEAT:
+        if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+          break;
+        datagramType = validateDatagram(vc, datagramType, ackNumber, rxDataBytes);
+        if (datagramType != DATAGRAM_HEARTBEAT)
+          return datagramType;
+        break;
+
+      case DATAGRAM_REMOTE_COMMAND:
+        datagramType = validateDatagram(vc, datagramType, ackNumber, sizeof(commandRXBuffer)
+                                        - availableRXCommandBytes());
+        if (datagramType != DATAGRAM_REMOTE_COMMAND)
+          return datagramType;
+        break;
+
+      case DATAGRAM_REMOTE_COMMAND_RESPONSE:
+        datagramType = validateDatagram(vc, datagramType, ackNumber, sizeof(serialTransmitBuffer)
+                                        - availableTXBytes());
+        if (datagramType != DATAGRAM_REMOTE_COMMAND_RESPONSE)
+          return datagramType;
+        break;
+
+      case DATAGRAM_DATA:
+        datagramType = validateDatagram(vc, datagramType, ackNumber, sizeof(serialTransmitBuffer)
+                                        - availableTXBytes());
+        if (datagramType != DATAGRAM_DATA)
+          return datagramType;
+        vc->messagesReceived++;
+        break;
+    }
 
     //Account for this frame
-    if (vc)
-    {
-      vc->framesReceived++;
-      if (datagramType == DATAGRAM_DATA)
-        vc->messagesReceived++;
-    }
-
-    //Display the virtual circuit header
-    if (settings.debugReceive)
-    {
-      systemPrintTimestamp();
-      systemPrint("    VC Length: ");
-      systemPrintln(vcHeader->length);
-      systemPrint("    DestAddr: ");
-      if (rxDestVc == VC_BROADCAST)
-        systemPrintln("Broadcast");
-      else
-        systemPrintln(rxDestVc);
-      systemPrint("    SrcAddr: ");
-      if (rxSrcVc == VC_UNASSIGNED)
-        systemPrintln("Unassigned");
-      else
-        systemPrintln(rxSrcVc);
-      outputSerialData(true);
-      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-        hopChannel();
-    }
+    vc->framesReceived++;
   }
 
   /*
@@ -1370,6 +1264,74 @@ PacketType rcvDatagram()
   return datagramType;
 }
 
+PacketType validateDatagram(VIRTUAL_CIRCUIT * vc, PacketType datagramType, uint8_t ackNumber, uint16_t freeBytes)
+{
+  if (ackNumber != vc->rmtTxAckNumber)
+  {
+    //Determine if this is a duplicate datagram
+    if (ackNumber == ((vc->rmtTxAckNumber - 1) & 3))
+    {
+      linkDownTimer = millis();
+      duplicateFrames++;
+      return DATAGRAM_DUPLICATE;
+    }
+
+    //Not a duplicate
+    if (settings.debugReceive)
+    {
+      systemPrintTimestamp();
+      systemPrint("Invalid datagram number, received ");
+      systemPrint(ackNumber);
+      systemPrint(" expecting ");
+      systemPrintln(vc->rmtTxAckNumber);
+      outputSerialData(true);
+      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+        hopChannel();
+    }
+    badFrames++;
+    return DATAGRAM_BAD;
+  }
+
+  //Verify that there is sufficient space in the serialTransmitBuffer
+  if (inCommandMode || ((sizeof(serialTransmitBuffer) - availableTXBytes()) < rxDataBytes))
+  {
+    if (settings.debugReceive)
+    {
+      systemPrintTimestamp();
+      systemPrintln("Insufficient space in the serialTransmitBuffer");
+    }
+    insufficientSpace++;
+
+    //Apply back pressure to the other radio by dropping this packet and
+    //forcing the other radio to retransmit the packet.
+    badFrames++;
+    return DATAGRAM_BAD;
+  }
+
+  //Receive this data packet and set the next expected datagram number
+  if (settings.printAckNumbers)
+  {
+    systemPrint("rxAckNumber: ");
+    systemPrint(vc->rxAckNumber);
+    systemPrint(" --> ");
+  }
+  vc->rxAckNumber = vc->rmtTxAckNumber;
+  if (settings.printAckNumbers)
+  {
+    systemPrintln(vc->rxAckNumber);
+    systemPrint("rmtTxAckNumber: ");
+    systemPrint(vc->rmtTxAckNumber);
+    systemPrint(" --> ");
+  }
+  vc->rmtTxAckNumber = (vc->rmtTxAckNumber + 1) & 3;
+  if (settings.printAckNumbers)
+  {
+    systemPrintln(vc->rmtTxAckNumber);
+    outputSerialData(true);
+  }
+  return datagramType;
+}
+
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Datagram transmission
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -1398,9 +1360,9 @@ bool transmitDatagram()
     vcHeader = (VC_RADIO_MESSAGE_HEADER *)&outgoingPacket[headerBytes];
     txDestVc = vcHeader->destVc;
     srcVc = vcHeader->srcVc;
-    if ((uint8_t)vcHeader->srcVc <= MAX_VC)
+    if ((uint8_t)vcHeader->destVc <= MAX_VC)
     {
-      vc = &virtualCircuitList[srcVc];
+      vc = &virtualCircuitList[txDestVc];
       vc->messagesSent++;
     }
     vcData = (uint8_t *)&vcHeader[1];
@@ -1807,51 +1769,56 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   if (timeToHop == true) //If the channelTimer has expired, move to next frequency
     hopChannel();
 
+  //Drop this datagram if the receiver is active
+  frameAirTime = calcAirTime(txDatagramSize); //Calculate frame air size while we're transmitting in the background
+  uint16_t responseDelay = frameAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
   if (receiveInProcess() == true || transactionComplete == true)
   {
     triggerEvent(TRIGGER_TRANSMIT_CANCELED);
+    if (settings.debugReceive || settings.debugDatagrams)
+      systemPrintln(receiveInProcess() ? "RXIP" : "RXTC");
     return (false); //Do not start transmit while RX is or has occured
   }
-
-  int state = radio.startTransmit(outgoingPacket, txDatagramSize);
-
-  if (state == RADIOLIB_ERR_NONE)
+  else
   {
-    frameSentCount++;
-    if (vc)
-      vc->framesSent++;
-    framesSent++;
-    xmitTimeMillis = millis();
-    frameAirTime = calcAirTime(txDatagramSize); //Calculate frame air size while we're transmitting in the background
-    uint16_t responseDelay = frameAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
-    if (settings.debugTransmit)
+
+    int state = radio.startTransmit(outgoingPacket, txDatagramSize);
+
+    if (state == RADIOLIB_ERR_NONE)
+    {
+      frameSentCount++;
+      if (vc)
+        vc->framesSent++;
+      framesSent++;
+      xmitTimeMillis = millis();
+      if (settings.debugTransmit)
+      {
+        systemPrintTimestamp();
+        systemPrint("TX: frameAirTime ");
+        systemPrint(frameAirTime);
+        systemPrintln(" mSec");
+        outputSerialData(true);
+        if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+          hopChannel();
+
+        systemPrintTimestamp();
+        systemPrint("TX: responseDelay ");
+        systemPrint(responseDelay);
+        systemPrintln(" mSec");
+        outputSerialData(true);
+        if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+          hopChannel();
+      }
+    }
+    else if (settings.debugTransmit)
     {
       systemPrintTimestamp();
-      systemPrint("TX: frameAirTime ");
-      systemPrint(frameAirTime);
-      systemPrintln(" mSec");
+      systemPrint("TX: Transmit error, state ");
+      systemPrintln(state);
       outputSerialData(true);
-      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-        hopChannel();
-
-      systemPrintTimestamp();
-      systemPrint("TX: responseDelay ");
-      systemPrint(responseDelay);
-      systemPrintln(" mSec");
-      outputSerialData(true);
-      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-        hopChannel();
     }
-    frameAirTime += responseDelay;
   }
-  else if (settings.debugTransmit)
-  {
-    systemPrintTimestamp();
-    systemPrint("TX: Transmit error, state ");
-    systemPrintln(state);
-    outputSerialData(true);
-  }
-
+  frameAirTime += responseDelay;
   datagramTimer = millis(); //Move timestamp even if error
   retransmitTimeout = random(ackAirTime, frameAirTime + ackAirTime); //Wait this number of ms between retransmits. Increases with each re-transmit.
 

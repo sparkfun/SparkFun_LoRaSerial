@@ -168,12 +168,12 @@ typedef struct _VIRTUAL_CIRCUIT
   unsigned long lastHeartbeatMillis;
 
   //Link quality metrics
-  uint32_t framesSent;        //Total number of frames sent
-  uint32_t framesReceived;    //Total number of frames received
-  uint32_t messagesSent;      //Total number of messages sent
-  uint32_t messagesReceived;  //Total number of messages received
-  uint32_t badLength;         //Total number of bad lengths received
-  uint32_t linkFailures;      //Total number of link failures
+  uint32_t framesSent;        //myVc --> VC, Total number of frames sent
+  uint32_t framesReceived;    //myVc <-- VC, Total number of frames received
+  uint32_t messagesSent;      //myVc --> VC, Total number of messages sent
+  uint32_t messagesReceived;  //myVc <-- VC, Total number of messages received
+  uint32_t badLength;         //myVc <-- VC, Total number of bad lengths received
+  uint32_t linkFailures;      //myVc <-> VC, Total number of link failures
 
   //Link management
   bool valid;                 //Unique ID is valid
@@ -182,6 +182,7 @@ typedef struct _VIRTUAL_CIRCUIT
   /* ACK number management
 
               System A                              System B
+             (in destVc)                           (in srcVc)
 
              txAckNumber
                   |
