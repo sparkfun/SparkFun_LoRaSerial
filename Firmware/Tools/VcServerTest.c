@@ -214,6 +214,7 @@ int hostToStdout(uint8_t * data, uint8_t bytesToSend)
 
   //Write this data to stdout
   bytesSent = 0;
+  status = 0;
   while (bytesSent < bytesToSend)
   {
     bytesWritten = write(STDOUT, &data[bytesSent], bytesToSend - bytesSent);
@@ -337,7 +338,9 @@ int radioToHost()
     switch (header->radio.destVc)
     {
     default:
-      //Discard this message
+      if ((header->radio.destVc == myVc) || (header->radio.destVc == VC_BROADCAST))
+        //Output this message
+        status = hostToStdout(data, length);
       break;
 
     case PC_LINK_STATUS:
