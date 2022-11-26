@@ -1644,18 +1644,21 @@ void updateRadioState()
                && (receiveInProcess() == false))
       {
         //Send another heartbeat
-        xmitVcHeartbeat(myVc, myUniqueId);
-        changeState(RADIO_VC_WAIT_TX_DONE);
+        if (xmitVcHeartbeat(myVc, myUniqueId))
+          changeState(RADIO_VC_WAIT_TX_DONE);
       }
 
       //Check for data to send
       else if ((receiveInProcess() == false) && (vcSerialMessageReceived()))
       {
+        //No need to add the VC header since the header is in the radioTxBuffer
         //Transmit the packet
         triggerEvent(TRIGGER_VC_TX_DATA);
         if (xmitDatagramP2PData() == true)
         {
           vcAckTimer = datagramTimer;
+
+          //Since vcAckTimer is off when equal to zero, force it to a non-zero value
           if (!vcAckTimer)
             vcAckTimer = 1;
 
@@ -1761,8 +1764,8 @@ void updateRadioState()
                && (receiveInProcess() == false))
       {
         //Send another heartbeat
-        xmitVcHeartbeat(myVc, myUniqueId);
-        changeState(RADIO_VC_WAIT_TX_DONE_ACK);
+        if (xmitVcHeartbeat(myVc, myUniqueId))
+          changeState(RADIO_VC_WAIT_TX_DONE_ACK);
       }
 
       //Check for retransmit needed
