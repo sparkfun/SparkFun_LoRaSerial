@@ -2253,6 +2253,27 @@ void vcBreakLink(int8_t vcIndex)
     resetSerial();
 }
 
+int8_t vcLinkUp(int8_t index)
+{
+  VIRTUAL_CIRCUIT * vc = &virtualCircuitList[index];
+
+  //Send the status message
+  if (!vc->linkUp)
+  {
+    vcSendLinkStatus(true, index);
+
+    //Reset the ACK counters
+    vc->txAckNumber = 0;
+    vc->rmtTxAckNumber = 0;
+    vc->rxAckNumber = 0;
+  }
+
+  //Update the link status
+  vc->linkUp = true;
+  vc->lastHeartbeatMillis = millis();
+  return index;
+}
+
 int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
 {
   int8_t index;
@@ -2268,16 +2289,8 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
 
     //Compare the unique ID values
     if (memcmp(vc->uniqueId, id, UNIQUE_ID_BYTES) == 0)
-    {
-      if (!vc->linkUp)
-        //Send the status message
-        vcSendLinkStatus(true, index);
-
       //Update the link status
-      vc->linkUp = true;
-      vc->lastHeartbeatMillis = millis();
-      return index;
-    }
+      return vcLinkUp(index);
   }
 
   //The unique ID is not in the list
@@ -2328,15 +2341,8 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
 
   //Mark this link as up
   vc->valid = true;
-  vc->linkUp = true;
-  vc->lastHeartbeatMillis = millis();
   memcpy(&vc->uniqueId, id, UNIQUE_ID_BYTES);
-
-  //Send the status message
-  vcSendLinkStatus(true, index);
-
-  //Returned the assigned address
-  return index;
+  return vcLinkUp(index);
 }
 
 void vcReceiveHeartbeat(RadioStates nextState, uint32_t rxMillis)
