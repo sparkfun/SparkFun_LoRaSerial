@@ -699,18 +699,22 @@ PacketType rcvDatagram()
   }
   else if (state == RADIOLIB_ERR_CRC_MISMATCH)
   {
-    if (settings.debug == true)
+    if (settings.debug || settings.debugDatagrams || settings.debugReceive)
+    {
       systemPrintln("Receive CRC error!");
+      outputSerialData(true);
+    }
     badCrc++;
     returnToReceiving(); //Return to listening
     return (DATAGRAM_CRC_ERROR);
   }
   else
   {
-    if (settings.debug == true)
+    if (settings.debug || settings.debugDatagrams || settings.debugReceive)
     {
       systemPrint("Receive error: ");
       systemPrintln(state);
+      outputSerialData(true);
     }
     returnToReceiving(); //Return to listening
     badFrames++;
@@ -769,7 +773,7 @@ PacketType rcvDatagram()
       hopChannel();
   }
 
-  if (settings.debugTransmit)
+  if (settings.debugReceive)
   {
     systemPrint("in: ");
     dumpBufferRaw(incomingBuffer, 14); //Print only the first few bytes when debugging packets
@@ -798,7 +802,7 @@ PacketType rcvDatagram()
   if (rxDataBytes < minDatagramSize)
   {
     //Display the packet contents
-    if (settings.printPktData || settings.debugReceive)
+    if (settings.printPktData || settings.debugDatagrams || settings.debugReceive)
     {
       systemPrintTimestamp();
       systemPrint("RX: Bad Frame ");
@@ -837,7 +841,7 @@ PacketType rcvDatagram()
     receivedNetID = *rxData++;
     if (receivedNetID != settings.netID)
     {
-      if (settings.debugReceive)
+      if (settings.debugReceive || settings.debugDatagrams)
       {
         systemPrintTimestamp();
         systemPrint("RX: NetID ");
@@ -883,7 +887,7 @@ PacketType rcvDatagram()
         && (incomingBuffer[rxDataBytes - 1] != (crc & 0xff)))
     {
       //Display the packet contents
-      if (settings.printPktData || settings.debugReceive)
+      if (settings.printPktData || settings.debugReceive || settings.debugDatagrams)
       {
         systemPrintTimestamp();
         systemPrint("RX: Bad CRC-16, received 0x");
@@ -925,7 +929,7 @@ PacketType rcvDatagram()
     printControl(*((uint8_t *)&rxControl));
   if (datagramType >= MAX_V2_DATAGRAM_TYPE)
   {
-    if (settings.debugReceive)
+    if (settings.debugReceive || settings.debugDatagrams)
     {
       systemPrintTimestamp();
       systemPrint("RX: Invalid datagram type ");
@@ -1003,7 +1007,7 @@ PacketType rcvDatagram()
     //Verify that the virtual circuit header is present
     if (rxDataBytes < 3)
     {
-      if (settings.debugReceive)
+      if (settings.debugReceive || settings.debugDatagrams)
       {
         systemPrintTimestamp();
         systemPrint("Missing VC header bytes, received only ");
@@ -1050,7 +1054,7 @@ PacketType rcvDatagram()
     {
       if ((uint8_t)rxSrcVc >= MAX_VC)
       {
-        if (settings.debugReceive)
+        if (settings.debugReceive || settings.debugDatagrams)
         {
           systemPrintTimestamp();
           systemPrint("Invalid source VC: ");
@@ -1071,7 +1075,7 @@ PacketType rcvDatagram()
     //Validate the length
     if (vcHeader->length != rxDataBytes)
     {
-      if (settings.debugReceive)
+      if (settings.debugReceive || settings.debugDatagrams)
       {
         systemPrintTimestamp();
         systemPrint("Invalid VC length, received ");
@@ -1091,7 +1095,7 @@ PacketType rcvDatagram()
     //Validate the destination VC
     if ((rxDestVc != VC_BROADCAST) && (rxDestVc != myVc))
     {
-        if (settings.debugReceive)
+        if (settings.debugReceive || settings.debugDatagrams)
         {
           systemPrintTimestamp();
           systemPrint("Not my VC: ");
@@ -1118,7 +1122,7 @@ PacketType rcvDatagram()
       case DATAGRAM_DATA_ACK:
         if (ackNumber != vc->txAckNumber)
         {
-          if (settings.debugReceive)
+          if (settings.debugReceive || settings.debugDatagrams)
           {
             systemPrintTimestamp();
             systemPrint("Invalid ACK number, received ");
@@ -1271,13 +1275,22 @@ PacketType validateDatagram(VIRTUAL_CIRCUIT * vc, PacketType datagramType, uint8
     //Determine if this is a duplicate datagram
     if (ackNumber == ((vc->rmtTxAckNumber - 1) & 3))
     {
+      if (settings.debugReceive || settings.debugDatagrams)
+      {
+        systemPrintTimestamp();
+        systemPrint("Duplicate datagram received, ACK ");
+        systemPrintln(ackNumber);
+        outputSerialData(true);
+        if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+          hopChannel();
+      }
       linkDownTimer = millis();
       duplicateFrames++;
       return DATAGRAM_DUPLICATE;
     }
 
     //Not a duplicate
-    if (settings.debugReceive)
+    if (settings.debugReceive || settings.debugDatagrams)
     {
       systemPrintTimestamp();
       systemPrint("Invalid datagram number, received ");
@@ -1295,7 +1308,7 @@ PacketType validateDatagram(VIRTUAL_CIRCUIT * vc, PacketType datagramType, uint8
   //Verify that there is sufficient space in the serialTransmitBuffer
   if (inCommandMode || ((sizeof(serialTransmitBuffer) - availableTXBytes()) < rxDataBytes))
   {
-    if (settings.debugReceive)
+    if (settings.debugReceive || settings.debugDatagrams)
     {
       systemPrintTimestamp();
       systemPrintln("Insufficient space in the serialTransmitBuffer");
