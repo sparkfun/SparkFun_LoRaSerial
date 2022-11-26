@@ -189,8 +189,6 @@ void updateRadioState()
       //Determine if a PING was received
       if (transactionComplete)
       {
-        transactionComplete = false; //Reset ISR flag
-
         //Decode the received packet
         PacketType packetType = rcvDatagram();
 
@@ -265,8 +263,6 @@ void updateRadioState()
     case RADIO_P2P_WAIT_ACK_1:
       if (transactionComplete)
       {
-        transactionComplete = false; //Reset ISR flag
-
         //Decode the received packet
         PacketType packetType = rcvDatagram();
 
@@ -376,8 +372,6 @@ void updateRadioState()
     case RADIO_P2P_WAIT_ACK_2:
       if (transactionComplete == true)
       {
-        transactionComplete = false; //Reset ISR flag
-
         //Decode the received packet
         PacketType packetType = rcvDatagram();
 
@@ -537,8 +531,6 @@ void updateRadioState()
       //Check for a received datagram
       if (transactionComplete == true)
       {
-        transactionComplete = false; //Reset ISR flag
-
         //Decode the received datagram
         PacketType packetType = rcvDatagram();
 
@@ -778,8 +770,6 @@ void updateRadioState()
 
       if (transactionComplete)
       {
-        transactionComplete = false; //Reset ISR flag
-
         //Decode the received datagram
         PacketType packetType = rcvDatagram();
 
@@ -1027,8 +1017,6 @@ void updateRadioState()
 
       if (transactionComplete)
       {
-        transactionComplete = false; //Reset ISR flag
-
         //Decode the received datagram
         PacketType packetType = rcvDatagram();
 
@@ -1158,7 +1146,6 @@ void updateRadioState()
       if (transactionComplete == true)
       {
         triggerEvent(TRIGGER_MP_PACKET_RECEIVED);
-        transactionComplete = false; //Reset ISR flag
 
         //Decode the received datagram
         PacketType packetType = rcvDatagram();
@@ -1382,7 +1369,6 @@ void updateRadioState()
       //If dio0ISR has fired, a packet has arrived
       if (transactionComplete == true)
       {
-        transactionComplete = false;
         trainingPreviousRxInProgress = false;
 
         //Decode the received datagram
@@ -1483,7 +1469,6 @@ void updateRadioState()
       //If dio0ISR has fired, a packet has arrived
       if (transactionComplete == true)
       {
-        transactionComplete = false; //Reset ISR flag
         trainingPreviousRxInProgress = false;
 
         //Decode the received datagram
@@ -1603,7 +1588,6 @@ void updateRadioState()
       currentMillis = millis();
       if (transactionComplete == true)
       {
-        transactionComplete = false; //Reset ISR flag
         trainingPreviousRxInProgress = false;
 
         //Decode the received datagram
@@ -1706,7 +1690,6 @@ void updateRadioState()
       currentMillis = millis();
       if (transactionComplete == true)
       {
-        transactionComplete = false; //Reset ISR flag
         trainingPreviousRxInProgress = false;
 
         //Decode the received datagram
