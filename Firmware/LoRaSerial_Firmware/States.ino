@@ -30,6 +30,7 @@ void updateRadioState()
   static uint8_t rexmtLength;
   static uint8_t rexmtFrameSentCount;
   static uint8_t rexmtTxDestVc;
+  bool serverLinkBroken;
   VIRTUAL_CIRCUIT * vc;
   VC_RADIO_MESSAGE_HEADER * vcHeader;
 
@@ -1567,6 +1568,32 @@ void updateRadioState()
 
     */
 
+    case RADIO_VC_WAIT_SERVER:
+      if (myVc == VC_SERVER)
+      {
+        changeState(RADIO_VC_WAIT_RECEIVE);
+        break;
+      }
+
+      //If dio0ISR has fired, a packet has arrived
+      currentMillis = millis();
+      if (transactionComplete == true)
+      {
+        //Decode the received datagram
+        PacketType packetType = rcvDatagram();
+
+        //Process the received datagram
+        if ((packetType == DATAGRAM_VC_HEARTBEAT) && (rxSrcVc == VC_SERVER))
+        {
+          vcReceiveHeartbeat(RADIO_VC_WAIT_TX_DONE, millis() - currentMillis);
+          changeState(RADIO_VC_WAIT_RECEIVE);
+        }
+        else
+          //Ignore this datagram
+          triggerEvent(TRIGGER_BAD_PACKET);
+      }
+      break;
+
     case RADIO_VC_WAIT_TX_DONE:
       //If dio0ISR has fired, we are done transmitting
       if (transactionComplete == true)
@@ -1589,8 +1616,6 @@ void updateRadioState()
       currentMillis = millis();
       if (transactionComplete == true)
       {
-        trainingPreviousRxInProgress = false;
-
         //Decode the received datagram
         PacketType packetType = rcvDatagram();
 
@@ -1672,6 +1697,7 @@ void updateRadioState()
       //Check for link timeout
       else
       {
+        serverLinkBroken = false;
         for (index = 0; index < MAX_VC; index++)
         {
           //Don't timeout the connection to myself
@@ -1680,8 +1706,16 @@ void updateRadioState()
 
           //Determine if the link has timed out
           vc = &virtualCircuitList[index];
-          if (vc->linkUp && ((currentMillis - vc->lastHeartbeatMillis) > (VC_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout)))
+          if (vc->linkUp && (serverLinkBroken
+            || ((currentMillis - vc->lastHeartbeatMillis) > (VC_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))))
+          {
+            if (index == VC_SERVER)
+            {
+              serverLinkBroken = true;
+              changeState(RADIO_VC_WAIT_SERVER);
+            }
             vcBreakLink(index);
+          }
         }
       }
       break;
@@ -1708,8 +1742,6 @@ void updateRadioState()
       currentMillis = millis();
       if (transactionComplete == true)
       {
-        trainingPreviousRxInProgress = false;
-
         //Decode the received datagram
         PacketType packetType = rcvDatagram();
 
@@ -1819,12 +1851,28 @@ void updateRadioState()
           //Failed to reach the other system, break the link
           vcAckTimer = 0;
           vcBreakLink(txDestVc);
+          if (txDestVc != VC_SERVER)
+            changeState(RADIO_VC_WAIT_RECEIVE);
+          else
+          {
+            for (index = 0; index < MAX_VC; index++)
+            {
+              //Don't timeout the connection to myself
+              if (index == myVc)
+                continue;
+
+              //Break all of the links
+              vcBreakLink(index);
+            }
+            changeState(RADIO_VC_WAIT_SERVER);
+          }
         }
       }
 
       //Check for link timeout
       else
       {
+        serverLinkBroken = false;
         for (index = 0; index < MAX_VC; index++)
         {
           //Don't timeout the connection to myself
@@ -1833,13 +1881,18 @@ void updateRadioState()
 
           //Determine if the link has timed out
           vc = &virtualCircuitList[index];
-          if (vc->linkUp && ((currentMillis - vc->lastHeartbeatMillis) > (VC_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout)))
+          if (vc->linkUp && (serverLinkBroken
+            || ((currentMillis - vc->lastHeartbeatMillis) > (VC_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))))
           {
+            if (index == VC_SERVER)
+              serverLinkBroken = true;
             vcBreakLink(index);
-            if (index == rexmtTxDestVc)
+            if ((index == rexmtTxDestVc) && (!serverLinkBroken))
               changeState(RADIO_VC_WAIT_RECEIVE);
           }
         }
+        if (serverLinkBroken)
+          changeState(RADIO_VC_WAIT_SERVER);
       }
       break;
   }
