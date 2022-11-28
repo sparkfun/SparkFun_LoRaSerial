@@ -1606,15 +1606,18 @@ void updateRadioState()
 
           case DATAGRAM_DATA:
             //Move the data into the serial output buffer
+            if (settings.debugSerial)
+            {
+              systemPrint("updateRadioState moving ");
+              systemPrint(rxDataBytes);
+              systemPrintln(" bytes from inputBuffer into serialTransmitBuffer");
+              outputSerialData(true);
+            }
+            systemWrite(START_OF_VC_SERIAL);
             serialBufferOutput(rxData, rxDataBytes);
 
             //Acknowledge the data frame
-            vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
-            vcHeader->length = VC_RADIO_HEADER_BYTES + CLOCK_SYNC_BYTES;
-            vcHeader->destVc = rxSrcVc;
-            vcHeader->srcVc = myVc;
-            endOfTxData += VC_RADIO_HEADER_BYTES;
-            if (xmitDatagramP2PAck() == true)
+            if (xmitVcAckFrame(rxSrcVc))
               changeState(RADIO_VC_WAIT_TX_DONE);
             break;
 
@@ -1708,15 +1711,18 @@ void updateRadioState()
 
           case DATAGRAM_DATA:
             //Move the data into the serial output buffer
+            if (settings.debugSerial)
+            {
+              systemPrint("updateRadioState moving ");
+              systemPrint(rxDataBytes);
+              systemPrintln(" bytes from inputBuffer into serialTransmitBuffer");
+              outputSerialData(true);
+            }
+            systemWrite(START_OF_VC_SERIAL);
             serialBufferOutput(rxData, rxDataBytes);
 
             //Acknowledge the data frame
-            vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
-            vcHeader->length = VC_RADIO_HEADER_BYTES + CLOCK_SYNC_BYTES;
-            vcHeader->destVc = rxSrcVc;
-            vcHeader->srcVc = myVc;
-            endOfTxData += VC_RADIO_HEADER_BYTES;
-            if (xmitDatagramP2PAck() == true)
+            if (xmitVcAckFrame(rxSrcVc))
               changeState(RADIO_VC_WAIT_TX_DONE_ACK);
             break;
 

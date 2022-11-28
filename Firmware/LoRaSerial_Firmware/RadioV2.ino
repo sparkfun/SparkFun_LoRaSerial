@@ -643,6 +643,32 @@ bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
   return (transmitDatagram());
 }
 
+//Build the ACK frame
+bool xmitVcAckFrame(int8_t destVc)
+{
+  VC_RADIO_MESSAGE_HEADER * vcHeader;
+
+  vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
+  vcHeader->length = VC_RADIO_HEADER_BYTES + CLOCK_SYNC_BYTES;
+  vcHeader->destVc = destVc;
+  vcHeader->srcVc = myVc;
+  endOfTxData += VC_RADIO_HEADER_BYTES;
+
+  /*
+                                        endOfTxData ---.
+                                                       |
+                                                       V
+      +--------+---------+--------+----------+---------+----------+----------+
+      |        |         |        |          |         | Channel  | Optional |
+      | NET ID | Control | Length | DestAddr | SrcAddr |  Timer   | Trailer  |
+      | 8 bits | 8 bits  | 8 bits |  8 bits  | 8 bits  | 2 bytes  | n Bytes  |
+      +--------+---------+--------+----------+---------+----------+----------+
+  */
+
+  //Finish building the ACK frame
+  return xmitDatagramP2PAck();
+}
+
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Datagram reception
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
