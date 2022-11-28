@@ -713,6 +713,7 @@ PacketType rcvDatagram()
       systemPrintln(state);
     }
     returnToReceiving(); //Return to listening
+    badFrames++;
     return (DATAGRAM_BAD);
   }
 
@@ -964,9 +965,7 @@ PacketType rcvDatagram()
   if (settings.radioSpreadFactor == 6)
   {
     if (rxDataBytes >= (*rxData + minDatagramSize))
-    {
       rxDataBytes = *rxData++;
-    }
     else
     {
       if (settings.debugReceive)
@@ -983,6 +982,15 @@ PacketType rcvDatagram()
       }
       badFrames++;
       return (DATAGRAM_BAD);
+    }
+    if (settings.debugTransmit)
+    {
+      systemPrintTimestamp();
+      systemPrint("    SF6 Length: ");
+      systemPrintln(rxDataBytes);
+      outputSerialData(true);
+      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+        hopChannel();
     }
   }
   else
@@ -1168,6 +1176,27 @@ PacketType rcvDatagram()
     rxSrcVc = vcHeader->srcVc;
     rxVcData = &rxData[3];
 
+    //Display the virtual circuit header
+    if (settings.debugReceive)
+    {
+      systemPrintTimestamp();
+      systemPrint("    VC Length: ");
+      systemPrintln(vcHeader->length);
+      systemPrint("    DestAddr: ");
+      if (rxDestVc == VC_BROADCAST)
+        systemPrintln("Broadcast");
+      else
+        systemPrintln(rxDestVc);
+      systemPrint("    SrcAddr: ");
+      if (rxSrcVc == VC_UNASSIGNED)
+        systemPrintln("Unassigned");
+      else
+        systemPrintln(rxSrcVc);
+      outputSerialData(true);
+      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+        hopChannel();
+    }
+
     //Validate the source VC
     vc = NULL;
     if (rxSrcVc != VC_UNASSIGNED)
@@ -1206,9 +1235,9 @@ PacketType rcvDatagram()
       }
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
-      badFrames++;
       if (vc)
         vc->badLength++;
+      badFrames++;
       return DATAGRAM_BAD;
     }
 
@@ -1295,6 +1324,13 @@ PacketType rcvDatagram()
   {
     systemPrintTimestamp();
     systemPrint("RX: ");
+    if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+    {
+      systemPrint((uint8_t)rxDestVc);
+      systemPrint(" <-- ");
+      systemPrint((uint8_t)rxSrcVc);
+      systemWrite(' ');
+    }
     systemPrint(v2DatagramType[datagramType]);
     switch (datagramType)
     {
@@ -1307,9 +1343,12 @@ PacketType rcvDatagram()
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
       case DATAGRAM_HEARTBEAT:
-        if (settings.operatingMode == MODE_POINT_TO_POINT)
+        if (settings.operatingMode != MODE_DATAGRAM)
         {
-          systemPrint(" (ACK #");
+          systemPrint(" (");
+          if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+            systemPrint("VC ");
+          systemPrint("ACK #");
           systemPrint(ackNumber);
           systemPrint(")");
         }
@@ -1383,6 +1422,13 @@ bool transmitDatagram()
   {
     systemPrintTimestamp();
     systemPrint("TX: ");
+    if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+    {
+      systemPrint((uint8_t)srcVc);
+      systemPrint(" --> ");
+      systemPrint((uint8_t)txDestVc);
+      systemWrite(' ');
+    }
     systemPrint(v2DatagramType[txControl.datagramType]);
     switch (txControl.datagramType)
     {
@@ -1395,9 +1441,12 @@ bool transmitDatagram()
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
       case DATAGRAM_HEARTBEAT:
-        if (settings.operatingMode == MODE_POINT_TO_POINT)
+        if (settings.operatingMode != MODE_DATAGRAM)
         {
-          systemPrint(" (ACK #");
+          systemPrint(" (");
+          if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+            systemPrint("VC ");
+          systemPrint("ACK #");
           systemPrint(txControl.ackNumber);
           systemPrint(")");
         }
@@ -1522,7 +1571,6 @@ bool transmitDatagram()
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
     }
-
   }
 
   //Verify the Virtual-Circuit length
