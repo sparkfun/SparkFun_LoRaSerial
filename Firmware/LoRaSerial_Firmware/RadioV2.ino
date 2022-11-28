@@ -692,6 +692,8 @@ PacketType rcvDatagram()
   returnToReceiving(); //Immediately begin listening while we process new data
 
   rxData = incomingBuffer;
+  vc = &virtualCircuitList[0];
+  vcHeader = NULL;
 
   /*
       |<---------------------- rxDataBytes ---------------------->|
@@ -967,7 +969,7 @@ PacketType rcvDatagram()
         break;
 
       case DATAGRAM_DATA_ACK:
-        if (ackNumber != txAckNumber)
+        if (ackNumber != vc->txAckNumber)
         {
           if (settings.debugReceive)
           {
@@ -975,7 +977,7 @@ PacketType rcvDatagram()
             systemPrint("Invalid ACK number, received ");
             systemPrint(ackNumber);
             systemPrint(" expecting ");
-            systemPrintln(txAckNumber);
+            systemPrintln(vc->txAckNumber);
             outputSerialData(true);
             if (timeToHop == true) //If the channelTimer has expired, move to next frequency
               hopChannel();
@@ -988,13 +990,13 @@ PacketType rcvDatagram()
         if (settings.printAckNumbers)
         {
           systemPrint("txAckNumber: ");
-          systemPrint(txAckNumber);
+          systemPrint(vc->txAckNumber);
           systemPrint(" --> ");
         }
-        txAckNumber = (txAckNumber + 1) & 3;
+        vc->txAckNumber = (vc->txAckNumber + 1) & 3;
         if (settings.printAckNumbers)
         {
-          systemPrintln(txAckNumber);
+          systemPrintln(vc->txAckNumber);
           outputSerialData(true);
         }
         break;
@@ -1002,10 +1004,10 @@ PacketType rcvDatagram()
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
       case DATAGRAM_HEARTBEAT:
-        if (ackNumber != rmtTxAckNumber)
+        if (ackNumber != vc->rmtTxAckNumber)
         {
           //Determine if this is a duplicate datagram
-          if (ackNumber == ((rmtTxAckNumber - 1) & 3))
+          if (ackNumber == ((vc->rmtTxAckNumber - 1) & 3))
           {
             linkDownTimer = millis();
             duplicateFrames++;
@@ -1019,7 +1021,7 @@ PacketType rcvDatagram()
             systemPrint("Invalid datagram number, received ");
             systemPrint(ackNumber);
             systemPrint(" expecting ");
-            systemPrintln(rmtTxAckNumber);
+            systemPrintln(vc->rmtTxAckNumber);
             outputSerialData(true);
             if (timeToHop == true) //If the channelTimer has expired, move to next frequency
               hopChannel();
@@ -1032,30 +1034,30 @@ PacketType rcvDatagram()
         if (settings.printAckNumbers)
         {
           systemPrint("rxAckNumber: ");
-          systemPrint(rxAckNumber);
+          systemPrint(vc->rxAckNumber);
           systemPrint(" --> ");
         }
-        rxAckNumber = rmtTxAckNumber;
+        vc->rxAckNumber = vc->rmtTxAckNumber;
         if (settings.printAckNumbers)
         {
-          systemPrintln(rxAckNumber);
+          systemPrintln(vc->rxAckNumber);
           systemPrint("rmtTxAckNumber: ");
-          systemPrint(rmtTxAckNumber);
+          systemPrint(vc->rmtTxAckNumber);
           systemPrint(" --> ");
         }
-        rmtTxAckNumber = (rmtTxAckNumber + 1) & 3;
+        vc->rmtTxAckNumber = (vc->rmtTxAckNumber + 1) & 3;
         if (settings.printAckNumbers)
         {
-          systemPrintln(rmtTxAckNumber);
+          systemPrintln(vc->rmtTxAckNumber);
           outputSerialData(true);
         }
         break;
 
       case DATAGRAM_DATA:
-        if (ackNumber != rmtTxAckNumber)
+        if (ackNumber != vc->rmtTxAckNumber)
         {
           //Determine if this is a duplicate datagram
-          if (ackNumber == ((rmtTxAckNumber - 1) & 3))
+          if (ackNumber == ((vc->rmtTxAckNumber - 1) & 3))
           {
             linkDownTimer = millis();
             duplicateFrames++;
@@ -1069,7 +1071,7 @@ PacketType rcvDatagram()
             systemPrint("Invalid datagram number, received ");
             systemPrint(ackNumber);
             systemPrint(" expecting ");
-            systemPrintln(rmtTxAckNumber);
+            systemPrintln(vc->rmtTxAckNumber);
             outputSerialData(true);
             if (timeToHop == true) //If the channelTimer has expired, move to next frequency
               hopChannel();
@@ -1096,17 +1098,17 @@ PacketType rcvDatagram()
         //Receive this data packet and set the next expected datagram number
         if (settings.printAckNumbers)
         {
-          systemPrint("rxAckNumber: ");
-          systemPrint(rxAckNumber);
+          systemPrint("vc->rxAckNumber: ");
+          systemPrint(vc->rxAckNumber);
           systemPrint(" --> ");
         }
-        rxAckNumber = rmtTxAckNumber;
+        vc->rxAckNumber = vc->rmtTxAckNumber;
         if (settings.printAckNumbers)
         {
-          systemPrintln(rxAckNumber);
+          systemPrintln(vc->rxAckNumber);
           outputSerialData(true);
         }
-        rmtTxAckNumber = (rmtTxAckNumber + 1) & 3;
+        vc->rmtTxAckNumber = (vc->rmtTxAckNumber + 1) & 3;
         break;
     }
   }
@@ -1320,9 +1322,11 @@ bool transmitDatagram()
     hopChannel();
 
   //Parse the virtual circuit header
-  vc = NULL;
+  vc = &virtualCircuitList[0];
+  vcHeader = NULL;
   if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
   {
+    vc = NULL;
     vcHeader = (VC_RADIO_MESSAGE_HEADER *)&outgoingPacket[headerBytes];
     txDestVc = vcHeader->destVc;
     srcVc = vcHeader->srcVc;
@@ -1341,9 +1345,9 @@ bool transmitDatagram()
 
   //Select the ACK number
   if (txControl.datagramType == DATAGRAM_DATA_ACK)
-    txControl.ackNumber = rxAckNumber;
+    txControl.ackNumber = vc->rxAckNumber;
   else
-    txControl.ackNumber = txAckNumber;
+    txControl.ackNumber = vc->txAckNumber;
 
   //Process the packet
   if (settings.debugDatagrams)

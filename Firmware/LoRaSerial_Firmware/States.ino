@@ -2132,6 +2132,8 @@ void v2BreakLink()
 
 void v2EnterLinkUp()
 {
+  VIRTUAL_CIRCUIT * vc;
+
   //Bring up the link
   triggerEvent(TRIGGER_HANDSHAKE_COMPLETE);
   hopChannel(); //Leave home
@@ -2139,9 +2141,10 @@ void v2EnterLinkUp()
   updateRSSI();
 
   //Synchronize the ACK numbers
-  rmtTxAckNumber = 0;
-  rxAckNumber = 0;
-  txAckNumber = 0;
+  vc = &virtualCircuitList[0];
+  vc->rmtTxAckNumber = 0;
+  vc->rxAckNumber = 0;
+  vc->txAckNumber = 0;
 
   //Discard any previous data
   discardPreviousData();
