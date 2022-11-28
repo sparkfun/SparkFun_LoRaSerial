@@ -38,8 +38,6 @@ typedef enum
   RADIO_VC_WAIT_SERVER,
   RADIO_VC_WAIT_TX_DONE,
   RADIO_VC_WAIT_RECEIVE,
-  RADIO_VC_WAIT_TX_DONE_ACK,
-  RADIO_VC_WAIT_ACK,
 
   RADIO_MAX_STATE,
 } RadioStates;
@@ -102,8 +100,6 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   {RADIO_VC_WAIT_SERVER,                 1, "VC_WAIT_SERVER",                 "V2 VC: Wait for the server"},         //26
   {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "V2 VC: Wait for TX done"},            //27
   {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "V2 VC: Wait for receive"},            //28
-  {RADIO_VC_WAIT_TX_DONE_ACK,            0, "VC_WAIT_TX_DONE_ACK",            "V2 VC: Wait for TX done then ACK"},   //29
-  {RADIO_VC_WAIT_ACK,                    1, "VC_WAIT_ACK",                    "V2 VC: Wait for ACK"},                //30
 };
 
 //Possible types of packets received
