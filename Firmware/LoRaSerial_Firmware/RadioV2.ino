@@ -657,6 +657,9 @@ PacketType rcvDatagram()
   VIRTUAL_CIRCUIT * vc;
   VC_RADIO_MESSAGE_HEADER * vcHeader;
 
+  //Acknowledge the receive interrupt
+  transactionComplete = false;
+
   //Save the receive time
   rcvTimeMillis = millis();
 
