@@ -950,6 +950,8 @@ void updateRadioState()
       //completes transmission, retransmit the previously lost datagram.
       if (transactionComplete)
       {
+        transactionComplete = false; //Reset ISR flag
+
         //Retransmit the packet
         if ((!settings.maxResends) || (rexmtFrameSentCount < settings.maxResends))
         {
@@ -986,7 +988,6 @@ void updateRadioState()
 
           if (retransmitDatagram(NULL) == true)
           {
-            transactionComplete = false; //Reset ISR flag
             setHeartbeatLong(); //We're re-sending data, so don't be the first to send next heartbeat
             lostFrames++;
             changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
