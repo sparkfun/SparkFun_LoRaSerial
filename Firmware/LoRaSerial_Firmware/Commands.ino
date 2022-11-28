@@ -191,6 +191,7 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI25 - Display the total insufficient buffer count");
         systemPrintln("  ATI26 - Display the total number of bad CRC frames");
         systemPrintln("  ATI27 - Display the total number of net ID mismatch frames");
+        systemPrintln("  ATI28 - Return myVc value");
         break;
       case ('0'): //ATI0 - Show user settable parameters
         displayParameters(0, true);
@@ -366,6 +367,12 @@ bool commandAT(const char * commandString)
       case ('7'): //ATI27 - Display the total number of net ID mismatch frames
         systemPrint("Total number of net ID mismatch frames: ");
         systemPrintln(netIdMismatch);
+        break;
+      case ('8'): //ATI28 - Return myVc value
+        systemPrintln();
+        systemPrint("myVc: ");
+        systemPrintln(myVc);
+        reportOK();
         break;
     }
   }
