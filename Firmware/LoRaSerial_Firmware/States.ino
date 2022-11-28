@@ -1625,6 +1625,17 @@ void updateRadioState()
           case DATAGRAM_DATA_ACK:
             vcAckTimer = 0;
             break;
+
+          case DATAGRAM_DUPLICATE:
+            printPacketQuality();
+
+            updateRSSI(); //Adjust LEDs to RSSI level
+            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+
+            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DUP);
+            if (xmitVcAckFrame(rxSrcVc))
+              changeState(RADIO_VC_WAIT_TX_DONE);
+            break;
         }
       }
 
@@ -1730,6 +1741,17 @@ void updateRadioState()
           case DATAGRAM_DATA_ACK:
             vcAckTimer = 0;
             changeState(RADIO_VC_WAIT_RECEIVE);
+            break;
+
+          case DATAGRAM_DUPLICATE:
+            printPacketQuality();
+            updateRSSI(); //Adjust LEDs to RSSI level
+            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+
+            //Acknowledge the data frame
+            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DUP);
+            if (xmitVcAckFrame(rxSrcVc))
+              changeState(RADIO_VC_WAIT_TX_DONE);
             break;
         }
       }
