@@ -137,7 +137,7 @@ unsigned long timerStart = 0; //Tracks how long our timer has been running since
 bool partialTimer = false; //After an ACK we reset and run a partial timer to sync units
 const int SYNC_PROCESSING_OVERHEAD = 3; //Number of milliseconds it takes to compute clock deltas before sync'ing clocks
 
-uint16_t petTimeoutHalf = 0; //Half the amount of time before WDT. Helps reduce amount of time spent petting.
+uint16_t petTimeout = 0; //A reduced amount of time before WDT triggers. Helps reduce amount of time spent petting.
 unsigned long lastPet = 0; //Remebers time of last WDT pet.
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
