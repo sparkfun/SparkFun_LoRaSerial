@@ -383,38 +383,6 @@ unsigned long datagramTimer;
 uint16_t pingRandomTime;
 uint16_t heartbeatRandomTime;
 
-/* ACK Number Management
-
-            System A                              System B
-
-           txAckNumber
-                |
-                V
-          Tx DATA Frame -----------------------> Rx DATA Frame
-                                                      |
-                                                      V
-                                                  AckNumber == rmtTxAckNumber
-                                                      |
-                                                      | yes
-                                                      V
-                                                 rxAckNumber = rmtTxAckNumber++
-                                                      |
-                                                      V
-        Rx DATA_Ack Frame <--------------------- Tx DATA_ACK Frame
-                |
-                V
-            ackNumber == txAckNumber
-                |
-                | yes
-                V
-           txAckNumber++
-*/
-
-//ACK management
-uint8_t rmtTxAckNumber;
-uint8_t rxAckNumber;
-uint8_t txAckNumber;
-
 //Receive control
 uint8_t incomingBuffer[MAX_PACKET_SIZE];
 uint8_t minDatagramSize;

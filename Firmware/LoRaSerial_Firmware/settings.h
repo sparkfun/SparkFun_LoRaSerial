@@ -35,10 +35,9 @@ typedef enum
   RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,
 
   //Virtual-Circuit states
+  RADIO_VC_WAIT_SERVER,
   RADIO_VC_WAIT_TX_DONE,
   RADIO_VC_WAIT_RECEIVE,
-  RADIO_VC_WAIT_TX_DONE_ACK,
-  RADIO_VC_WAIT_ACK,
 
   RADIO_MAX_STATE,
 } RadioStates;
@@ -97,10 +96,10 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   {RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,   0, "MP_WAIT_TX_RADIO_PARAMS_DONE",   "V2 MP: Wait for TX params done"},     //25
 
   //V2 - Virtual circuit states
-  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "V2 VC: Wait for TX done"},            //26
-  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "V2 VC: Wait for receive"},            //27
-  {RADIO_VC_WAIT_TX_DONE_ACK,            0, "VC_WAIT_TX_DONE_ACK",            "V2 VC: Wait for TX done then ACK"},   //28
-  {RADIO_VC_WAIT_ACK,                    1, "VC_WAIT_ACK",                    "V2 VC: Wait for ACK"},                //29
+  //    State                           RX      Name                              Description
+  {RADIO_VC_WAIT_SERVER,                 1, "VC_WAIT_SERVER",                 "V2 VC: Wait for the server"},         //26
+  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "V2 VC: Wait for TX done"},            //27
+  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "V2 VC: Wait for receive"},            //28
 };
 
 //Possible types of packets received
@@ -168,12 +167,12 @@ typedef struct _VIRTUAL_CIRCUIT
   unsigned long lastHeartbeatMillis;
 
   //Link quality metrics
-  uint32_t framesSent;        //Total number of frames sent
-  uint32_t framesReceived;    //Total number of frames received
-  uint32_t messagesSent;      //Total number of messages sent
-  uint32_t messagesReceived;  //Total number of messages received
-  uint32_t badLength;         //Total number of bad lengths received
-  uint32_t linkFailures;      //Total number of link failures
+  uint32_t framesSent;        //myVc --> VC, Total number of frames sent
+  uint32_t framesReceived;    //myVc <-- VC, Total number of frames received
+  uint32_t messagesSent;      //myVc --> VC, Total number of messages sent
+  uint32_t messagesReceived;  //myVc <-- VC, Total number of messages received
+  uint32_t badLength;         //myVc <-- VC, Total number of bad lengths received
+  uint32_t linkFailures;      //myVc <-> VC, Total number of link failures
 
   //Link management
   bool valid;                 //Unique ID is valid
@@ -182,6 +181,7 @@ typedef struct _VIRTUAL_CIRCUIT
   /* ACK number management
 
               System A                              System B
+             (in destVc)                           (in srcVc)
 
              txAckNumber
                   |

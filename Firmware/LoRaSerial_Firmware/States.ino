@@ -30,6 +30,7 @@ void updateRadioState()
   static uint8_t rexmtLength;
   static uint8_t rexmtFrameSentCount;
   static uint8_t rexmtTxDestVc;
+  bool serverLinkBroken;
   VIRTUAL_CIRCUIT * vc;
   VC_RADIO_MESSAGE_HEADER * vcHeader;
 
@@ -189,8 +190,6 @@ void updateRadioState()
       //Determine if a PING was received
       if (transactionComplete)
       {
-        transactionComplete = false; //Reset ISR flag
-
         //Decode the received packet
         PacketType packetType = rcvDatagram();
 
@@ -265,8 +264,6 @@ void updateRadioState()
     case RADIO_P2P_WAIT_ACK_1:
       if (transactionComplete)
       {
-        transactionComplete = false; //Reset ISR flag
-
         //Decode the received packet
         PacketType packetType = rcvDatagram();
 
@@ -376,8 +373,6 @@ void updateRadioState()
     case RADIO_P2P_WAIT_ACK_2:
       if (transactionComplete == true)
       {
-        transactionComplete = false; //Reset ISR flag
-
         //Decode the received packet
         PacketType packetType = rcvDatagram();
 
@@ -537,8 +532,6 @@ void updateRadioState()
       //Check for a received datagram
       if (transactionComplete == true)
       {
-        transactionComplete = false; //Reset ISR flag
-
         //Decode the received datagram
         PacketType packetType = rcvDatagram();
 
@@ -778,8 +771,6 @@ void updateRadioState()
 
       if (transactionComplete)
       {
-        transactionComplete = false; //Reset ISR flag
-
         //Decode the received datagram
         PacketType packetType = rcvDatagram();
 
@@ -960,6 +951,8 @@ void updateRadioState()
       //completes transmission, retransmit the previously lost datagram.
       if (transactionComplete)
       {
+        transactionComplete = false; //Reset ISR flag
+
         //Retransmit the packet
         if ((!settings.maxResends) || (rexmtFrameSentCount < settings.maxResends))
         {
@@ -996,7 +989,6 @@ void updateRadioState()
 
           if (retransmitDatagram(NULL) == true)
           {
-            transactionComplete = false; //Reset ISR flag
             setHeartbeatLong(); //We're re-sending data, so don't be the first to send next heartbeat
             lostFrames++;
             changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
@@ -1027,8 +1019,6 @@ void updateRadioState()
 
       if (transactionComplete)
       {
-        transactionComplete = false; //Reset ISR flag
-
         //Decode the received datagram
         PacketType packetType = rcvDatagram();
 
@@ -1158,7 +1148,6 @@ void updateRadioState()
       if (transactionComplete == true)
       {
         triggerEvent(TRIGGER_MP_PACKET_RECEIVED);
-        transactionComplete = false; //Reset ISR flag
 
         //Decode the received datagram
         PacketType packetType = rcvDatagram();
@@ -1382,7 +1371,6 @@ void updateRadioState()
       //If dio0ISR has fired, a packet has arrived
       if (transactionComplete == true)
       {
-        transactionComplete = false;
         trainingPreviousRxInProgress = false;
 
         //Decode the received datagram
@@ -1429,9 +1417,7 @@ void updateRadioState()
 
       //Check for a receive timeout
       else if ((millis() - datagramTimer) > (settings.clientPingRetryInterval * 1000))
-      {
         xmitDatagramMpTrainingPing();
-      }
       break;
 
     case RADIO_MP_WAIT_TX_PARAM_ACK_DONE:
@@ -1483,7 +1469,6 @@ void updateRadioState()
       //If dio0ISR has fired, a packet has arrived
       if (transactionComplete == true)
       {
-        transactionComplete = false; //Reset ISR flag
         trainingPreviousRxInProgress = false;
 
         //Decode the received datagram
@@ -1499,6 +1484,7 @@ void updateRadioState()
           case DATAGRAM_TRAINING_PING:
             //Save the client ID
             memcpy(trainingPartnerID, rxData, UNIQUE_ID_BYTES);
+
             //Wait for the transmit to complete
             if (xmitDatagramMpRadioParameters(trainingPartnerID) == true)
               changeState(RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE);
@@ -1556,30 +1542,54 @@ void updateRadioState()
                    RADIO_RESET
                         |
                         V
+               RADIO_VC_WAIT_SERVER
+                        |
+                        V
                         +<-------------------------.
                         |                          |
                         | Send VC_HEARTBEAT        |
                         |                          |
                         V                          |
-              RADIO_VC_WAIT_TX_DONE                |
-                        |                          |
-                        V                          | Heartbeat timeout
-      .-----> RADIO_VC_WAIT_RECEIVE ---------------'
+      .-----> RADIO_VC_WAIT_TX_DONE                |
+      |                 |                          |
+      |                 V                          | Heartbeat timeout
+      |       RADIO_VC_WAIT_RECEIVE ---------------'
       |                 |
-      |                 | Receive serial data
-      |                 | Send DATA
+      |     ACK Timeout | Receive serial data
+      |      Retransmit | Send DATA
       |                 |
-      |                 V
-      | Receive ACK     +<----------------+<----------------------.
-      |                 |                 ^                       |
-      |                 V                 |                       | Send ACK
-      |     RADIO_VC_WAIT_TC_DONE_ACK     | Send VC_HEARTBEAT     |
-      |                 |                 |                       | Receive DATA
-      |                 V                 | Heartbeat timeout     |
-      '-------- RADIO_VC_WAIT_ACK --------+-----------------------'
-
+      |  Remote Cmd Rsp | Remote Cmd
+      |    Send Cmd Rsp | Send remote Cmd
+      |                 |
+      '-----------------'
 
     */
+
+    case RADIO_VC_WAIT_SERVER:
+      if (myVc == VC_SERVER)
+      {
+        changeState(RADIO_VC_WAIT_RECEIVE);
+        break;
+      }
+
+      //If dio0ISR has fired, a packet has arrived
+      currentMillis = millis();
+      if (transactionComplete == true)
+      {
+        //Decode the received datagram
+        PacketType packetType = rcvDatagram();
+
+        //Process the received datagram
+        if ((packetType == DATAGRAM_VC_HEARTBEAT) && (rxSrcVc == VC_SERVER))
+        {
+          vcReceiveHeartbeat(millis() - currentMillis);
+          changeState(RADIO_VC_WAIT_RECEIVE);
+        }
+        else
+          //Ignore this datagram
+          triggerEvent(TRIGGER_BAD_PACKET);
+      }
+      break;
 
     case RADIO_VC_WAIT_TX_DONE:
       //If dio0ISR has fired, we are done transmitting
@@ -1603,9 +1613,6 @@ void updateRadioState()
       currentMillis = millis();
       if (transactionComplete == true)
       {
-        transactionComplete = false; //Reset ISR flag
-        trainingPreviousRxInProgress = false;
-
         //Decode the received datagram
         PacketType packetType = rcvDatagram();
 
@@ -1617,59 +1624,143 @@ void updateRadioState()
             break;
 
           case DATAGRAM_VC_HEARTBEAT:
-            vcReceiveHeartbeat(RADIO_VC_WAIT_TX_DONE, millis() - currentMillis);
+            vcReceiveHeartbeat(millis() - currentMillis);
             break;
 
           case DATAGRAM_DATA:
             //Move the data into the serial output buffer
+            if (settings.debugSerial)
+            {
+              systemPrint("updateRadioState moving ");
+              systemPrint(rxDataBytes);
+              systemPrintln(" bytes from inputBuffer into serialTransmitBuffer");
+              outputSerialData(true);
+            }
+            systemWrite(START_OF_VC_SERIAL);
             serialBufferOutput(rxData, rxDataBytes);
 
             //Acknowledge the data frame
-            vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
-            vcHeader->length = VC_RADIO_HEADER_BYTES + CLOCK_SYNC_BYTES;
-            vcHeader->destVc = rxSrcVc;
-            vcHeader->srcVc = myVc;
-            endOfTxData += VC_RADIO_HEADER_BYTES;
-            if (xmitDatagramP2PAck() == true)
+            if (xmitVcAckFrame(rxSrcVc))
               changeState(RADIO_VC_WAIT_TX_DONE);
             break;
 
           case DATAGRAM_DATA_ACK:
             vcAckTimer = 0;
             break;
+
+          case DATAGRAM_DUPLICATE:
+            printPacketQuality();
+
+            updateRSSI(); //Adjust LEDs to RSSI level
+            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+
+            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DUP);
+            if (xmitVcAckFrame(rxSrcVc))
+              changeState(RADIO_VC_WAIT_TX_DONE);
+            break;
         }
       }
 
+      //----------
       //Transmit a HEARTBEAT if necessary
+      //----------
       else if (((currentMillis - heartbeatTimer) >= heartbeatRandomTime)
                && (receiveInProcess() == false))
       {
         //Send another heartbeat
-        xmitVcHeartbeat(myVc, myUniqueId);
-        changeState(RADIO_VC_WAIT_TX_DONE);
+        if (xmitVcHeartbeat(myVc, myUniqueId))
+          changeState(RADIO_VC_WAIT_TX_DONE);
       }
 
+      //----------
+      //Wait for an outstanding ACK until it is received, don't transmit any other data
+      //----------
+      else if (vcAckTimer)
+      {
+        //Check for retransmit needed
+        if ((currentMillis - vcAckTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+        {
+          //Determine if another retransmit is allowed
+          txDestVc = rexmtTxDestVc;
+          if ((!settings.maxResends) || (rexmtFrameSentCount < settings.maxResends))
+          {
+            rexmtFrameSentCount++;
+
+            //Restore the message for retransmission
+            RESTORE_TX_BUFFER();
+            if (settings.debugDatagrams)
+            {
+              systemPrintTimestamp();
+              systemPrint("TX: Retransmit ");
+              systemPrint(frameSentCount);
+              systemPrint(", ");
+              systemPrint(v2DatagramType[txControl.datagramType]);
+              switch (txControl.datagramType)
+              {
+                default:
+                  systemPrintln();
+                  break;
+
+                case DATAGRAM_DATA:
+                case DATAGRAM_DATA_ACK:
+                case DATAGRAM_REMOTE_COMMAND:
+                case DATAGRAM_REMOTE_COMMAND_RESPONSE:
+                case DATAGRAM_HEARTBEAT:
+                  systemPrint(" (ACK #");
+                  systemPrint(txControl.ackNumber);
+                  systemPrint(")");
+                  systemPrintln();
+                  break;
+              }
+              outputSerialData(true);
+            }
+
+            //Retransmit the packet
+            if (retransmitDatagram(((uint8_t)txDestVc <= MAX_VC) ? &virtualCircuitList[txDestVc] : NULL))
+              changeState(RADIO_VC_WAIT_TX_DONE);
+
+            //Since vcAckTimer is off when equal to zero, force it to a non-zero value
+            vcAckTimer = datagramTimer;
+            if (!vcAckTimer)
+              vcAckTimer = 1;
+            lostFrames++;
+          }
+          else
+          {
+            //Failed to reach the other system, break the link
+            vcAckTimer = 0;
+            vcBreakLink(txDestVc);
+          }
+        }
+      }
+
+      //----------
       //Check for data to send
+      //----------
       else if ((receiveInProcess() == false) && (vcSerialMessageReceived()))
       {
+        //No need to add the VC header since the header is in the radioTxBuffer
         //Transmit the packet
         triggerEvent(TRIGGER_VC_TX_DATA);
         if (xmitDatagramP2PData() == true)
-        {
-          vcAckTimer = datagramTimer;
-          if (!vcAckTimer)
-            vcAckTimer = 1;
+          changeState(RADIO_VC_WAIT_TX_DONE);
+        vcAckTimer = datagramTimer;
 
-          //Save the message for retransmission
-          SAVE_TX_BUFFER();
-          rexmtTxDestVc = txDestVc;
-          changeState(RADIO_VC_WAIT_TX_DONE_ACK);
-        }
+        //Since vcAckTimer is off when equal to zero, force it to a non-zero value
+        if (!vcAckTimer)
+          vcAckTimer = 1;
+
+        //Save the message for retransmission
+        SAVE_TX_BUFFER();
+        rexmtTxDestVc = txDestVc;
       }
 
+      //----------
       //Check for link timeout
+      //----------
       else
       {
+        serverLinkBroken = false;
         for (index = 0; index < MAX_VC; index++)
         {
           //Don't timeout the connection to myself
@@ -1678,151 +1769,15 @@ void updateRadioState()
 
           //Determine if the link has timed out
           vc = &virtualCircuitList[index];
-          if (vc->linkUp && ((currentMillis - vc->lastHeartbeatMillis) > (VC_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout)))
-            vcBreakLink(index);
-        }
-      }
-      break;
-
-    case RADIO_VC_WAIT_TX_DONE_ACK:
-      //If dio0ISR has fired, we are done transmitting
-      if (transactionComplete == true)
-      {
-        transactionComplete = false;
-
-        //Indicate that the receive is complete
-        triggerEvent(TRIGGER_VC_TX_DONE);
-
-        //Start the receive operation
-        returnToReceiving();
-
-        //Set the next state
-        changeState(RADIO_VC_WAIT_ACK);
-      }
-      break;
-
-    case RADIO_VC_WAIT_ACK:
-      //If dio0ISR has fired, a packet has arrived
-      currentMillis = millis();
-      if (transactionComplete == true)
-      {
-        transactionComplete = false; //Reset ISR flag
-        trainingPreviousRxInProgress = false;
-
-        //Decode the received datagram
-        PacketType packetType = rcvDatagram();
-
-        //Process the received datagram
-        switch (packetType)
-        {
-          default:
-            triggerEvent(TRIGGER_BAD_PACKET);
-            break;
-
-          case DATAGRAM_VC_HEARTBEAT:
-            vcReceiveHeartbeat(RADIO_VC_WAIT_TX_DONE_ACK, millis() - currentMillis);
-            break;
-
-          case DATAGRAM_DATA:
-            //Move the data into the serial output buffer
-            serialBufferOutput(rxData, rxDataBytes);
-
-            //Acknowledge the data frame
-            vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
-            vcHeader->length = VC_RADIO_HEADER_BYTES + CLOCK_SYNC_BYTES;
-            vcHeader->destVc = rxSrcVc;
-            vcHeader->srcVc = myVc;
-            endOfTxData += VC_RADIO_HEADER_BYTES;
-            if (xmitDatagramP2PAck() == true)
-              changeState(RADIO_VC_WAIT_TX_DONE_ACK);
-            break;
-
-          case DATAGRAM_DATA_ACK:
-            vcAckTimer = 0;
-            changeState(RADIO_VC_WAIT_RECEIVE);
-            break;
-        }
-      }
-
-      //Transmit a HEARTBEAT if necessary
-      else if (((currentMillis - heartbeatTimer) >= heartbeatRandomTime)
-               && (receiveInProcess() == false))
-      {
-        //Send another heartbeat
-        xmitVcHeartbeat(myVc, myUniqueId);
-        changeState(RADIO_VC_WAIT_TX_DONE_ACK);
-      }
-
-      //Check for retransmit needed
-      else if (vcAckTimer && ((currentMillis - vcAckTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset())))
-      {
-        //Determine if another retransmit is allowed
-        txDestVc = rexmtTxDestVc;
-        if ((!settings.maxResends) || (rexmtFrameSentCount < settings.maxResends))
-        {
-          rexmtFrameSentCount++;
-
-          //Restore the message for retransmission
-          RESTORE_TX_BUFFER();
-          if (settings.debugDatagrams)
+          if (vc->linkUp && (serverLinkBroken
+            || ((currentMillis - vc->lastHeartbeatMillis) > (VC_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))))
           {
-            systemPrintTimestamp();
-            systemPrint("TX: Retransmit ");
-            systemPrint(frameSentCount);
-            systemPrint(", ");
-            systemPrint(v2DatagramType[txControl.datagramType]);
-            switch (txControl.datagramType)
+            if (index == VC_SERVER)
             {
-              default:
-                systemPrintln();
-                break;
-
-              case DATAGRAM_DATA:
-              case DATAGRAM_DATA_ACK:
-              case DATAGRAM_REMOTE_COMMAND:
-              case DATAGRAM_REMOTE_COMMAND_RESPONSE:
-              case DATAGRAM_HEARTBEAT:
-                systemPrint(" (ACK #");
-                systemPrint(txControl.ackNumber);
-                systemPrint(")");
-                systemPrintln();
-                break;
+              serverLinkBroken = true;
+              changeState(RADIO_VC_WAIT_SERVER);
             }
-            outputSerialData(true);
-          }
-
-          //Retransmit the packet
-          retransmitDatagram(((uint8_t)txDestVc <= MAX_VC) ? &virtualCircuitList[txDestVc] : NULL);
-          vcAckTimer = datagramTimer;
-          if (!vcAckTimer)
-            vcAckTimer = 1;
-          lostFrames++;
-          changeState(RADIO_VC_WAIT_TX_DONE_ACK);
-        }
-        else
-        {
-          //Failed to reach the other system, break the link
-          vcAckTimer = 0;
-          vcBreakLink(txDestVc);
-        }
-      }
-
-      //Check for link timeout
-      else
-      {
-        for (index = 0; index < MAX_VC; index++)
-        {
-          //Don't timeout the connection to myself
-          if (index == myVc)
-            continue;
-
-          //Determine if the link has timed out
-          vc = &virtualCircuitList[index];
-          if (vc->linkUp && ((currentMillis - vc->lastHeartbeatMillis) > (VC_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout)))
-          {
             vcBreakLink(index);
-            if (index == rexmtTxDestVc)
-              changeState(RADIO_VC_WAIT_RECEIVE);
           }
         }
       }
@@ -2132,6 +2087,8 @@ void v2BreakLink()
 
 void v2EnterLinkUp()
 {
+  VIRTUAL_CIRCUIT * vc;
+
   //Bring up the link
   triggerEvent(TRIGGER_HANDSHAKE_COMPLETE);
   hopChannel(); //Leave home
@@ -2139,9 +2096,10 @@ void v2EnterLinkUp()
   updateRSSI();
 
   //Synchronize the ACK numbers
-  rmtTxAckNumber = 0;
-  rxAckNumber = 0;
-  txAckNumber = 0;
+  vc = &virtualCircuitList[0];
+  vc->rmtTxAckNumber = 0;
+  vc->rxAckNumber = 0;
+  vc->txAckNumber = 0;
 
   //Discard any previous data
   discardPreviousData();
@@ -2235,6 +2193,27 @@ void vcBreakLink(int8_t vcIndex)
     resetSerial();
 }
 
+int8_t vcLinkUp(int8_t index)
+{
+  VIRTUAL_CIRCUIT * vc = &virtualCircuitList[index];
+
+  //Send the status message
+  if (!vc->linkUp)
+  {
+    vcSendLinkStatus(true, index);
+
+    //Reset the ACK counters
+    vc->txAckNumber = 0;
+    vc->rmtTxAckNumber = 0;
+    vc->rxAckNumber = 0;
+  }
+
+  //Update the link status
+  vc->linkUp = true;
+  vc->lastHeartbeatMillis = millis();
+  return index;
+}
+
 int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
 {
   int8_t index;
@@ -2250,16 +2229,8 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
 
     //Compare the unique ID values
     if (memcmp(vc->uniqueId, id, UNIQUE_ID_BYTES) == 0)
-    {
-      if (!vc->linkUp)
-        //Send the status message
-        vcSendLinkStatus(true, index);
-
       //Update the link status
-      vc->linkUp = true;
-      vc->lastHeartbeatMillis = millis();
-      return index;
-    }
+      return vcLinkUp(index);
   }
 
   //The unique ID is not in the list
@@ -2310,18 +2281,11 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
 
   //Mark this link as up
   vc->valid = true;
-  vc->linkUp = true;
-  vc->lastHeartbeatMillis = millis();
   memcpy(&vc->uniqueId, id, UNIQUE_ID_BYTES);
-
-  //Send the status message
-  vcSendLinkStatus(true, index);
-
-  //Returned the assigned address
-  return index;
+  return vcLinkUp(index);
 }
 
-void vcReceiveHeartbeat(RadioStates nextState, uint32_t rxMillis)
+void vcReceiveHeartbeat(uint32_t rxMillis)
 {
   uint32_t deltaMillis;
   int vcSrc;
@@ -2342,11 +2306,14 @@ void vcReceiveHeartbeat(RadioStates nextState, uint32_t rxMillis)
 
   //Translate the unique ID into an address byte
   vcSrc = vcIdToAddressByte(rxSrcVc, rxVcData);
+  if (vcSrc < 0)
+    return;
 
-  if (settings.server && (rxSrcVc == VC_UNASSIGNED) && (vcSrc >= 0))
+  //When the client does not know its address, it is assigned by the server
+  if (settings.server && (rxSrcVc == VC_UNASSIGNED))
   {
     //Assign the address to the client
-    xmitVcHeartbeat(vcSrc, rxVcData);
-    changeState(nextState);
+    if (xmitVcHeartbeat(vcSrc, rxVcData))
+      changeState(RADIO_VC_WAIT_TX_DONE);
   }
 }
