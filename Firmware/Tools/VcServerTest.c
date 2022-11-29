@@ -13,11 +13,12 @@
 #define DEBUG_PC_TO_RADIO     0
 #define DEBUG_RADIO_TO_PC     0
 
-bool findMyVc = true;
-int myVc;
+bool findMyVc;
+int myVc = VC_UNASSIGNED;
 int remoteVc;
 uint8_t inputBuffer[BUFFER_SIZE];
 uint8_t outputBuffer[VC_SERIAL_HEADER_BYTES + BUFFER_SIZE];
+int timeoutCount;
 
 int cmdToRadio(uint8_t * buffer, int length)
 {
@@ -451,6 +452,7 @@ main (
     }
 
     //Get myVc address
+    findMyVc = true;
     cmdToRadio((uint8_t *)GET_MY_VC_ADDRESS, strlen(GET_MY_VC_ADDRESS));
 
     //Break the links if requested
@@ -474,6 +476,18 @@ main (
       FD_SET(STDIN, &readfds);
       FD_SET(tty, &readfds);
       status = select(maxfds + 1, &readfds, &writefds, &exceptfds, &timeout);
+
+      //Check for timeout
+      if ((status == 0) && (timeoutCount++ >= 1000))
+      {
+        timeoutCount = 0;
+        if (myVc == VC_UNASSIGNED)
+        {
+          //Get myVc address
+          findMyVc = true;
+          cmdToRadio((uint8_t *)GET_MY_VC_ADDRESS, strlen(GET_MY_VC_ADDRESS));
+        }
+      }
 
       //Determine if console input is available
       if (FD_ISSET(STDIN, &readfds))
