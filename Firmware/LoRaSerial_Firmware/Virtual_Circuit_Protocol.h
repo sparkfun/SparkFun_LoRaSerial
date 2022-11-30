@@ -143,5 +143,6 @@ typedef struct _VC_LINK_STATUS_MESSAGE
 
 #define DATA_BYTES(vc_message_length)     (vc_message_length - VC_RADIO_HEADER_BYTES)
 #define DATA_BUFFER(data)                 (data + VC_RADIO_HEADER_BYTES)
+#define GET_CHANNEL_NUMBER(vc)            (vc & (VCAB_CHANNEL_MASK << VCAB_NUMBER_BITS))
 
 #endif  //__VIRTUAL_CIRCUIT_PROTOCOL_H__
