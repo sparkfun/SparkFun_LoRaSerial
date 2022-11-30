@@ -1677,11 +1677,19 @@ void updateRadioState()
       //----------
       else if (vcAckTimer)
       {
+        //Verify that the link is still up
+        txDestVc = rexmtTxDestVc;
+        if ((txDestVc != VC_BROADCAST)
+          && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].linkUp == false))
+        {
+          //Stop the retransmits
+          vcAckTimer = 0;
+        }
+
         //Check for retransmit needed
-        if ((currentMillis - vcAckTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+        else if ((currentMillis - vcAckTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
         {
           //Determine if another retransmit is allowed
-          txDestVc = rexmtTxDestVc;
           if ((!settings.maxResends) || (rexmtFrameSentCount < settings.maxResends))
           {
             rexmtFrameSentCount++;
@@ -1772,11 +1780,20 @@ void updateRadioState()
           if (vc->linkUp && (serverLinkBroken
             || ((currentMillis - vc->lastHeartbeatMillis) > (VC_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))))
           {
+            //When the server connection breaks, break all other connections and
+            //wait for the server
             if (index == VC_SERVER)
             {
               serverLinkBroken = true;
               changeState(RADIO_VC_WAIT_SERVER);
             }
+
+            //If waiting for an ACK and the link breaks, stop the retransmissions
+            //by stopping the ACK timer.
+            if (vcAckTimer && (index == rexmtTxDestVc))
+              vcAckTimer = 0;
+
+            //Break the link
             vcBreakLink(index);
           }
         }
@@ -2170,6 +2187,11 @@ void vcSendLinkStatus(bool linkUp, int8_t srcVc)
 void vcBreakLink(int8_t vcIndex)
 {
   VIRTUAL_CIRCUIT * vc;
+
+  //Only handle real VCs
+  if ((vcIndex >= PC_COMMAND) && (vcIndex <= VC_BROADCAST))
+    return;
+  vcIndex &= VCAB_NUMBER_MASK;
 
   //Get the virtual circuit data structure
   if ((vcIndex >= 0) && (vcIndex != myVc) && ( vcIndex < MAX_VC))

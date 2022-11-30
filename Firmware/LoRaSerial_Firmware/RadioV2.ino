@@ -1785,11 +1785,21 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   //Drop this datagram if the receiver is active
   frameAirTime = calcAirTime(txDatagramSize); //Calculate frame air size while we're transmitting in the background
   uint16_t responseDelay = frameAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
-  if (receiveInProcess() == true || transactionComplete == true)
+  if ((receiveInProcess() == true) || (transactionComplete == true)
+    || ((settings.operatingMode == MODE_VIRTUAL_CIRCUIT) && (txDestVc != VC_BROADCAST)
+        && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].linkUp == false)))
   {
     triggerEvent(TRIGGER_TRANSMIT_CANCELED);
     if (settings.debugReceive || settings.debugDatagrams)
-      systemPrintln(receiveInProcess() ? "RXIP" : "RXTC");
+    {
+      if (transactionComplete)
+        systemPrintln("RXTC");
+      else if (receiveInProcess())
+        systemPrintln("RXIP");
+      else
+        systemPrintln("VC link down");
+      outputSerialData(true);
+    }
     return (false); //Do not start transmit while RX is or has occured
   }
   else
