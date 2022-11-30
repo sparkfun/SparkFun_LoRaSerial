@@ -5,16 +5,43 @@
 // Constants
 //------------------------------------------------------------------------------
 
-//Virtual-Circuit source and destination index values
-#define MAX_VC              8
+//Define the virtual circuit address byte
+#define VCAB_NUMBER_BITS    5
+#define MAX_VC              (1 << VCAB_NUMBER_BITS)
+#define VCAB_NUMBER_MASK    (MAX_VC - 1)
+#define VCAB_CHANNEL_BITS   (8 - VCAB_NUMBER_BITS)
+#define VCAB_CHANNEL_MASK   ((1 << VCAB_CHANNEL_BITS) - 1)
+
+//Communications over the virtual circuit are broken down into the following
+//address spaces:
+//
+//    0 - Data communications
+//    7 - Special virtual circuits
+
+//The following addresses are reserved for data communications: 0 - VCAB_NUMBER_MASK
+//Address zero is reserved for the server
 #define VC_SERVER           0
-#define VC_BROADCAST        -1
-#define VC_COMMAND          -2    //Command input and command response
-#define VC_UNASSIGNED       -3
+
+//Address space 7 is reserved for the following special addresses:
+
+#define VC_RSVD_SPECIAL_VCS ((int8_t)(VCAB_CHANNEL_MASK << VCAB_NUMBER_BITS))
+#define VC_BROADCAST        ((int8_t)(VC_RSVD_SPECIAL_VCS | VCAB_NUMBER_MASK))
+#define VC_COMMAND          (VC_BROADCAST - 1) //Command input and command response
+#define VC_UNASSIGNED       (VC_COMMAND - 1)
 
 //Source and destinations reserved for the local host
-#define PC_COMMAND          -17   //Command input and command response
-#define PC_LINK_STATUS      -18   //Asynchronous link status output
+#define PC_COMMAND          VC_RSVD_SPECIAL_VCS //Command input and command response
+#define PC_LINK_STATUS      (PC_COMMAND + 1)    //Asynchronous link status output
+
+//Address space 1 and 2 are reserved for the host PC interface to support remote
+//command processing.  The radio removes these bits and converts them to the
+//appropriate datagram type.  Upon reception of one of these messages the bit is
+//added back into the VC header and the message is delivered to the host PC.
+//As a result, any host may send commands to any other host!
+#define PC_REMOTE_COMMAND   ((int8_t)(1 << VCAB_NUMBER_BITS))
+#define PC_REMOTE_RESPONSE  ((int8_t)(2 << VCAB_NUMBER_BITS))
+
+//Address spaces 3 - 6 are not currently defined
 
 //Field offsets in the VC HEARTBEAT frame
 #define VC_HB_UNIQUE_ID     0
@@ -109,5 +136,12 @@ typedef struct _VC_LINK_STATUS_MESSAGE
 
 #define LINK_DOWN         0
 #define LINK_UP           1
+
+//------------------------------------------------------------------------------
+// Macros
+//------------------------------------------------------------------------------
+
+#define DATA_BYTES(vc_message_length)     (vc_message_length - VC_RADIO_HEADER_BYTES)
+#define DATA_BUFFER(data)                 (data + VC_RADIO_HEADER_BYTES)
 
 #endif  //__VIRTUAL_CIRCUIT_PROTOCOL_H__
