@@ -327,7 +327,7 @@ void processSerialInput()
         else
         {
           //Move this character into the command buffer
-          commandBuffer[commandLength++] = toupper(incoming);
+          commandBuffer[commandLength++] = incoming;
           commandLength %= sizeof(commandBuffer);
         }
       }
