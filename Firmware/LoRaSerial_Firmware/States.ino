@@ -527,6 +527,15 @@ void updateRadioState()
                    HEARTBEAT 1 ----> Update timestampOffset
     */
 
+    //====================
+    //Wait for the next operation (listed in priority order):
+    // * Frame received
+    // * Time to send HEARTBEAT
+    // * Time to retransmit previous frame
+    // * Remote command response to send
+    // * Data to send
+    // * Link timeout
+    //====================
     case RADIO_P2P_LINK_UP:
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
@@ -736,7 +745,9 @@ void updateRadioState()
       }
       break;
 
+    //====================
     //Wait for the ACK or HEARTBEAT to finish transmission
+    //====================
     case RADIO_P2P_LINK_UP_WAIT_ACK_DONE:
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
@@ -750,7 +761,9 @@ void updateRadioState()
       }
       break;
 
+    //====================
     //Wait for the data transmission to complete
+    //====================
     case RADIO_P2P_LINK_UP_WAIT_TX_DONE:
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
@@ -766,7 +779,9 @@ void updateRadioState()
       }
       break;
 
+    //====================
     //Wait for the ACK to be received
+    //====================
     case RADIO_P2P_LINK_UP_WAIT_ACK:
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
@@ -944,6 +959,10 @@ void updateRadioState()
         breakLink();
       break;
 
+    //====================
+    //Wait for the HEARTBEAT frame to complete transmission then wait for ACK
+    //and retransmit previous data frame if necessary
+    //====================
     case RADIO_P2P_LINK_UP_HB_ACK_REXMT:
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
@@ -1006,6 +1025,9 @@ void updateRadioState()
     //Multi-Point Data Exchange
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+    //====================
+    //Start searching for other radios
+    //====================
     case RADIO_MP_BEGIN_SCAN:
       stopChannelTimer(); //Stop hopping
 
@@ -1016,7 +1038,9 @@ void updateRadioState()
       changeState(RADIO_MP_SCANNING);
       break;
 
+    //====================
     //Walk through channel table transmitting a Ping and looking for an Ack
+    //====================
     case RADIO_MP_SCANNING:
 
       if (transactionComplete)
@@ -1121,7 +1145,9 @@ void updateRadioState()
 
       break;
 
+    //====================
     //Wait for the PING to complete transmission
+    //====================
     case RADIO_MP_WAIT_TX_PING_DONE:
       if (transactionComplete)
       {
@@ -1131,7 +1157,9 @@ void updateRadioState()
       }
       break;
 
+    //====================
     //Wait for the ACK to complete transmission
+    //====================
     case RADIO_MP_WAIT_TX_ACK_DONE:
       if (transactionComplete)
       {
@@ -1141,6 +1169,13 @@ void updateRadioState()
       }
       break;
 
+    //====================
+    //Wait for the next operation (listed in priority order):
+    // * Frame received
+    // * Data to send
+    // * Time to send HEARTBEAT
+    // * Link timeout
+    //====================
     case RADIO_MP_STANDBY:
       //Hop channels when required
       if (timeToHop == true)
@@ -1299,6 +1334,9 @@ void updateRadioState()
 
       break;
 
+    //====================
+    //Wait for the frame transmission to complete
+    //====================
     case RADIO_MP_WAIT_TX_DONE:
       //Hop channels when required
       if (timeToHop == true)
@@ -1348,6 +1386,9 @@ void updateRadioState()
                 V
     */
 
+    //====================
+    //Wait for the PING to complete transmission
+    //====================
     case RADIO_MP_WAIT_TX_TRAINING_PING_DONE:
       updateCylonLEDs();
 
@@ -1367,6 +1408,9 @@ void updateRadioState()
       }
       break;
 
+    //====================
+    //Wait to receive the radio parameters
+    //====================
     case RADIO_MP_WAIT_RX_RADIO_PARAMETERS:
       updateCylonLEDs();
 
@@ -1422,6 +1466,9 @@ void updateRadioState()
         xmitDatagramMpTrainingPing();
       break;
 
+    //====================
+    //Wait for the ACK frame to complete transmission
+    //====================
     case RADIO_MP_WAIT_TX_PARAM_ACK_DONE:
       updateCylonLEDs();
 
@@ -1465,6 +1512,9 @@ void updateRadioState()
                         V
     */
 
+    //====================
+    //Wait for a PING frame from a client
+    //====================
     case RADIO_MP_WAIT_FOR_TRAINING_PING:
       updateCylonLEDs();
 
@@ -1517,6 +1567,9 @@ void updateRadioState()
         }
       break;
 
+    //====================
+    //Wait for the radio parameters to complete transmission
+    //====================
     case RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE:
       updateCylonLEDs();
 
@@ -1567,6 +1620,9 @@ void updateRadioState()
 
     */
 
+    //====================
+    //Wait for a HEARTBEAT from the server
+    //====================
     case RADIO_VC_WAIT_SERVER:
       if (myVc == VC_SERVER)
       {
@@ -1593,7 +1649,14 @@ void updateRadioState()
       }
       break;
 
+    //====================
+    //Wait for the transmission to complete
+    //====================
     case RADIO_VC_WAIT_TX_DONE:
+      //Hop channels when required
+      if (timeToHop == true)
+        hopChannel();
+
       //If dio0ISR has fired, we are done transmitting
       if (transactionComplete == true)
       {
@@ -1610,7 +1673,20 @@ void updateRadioState()
       }
       break;
 
+    //====================
+    //Wait for the next operation (listed in priority order):
+    // * Frame received
+    // * Time to send HEARTBEAT
+    // * Time to retransmit previous frame
+    // * Remote command response to send
+    // * Data to send
+    // * Link timeout
+    //====================
     case RADIO_VC_WAIT_RECEIVE:
+      //Hop channels when required
+      if (timeToHop == true)
+        hopChannel();
+
       //If dio0ISR has fired, a packet has arrived
       currentMillis = millis();
       if (transactionComplete == true)
