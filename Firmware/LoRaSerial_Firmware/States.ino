@@ -123,7 +123,7 @@ void updateRadioState()
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    //V2 - No Link
+    //No Link
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
     //Point-To-Point: Bring up the link
     //
@@ -204,7 +204,7 @@ void updateRadioState()
             {
               systemPrintTimestamp();
               systemPrint("Scan: Unhandled packet type ");
-              systemPrint(v2DatagramType[packetType]);
+              systemPrint(radioDatagramType[packetType]);
               systemPrintln();
             }
             break;
@@ -278,7 +278,7 @@ void updateRadioState()
             {
               systemPrintTimestamp();
               systemPrint("Scan: Unhandled packet type ");
-              systemPrint(v2DatagramType[packetType]);
+              systemPrint(radioDatagramType[packetType]);
               systemPrintln();
             }
             break;
@@ -387,7 +387,7 @@ void updateRadioState()
             {
               systemPrintTimestamp();
               systemPrint("Scan: Unhandled packet type ");
-              systemPrint(v2DatagramType[packetType]);
+              systemPrint(radioDatagramType[packetType]);
               systemPrintln();
             }
             break;
@@ -416,7 +416,7 @@ void updateRadioState()
             setHeartbeatLong(); //We sent ACK1 and they sent ACK2, so don't be the first to send heartbeat
 
             //Bring up the link
-            v2EnterLinkUp();
+            enterLinkUp();
             break;
         }
       }
@@ -460,12 +460,12 @@ void updateRadioState()
         setHeartbeatShort(); //We sent the last ack so be responsible for sending the next heartbeat
 
         //Bring up the link
-        v2EnterLinkUp();
+        enterLinkUp();
       }
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    //V2 - Link Up
+    //Link Up
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
     //Point-To-Point: Data Exchange
 
@@ -546,7 +546,7 @@ void updateRadioState()
             {
               systemPrintTimestamp();
               systemPrint("LinkUp: Unhandled packet type ");
-              systemPrint(v2DatagramType[packetType]);
+              systemPrint(radioDatagramType[packetType]);
               systemPrintln();
               outputSerialData(true);
             }
@@ -565,7 +565,7 @@ void updateRadioState()
             break;
 
           case DATAGRAM_PING:
-            v2BreakLink();
+            breakLink();
             break;
 
           case DATAGRAM_DUPLICATE:
@@ -732,7 +732,7 @@ void updateRadioState()
         }
         else if ((millis() - linkDownTimer) >= (P2P_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))
           //Break the link
-          v2BreakLink();
+          breakLink();
       }
       break;
 
@@ -785,7 +785,7 @@ void updateRadioState()
             {
               systemPrintTimestamp();
               systemPrint("RX: Unhandled packet type ");
-              systemPrint(v2DatagramType[packetType]);
+              systemPrint(radioDatagramType[packetType]);
               systemPrintln();
               outputSerialData(true);
             }
@@ -805,7 +805,7 @@ void updateRadioState()
 
           case DATAGRAM_PING:
             //Break the link
-            v2BreakLink();
+            breakLink();
             break;
 
           case DATAGRAM_DATA_ACK:
@@ -895,7 +895,7 @@ void updateRadioState()
               systemPrint("TX: Retransmit ");
               systemPrint(frameSentCount);
               systemPrint(", ");
-              systemPrint(v2DatagramType[txControl.datagramType]);
+              systemPrint(radioDatagramType[txControl.datagramType]);
               switch (txControl.datagramType)
               {
                 default:
@@ -930,18 +930,18 @@ void updateRadioState()
           triggerEvent(TRIGGER_LINK_RETRANSMIT_FAIL);
 
           //Break the link
-          v2BreakLink();
+          breakLink();
         }
       }
 
       else if ((millis() - linkDownTimer) >= (P2P_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))
         //Break the link
-        v2BreakLink();
+        breakLink();
 
       //Retransmits are not getting through in a rational time
       else if (transmitTimer && ((millis() - transmitTimer) >= (P2P_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout)))
         //Break the link
-        v2BreakLink();
+        breakLink();
       break;
 
     case RADIO_P2P_LINK_UP_HB_ACK_REXMT:
@@ -965,7 +965,7 @@ void updateRadioState()
             systemPrint("TX: Retransmit ");
             systemPrint(frameSentCount);
             systemPrint(", ");
-            systemPrint(v2DatagramType[txControl.datagramType]);
+            systemPrint(radioDatagramType[txControl.datagramType]);
             outputSerialData(true);
             switch (txControl.datagramType)
             {
@@ -998,12 +998,12 @@ void updateRadioState()
         }
         else
           //Failed to reach the other system, break the link
-          v2BreakLink();
+          breakLink();
       }
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    //V2 - Multi-Point Data Exchange
+    //Multi-Point Data Exchange
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     case RADIO_MP_BEGIN_SCAN:
@@ -1033,7 +1033,7 @@ void updateRadioState()
             {
               systemPrintTimestamp();
               systemPrint("Scan: Unhandled packet type ");
-              systemPrint(v2DatagramType[packetType]);
+              systemPrint(radioDatagramType[packetType]);
               systemPrintln();
               outputSerialData(true);
             }
@@ -1163,7 +1163,7 @@ void updateRadioState()
             {
               systemPrintTimestamp();
               systemPrint("MP Standby: Unhandled packet type ");
-              systemPrint(v2DatagramType[packetType]);
+              systemPrint(radioDatagramType[packetType]);
               systemPrintln();
               outputSerialData(true);
             }
@@ -1315,7 +1315,7 @@ void updateRadioState()
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    //V2 - Multi-Point Client Training
+    //Multi-Point Client Training
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     /*
@@ -1434,7 +1434,7 @@ void updateRadioState()
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    //V2 - Multi-Point Server Training
+    //Multi-Point Server Training
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     /*
@@ -1537,7 +1537,7 @@ void updateRadioState()
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    //V2 - Virtual Circuit States
+    //Virtual Circuit States
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     /*
@@ -1772,7 +1772,7 @@ void updateRadioState()
               systemPrint("TX: Retransmit ");
               systemPrint(frameSentCount);
               systemPrint(", ");
-              systemPrint(v2DatagramType[txControl.datagramType]);
+              systemPrint(radioDatagramType[txControl.datagramType]);
               switch (txControl.datagramType)
               {
                 default:
@@ -2176,11 +2176,11 @@ void verifyRadioStateTable()
 }
 
 //Verify the datagram type table
-void verifyV2DatagramType()
+void verifyRadioDatagramType()
 {
-  if ((sizeof(v2DatagramType) / sizeof(v2DatagramType[0])) != MAX_V2_DATAGRAM_TYPE)
+  if ((sizeof(radioDatagramType) / sizeof(radioDatagramType[0])) != MAX_DATAGRAM_TYPE)
   {
-    systemPrintln("ERROR - Please update the v2DatagramTable");
+    systemPrintln("ERROR - Please update the radioDatagramTable");
     waitForever();
   }
 }
@@ -2243,7 +2243,7 @@ void changeState(RadioStates newState)
   outputSerialData(true);
 }
 
-void v2BreakLink()
+void breakLink()
 {
   //Break the link
   linkFailures++;
@@ -2262,7 +2262,7 @@ void v2BreakLink()
   changeState(RADIO_RESET);
 }
 
-void v2EnterLinkUp()
+void enterLinkUp()
 {
   VIRTUAL_CIRCUIT * vc;
 

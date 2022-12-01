@@ -93,7 +93,7 @@ bool commandAT(const char * commandString)
         }
         else if (settings.operatingMode == MODE_POINT_TO_POINT)
         {
-          v2BreakLink();
+          breakLink();
           outputSerialData(true);
         }
 
