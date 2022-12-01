@@ -447,6 +447,8 @@ void updateRTS(bool assertRTS);
 
 void setup()
 {
+  int index;
+
   beginSerial(57600); //Default for debug messages before board begins
 
   loadSettings(); //Load settings from EEPROM
@@ -461,6 +463,14 @@ void setup()
   verifyRadioStateTable(); //Verify that the state table contains all of the states in increasing order
 
   verifyRadioDatagramType(); //Verify that the datagram type table contains all of the datagram types
+
+  //Load the unique IDs for the virtual circuits
+  //Always hand out the same VC number for a given unique ID
+  if (settings.server)
+  {
+    for (index = 0; index < MAX_VC; index++)
+      nvmLoadVcUniqueId(index);
+  }
 
   arch.uniqueID(myUniqueId); //Get the unique ID
 

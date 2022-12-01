@@ -2461,9 +2461,13 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
     return -3;
   }
 
+  //Save the unique ID to VC assignment in NVM
+  memcpy(&vc->uniqueId, id, UNIQUE_ID_BYTES);
+  if (settings.server)
+    nvmSaveVcUniqueId(index);
+
   //Mark this link as up
   vc->valid = true;
-  memcpy(&vc->uniqueId, id, UNIQUE_ID_BYTES);
   return vcLinkUp(index);
 }
 
