@@ -315,8 +315,8 @@ struct ControlTrailer responseTrailer;
 
 typedef struct _CONTROL_U8
 {
-  uint8_t ackNumber : 2;
   PacketType datagramType: 4;
+  uint8_t ackNumber : 2;
   uint8_t filler : 2;
 } CONTROL_U8;
 

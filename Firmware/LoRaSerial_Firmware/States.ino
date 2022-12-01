@@ -1647,6 +1647,21 @@ void updateRadioState()
               changeState(RADIO_VC_WAIT_TX_DONE);
             break;
 
+          case DATAGRAM_DATAGRAM:
+            //Move the data into the serial output buffer
+            if (settings.debugSerial)
+            {
+              systemPrint("updateRadioState moving ");
+              systemPrint(rxDataBytes);
+              systemPrintln(" bytes from inputBuffer into serialTransmitBuffer");
+              outputSerialData(true);
+            }
+            systemWrite(START_OF_VC_SERIAL);
+            serialBufferOutput(rxData, rxDataBytes);
+
+            //Datagrams do NOT get ACKed
+            break;
+
           case DATAGRAM_DATA_ACK:
             vcAckTimer = 0;
             break;
@@ -1845,10 +1860,22 @@ void updateRadioState()
         //No need to add the VC header since the header is in the radioTxBuffer
         //Get the VC header
         vcHeader = (VC_RADIO_MESSAGE_HEADER *)&outgoingPacket[headerBytes];
-        channel = (vcHeader->destVc >> VCAB_NUMBER_BITS) & VCAB_CHANNEL_MASK;
+        if (vcHeader->destVc == VC_BROADCAST)
+          channel = 0;
+        else
+          channel = (vcHeader->destVc >> VCAB_NUMBER_BITS) & VCAB_CHANNEL_MASK;
         switch (channel)
         {
         case 0: //Data packets
+          //Check for datagram transmission
+          if (vcHeader->destVc == VC_BROADCAST)
+          {
+            //Broadcast this data to all VCs, no ACKs will be received
+            triggerEvent(TRIGGER_VC_TX_DATA);
+            xmitVcDatagram();
+            break;
+          }
+
           //Transmit the packet
           triggerEvent(TRIGGER_VC_TX_DATA);
           if (xmitDatagramP2PData() == true)
@@ -1865,6 +1892,21 @@ void updateRadioState()
           break;
 
         case 1: //Remote command packets
+          //Remote commands must not be broadcast
+          if (vcHeader->destVc == VC_BROADCAST)
+          {
+            if (settings.debugSerial || settings.debugTransmit)
+            {
+              systemPrintln("ERROR: Remote commands may not be broadcast!");
+              outputSerialData(true);
+            }
+
+            //Discard this message
+            endOfTxData = &outgoingPacket[headerBytes];
+            break;
+          }
+
+          //Determine if this remote command gets processed on the local node
           if ((vcHeader->destVc & VCAB_NUMBER_MASK) == myVc)
           {
             //Copy the command into the command buffer
