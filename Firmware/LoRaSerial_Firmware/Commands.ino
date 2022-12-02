@@ -707,6 +707,7 @@ const COMMAND_ENTRY commands[] =
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugRadio",           &settings.debugRadio},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugReceive",         &settings.debugReceive},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugStates",          &settings.debugStates},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugSync",            &settings.debugSync},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugTraining",        &settings.debugTraining},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &settings.debugTransmit},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugSerial",          &settings.debugSerial},
