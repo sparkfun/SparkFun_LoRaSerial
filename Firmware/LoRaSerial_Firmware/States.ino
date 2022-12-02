@@ -100,15 +100,21 @@ void updateRadioState()
       else if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
       {
         if (settings.server)
+        {
           //Reserve the server's address (0)
           myVc = vcIdToAddressByte(VC_SERVER, myUniqueId);
+
+          //Start sending heartbeats
+          xmitVcHeartbeat(myVc, myUniqueId);
+          startChannelTimer();
+          changeState(RADIO_VC_WAIT_TX_DONE);
+        }
         else
+        {
           //Unknown client address
           myVc = VC_UNASSIGNED;
-
-        //Start sending heartbeats
-        xmitVcHeartbeat(myVc, myUniqueId);
-        changeState(RADIO_VC_WAIT_TX_DONE);
+          changeState(RADIO_VC_WAIT_SERVER);
+        }
       }
       else
       {
@@ -186,7 +192,7 @@ void updateRadioState()
       {
         stopChannelTimer();
         channelNumber = 0;
-        radio.setFrequency(channels[channelNumber]);
+        setRadioFrequency(false);
       }
 
       //Determine if a PING was received
@@ -1621,7 +1627,7 @@ void updateRadioState()
     */
 
     //====================
-    //Wait for a HEARTBEAT from the server
+    //Wait on channel zero (0) for a HEARTBEAT from the server
     //====================
     case RADIO_VC_WAIT_SERVER:
       if (myVc == VC_SERVER)
@@ -2063,6 +2069,8 @@ void updateRadioState()
             if (index == VC_SERVER)
             {
               serverLinkBroken = true;
+              channel = 0;
+              setRadioFrequency(false);
               changeState(RADIO_VC_WAIT_SERVER);
             }
 
