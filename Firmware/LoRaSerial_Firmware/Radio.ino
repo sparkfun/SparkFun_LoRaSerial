@@ -1089,10 +1089,12 @@ void updateRadioParameters(uint8_t * rxData)
     originalSettings.copyDebug = params.copyDebug;
     originalSettings.debug = params.debug;
     originalSettings.debugDatagrams = params.debugDatagrams;
+    originalSettings.debugHeartbeat = params.debugHeartbeat;
     originalSettings.debugNvm = params.debugNvm;
     originalSettings.debugRadio = params.debugRadio;
     originalSettings.debugReceive = params.debugReceive;
     originalSettings.debugStates = params.debugStates;
+    originalSettings.debugSync = params.debugSync;
     originalSettings.debugTraining = params.debugTraining;
     originalSettings.debugTransmit = params.debugTransmit;
     originalSettings.debugSerial = params.debugSerial;
@@ -1233,8 +1235,7 @@ bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
   vcTxHeartbeatMillis = millis() - currentMillis;
 
   //Select a random for the next heartbeat
-  setHeartbeatLong(); //Those who send a heartbeat or data have long time before next heartbeat. Those who send ACKs, have short wait to next heartbeat.
-
+  setVcHeartbeatTimer();
   return (transmitDatagram());
 }
 
@@ -2652,4 +2653,63 @@ void setHeartbeatMultipoint()
   //Slow datarates can have significant ack transmission times
   //Add the amount of time it takes to send an ack
   heartbeatRandomTime += frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset();
+}
+
+void setVcHeartbeatTimer()
+{
+  long deltaMillis;
+
+  /*
+   * The goal of this routine is to randomize the placement of the HEARTBEAT
+   * messages, allowing traffic to flow normally.  However since clients are
+   * waiting in channel zero (0) for a HEARTBEAT, the last couple of invervals
+   * are adjusted for the server to ensure that a HEARTBEAT is sent in channel
+   * zero.
+   *
+   * dwellTime: 400 mSec
+   * heartbeatTimeout: 3000 mSec
+   * 50% heartbeatTimeout: 1500 mSec
+   *
+   * channel     38  39  40  41  42  43  44  45  46  47  48  49   0   1   2
+   * dwellTime    |   |   |   |   |   |   |   |   |   |   |   |   |   |   |
+   * seconds    |    .    |    .    |    .    |    .    |    .    |    .    |
+   * case 1: > 4.5, Use random, then remaining
+   *                ^--------------^^^^^^^^^^^^^^^^---------------^
+   * case 2: 4.5 >= X >= 3, Use half, then second half
+   *                 ^^^^^^^^^^^^^^^^-------^^^^^^^^--------------^
+   * case 3: X < 3, Use remaining
+   *                                 ^----------------------------^
+   */
+  petWDT();
+
+  //Determine the delay before channel zero is reached
+  heartbeatTimer = millis();
+  deltaMillis = nextChannelZeroTimeInMillis - heartbeatTimer;
+  if (deltaMillis <= 0)
+  {
+    nextChannelZeroTimeInMillis = heartbeatTimer + ((settings.numberOfChannels - channelNumber) * settings.maxDwellTime);
+    deltaMillis = nextChannelZeroTimeInMillis - heartbeatTimer;
+  }
+
+  //Determine the delay before the next HEARTBEAT frame
+  if ((!settings.server) || (deltaMillis > ((3 * settings.heartbeatTimeout) / 2))
+    || (deltaMillis <= 0))
+    //Use the random interval: 50% - 100%
+    heartbeatRandomTime = random(settings.heartbeatTimeout / 2,
+                                 settings.heartbeatTimeout);
+  else if (deltaMillis >= settings.heartbeatTimeout)
+    heartbeatRandomTime = deltaMillis / 2;
+  else
+    heartbeatRandomTime = deltaMillis;
+
+  //Display the next HEARTBEAT time interval
+  if (settings.debugHeartbeat)
+  {
+    systemPrint("deltaMillis: ");
+    systemPrintln(deltaMillis);
+    systemPrint("heartbeatRandomTime: ");
+    systemPrintln(heartbeatRandomTime);
+    outputSerialData(true);
+    petWDT();
+  }
 }

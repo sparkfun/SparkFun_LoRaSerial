@@ -703,6 +703,7 @@ const COMMAND_ENTRY commands[] =
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "CopyDebug",            &settings.copyDebug},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "Debug",                &settings.debug},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &settings.debugDatagrams},
+  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugHeartbeat",       &settings.debugHeartbeat},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugNvm",             &settings.debugNvm},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugRadio",           &settings.debugRadio},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugReceive",         &settings.debugReceive},
