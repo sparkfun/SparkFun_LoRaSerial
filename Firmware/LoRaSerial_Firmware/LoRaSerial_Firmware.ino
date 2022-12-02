@@ -397,6 +397,7 @@ unsigned long xmitTimeMillis;
 unsigned long timestampOffset;
 unsigned long roundTripMillis;
 unsigned long vcTxHeartbeatMillis;
+unsigned long nextChannelZeroTimeInMillis;
 
 //Transmit control
 uint8_t * endOfTxData;

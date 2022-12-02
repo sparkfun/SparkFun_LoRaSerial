@@ -2,23 +2,11 @@
 //Called after begin() and once user exits from command interface
 void configureRadio()
 {
-  float frequency;
   bool success = true;
 
-  frequency = channels[0];
-  if (radio.setFrequency(frequency) == RADIOLIB_ERR_INVALID_FREQUENCY)
-    success = false;
-
-  //Print the frequency if requested
-  if (settings.printFrequency)
-  {
-    systemPrintTimestamp();
-    systemPrint(frequency);
-    systemPrintln(" MHz");
-    outputSerialData(true);
-  }
-
   channelNumber = 0;
+  if (!setRadioFrequency(false))
+    success = false;
 
   //The SX1276 and RadioLib accepts a value of 2 to 17, with 20 enabling the power amplifier
   //Measuring actual power output the radio will output 14dBm (25mW) to 27.9dBm (617mW) in constant transmission
@@ -184,23 +172,36 @@ void convertAirSpeedToSettings()
 }
 
 //Set radio frequency
-void setRadioFrequency(bool rxAdjust)
+bool setRadioFrequency(bool rxAdjust)
 {
   float frequency;
 
+  //Determine the frequency to use
   frequency = channels[channelNumber];
-  if (rxAdjust)
+  if (rxAdjust && settings.autoTuneFrequency)
     frequency -= frequencyCorrection;
-  radio.setFrequency(frequency);
+
+  //Set the new frequency
+  if (radio.setFrequency(frequency) == RADIOLIB_ERR_INVALID_FREQUENCY)
+    return false;
+  //triggerFrequency(frequency);
+
+  //Determine the time in milliseconds when channel zero is reached again
+  nextChannelZeroTimeInMillis = millis() + ((settings.numberOfChannels - channelNumber) * settings.maxDwellTime);
 
   //Print the frequency if requested
   if (settings.printFrequency)
   {
     systemPrintTimestamp();
-    systemPrint(frequency);
-    systemPrintln(" MHz");
+    systemPrint(channelNumber);
+    systemPrint(": ");
+    systemPrint(frequency, 3);
+    systemPrint(" MHz, Ch 0 in ");
+    systemPrint(nextChannelZeroTimeInMillis - millis());
+    systemPrintln(" mSec");
     outputSerialData(true);
   }
+  return true;
 }
 
 void returnToReceiving()
@@ -416,28 +417,7 @@ void hopChannel(bool moveForwardThroughTable)
   }
 
   //Select the new frequency
-  float frequency;
-  if (settings.autoTuneFrequency == true)
-  {
-    if (radioStateTable[radioState].rxState)
-      frequency = channels[channelNumber] - frequencyCorrection;
-    else
-      frequency = channels[channelNumber];
-  }
-  else
-    frequency = channels[channelNumber];
-
-  radio.setFrequency(frequency);
-  //triggerFrequency(frequency);
-
-  //Print the frequency if requested
-  if (settings.printFrequency)
-  {
-    systemPrintTimestamp();
-    systemPrint(frequency, 3);
-    systemPrintln(" MHz");
-    outputSerialData(true);
-  }
+  setRadioFrequency(radioStateTable[radioState].rxState);
 }
 
 //Returns true if the radio indicates we have an ongoing reception
@@ -2634,6 +2614,8 @@ void syncChannelTimer()
   channelTimer.enableTimer();
 
   triggerEvent(TRIGGER_SYNC_CHANNEL); //Trigger after adjustments to timer to avoid skew during debug
+  if (settings.debugSync)
+    outputSerialData(true);
 }
 
 //This function resets the heartbeat time and re-rolls the random time
