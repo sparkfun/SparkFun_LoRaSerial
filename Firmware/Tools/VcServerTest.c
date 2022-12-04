@@ -6,7 +6,7 @@
 #define STDOUT                1
 
 #define BREAK_LINKS_COMMAND   "atb"
-#define GET_MY_VC_ADDRESS     "atI28"
+#define GET_MY_VC_ADDRESS     "atI11"
 #define LINK_RESET_COMMAND    "atz"
 #define MY_VC_ADDRESS         "myVc: "
 
