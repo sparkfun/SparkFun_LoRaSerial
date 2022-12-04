@@ -1770,6 +1770,7 @@ PacketType rcvDatagram()
           //Build the VC_DATA_ACK_MESSAGE
           serialOutputByte(rexmtTxDestVc);//Message destination VC
         }
+        lastRxDatagram = rcvTimeMillis;
         break;
 
       case DATAGRAM_HEARTBEAT:
@@ -1778,6 +1779,7 @@ PacketType rcvDatagram()
         datagramType = validateDatagram(vc, datagramType, ackNumber, rxDataBytes);
         if (datagramType != DATAGRAM_HEARTBEAT)
           return datagramType;
+        lastRxDatagram = rcvTimeMillis;
         break;
 
       case DATAGRAM_REMOTE_COMMAND:
@@ -1785,6 +1787,7 @@ PacketType rcvDatagram()
                                         - availableRXCommandBytes());
         if (datagramType != DATAGRAM_REMOTE_COMMAND)
           return datagramType;
+        lastRxDatagram = rcvTimeMillis;
         break;
 
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
@@ -1792,6 +1795,7 @@ PacketType rcvDatagram()
                                         - availableTXBytes());
         if (datagramType != DATAGRAM_REMOTE_COMMAND_RESPONSE)
           return datagramType;
+        lastRxDatagram = rcvTimeMillis;
         break;
 
       case DATAGRAM_DATA:
@@ -1799,6 +1803,7 @@ PacketType rcvDatagram()
                                         - availableTXBytes());
         if (datagramType != DATAGRAM_DATA)
           return datagramType;
+        lastRxDatagram = rcvTimeMillis;
         vc->messagesReceived++;
         break;
     }

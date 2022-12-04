@@ -192,6 +192,7 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI26 - Display the total number of bad CRC frames");
         systemPrintln("  ATI27 - Display the total number of net ID mismatch frames");
         systemPrintln("  ATI28 - Return myVc value");
+        systemPrintln("  ATI29 - Display metrics");
         break;
       case ('0'): //ATI0 - Show user settable parameters
         displayParameters(0, true);
@@ -389,6 +390,47 @@ bool commandAT(const char * commandString)
         systemPrint("myVc: ");
         systemPrintln(myVc);
         reportOK();
+        break;
+      case ('9'): //ATI29 - Display metrics
+        systemPrint("Radio Metrics @ ");
+        systemPrintTimestamp(millis());
+        systemPrintln();
+        if (settings.operatingMode == MODE_POINT_TO_POINT)
+        {
+          systemPrint("    Link Status: ");
+          systemPrintln((radioState >= RADIO_P2P_LINK_UP) ? "Up" : "Down");
+          systemPrint("        Last RX:  ");
+          systemPrintTimestamp(lastRxDatagram);
+          systemPrintln();
+          systemPrint("        First RX: ");
+          systemPrintTimestamp(lastLinkUpTime);
+          systemPrintln();
+          systemPrint("        Up Time:  ");
+          systemPrintTimestamp(lastRxDatagram - lastLinkUpTime);
+          systemPrintln();
+        }
+        systemPrintln("    Sent");
+        systemPrint("        Datagrams: ");
+        systemPrintln(datagramsSent);
+        systemPrint("        Frames: ");
+        systemPrintln(framesSent);
+        systemPrint("        Lost Frames: ");
+        systemPrintln(lostFrames);
+        systemPrintln("    Received");
+        systemPrint("        Datagrams: ");
+        systemPrintln(datagramsReceived);
+        systemPrint("        Frames: ");
+        systemPrintln(framesReceived);
+        systemPrint("        Bad CRC: ");
+        systemPrintln(badCrc);
+        systemPrint("        Bad Frames: ");
+        systemPrintln(badFrames);
+        systemPrint("        Duplicate Frames: ");
+        systemPrintln(duplicateFrames);
+        systemPrint("        Insufficient Space: ");
+        systemPrintln(insufficientSpace);
+        systemPrint("        Net ID Mismatch: ");
+        systemPrintln(netIdMismatch);
         break;
     }
   }
