@@ -664,7 +664,6 @@ const COMMAND_ENTRY commands[] =
 {
   /*Debug parameters
    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "AlternateLedUsage",    &settings.alternateLedUsage},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "CopyDebug",            &settings.copyDebug},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "Debug",                &settings.debug},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &settings.debugDatagrams},
@@ -686,6 +685,7 @@ const COMMAND_ENTRY commands[] =
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintRfData",          &settings.printRfData},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintTimestamp",       &settings.printTimestamp},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintTxErrors",        &settings.printTxErrors},
+  {'D',   1,   0, 255,    0, TYPE_U8,           valInt,         "SelectLedUse",         &settings.selectLedUse},
 
   /*Radio parameters
    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */

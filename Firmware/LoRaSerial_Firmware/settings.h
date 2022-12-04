@@ -336,6 +336,15 @@ typedef struct _COMMAND_ENTRY
   void * setting;
 } COMMAND_ENTRY;
 
+typedef enum
+{
+  LEDS_RSSI = 0,    //Green: RSSI, Blue: Serial TX, Yellow: Serial RX
+  LEDS_RADIO_USE,   //Green1: RX, Green2: Link, Green3: RSSI, Green4: TX
+                    //Blue: Bad frames, Yellow: Bad CRC
+
+  //Add user LED types from 255 working down
+} LEDS_USE_TYPE;
+
 //These are all the settings that can be set on Serial Terminal Radio. It's recorded to NVM.
 typedef struct struct_settings {
   uint16_t sizeOfSettings = 0; //sizeOfSettings **must** be the first entry and must be int
@@ -406,7 +415,7 @@ typedef struct struct_settings {
   bool printLinkUpDown = false; //Print the link up and link down messages
   bool invertCts = false; //Invert the input of CTS
   bool invertRts = false; //Invert the output of RTS
-  bool alternateLedUsage = false; //Enable alternate LED usage
+  bool selectLedUse = 0; //Select LED use
   uint8_t trainingTimeout = 1; //Timeout in minutes to complete the training
   bool debugSerial = false; //Debug the serial input
   bool debugSync = false; //Print clock sync processing

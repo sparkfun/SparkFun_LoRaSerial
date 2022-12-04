@@ -542,19 +542,6 @@ void updateRSSI()
   else
     rssi = radio.getRSSI();
 
-  if (settings.alternateLedUsage)
-    return;
-
-  //Set LEDs according to RSSI level
-  if (rssi > rssiLevelLow)
-    setRSSI(0b0001);
-  if (rssi > rssiLevelMed)
-    setRSSI(0b0011);
-  if (rssi > rssiLevelHigh)
-    setRSSI(0b0111);
-  if (rssi > rssiLevelMax)
-    setRSSI(0b1111);
-
   if (hopCount > 0)
   {
     //Reset RSSI measurements
@@ -565,9 +552,6 @@ void updateRSSI()
 
 void setRSSI(uint8_t ledBits)
 {
-  if (settings.alternateLedUsage)
-    return;
-
   if (ledBits & 0b0001)
     digitalWrite(pin_rssi1LED, HIGH);
   else
@@ -591,7 +575,7 @@ void setRSSI(uint8_t ledBits)
 
 void txLED(bool illuminate)
 {
-  if (settings.alternateLedUsage)
+  if (settings.selectLedUse != LEDS_RSSI)
     return;
   if (pin_txLED != PIN_UNDEFINED)
   {
@@ -604,7 +588,7 @@ void txLED(bool illuminate)
 
 void rxLED(bool illuminate)
 {
-  if (settings.alternateLedUsage)
+  if (settings.selectLedUse != LEDS_RSSI)
     return;
   if (pin_rxLED != PIN_UNDEFINED)
   {
@@ -615,7 +599,7 @@ void rxLED(bool illuminate)
   }
 }
 
-void updateLeds()
+void radioLeds()
 {
   uint32_t currentMillis;
   static uint32_t previousMillis;
@@ -704,6 +688,29 @@ void updateLeds()
 
   //Save the last millis value
   previousMillis = currentMillis;
+}
+
+void updateLeds()
+{
+  switch (settings.selectLedUse)
+  {
+    //Set LEDs according to RSSI level
+    default:
+    case 0:
+      if (rssi > rssiLevelLow)
+        setRSSI(0b0001);
+      if (rssi > rssiLevelMed)
+        setRSSI(0b0011);
+      if (rssi > rssiLevelHigh)
+        setRSSI(0b0111);
+      if (rssi > rssiLevelMax)
+        setRSSI(0b1111);
+      break;
+
+    case 1:
+      radioLeds();
+      break;
+    }
 }
 
 int stricmp(const char * str1, const char * str2)
