@@ -404,6 +404,14 @@ uint8_t * endOfTxData;
 CONTROL_U8 txControl;
 uint32_t transmitTimer;
 
+//Retransmit support
+uint8_t rmtCmdVc;
+uint8_t rexmtBuffer[MAX_PACKET_SIZE];
+CONTROL_U8 rexmtControl;
+uint8_t rexmtLength;
+uint8_t rexmtFrameSentCount;
+uint8_t rexmtTxDestVc;
+
 //Multi-point Training
 bool trainingServerRunning; //Training server is running
 bool trainingPreviousRxInProgress = false; //Previous RX status

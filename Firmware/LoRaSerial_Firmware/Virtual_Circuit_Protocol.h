@@ -32,6 +32,7 @@
 //Source and destinations reserved for the local host
 #define PC_COMMAND          VC_RSVD_SPECIAL_VCS //Command input and command response
 #define PC_LINK_STATUS      (PC_COMMAND + 1)    //Asynchronous link status output
+#define PC_DATA_ACK         (PC_LINK_STATUS + 1)//Indicate successful delivery of the data
 
 //Address space 1 and 2 are reserved for the host PC interface to support remote
 //command processing.  The radio removes these bits and converts them to the
@@ -133,6 +134,11 @@ typedef struct _VC_LINK_STATUS_MESSAGE
 {
   uint8_t linkStatus;     //Link status
 } VC_LINK_STATUS_MESSAGE;
+
+typedef struct _VC_DATA_ACK_MESSAGE
+{
+  uint8_t msgDestVc;      //message destination VC
+} VC_DATA_ACK_MESSAGE;
 
 #define LINK_DOWN         0
 #define LINK_UP           1

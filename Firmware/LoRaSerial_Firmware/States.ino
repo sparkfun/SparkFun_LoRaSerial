@@ -26,12 +26,6 @@ void updateRadioState()
   int index;
   uint16_t length;
   uint8_t radioSeed;
-  static uint8_t rmtCmdVc;
-  static uint8_t rexmtBuffer[MAX_PACKET_SIZE];
-  static CONTROL_U8 rexmtControl;
-  static uint8_t rexmtLength;
-  static uint8_t rexmtFrameSentCount;
-  static uint8_t rexmtTxDestVc;
   bool serverLinkBroken;
   VIRTUAL_CIRCUIT * vc;
   VC_RADIO_MESSAGE_HEADER * vcHeader;
