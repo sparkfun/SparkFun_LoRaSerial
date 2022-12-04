@@ -2309,6 +2309,12 @@ void changeState(RadioStates newState)
   if ((settings.debug == false) && (settings.debugStates == false))
     return;
 
+  displayState(newState);
+  outputSerialData(true);
+}
+
+void displayState(RadioStates newState)
+{
   //Debug print
   if (settings.printTimestamp)
     systemPrintTimestamp();
@@ -2356,7 +2362,6 @@ void changeState(RadioStates newState)
   }
 
   systemPrintln();
-  outputSerialData(true);
 }
 
 void breakLink()

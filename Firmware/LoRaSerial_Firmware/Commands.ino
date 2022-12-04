@@ -199,10 +199,8 @@ bool commandAT(const char * commandString)
       case ('5'): //ATI5 - Show max possible bytes per second
         systemPrintln(calcMaxThroughput());
         break;
-      case ('6'): //ATI6 - Display AES key
-        for (uint8_t i = 0 ; i < 16 ; i++)
-          systemPrint(settings.encryptionKey[i], HEX);
-        systemPrintln();
+      case ('6'): //ATI6 - Display currentState
+        displayState(radioState);
         break;
       case ('7'): //ATI7 - Show current FHSS channel
         systemPrintln(channelNumber);
