@@ -838,3 +838,23 @@ int16_t getReceiveCompletionOffset()
       break;
   }
 }
+
+//Verify the enums .vs. name tables, stop on failure to force software fix
+void verifyTables()
+{
+  bool valid;
+
+  valid = true;
+
+  //Verify that the state table contains all of the states in increasing order
+  valid &= verifyRadioStateTable();
+
+  //Verify that the datagram type table contains all of the datagram types
+  valid &= verifyRadioDatagramType();
+
+  if (!valid)
+  {
+    outputSerialData(true);
+    waitForever();
+  }
+}

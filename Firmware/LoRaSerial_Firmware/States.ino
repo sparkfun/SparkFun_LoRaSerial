@@ -2120,7 +2120,8 @@ bool isLinked()
   return (false);
 }
 
-void verifyRadioStateTable()
+//Verify the radio state definitions against the radioStateTable
+bool verifyRadioStateTable()
 {
   int expectedState;
   unsigned int i;
@@ -2131,8 +2132,10 @@ void verifyRadioStateTable()
   int * order;
   unsigned int tableEntries;
   int temp;
+  int valid;
 
   //Verify that all the entries are in the state table
+  valid = true;
   tableEntries = sizeof(radioStateTable) / sizeof(radioStateTable[0]);
   for (index = 0; index < tableEntries; index++)
   {
@@ -2286,20 +2289,20 @@ void verifyRadioStateTable()
       systemPrintln(expectedState++);
     }
     systemPrintln("};");
-
-    //Wait forever
-    waitForever();
+    valid = false;
   }
+  return valid;
 }
 
 //Verify the PacketType enums against the radioDatagramType
-void verifyRadioDatagramType()
+bool verifyRadioDatagramType()
 {
-  if ((sizeof(radioDatagramType) / sizeof(radioDatagramType[0])) != MAX_DATAGRAM_TYPE)
-  {
+  bool valid;
+
+  valid = ((sizeof(radioDatagramType) / sizeof(radioDatagramType[0])) == MAX_DATAGRAM_TYPE);
+  if (!valid)
     systemPrintln("ERROR - Please update the radioDatagramTable");
-    waitForever();
-  }
+  return valid;
 }
 
 //Change states and print the new state
