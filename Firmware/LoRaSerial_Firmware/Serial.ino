@@ -558,7 +558,7 @@ bool vcSerialMessageReceived()
 
     //Verify that the destination link is up
     if ((vcDest != VC_BROADCAST)
-      && (virtualCircuitList[vcDest & VCAB_NUMBER_MASK].linkUp == false))
+      && (virtualCircuitList[vcDest & VCAB_NUMBER_MASK].vcState == VC_STATE_LINK_DOWN))
     {
       if (settings.debugSerial || settings.debugTransmit)
       {

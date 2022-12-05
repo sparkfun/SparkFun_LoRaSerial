@@ -135,6 +135,19 @@ typedef struct _VC_LINK_STATUS_MESSAGE
   uint8_t linkStatus;     //Link status
 } VC_LINK_STATUS_MESSAGE;
 
+typedef enum
+{
+  VC_STATE_LINK_DOWN = 0, //0: HEARTBEATs not received
+  VC_STATE_LINK_ALIVE,    //1: Receiving HEARTBEATs, waiting for PING
+  VC_STATE_SEND_PING,     //2: ATC command received, sending PING
+  VC_STATE_WAIT_FOR_ACK1 ,//3: PING sent, waiting for ACK1
+  VC_STATE_WAIT_FOR_ACK2 ,//4: ACK1 sent, waiting for ACK2
+  VC_STATE_CONNECTED,     //5: ACK2 received, ACKs cleared, ready to send data
+
+  //Insert new states before this line
+  VC_STATE_MAX
+} VC_STATE_TYPE;
+
 typedef struct _VC_DATA_ACK_MESSAGE
 {
   uint8_t msgDestVc;      //message destination VC

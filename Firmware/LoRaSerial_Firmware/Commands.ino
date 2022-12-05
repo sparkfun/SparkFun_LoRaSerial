@@ -89,7 +89,7 @@ bool commandAT(const char * commandString)
         if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
         {
           for (int i=0; i < MAX_VC; i++)
-            if (virtualCircuitList[i].linkUp && (i != myVc))
+            if ((virtualCircuitList[i].vcState != VC_STATE_LINK_DOWN) && (i != myVc))
               vcBreakLink(i);
         }
         else if (settings.operatingMode == MODE_POINT_TO_POINT)
@@ -293,7 +293,7 @@ bool commandAT(const char * commandString)
         }
         else
         {
-          systemPrint(vc->linkUp ? "Up" : "Down");
+          systemPrint(vcStateNames[vc->vcState]);
           systemPrint(" @ ");
           systemPrintTimestamp(millis());
           systemPrintln();
