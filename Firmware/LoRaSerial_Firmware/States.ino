@@ -2525,15 +2525,15 @@ void vcBreakLink(int8_t vcIndex)
 }
 
 //Place VC in LINK-UP state since it is receiving HEARTBEATs from the remote radio
-int8_t vcLinkUp(int8_t index)
+int8_t vcLinkUp(int8_t vcIndex)
 {
-  VIRTUAL_CIRCUIT * vc = &virtualCircuitList[index];
+  VIRTUAL_CIRCUIT * vc = &virtualCircuitList[vcIndex];
 
   //Send the status message
   if (vc->vcState == VC_STATE_LINK_DOWN)
   {
     vc->firstHeartbeatMillis = millis();
-    vcSendLinkStatus(true, index);
+    vcSendLinkStatus(true, vcIndex);
 
     //Reset the ACK counters
     vc->txAckNumber = 0;
@@ -2544,33 +2544,33 @@ int8_t vcLinkUp(int8_t index)
   //Update the link status
   vc->vcState = VC_STATE_LINK_ALIVE;
   vc->lastHeartbeatMillis = millis();
-  return index;
+  return vcIndex;
 }
 
 //Translate the UNIQUE ID value into a VC number to reduce the communications overhead
 int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
 {
-  int8_t index;
   VIRTUAL_CIRCUIT * vc;
+  int8_t vcIndex;
 
   //Determine if the address is already in the list
-  for (index = 0; index < MAX_VC; index++)
+  for (vcIndex = 0; vcIndex < MAX_VC; vcIndex++)
   {
     //Verify that an address is present
-    vc = &virtualCircuitList[index];
+    vc = &virtualCircuitList[vcIndex];
     if (!vc->valid)
       continue;
 
     //Compare the unique ID values
     if (memcmp(vc->uniqueId, id, UNIQUE_ID_BYTES) == 0)
       //Update the link status
-      return vcLinkUp(index);
+      return vcLinkUp(vcIndex);
   }
 
   //The unique ID is not in the list
   //Fill in clients that were already running
-  index = srcAddr;
-  vc = &virtualCircuitList[index];
+  vcIndex = srcAddr;
+  vc = &virtualCircuitList[vcIndex];
 
   //Only the server can assign the address bytes
   if ((srcAddr == VC_UNASSIGNED) && (!settings.server))
@@ -2581,19 +2581,19 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
   {
     //Unknown client ID
     //Determine if there is a free address
-    for (index = 0; index < MAX_VC; index++)
+    for (vcIndex = 0; vcIndex < MAX_VC; vcIndex++)
     {
-      vc = &virtualCircuitList[index];
-      if (!virtualCircuitList[index].valid)
+      vc = &virtualCircuitList[vcIndex];
+      if (!virtualCircuitList[vcIndex].valid)
         break;
     }
-    if (index >= MAX_VC)
+    if (vcIndex >= MAX_VC)
     {
       systemPrintln("ERROR: Too many clients, no free addresses!\n");
       outputSerialData(true);
       return -2;
     }
-    srcAddr = index;
+    srcAddr = vcIndex;
   }
 
   //Check for an address conflict
@@ -2616,11 +2616,11 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
   //Save the unique ID to VC assignment in NVM
   memcpy(&vc->uniqueId, id, UNIQUE_ID_BYTES);
   if (settings.server)
-    nvmSaveVcUniqueId(index);
+    nvmSaveVcUniqueId(vcIndex);
 
   //Mark this link as up
   vc->valid = true;
-  return vcLinkUp(index);
+  return vcLinkUp(vcIndex);
 }
 
 //Process a received HEARTBEAT frame from a VC
