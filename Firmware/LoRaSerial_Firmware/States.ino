@@ -2460,38 +2460,55 @@ void discardPreviousData()
 }
 
 //Output VC link status
-void vcSendLinkStatus(bool linkUp, int8_t srcVc)
+void vcChangeState(int8_t vcIndex, uint8_t state)
 {
-  //Build the message
-  VC_LINK_STATUS_MESSAGE message;
-  message.linkStatus = linkUp ? LINK_UP : LINK_DOWN;
+  VIRTUAL_CIRCUIT * vc;
+  uint32_t vcBit;
 
-  //Build the message header
-  VC_SERIAL_MESSAGE_HEADER header;
-  header.start = START_OF_VC_SERIAL;
-  header.radio.length = VC_RADIO_HEADER_BYTES + sizeof(message);
-  header.radio.destVc = PC_LINK_STATUS;
-  header.radio.srcVc = srcVc;
-
-  //Send the message
-  systemWrite((uint8_t *)&header, sizeof(header));
-  systemWrite((uint8_t *)&message, sizeof(message));
-
-  if (settings.printLinkUpDown)
+  vc = &virtualCircuitList[vcIndex];
+  if (state != vc->vcState)
   {
-    if (linkUp)
+    //Set the new state
+    vc->vcState = state;
+
+    //Display the state change
+    if (settings.printLinkUpDown)
     {
-      systemPrint("========== Link ");
-      systemPrint(srcVc);
-      systemPrintln(" UP ==========");
+      if (state == VC_STATE_CONNECTED)
+      {
+        systemPrint("======= VC ");
+        systemPrint(vcIndex);
+        systemPrintln(" CONNECTED ======");
+      }
+      if (state == VC_STATE_LINK_DOWN)
+      {
+        systemPrint("--------- VC ");
+        systemPrint(vcIndex);
+        systemPrintln(" Down ---------");
+      }
+      else if (state == VC_STATE_LINK_ALIVE)
+      {
+        systemPrint("-=--=--=- VC ");
+        systemPrint(vcIndex);
+        systemPrintln(" ALIVE =--=--=-");
+      }
+      outputSerialData(true);
     }
-    else
-    {
-      systemPrint("--------- Link ");
-      systemPrint(srcVc);
-      systemPrintln(" Down ---------");
-    }
-    outputSerialData(true);
+
+    //Build the VC state message
+    VC_STATE_MESSAGE message;
+    message.vcState = state;
+
+    //Build the message header
+    VC_SERIAL_MESSAGE_HEADER header;
+    header.start = START_OF_VC_SERIAL;
+    header.radio.length = VC_RADIO_HEADER_BYTES + sizeof(message);
+    header.radio.destVc = PC_LINK_STATUS;
+    header.radio.srcVc = vcIndex;
+
+    //Send the VC state message
+    systemWrite((uint8_t *)&header, sizeof(header));
+    systemWrite((uint8_t *)&message, sizeof(message));
   }
 }
 
@@ -2506,12 +2523,12 @@ void vcBreakLink(int8_t vcIndex)
   vcIndex &= VCAB_NUMBER_MASK;
 
   //Get the virtual circuit data structure
-  if ((vcIndex >= 0) && (vcIndex != myVc) && ( vcIndex < MAX_VC))
+  if ((vcIndex >= 0) && (vcIndex != myVc) && (vcIndex < MAX_VC))
   {
     //Account for the link failure
     vc = &virtualCircuitList[vcIndex];
     vc->linkFailures++;
-    vc->vcState = VC_STATE_LINK_DOWN;
+    vcChangeState(vcIndex, VC_STATE_LINK_DOWN);
   }
   linkFailures++;
 
@@ -2533,7 +2550,7 @@ int8_t vcLinkAlive(int8_t vcIndex)
   if (vc->vcState == VC_STATE_LINK_DOWN)
   {
     vc->firstHeartbeatMillis = millis();
-    vcSendLinkStatus(true, vcIndex);
+    vcChangeState(vcIndex, VC_STATE_LINK_ALIVE);
 
     //Reset the ACK counters
     vc->txAckNumber = 0;
@@ -2542,7 +2559,8 @@ int8_t vcLinkAlive(int8_t vcIndex)
   }
 
   //Update the link status
-  vc->vcState = VC_STATE_LINK_ALIVE;
+  if (vc->vcState == VC_STATE_LINK_DOWN)
+    vcChangeState(vcIndex, VC_STATE_LINK_ALIVE);
   vc->lastHeartbeatMillis = millis();
   return vcIndex;
 }

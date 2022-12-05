@@ -13,6 +13,7 @@
 #define DEBUG_PC_TO_RADIO     0
 #define DEBUG_RADIO_TO_PC     0
 #define DISPLAY_DATA_ACK      1
+#define DISPLAY_VC_STATE      1
 
 bool findMyVc;
 int myVc = VC_UNASSIGNED;
@@ -235,22 +236,51 @@ int hostToStdout(uint8_t * data, uint8_t bytesToSend)
 
 void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t length)
 {
-  VC_LINK_STATUS_MESSAGE * linkStatus;
+  VC_STATE_MESSAGE * vcMsg;
 
-  linkStatus = (VC_LINK_STATUS_MESSAGE *)&header[1];
-  if (linkStatus->linkStatus == LINK_UP)
-    printf("========== Link %d UP ==========\n", header->radio.srcVc);
-  else
-    printf("--------- Link %d DOWN ---------\n", header->radio.srcVc);
+  vcMsg = (VC_STATE_MESSAGE *)&header[1];
+  if (DISPLAY_VC_STATE)
+  {
+    switch (vcMsg->vcState)
+    {
+    default:
+      printf("------- VC %d State %3d ------\n", header->radio.srcVc, vcMsg->vcState);
+      break;
+
+    case VC_STATE_LINK_DOWN:
+      printf("--------- VC %d DOWN ---------\n", header->radio.srcVc);
+      break;
+
+    case VC_STATE_LINK_ALIVE:
+      printf("-=--=--=- VC %d ALIVE =--=--=-\n", header->radio.srcVc);
+      break;
+
+    case VC_STATE_SEND_PING:
+      printf("-=--=-- VC %d ALIVE P1 --=--=-\n", header->radio.srcVc);
+      break;
+
+    case VC_STATE_WAIT_FOR_ACK1:
+      printf("-=--=-- VC %d ALIVE WA1 -=--=-\n", header->radio.srcVc);
+      break;
+
+    case VC_STATE_WAIT_FOR_ACK2:
+      printf("-=--=-- VC %d ALIVE WA2 -=--=-\n", header->radio.srcVc);
+      break;
+
+    case VC_STATE_CONNECTED:
+      printf("======= VC %d CONNECTED ======\n", header->radio.srcVc);
+      break;
+    }
+  }
 }
 
 void radioDataAck(uint8_t * data, uint8_t length)
 {
-  VC_DATA_ACK_MESSAGE * ack;
+  VC_DATA_ACK_MESSAGE * vcMsg;
 
-  ack = (VC_DATA_ACK_MESSAGE *)data;
+  vcMsg = (VC_DATA_ACK_MESSAGE *)data;
   if (DISPLAY_DATA_ACK)
-    printf("ACK from VC %d\n", ack->msgDestVc);
+    printf("ACK from VC %d\n", vcMsg->msgDestVc);
 }
 
 int radioToHost()
