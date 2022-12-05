@@ -2525,7 +2525,7 @@ void vcBreakLink(int8_t vcIndex)
 }
 
 //Place VC in LINK-UP state since it is receiving HEARTBEATs from the remote radio
-int8_t vcLinkUp(int8_t vcIndex)
+int8_t vcLinkAlive(int8_t vcIndex)
 {
   VIRTUAL_CIRCUIT * vc = &virtualCircuitList[vcIndex];
 
@@ -2564,7 +2564,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
     //Compare the unique ID values
     if (memcmp(vc->uniqueId, id, UNIQUE_ID_BYTES) == 0)
       //Update the link status
-      return vcLinkUp(vcIndex);
+      return vcLinkAlive(vcIndex);
   }
 
   //The unique ID is not in the list
@@ -2620,7 +2620,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
 
   //Mark this link as up
   vc->valid = true;
-  return vcLinkUp(vcIndex);
+  return vcLinkAlive(vcIndex);
 }
 
 //Process a received HEARTBEAT frame from a VC
