@@ -456,6 +456,7 @@ void updateRTS(bool assertRTS);
 #include "Arch_SAMD.h"
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+//Initial entrypoint following any runtime library initialization
 void setup()
 {
   int index;
@@ -504,6 +505,7 @@ void setup()
   triggerEvent(TRIGGER_RADIO_RESET);
 }
 
+//Idle loop for the CPU
 void loop()
 {
   petWDT();

@@ -77,6 +77,7 @@ void updateCylonLEDs()
 //Multi-Point Client/Server Training
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+//Start the multi-point training in client mode
 void beginTrainingClient()
 {
   systemPrintln("Begin client training");
@@ -93,6 +94,7 @@ void beginTrainingClient()
   trainingTimer = millis();
 }
 
+//Start the multi-point training in server mode
 void beginTrainingServer()
 {
   trainingServerRunning = true;

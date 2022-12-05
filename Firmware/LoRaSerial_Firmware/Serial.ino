@@ -309,6 +309,7 @@ void updateSerial()
   }
 }
 
+//Process serial input for point-to-point and multi-point modes
 void processSerialInput()
 {
   uint16_t radioHead;
@@ -419,6 +420,7 @@ void processSerialInput()
   }
 }
 
+//Move the serial data from serialTransmitBuffer to the USB or serial port
 void outputSerialData(bool ignoreISR)
 {
   int dataBytes;
@@ -604,6 +606,7 @@ bool vcSerialMessageReceived()
   return false;
 }
 
+//Process serial input when running in MODE_VIRTUAL_CIRCUIT
 void vcProcessSerialInput()
 {
   char * cmd;
@@ -792,6 +795,11 @@ void vcProcessSerialInput()
   if (timeToHop == true) hopChannel();
 }
 
+//Display any serial data for output, discard:
+// * Serial input data
+// * Radio transmit data
+// * Received remote command data
+// * Remote command response data
 void resetSerial()
 {
   uint32_t delayTime;

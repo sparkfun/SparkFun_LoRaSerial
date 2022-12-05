@@ -1,3 +1,4 @@
+//Read the settings from NVM into the settings structure
 void loadSettings()
 {
   arch.eepromBegin();
@@ -66,6 +67,7 @@ void recordSystemSettings()
   arch.eepromCommit();
 }
 
+//Erase the EEPROM
 void eepromErase()
 {
   if (settings.debugNvm)
