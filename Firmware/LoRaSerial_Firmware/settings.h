@@ -302,18 +302,6 @@ typedef enum
   MODE_VIRTUAL_CIRCUIT,
 } OPERATING_MODE;
 
-struct ControlTrailer
-{
-  uint8_t resend : 1;
-  uint8_t ack : 1;
-  uint8_t remoteCommand : 1;
-  uint8_t remoteCommandResponse : 1;
-  uint8_t train : 1;
-  uint8_t filler : 3;
-};
-struct ControlTrailer receiveTrailer;
-struct ControlTrailer responseTrailer;
-
 typedef struct _CONTROL_U8
 {
   PacketType datagramType: 4;
