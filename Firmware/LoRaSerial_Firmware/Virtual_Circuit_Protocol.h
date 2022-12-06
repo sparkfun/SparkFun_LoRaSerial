@@ -130,10 +130,10 @@ typedef struct _VC_SERIAL_MESSAGE_HEADER
 
 #define VC_SERIAL_HEADER_BYTES  (sizeof(VC_SERIAL_MESSAGE_HEADER)) //Length of the serial VC header in bytes
 
-typedef struct _VC_LINK_STATUS_MESSAGE
+typedef struct _VC_STATE_MESSAGE
 {
-  uint8_t linkStatus;     //Link status
-} VC_LINK_STATUS_MESSAGE;
+  uint8_t vcState;        //VC state
+} VC_STATE_MESSAGE;
 
 typedef enum
 {
@@ -152,9 +152,6 @@ typedef struct _VC_DATA_ACK_MESSAGE
 {
   uint8_t msgDestVc;      //message destination VC
 } VC_DATA_ACK_MESSAGE;
-
-#define LINK_DOWN         0
-#define LINK_UP           1
 
 //------------------------------------------------------------------------------
 // Macros
