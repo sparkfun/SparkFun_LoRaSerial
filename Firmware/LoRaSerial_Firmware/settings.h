@@ -411,6 +411,7 @@ typedef struct struct_settings {
   bool debugSync = false; //Print clock sync processing
   bool debugNvm = false; //Debug NVM operation
   bool printAckNumbers = false; //Print the ACK numbers
+  bool debugHeartbeat = false; //Print the HEARTBEAT timing values
 
   //Add new parameters immediately before this line
   //-- Add commands to set the parameters
