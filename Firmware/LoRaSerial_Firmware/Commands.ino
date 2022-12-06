@@ -52,6 +52,7 @@ bool commandAT(const char * commandString)
         systemPrintln("Command summary:");
         systemPrintln("  AT? - Print the command summary");
         systemPrintln("  ATB - Break the link");
+        systemPrintln("  ATC - Establish VC connection for data");
         systemPrintln("  ATD - Display the debug settings");
         systemPrintln("  ATG - Generate new netID and encryption key");
         systemPrintln("  ATI - Display the radio version");
@@ -109,6 +110,19 @@ bool commandAT(const char * commandString)
         {
           systemPrintln("Delay done");
           outputSerialData(true);
+        }
+        break;
+      case ('C'): //ATC - Establish VC connection for data
+        if ((settings.operatingMode != MODE_VIRTUAL_CIRCUIT)
+          || (vc->vcState != VC_STATE_LINK_ALIVE))
+          reportERROR();
+        else
+        {
+          if (cmdVc == myVc)
+            vcChangeState(cmdVc, VC_STATE_CONNECTED);
+          else
+            vcChangeState(cmdVc, VC_STATE_SEND_PING);
+          reportOK;
         }
         break;
       case ('G'): //Generate a new netID and encryption key
