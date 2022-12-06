@@ -173,6 +173,7 @@ typedef struct _VIRTUAL_CIRCUIT
   uint8_t uniqueId[UNIQUE_ID_BYTES];
   unsigned long firstHeartbeatMillis; //Time VC link came up
   unsigned long lastTrafficMillis; //Last time a frame was received
+  unsigned long lastPingMillis; //Last time a ping was sent or ACK received
 
   //Link quality metrics
   uint32_t framesSent;        //myVc --> VC, Total number of frames sent

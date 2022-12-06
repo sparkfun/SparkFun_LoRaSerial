@@ -1633,6 +1633,11 @@ void updateRadioState()
       |                       | ATC command
       | HB Timeout            V
       +<------------- VC_STATE_SEND_PING
+      ^                       |
+      |                       | TX PING
+      |                       | TX Complete
+      | HB Timeout            V
+      +<------------- VC_STATE_WAIT_ACK1
 
     */
 
@@ -1952,6 +1957,38 @@ void updateRadioState()
         //Save the message for retransmission
         SAVE_TX_BUFFER();
         rexmtTxDestVc = txDestVc;
+      }
+
+      //----------
+      //Priority 4: Walk through the 3-way handshake
+      //----------
+      else if (vcConnecting)
+      {
+        if (receiveInProcess() == false)
+        {
+          for (index = 0; index < MAX_VC; index++)
+          {
+            //Determine the first VC that is walking through connections
+            if (vcConnecting & (1 << index))
+            {
+              //Determine if PING needs to be sent
+              if (virtualCircuitList[index].vcState == VC_STATE_SEND_PING)
+              {
+                //Send the PING datagram, first part of the 3-way handshake
+                if (xmitVcPing(index))
+                {
+                  vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
+                  virtualCircuitList[index].lastPingMillis = datagramTimer;
+                  changeState(RADIO_VC_WAIT_TX_DONE);
+                  break;
+                }
+              }
+
+//Retransmit after lastPingMillis + (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+
+            }
+          }
+        }
       }
 
       //----------
