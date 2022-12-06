@@ -1638,11 +1638,15 @@ void updateRadioState()
       |                       | TX Complete                 |      HB Timeout |
       | HB Timeout            V                             |                 |
       +<------------- VC_STATE_WAIT_ACK1                    |                 |
-                                                            |                 |
-                                                            | TX ACK1         |
-                                                            | TX Complete     |
-                                                            V                 |
-                                                    VC_STATE_WAIT_ACK2 -------'
+      ^                       |                             |                 |
+      |                       | RX ACK1                     | TX ACK1         |
+      |                       | TX ACK2                     | TX Complete     |
+      |                       | TX Complete                 V                 |
+      |                       |                     VC_STATE_WAIT_ACK2 -------'
+      |                       |
+      |                       | Zero ACK values
+      | HB Timeout            V
+      '-------------- VC_STATE_CONNECTED
 
     */
 
@@ -1783,13 +1787,23 @@ void updateRadioState()
               changeState(RADIO_VC_WAIT_TX_DONE);
             break;
 
-          //Second step in 3-way handshake, received PING, respond with ACK1
+          //Second step in the 3-way handshake, received PING, respond with ACK1
           case DATAGRAM_PING:
             if (xmitVcAck1(rxSrcVc))
             {
               changeState(RADIO_VC_WAIT_TX_DONE);
-              vcChangeState(rxSrcVc, VC_STATE_CONNECTED);
+              vcChangeState(rxSrcVc, VC_STATE_WAIT_FOR_ACK2);
               virtualCircuitList[rxSrcVc].lastPingMillis = datagramTimer;
+            }
+            break;
+
+          //Third step in the 3-way handshake, received ACK1, respond with ACK2
+          case DATAGRAM_ACK_1:
+            if (xmitVcAck2(rxSrcVc))
+            {
+              changeState(RADIO_VC_WAIT_TX_DONE);
+              vcZeroAcks(rxSrcVc);
+              vcChangeState(rxSrcVc, VC_STATE_CONNECTED);
             }
             break;
 
@@ -2617,18 +2631,21 @@ int8_t vcLinkAlive(int8_t vcIndex)
   if (vc->vcState == VC_STATE_LINK_DOWN)
   {
     vc->firstHeartbeatMillis = millis();
-    vcChangeState(vcIndex, VC_STATE_LINK_ALIVE);
 
-    //Reset the ACK counters
-    vc->txAckNumber = 0;
-    vc->rmtTxAckNumber = 0;
-    vc->rxAckNumber = 0;
+    //Update the link status
+    vcChangeState(vcIndex, VC_STATE_LINK_ALIVE);
   }
-
-  //Update the link status
-  if (vc->vcState == VC_STATE_LINK_DOWN)
-    vcChangeState(vcIndex, VC_STATE_LINK_ALIVE);
   return vcIndex;
+}
+
+void vcZeroAcks(int8_t vcIndex)
+{
+  VIRTUAL_CIRCUIT * vc = &virtualCircuitList[vcIndex];
+
+  //Reset the ACK counters
+  vc->txAckNumber = 0;
+  vc->rmtTxAckNumber = 0;
+  vc->rxAckNumber = 0;
 }
 
 //Translate the UNIQUE ID value into a VC number to reduce the communications overhead
