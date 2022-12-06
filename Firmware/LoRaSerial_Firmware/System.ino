@@ -839,6 +839,18 @@ int16_t getReceiveCompletionOffset()
   }
 }
 
+//Verify the VC_STATE_TYPE enums against the vcStateNames table
+bool verifyVcStateNames()
+{
+  bool valid;
+
+  //Verify the length of the vcStateNames table
+  valid = (VC_STATE_MAX == (sizeof(vcStateNames) / sizeof(vcStateNames[0])));
+  if (!valid)
+    systemPrintln("ERROR: Fix difference between VC_STATE_TYPE and vcStateNames");
+  return valid;
+}
+
 //Verify the enums .vs. name tables, stop on failure to force software fix
 void verifyTables()
 {
@@ -851,6 +863,9 @@ void verifyTables()
 
   //Verify that the datagram type table contains all of the datagram types
   valid &= verifyRadioDatagramType();
+
+  //Verify the VC state name table
+  valid &= verifyVcStateNames();
 
   if (!valid)
   {

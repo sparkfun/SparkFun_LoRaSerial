@@ -2423,7 +2423,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   uint16_t responseDelay = frameAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
   if ((receiveInProcess() == true) || (transactionComplete == true)
     || ((settings.operatingMode == MODE_VIRTUAL_CIRCUIT) && (txDestVc != VC_BROADCAST)
-        && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].linkUp == false)))
+        && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].vcState == VC_STATE_LINK_DOWN)))
   {
     triggerEvent(TRIGGER_TRANSMIT_CANCELED);
     if (settings.debugReceive || settings.debugDatagrams)

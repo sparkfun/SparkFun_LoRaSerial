@@ -1589,6 +1589,9 @@ void updateRadioState()
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     /*
+
+    Radio States:
+
                    RADIO_RESET
                         |
                         V
@@ -1612,6 +1615,20 @@ void updateRadioState()
       |    Send Cmd Rsp | Send remote Cmd
       |                 |
       '-----------------'
+
+    3-way Handshake to zero ACKs:
+
+        TX PING --> RX ACK1 --> TX ACK2
+           or
+        RX PING --> TX ACK1 --> RX ACK2
+
+    VC States:
+
+      .-------------> VC_STATE_LINK_DOWN
+      |                       |
+      |                       | HEARTBEAT received
+      | HB Timeout            v
+      +<----------- VC_STATE_LINK_ALIVE
 
     */
 
@@ -1818,7 +1835,7 @@ void updateRadioState()
       }
 
       //----------
-      //Transmit a HEARTBEAT if necessary
+      //Priority 1: Transmit a HEARTBEAT if necessary
       //----------
       else if (((currentMillis - heartbeatTimer) >= heartbeatRandomTime)
                && (receiveInProcess() == false))
@@ -1833,14 +1850,15 @@ void updateRadioState()
       }
 
       //----------
-      //Wait for an outstanding ACK until it is received, don't transmit any other data
+      //Priority 2: Wait for an outstanding ACK until it is received, don't
+      //transmit any other data
       //----------
       else if (vcAckTimer)
       {
         //Verify that the link is still up
         txDestVc = rexmtTxDestVc;
         if ((txDestVc != VC_BROADCAST)
-          && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].linkUp == false))
+          && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].vcState == VC_STATE_LINK_DOWN))
         {
           //Stop the retransmits
           vcAckTimer = 0;
@@ -1903,7 +1921,8 @@ void updateRadioState()
       }
 
       //----------
-      //Prioritize sending the command response higher than sending data
+      //Priority 3: Send the entire command response, toggle between waiting for
+      //ACK above and transmitting the command response
       //----------
       else if (availableTXCommandBytes())
       {
@@ -1928,7 +1947,7 @@ void updateRadioState()
       }
 
       //----------
-      //Check for data to send
+      //Lowest Priority: Check for data to send
       //----------
       else if ((receiveInProcess() == false) && (vcSerialMessageReceived()))
       {
@@ -2054,7 +2073,7 @@ void updateRadioState()
 
           //Determine if the link has timed out
           vc = &virtualCircuitList[index];
-          if (vc->linkUp && (serverLinkBroken
+          if ((vc->vcState != VC_STATE_LINK_DOWN) && (serverLinkBroken
             || ((currentMillis - vc->lastHeartbeatMillis) > (VC_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))))
           {
             //When the server connection breaks, break all other connections and
@@ -2489,12 +2508,9 @@ void vcBreakLink(int8_t vcIndex)
     //Account for the link failure
     vc = &virtualCircuitList[vcIndex];
     vc->linkFailures++;
-    vc->linkUp = false;
+    vc->vcState = VC_STATE_LINK_DOWN;
   }
   linkFailures++;
-
-  //Send the status message
-  vcSendLinkStatus(false, vcIndex);
 
   //Stop the transmit timer
   transmitTimer = 0;
@@ -2511,7 +2527,7 @@ int8_t vcLinkUp(int8_t index)
   VIRTUAL_CIRCUIT * vc = &virtualCircuitList[index];
 
   //Send the status message
-  if (!vc->linkUp)
+  if (vc->vcState == VC_STATE_LINK_DOWN)
   {
     vc->firstHeartbeatMillis = millis();
     vcSendLinkStatus(true, index);
@@ -2523,7 +2539,7 @@ int8_t vcLinkUp(int8_t index)
   }
 
   //Update the link status
-  vc->linkUp = true;
+  vc->vcState = VC_STATE_LINK_ALIVE;
   vc->lastHeartbeatMillis = millis();
   return index;
 }

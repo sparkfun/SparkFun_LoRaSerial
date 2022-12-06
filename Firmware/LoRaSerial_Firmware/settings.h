@@ -161,6 +161,13 @@ const char * const radioDatagramType[] =
   "VC_HEARTBEAT",
 };
 
+const char * const vcStateNames[] =
+{ //   0            1
+  "LINK-DOWN", "LINK-ALIVE",
+  //   2            3            4            5
+  "SEND-PING", "WAIT-ACK1", "WAIT-ACK2", "CONNECTED",
+};
+
 typedef struct _VIRTUAL_CIRCUIT
 {
   uint8_t uniqueId[UNIQUE_ID_BYTES];
@@ -177,7 +184,7 @@ typedef struct _VIRTUAL_CIRCUIT
 
   //Link management
   bool valid;                 //Unique ID is valid
-  bool linkUp;                //Link is up, received a recent HEARTBEAT datagram
+  uint8_t vcState;            //State of VC
 
   /* ACK number management
 
