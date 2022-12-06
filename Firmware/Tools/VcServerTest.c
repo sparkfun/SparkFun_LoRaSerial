@@ -336,17 +336,17 @@ int radioToHost()
     }
 
     //Process the message
-    switch (header->radio.destVc)
+    if (header->radio.destVc == PC_LINK_STATUS)
+      radioToPcLinkStatus(header, VC_SERIAL_HEADER_BYTES + length);
+
+    if (header->radio.destVc == (PC_REMOTE_RESPONSE | myVc))
+        status = hostToStdout(data, length);
+
+    else
     {
-    default:
       if ((header->radio.destVc == myVc) || (header->radio.destVc == VC_BROADCAST))
         //Output this message
         status = hostToStdout(data, length);
-      break;
-
-    case PC_LINK_STATUS:
-      radioToPcLinkStatus(header, VC_SERIAL_HEADER_BYTES + length);
-      break;
     }
 
     //Continue processing the rest of the data in the buffer
@@ -399,7 +399,7 @@ main (
 
     //Determine the remote VC address
     if ((sscanf(argv[2], "%d", &remoteVc) != 1)
-      || (remoteVc < VC_COMMAND) || (remoteVc >= MAX_VC))
+      || ((remoteVc > PC_LINK_STATUS) && (remoteVc < VC_COMMAND)))
     {
       fprintf(stderr, "ERROR: Invalid target VC address, please use one of the following:\n");
       if (myVc)
