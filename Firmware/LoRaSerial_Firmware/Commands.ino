@@ -34,7 +34,7 @@ bool commandAT(const char * commandString)
 {
   uint32_t delayMillis;
   unsigned long timer;
-  VIRTUAL_CIRCUIT * vc;
+  VIRTUAL_CIRCUIT * vc = &virtualCircuitList[cmdVc];
 
   //'AT'
   if (commandLength == 2)
@@ -275,13 +275,13 @@ bool commandAT(const char * commandString)
         systemPrint("VC ");
         systemPrint(cmdVc);
         systemPrint(" frames sent: ");
-        systemPrintln(virtualCircuitList[cmdVc].framesSent);
+        systemPrintln(vc->framesSent);
         break;
       case ('9'): //ATI19 - Display the VC frames received
         systemPrint("VC ");
         systemPrint(cmdVc);
         systemPrint(" frames received: ");
-        systemPrintln(virtualCircuitList[cmdVc].framesReceived);
+        systemPrintln(vc->framesReceived);
         break;
     }
   }
@@ -295,44 +295,49 @@ bool commandAT(const char * commandString)
         systemPrint("VC ");
         systemPrint(cmdVc);
         systemPrint(" messages sent: ");
-        systemPrintln(virtualCircuitList[cmdVc].messagesSent);
+        systemPrintln(vc->messagesSent);
         break;
       case ('1'): //ATI21 - Display the VC messages received
         systemPrint("VC ");
         systemPrint(cmdVc);
         systemPrint(" messages received: ");
-        systemPrintln(virtualCircuitList[cmdVc].messagesReceived);
+        systemPrintln(vc->messagesReceived);
         break;
       case ('2'): //ATI22 - Display the VC bad length received
         systemPrint("VC ");
         systemPrint(cmdVc);
         systemPrint(" bad length received: ");
-        systemPrintln(virtualCircuitList[cmdVc].badLength);
+        systemPrintln(vc->badLength);
         break;
       case ('3'): //ATI23 - Display the VC link failures
         systemPrint("VC ");
         systemPrint(cmdVc);
         systemPrint(" link failures: ");
-        systemPrintln(virtualCircuitList[cmdVc].linkFailures);
+        systemPrintln(vc->linkFailures);
         break;
       case ('4'): //ATI24 - Display the VC details
-        vc = &virtualCircuitList[cmdVc];
         systemPrint("VC ");
         systemPrint(cmdVc);
-        systemPrint(":");
+        systemPrint(": ");
         if (!vc->valid)
-          systemPrintln(" Not valid!");
+          systemPrintln("Down, Not valid");
         else
         {
-          petWDT();
-          systemPrint("    Link: ");
           systemPrintln(vc->linkUp ? "Up" : "Down");
-          systemPrint("    Unique ID: ");
+          systemPrint("    ID: ");
           systemPrintUniqueID(vc->uniqueId);
-
-          systemPrintln("    Metrics:");
-          systemPrint("        Link Failures: ");
-          systemPrintln(vc->linkFailures);
+          systemPrintln(vc->valid ? " (Valid)" : " (Invalid)");
+          systemPrintln("    Heartbeats");
+          systemPrint("        Last:    ");
+          systemPrintTimestamp(vc->lastHeartbeatMillis);
+          systemPrintln();
+          systemPrint("        First:   ");
+          systemPrintTimestamp(vc->firstHeartbeatMillis);
+          systemPrintln();
+          systemPrint("        Up Time: ");
+          systemPrintTimestamp(vc->lastHeartbeatMillis - vc->firstHeartbeatMillis);
+          systemPrintln();
+          systemPrintln("    Metrics");
           systemPrint("        Frames Sent: ");
           systemPrintln(vc->framesSent);
           systemPrint("        Frames Received: ");
@@ -343,17 +348,15 @@ bool commandAT(const char * commandString)
           systemPrintln(vc->messagesReceived);
           systemPrint("        Bad Lengths Received: ");
           systemPrintln(vc->badLength);
-
-          systemPrintln("    ACK Management:");
+          systemPrint("        Link Failures: ");
+          systemPrintln(linkFailures);
+          systemPrintln("    ACK Management");
           systemPrint("        Last RX ACK number: ");
           systemPrintln(vc->rxAckNumber);
           systemPrint("        Next RX ACK number: ");
           systemPrintln(vc->rmtTxAckNumber);
           systemPrint("        Last TX ACK number: ");
           systemPrintln(vc->txAckNumber);
-
-          systemPrint("    Last HEARTBEAT millis: ");
-          systemPrintln(vc->lastHeartbeatMillis);
         }
         break;
       case ('5'): //ATI25 - Display the total insufficient buffer count
