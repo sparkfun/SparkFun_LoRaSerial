@@ -58,83 +58,83 @@ const RADIO_STATE_ENTRY radioStateTable[] =
 {
   {RADIO_RESET,                          0, "RESET",                          NULL},                         // 0
 
-  //V2 - Point-to-Point link handshake
+  //Point-to-Point link handshake
   //    State                           RX      Name                              Description
-  {RADIO_P2P_LINK_DOWN,                  1, "P2P_LINK_DOWN",                  "V2 P2P: [No Link] Waiting for Ping"}, // 4
-  {RADIO_P2P_WAIT_TX_PING_DONE,          0, "P2P_WAIT_TX_PING_DONE",          "V2 P2P: [No Link] Wait Ping TX Done"},// 5
-  {RADIO_P2P_WAIT_ACK_1,                 1, "P2P_WAIT_ACK_1",                 "V2 P2P: [No Link] Waiting for ACK1"}, // 6
-  {RADIO_P2P_WAIT_TX_ACK_1_DONE,         0, "P2P_WAIT_TX_ACK_1_DONE",         "V2 P2P: [No Link] Wait ACK1 TX Done"},// 7
-  {RADIO_P2P_WAIT_ACK_2,                 1, "P2P_WAIT_ACK_2",                 "V2 P2P: [No Link] Waiting for ACK2"}, // 8
-  {RADIO_P2P_WAIT_TX_ACK_2_DONE,         0, "P2P_WAIT_TX_ACK_2_DONE",         "V2 P2P: [No Link] Wait ACK2 TX Done"},// 9
+  {RADIO_P2P_LINK_DOWN,                  1, "P2P_LINK_DOWN",                  "P2P: [No Link] Waiting for Ping"}, // 4
+  {RADIO_P2P_WAIT_TX_PING_DONE,          0, "P2P_WAIT_TX_PING_DONE",          "P2P: [No Link] Wait Ping TX Done"},// 5
+  {RADIO_P2P_WAIT_ACK_1,                 1, "P2P_WAIT_ACK_1",                 "P2P: [No Link] Waiting for ACK1"}, // 6
+  {RADIO_P2P_WAIT_TX_ACK_1_DONE,         0, "P2P_WAIT_TX_ACK_1_DONE",         "P2P: [No Link] Wait ACK1 TX Done"},// 7
+  {RADIO_P2P_WAIT_ACK_2,                 1, "P2P_WAIT_ACK_2",                 "P2P: [No Link] Waiting for ACK2"}, // 8
+  {RADIO_P2P_WAIT_TX_ACK_2_DONE,         0, "P2P_WAIT_TX_ACK_2_DONE",         "P2P: [No Link] Wait ACK2 TX Done"},// 9
 
-  //V2 - Point-to-Point, link up, data exchange
+  //Point-to-Point, link up, data exchange
   //    State                           RX      Name                              Description
-  {RADIO_P2P_LINK_UP,                    1, "P2P_LINK_UP",                    "V2 P2P: Receiving Standby"},          //10
-  {RADIO_P2P_LINK_UP_WAIT_ACK_DONE,      0, "P2P_LINK_UP_WAIT_ACK_DONE",      "V2 P2P: Waiting ACK TX Done"},        //11
-  {RADIO_P2P_LINK_UP_WAIT_TX_DONE,       0, "P2P_LINK_UP_WAIT_TX_DONE",       "V2 P2P: Waiting TX done"},            //12
-  {RADIO_P2P_LINK_UP_WAIT_ACK,           1, "P2P_LINK_UP_WAIT_ACK",           "V2 P2P: Waiting for ACK"},            //13
-  {RADIO_P2P_LINK_UP_HB_ACK_REXMT,       0, "P2P_LINK_UP_HB_ACK_REXMT",       "V2 P2P: Heartbeat ACK ReXmt"},        //14
+  {RADIO_P2P_LINK_UP,                    1, "P2P_LINK_UP",                    "P2P: Receiving Standby"},          //10
+  {RADIO_P2P_LINK_UP_WAIT_ACK_DONE,      0, "P2P_LINK_UP_WAIT_ACK_DONE",      "P2P: Waiting ACK TX Done"},        //11
+  {RADIO_P2P_LINK_UP_WAIT_TX_DONE,       0, "P2P_LINK_UP_WAIT_TX_DONE",       "P2P: Waiting TX done"},            //12
+  {RADIO_P2P_LINK_UP_WAIT_ACK,           1, "P2P_LINK_UP_WAIT_ACK",           "P2P: Waiting for ACK"},            //13
+  {RADIO_P2P_LINK_UP_HB_ACK_REXMT,       0, "P2P_LINK_UP_HB_ACK_REXMT",       "P2P: Heartbeat ACK ReXmt"},        //14
 
-  //V2 - Multi-Point data exchange
+  //Multi-Point data exchange
   //    State                           RX      Name                              Description
-  {RADIO_MP_BEGIN_SCAN,                  0, "MP_BEGIN_SCAN",                  "V2 MP: Setup for CAD Scanning"},      //15
-  {RADIO_MP_SCANNING,                    0, "MP_SCANNING",                    "V2 MP: Scanning for activity"},       //16
-  {RADIO_MP_WAIT_TX_PING_DONE,           0, "MP_WAIT_TX_PING_DONE",           "V2 MP: Wait for ping to xmit"},       //17
-  {RADIO_MP_WAIT_TX_ACK_DONE,            0, "MP_WAIT_TX_ACK_DONE",            "V2 MP: Wait for ACK to xmit"},        //18
-  {RADIO_MP_STANDBY,                     1, "MP_STANDBY",                     "V2 MP: Wait for TX or RX"},           //19
-  {RADIO_MP_WAIT_TX_DONE,                0, "MP_WAIT_TX_DONE",                "V2 MP: Waiting for TX done"},         //20
+  {RADIO_MP_BEGIN_SCAN,                  0, "MP_BEGIN_SCAN",                  "MP: Setup for CAD Scanning"},      //15
+  {RADIO_MP_SCANNING,                    0, "MP_SCANNING",                    "MP: Scanning for activity"},       //16
+  {RADIO_MP_WAIT_TX_PING_DONE,           0, "MP_WAIT_TX_PING_DONE",           "MP: Wait for ping to xmit"},       //17
+  {RADIO_MP_WAIT_TX_ACK_DONE,            0, "MP_WAIT_TX_ACK_DONE",            "MP: Wait for ACK to xmit"},        //18
+  {RADIO_MP_STANDBY,                     1, "MP_STANDBY",                     "MP: Wait for TX or RX"},           //19
+  {RADIO_MP_WAIT_TX_DONE,                0, "MP_WAIT_TX_DONE",                "MP: Waiting for TX done"},         //20
 
-  //V2 - Multi-Point training client states
+  //Multi-Point training client states
   //    State                           RX      Name                              Description
-  {RADIO_MP_WAIT_TX_TRAINING_PING_DONE,  0, "MP_WAIT_TX_TRAINING_PING_DONE",  "V2 MP: Wait TX training PING done"},  //21
-  {RADIO_MP_WAIT_RX_RADIO_PARAMETERS,    1, "MP_WAIT_RX_RADIO_PARAMETERS",    "V2 MP: Wait for radio parameters"},   //22
-  {RADIO_MP_WAIT_TX_PARAM_ACK_DONE,      0, "MP_WAIT_TX_PARAM_ACK_DONE",      "V2 MP: Wait for TX param ACK done"},  //23
+  {RADIO_MP_WAIT_TX_TRAINING_PING_DONE,  0, "MP_WAIT_TX_TRAINING_PING_DONE",  "MP: Wait TX training PING done"},  //21
+  {RADIO_MP_WAIT_RX_RADIO_PARAMETERS,    1, "MP_WAIT_RX_RADIO_PARAMETERS",    "MP: Wait for radio parameters"},   //22
+  {RADIO_MP_WAIT_TX_PARAM_ACK_DONE,      0, "MP_WAIT_TX_PARAM_ACK_DONE",      "MP: Wait for TX param ACK done"},  //23
 
-  //V2 - Multi-Point training server states
+  //Multi-Point training server states
   //    State                           RX      Name                              Description
-  {RADIO_MP_WAIT_FOR_TRAINING_PING,      1, "MP_WAIT_FOR_TRAINING_PING",      "V2 MP: Wait for training PING"},      //24
-  {RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,   0, "MP_WAIT_TX_RADIO_PARAMS_DONE",   "V2 MP: Wait for TX params done"},     //25
+  {RADIO_MP_WAIT_FOR_TRAINING_PING,      1, "MP_WAIT_FOR_TRAINING_PING",      "MP: Wait for training PING"},      //24
+  {RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,   0, "MP_WAIT_TX_RADIO_PARAMS_DONE",   "MP: Wait for TX params done"},     //25
 
-  //V2 - Virtual circuit states
+  //Virtual circuit states
   //    State                           RX      Name                              Description
-  {RADIO_VC_WAIT_SERVER,                 1, "VC_WAIT_SERVER",                 "V2 VC: Wait for the server"},         //26
-  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "V2 VC: Wait for TX done"},            //27
-  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "V2 VC: Wait for receive"},            //28
+  {RADIO_VC_WAIT_SERVER,                 1, "VC_WAIT_SERVER",                 "VC: Wait for the server"},         //26
+  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "VC: Wait for TX done"},            //27
+  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "VC: Wait for receive"},            //28
 };
 
 //Possible types of packets received
 typedef enum
 {
-  //V2 packet types must start at zero
-  //V2: Point-to-Point training
+  //Packet types must start at zero
+  //Point-to-Point training
   DATAGRAM_P2P_TRAINING_PING = 0,   // 0
   DATAGRAM_P2P_TRAINING_PARAMS,     // 1
 
-  //V2: Link establishment handshake
+  //Link establishment handshake
   DATAGRAM_PING,                    // 2
   DATAGRAM_ACK_1,                   // 3
   DATAGRAM_ACK_2,                   // 4
 
-  //V2: Point-to-Point data exchange
+  //Point-to-Point data exchange
   DATAGRAM_DATA,                    // 5
   DATAGRAM_DATA_ACK,                // 6
   DATAGRAM_HEARTBEAT,               // 7
   DATAGRAM_REMOTE_COMMAND,          // 8
   DATAGRAM_REMOTE_COMMAND_RESPONSE, // 9
 
-  //V2: Multi-Point data exchange
+  //Multi-Point data exchange
   DATAGRAM_DATAGRAM,                //10
 
-  //V2: Multi-Point training exchange
+  //Multi-Point training exchange
   DATAGRAM_TRAINING_PING,           //11
   DATAGRAM_TRAINING_PARAMS,         //12
   DATAGRAM_TRAINING_ACK,            //13
 
-  //V2: Virtual-Circuit (VC) exchange
+  //Virtual-Circuit (VC) exchange
   DATAGRAM_VC_HEARTBEAT,            //14
 
-  //Add new V2 datagram types before this line
-  MAX_V2_DATAGRAM_TYPE,
+  //Add new datagram types before this line
+  MAX_DATAGRAM_TYPE,
 
   //Add new protocol datagrams above this line
 
@@ -146,7 +146,7 @@ typedef enum
   DATAGRAM_NOT_MINE,
 } PacketType;
 
-const char * const v2DatagramType[] =
+const char * const radioDatagramType[] =
 { //       0                    1
   "P2P_TRAINING_PING", "P2P_TRAINING_PARAMS",
   // 2       3        4

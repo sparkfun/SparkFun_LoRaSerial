@@ -74,7 +74,7 @@ void updateCylonLEDs()
 }
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-//V2 Multi-Point Client/Server Training
+//Multi-Point Client/Server Training
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 void beginTrainingClient()

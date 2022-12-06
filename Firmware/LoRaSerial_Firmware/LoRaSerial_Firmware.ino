@@ -369,7 +369,7 @@ uint32_t netIdMismatch;     //Total number of mismatched Net ID frames
 unsigned long lastLinkUpTime = 0; //Mark when link was first established
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-//Global variables - V2 Protocol
+//Global variables - Radio Protocol
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Frame size values
@@ -460,7 +460,7 @@ void setup()
 
   verifyRadioStateTable(); //Verify that the state table contains all of the states in increasing order
 
-  verifyV2DatagramType(); //Verify that the datagram type table contains all of the datagram types
+  verifyRadioDatagramType(); //Verify that the datagram type table contains all of the datagram types
 
   arch.uniqueID(myUniqueId); //Get the unique ID
 
