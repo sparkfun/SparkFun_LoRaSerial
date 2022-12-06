@@ -512,10 +512,9 @@ void loop()
 
   updateSerial(); //Store incoming and print outgoing
 
-  if (settings.alternateLedUsage)
-    updateLeds();
-
   updateRadioState(); //Ping/ack/send packets as needed
+
+  updateLeds(); //Update the LEDs on the board
 
   if (hop) //If the hop ISR has triggered, measure RSSI during reception
   {

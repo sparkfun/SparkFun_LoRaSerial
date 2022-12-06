@@ -199,10 +199,8 @@ bool commandAT(const char * commandString)
       case ('5'): //ATI5 - Show max possible bytes per second
         systemPrintln(calcMaxThroughput());
         break;
-      case ('6'): //ATI6 - Display AES key
-        for (uint8_t i = 0 ; i < 16 ; i++)
-          systemPrint(settings.encryptionKey[i], HEX);
-        systemPrintln();
+      case ('6'): //ATI6 - Display currentState
+        displayState(radioState);
         break;
       case ('7'): //ATI7 - Show current FHSS channel
         systemPrintln(channelNumber);
@@ -666,7 +664,6 @@ const COMMAND_ENTRY commands[] =
 {
   /*Debug parameters
    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "AlternateLedUsage",    &settings.alternateLedUsage},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "CopyDebug",            &settings.copyDebug},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "Debug",                &settings.debug},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &settings.debugDatagrams},
@@ -688,6 +685,7 @@ const COMMAND_ENTRY commands[] =
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintRfData",          &settings.printRfData},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintTimestamp",       &settings.printTimestamp},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintTxErrors",        &settings.printTxErrors},
+  {'D',   1,   0, 255,    0, TYPE_U8,           valInt,         "SelectLedUse",         &settings.selectLedUse},
 
   /*Radio parameters
    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */

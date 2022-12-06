@@ -1085,7 +1085,6 @@ void updateRadioParameters(uint8_t * rxData)
   if (params.copyDebug)
   {
     originalSettings.debug = params.debug;
-    originalSettings.alternateLedUsage = params.alternateLedUsage;
     originalSettings.copyDebug = params.copyDebug;
     originalSettings.debug = params.debug;
     originalSettings.debugDatagrams = params.debugDatagrams;
@@ -1107,6 +1106,7 @@ void updateRadioParameters(uint8_t * rxData)
     originalSettings.printRfData = params.printRfData;
     originalSettings.printTimestamp = params.printTimestamp;
     originalSettings.printTxErrors = params.printTxErrors;
+    originalSettings.selectLedUse = params.selectLedUse;
   }
 
   //Update the serial parameters
@@ -1888,7 +1888,7 @@ PacketType rcvDatagram()
   linkDownTimer = millis();
 
   //Blink the RX LED
-  if (settings.alternateLedUsage)
+  if (settings.selectLedUse == LEDS_RADIO_USE)
     digitalWrite(ALT_LED_RX_DATA, LED_ON);
   return datagramType;
 }
@@ -2472,7 +2472,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   retransmitTimeout = random(ackAirTime, frameAirTime + ackAirTime); //Wait this number of ms between retransmits. Increases with each re-transmit.
 
   //BLink the RX LED
-  if (settings.alternateLedUsage)
+  if (settings.selectLedUse == LEDS_RADIO_USE)
     digitalWrite(ALT_LED_TX_DATA, LED_ON);
 
   return (true); //Tranmission has started

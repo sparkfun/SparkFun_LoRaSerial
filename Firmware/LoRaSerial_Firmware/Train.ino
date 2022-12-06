@@ -151,7 +151,7 @@ void commonTrainingInitialization()
   //Debug training if requested
   if (originalSettings.debugTraining)
   {
-    settings.alternateLedUsage = originalSettings.alternateLedUsage;
+    settings.selectLedUse = originalSettings.selectLedUse;
     //Ignore copyDebug
     settings.debug = originalSettings.debug;
     settings.debugDatagrams = originalSettings.debugDatagrams;
