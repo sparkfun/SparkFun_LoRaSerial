@@ -164,7 +164,8 @@ const char * const radioDatagramType[] =
 typedef struct _VIRTUAL_CIRCUIT
 {
   uint8_t uniqueId[UNIQUE_ID_BYTES];
-  unsigned long lastHeartbeatMillis;
+  unsigned long firstHeartbeatMillis; //Time VC link came up
+  unsigned long lastHeartbeatMillis; //Last time a HEARTBEAT was received, last time link was up
 
   //Link quality metrics
   uint32_t framesSent;        //myVc --> VC, Total number of frames sent

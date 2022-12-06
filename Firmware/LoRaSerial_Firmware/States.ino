@@ -2494,6 +2494,7 @@ int8_t vcLinkUp(int8_t index)
   //Send the status message
   if (!vc->linkUp)
   {
+    vc->firstHeartbeatMillis = millis();
     vcSendLinkStatus(true, index);
 
     //Reset the ACK counters
