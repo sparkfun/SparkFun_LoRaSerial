@@ -82,3 +82,47 @@ void eepromErase()
     arch.eepromCommit();
   }
 }
+
+//Copy the unique ID for the VC from NVM into the virtualCircuitList entry
+void nvmLoadVcUniqueId(int8_t vc)
+{
+  uint8_t id[UNIQUE_ID_BYTES];
+  int index;
+  int offset;
+
+  //Read the ID from the flash
+  offset = NVM_UNIQUE_ID_OFFSET + (vc * UNIQUE_ID_BYTES);
+  EEPROM.get(offset, id);
+
+  //Verify that the value was saved
+  for (index = 0; index < sizeof(id); index++)
+  {
+    //Determine if this entry was set to a value
+    if (id[index] != NVM_ERASE_VALUE)
+    {
+      //The unique ID was set, copy it into the VC structure
+      memcpy(virtualCircuitList[vc].uniqueId, id, sizeof(id));
+      virtualCircuitList[vc].valid = true;
+      break;
+    }
+  }
+}
+
+//Save the unique ID from the virtualCircuitList entry into the NVM
+void nvmSaveVcUniqueId(int8_t vc)
+{
+  uint8_t id[UNIQUE_ID_BYTES];
+  int index;
+  int offset;
+
+  //Read the ID from the flash
+  offset = NVM_UNIQUE_ID_OFFSET + (vc * UNIQUE_ID_BYTES);
+  EEPROM.get(offset, id);
+
+  //Write the ID into the flash
+  if (memcmp(id, virtualCircuitList[vc].uniqueId, sizeof(id)) != 0)
+  {
+    EEPROM.put(offset, virtualCircuitList[vc].uniqueId);
+    arch.eepromCommit();
+  }
+}
