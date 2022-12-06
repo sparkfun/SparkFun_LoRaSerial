@@ -1201,30 +1201,40 @@ bool xmitVcDatagram()
 
 bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
 {
+  uint32_t currentMillis = millis();
   uint8_t * txData;
 
-  uint32_t currentMillis = millis();
+  //Build the VC header
   txData = endOfTxData;
   *endOfTxData++ = 0; //Reserve for length
   *endOfTxData++ = VC_BROADCAST;
   *endOfTxData++ = addr;
+
+  //Add this radio's unique ID
   memcpy(endOfTxData, id, UNIQUE_ID_BYTES);
   endOfTxData += UNIQUE_ID_BYTES;
+
+  //Add the current time for timestamp synchronization
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   endOfTxData += sizeof(currentMillis);
+
+  //Add the channel timer for HOP synchronization
+  uint16_t msToNextHop = settings.maxDwellTime - (millis() - timerStart);
+  memcpy(endOfTxData, &msToNextHop, sizeof(msToNextHop));
+  endOfTxData += sizeof(msToNextHop);
 
   //Set the length field
   *txData = (uint8_t)(endOfTxData - txData);
 
   /*
-                                                               endOfTxData ---.
-                                                                              |
-                                                                              V
-      +----------+---------+--------+----------+---------+----------+---------+----------+
-      | Optional |         |        |          |         |          |         | Optional |
-      |  NET ID  | Control | Length | DestAddr | SrcAddr |  Src ID  | millis  | Trailer  |
-      |  8 bits  | 8 bits  | 8 bits |  8 bits  | 8 bits  | 16 Bytes | 4 Bytes || n Bytes  |
-      +----------+---------+--------+----------+---------+----------+---------+----------+
+                                                                          endOfTxData ---.
+                                                                                         |
+                                                                                         V
+      +----------+---------+--------+----------+---------+----------+---------+----------+----------+
+      | Optional |         |        |          |         |          |         | Channel  | Optional |
+      |  NET ID  | Control | Length | DestAddr | SrcAddr |  Src ID  | millis  |  Timer   | Trailer  |
+      |  8 bits  | 8 bits  | 8 bits |  8 bits  | 8 bits  | 16 Bytes | 4 Bytes | 2 bytes  || n Bytes  |
+      +----------+---------+--------+----------+---------+----------+---------+----------+----------+
   */
 
   txControl.datagramType = DATAGRAM_VC_HEARTBEAT;
