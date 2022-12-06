@@ -513,8 +513,28 @@ bool vcSerialMessageReceived()
       break;
     }
 
-    //Determine if the message is too large
+    //vcProcessSerialInput validates the vcDest value, this check validates
+    //that internally generated traffic uses valid vcDest values.  Only messages
+    //enabled for receive on a remote radio may be transmitted.
     vcDest = vcSerialMsgGetVcDest();
+    if (((uint8_t)vcDest >= (uint8_t)MIN_RX_NOT_ALLOWED) && (vcDest != VC_BROADCAST))
+    {
+      if (settings.debugSerial || settings.debugTransmit)
+      {
+        systemPrint("ERROR: Invalid internally generated vcDest ");
+        systemPrint(vcDest);
+        systemPrintln(", discarding message!");
+        outputSerialData(true);
+      }
+
+      //Discard this message
+      radioTxTail += msgLength;
+      if (radioTxTail >= sizeof(radioTxBuffer))
+        radioTxTail -= sizeof(radioTxBuffer);
+      break;
+    }
+
+    //Determine if the message is too large
     if (msgLength > maxDatagramSize)
     {
       if (settings.debugSerial || settings.debugTransmit)
@@ -529,30 +549,12 @@ bool vcSerialMessageReceived()
         radioTxTail -= sizeof(radioTxBuffer);
 
       //Nothing to do for invalid addresses or the broadcast address
-      if ((vcDest >= MAX_VC) || (vcDest == VC_BROADCAST))
+      if (((uint8_t)vcDest >= (uint8_t)MIN_TX_NOT_ALLOWED) && (vcDest != VC_BROADCAST))
         break;
 
-      //Break the link to this host
-      vcBreakLink(vcDest);
-      break;
-    }
-
-    //Validate the destination VC
-    //None of the local host targets belong in the radioTxBuffer
-    if ((vcDest >= PC_COMMAND) && (vcDest < VC_BROADCAST))
-    {
-      if (settings.debugSerial || settings.debugTransmit)
-      {
-        systemPrint("ERROR: Invalid vcDest ");
-        systemPrint(vcDest);
-        systemPrintln(", discarding message!");
-        outputSerialData(true);
-      }
-
-      //Discard this message
-      radioTxTail += msgLength;
-      if (radioTxTail >= sizeof(radioTxBuffer))
-        radioTxTail -= sizeof(radioTxBuffer);
+      //Break the link to this host since message delivery is guarranteed and
+      //this message is being discarded
+      vcBreakLink(vcDest & VCAB_NUMBER_MASK);
       break;
     }
 
@@ -709,7 +711,7 @@ void vcProcessSerialInput()
         }
 
         //Verify the destination virtual circuit
-        if ((vcDest > PC_LINK_STATUS) && (vcDest < VC_BROADCAST))
+        if (((uint8_t)vcDest >= (uint8_t)MIN_TX_NOT_ALLOWED) && (vcDest < VC_BROADCAST))
         {
           if (settings.debugSerial)
           {

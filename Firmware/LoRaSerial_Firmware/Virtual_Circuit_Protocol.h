@@ -39,10 +39,11 @@
 //appropriate datagram type.  Upon reception of one of these messages the bit is
 //added back into the VC header and the message is delivered to the host PC.
 //As a result, any host may send commands to any other host!
+#define MIN_RX_NOT_ALLOWED  VC_RSVD_SPECIAL_VCS
+#define PC_REMOTE_RESPONSE  ((int8_t)(6 << VCAB_NUMBER_BITS))
+//Address spaces 2 - 5 are not currently defined
+#define MIN_TX_NOT_ALLOWED  ((int8_t)(2 << VCAB_NUMBER_BITS)) //Marker only
 #define PC_REMOTE_COMMAND   ((int8_t)(1 << VCAB_NUMBER_BITS))
-#define PC_REMOTE_RESPONSE  ((int8_t)(2 << VCAB_NUMBER_BITS))
-
-//Address spaces 3 - 6 are not currently defined
 
 //Field offsets in the VC HEARTBEAT frame
 #define VC_HB_UNIQUE_ID     0
