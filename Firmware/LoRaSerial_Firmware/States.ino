@@ -14,6 +14,7 @@
     frameSentCount = rexmtFrameSentCount;                 \
   }
 
+//Process the radio states
 void updateRadioState()
 {
   int8_t addressByte;
@@ -2291,7 +2292,7 @@ void verifyRadioStateTable()
   }
 }
 
-//Verify the datagram type table
+//Verify the PacketType enums against the radioDatagramType
 void verifyRadioDatagramType()
 {
   if ((sizeof(radioDatagramType) / sizeof(radioDatagramType[0])) != MAX_DATAGRAM_TYPE)
@@ -2313,6 +2314,7 @@ void changeState(RadioStates newState)
   outputSerialData(true);
 }
 
+//Display the state transition
 void displayState(RadioStates newState)
 {
   //Debug print
@@ -2364,6 +2366,7 @@ void displayState(RadioStates newState)
   systemPrintln();
 }
 
+//Break a point-to-point link
 void breakLink()
 {
   //Break the link
@@ -2383,6 +2386,7 @@ void breakLink()
   changeState(RADIO_RESET);
 }
 
+//Point-to-point link is now up, following a 3-way handshake
 void enterLinkUp()
 {
   VIRTUAL_CIRCUIT * vc;
@@ -2417,6 +2421,7 @@ void enterLinkUp()
   }
 }
 
+//Empty the remote command receive buffer
 void discardPreviousData()
 {
   //Output any debug messages
@@ -2429,6 +2434,7 @@ void discardPreviousData()
   commandTXTail = commandTXHead;
 }
 
+//Output VC link status
 void vcSendLinkStatus(bool linkUp, int8_t srcVc)
 {
   //Build the message
@@ -2496,6 +2502,7 @@ void vcBreakLink(int8_t vcIndex)
     resetSerial();
 }
 
+//Place VC in LINK-UP state since it is receiving HEARTBEATs from the remote radio
 int8_t vcLinkUp(int8_t index)
 {
   VIRTUAL_CIRCUIT * vc = &virtualCircuitList[index];
@@ -2518,6 +2525,7 @@ int8_t vcLinkUp(int8_t index)
   return index;
 }
 
+//Translate the UNIQUE ID value into a VC number to reduce the communications overhead
 int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
 {
   int8_t index;
@@ -2593,6 +2601,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
   return vcLinkUp(index);
 }
 
+//Process a received HEARTBEAT frame from a VC
 void vcReceiveHeartbeat(uint32_t rxMillis)
 {
   uint32_t deltaMillis;

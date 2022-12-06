@@ -26,6 +26,7 @@ void beginBoard()
 
 }
 
+//Initialize the radio layer
 void beginLoRa()
 {
   radio = arch.radio();
@@ -48,6 +49,7 @@ void beginLoRa()
   changeState(RADIO_RESET);
 }
 
+//Initialize the button driver
 void beginButton()
 {
   if (pin_trainButton != PIN_UNDEFINED)
@@ -68,12 +70,14 @@ void delayWDT(uint16_t delayAmount)
   }
 }
 
+//Initialize the serial drivers
 void beginSerial(uint16_t serialSpeed)
 {
   Serial.begin(serialSpeed);
   arch.beginSerial(serialSpeed);
 }
 
+//Ensure the watch dog timer does not fire which would cause a CPU hardware reset
 void petWDT()
 {
   //Petting the dog takes a long time (~4.5ms on SAMD21) so it's only done after we've passed the timeout
@@ -84,6 +88,8 @@ void petWDT()
   }
 }
 
+//Start the timer measuring the dwell interval and indicating that it is time to
+//hop channels
 void beginChannelTimer()
 {
   if (channelTimer.attachInterruptInterval_MS(settings.maxDwellTime, channelTimerHandler) == false)

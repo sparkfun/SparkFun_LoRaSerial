@@ -30,6 +30,7 @@ typedef struct
 //  Command prefix routines
 //----------------------------------------
 
+//Process the AT commands
 bool commandAT(const char * commandString)
 {
   uint32_t delayMillis;
@@ -458,11 +459,13 @@ void checkCommand()
   commandLength = 0; //Get ready for next command
 }
 
+//Indicate successful command completion
 void reportOK()
 {
   systemPrintln("OK");
 }
 
+//Indicate command failure
 void reportERROR()
 {
   systemPrintln("ERROR");
@@ -481,36 +484,42 @@ char * trimCommand()
   return commandString;
 }
 
+//Display all of the commands
 bool commandDisplayAll(const char * commandString)
 {
   displayParameters(0, false);
   return true;
 }
 
+//Display only the debugging commands
 bool commandDisplayDebug(const char * commandString)
 {
   displayParameters('D', false);
   return true;
 }
 
+//Display only the trigger probe commands
 bool commandDisplayProbe(const char * commandString)
 {
   displayParameters('P', false);
   return true;
 }
 
+//Display only the radio commands
 bool commandDisplayRadio(const char * commandString)
 {
   displayParameters('R', false);
   return true;
 }
 
+//Display only the serial commands
 bool commandDisplaySerial(const char * commandString)
 {
   displayParameters('S', false);
   return true;
 }
 
+//Display only the virtual circuit commands
 bool commandDisplayVirtualCircuit(const char * commandString)
 {
   displayParameters('V', false);
@@ -521,6 +530,7 @@ bool commandDisplayVirtualCircuit(const char * commandString)
 //  Data validation routines
 //----------------------------------------
 
+//Validate a bandwidth value
 bool valBandwidth (void * value, uint32_t valMin, uint32_t valMax)
 {
   double doubleSettingValue = *(double *)value;
@@ -547,6 +557,7 @@ bool valBandwidth (void * value, uint32_t valMin, uint32_t valMax)
           || (doubleSettingValue == 500.0));
 }
 
+//Validate a maximum frequency value
 bool valFreqMax (void * value, uint32_t valMin, uint32_t valMax)
 {
   double doubleSettingValue = *(double *)value;
@@ -556,6 +567,7 @@ bool valFreqMax (void * value, uint32_t valMin, uint32_t valMax)
   return ((doubleSettingValue >= settings.frequencyMin) && (doubleSettingValue <= (double)valMax));
 }
 
+//Validate a minimum frequency value
 bool valFreqMin (void * value, uint32_t valMin, uint32_t valMax)
 {
   double doubleSettingValue = *(double *)value;
@@ -565,6 +577,7 @@ bool valFreqMin (void * value, uint32_t valMin, uint32_t valMax)
   return ((doubleSettingValue >= (double)valMin) && (doubleSettingValue <= settings.frequencyMax));
 }
 
+//Validate an integer value
 bool valInt (void * value, uint32_t valMin, uint32_t valMax)
 {
   uint32_t settingValue = *(uint32_t *)value;
@@ -572,6 +585,7 @@ bool valInt (void * value, uint32_t valMin, uint32_t valMax)
   return ((settingValue >= valMin) && (settingValue <= valMax));
 }
 
+//Validate an encryption key value
 bool valKey (void * value, uint32_t valMin, uint32_t valMax)
 {
   unsigned int length;
@@ -602,6 +616,7 @@ bool valKey (void * value, uint32_t valMin, uint32_t valMax)
   return false;
 }
 
+//Determine if the AirSpeed value is overriding the parameter value
 bool valOverride (void * value, uint32_t valMin, uint32_t valMax)
 {
   uint32_t settingValue = *(uint32_t *)value;
@@ -615,6 +630,7 @@ bool valOverride (void * value, uint32_t valMin, uint32_t valMax)
   return ((settingValue >= valMin) && (settingValue <= valMax));
 }
 
+//Validate the AirSpeed value
 bool valSpeedAir (void * value, uint32_t valMin, uint32_t valMax)
 {
   bool valid;
@@ -639,6 +655,7 @@ bool valSpeedAir (void * value, uint32_t valMin, uint32_t valMax)
   return valid;
 }
 
+//Validate the SerialSpeed value
 bool valSpeedSerial (void * value, uint32_t valMin, uint32_t valMax)
 {
   uint32_t settingValue = *(uint32_t *)value;
@@ -753,6 +770,7 @@ const int commandCount = sizeof(commands) / sizeof(commands[0]);
 //  ATSxx routines
 //----------------------------------------
 
+//Display a command
 void commandDisplay(const COMMAND_ENTRY * command)
 {
   //Print the setting value

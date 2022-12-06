@@ -204,6 +204,7 @@ bool setRadioFrequency(bool rxAdjust)
   return true;
 }
 
+//Place the radio in receive mode
 void returnToReceiving()
 {
   if (receiveInProcess() == true) return; //Do not touch the radio if it is already receiving
@@ -389,17 +390,18 @@ uint16_t myRand()
 //Move to the next channel
 //This is called when the FHSS interrupt is received
 //at the beginning and during of a transmission or reception
-
 void hopChannel()
 {
   hopChannel(true); //Move forward
 }
 
+//Hop to the previous channel in the frequency list
 void hopChannelReverse()
 {
   hopChannel(false); //Move backward
 }
 
+//Set the next radio frequency given the hop direction and frequency table
 void hopChannel(bool moveForwardThroughTable)
 {
   timeToHop = false;
@@ -477,6 +479,7 @@ uint8_t covertdBmToSetting(uint8_t userSetting)
 }
 
 #ifdef  RADIOLIB_LOW_LEVEL
+//Read a register from the SX1276 chip
 uint8_t readSX1276Register(uint8_t reg)
 {
   return radio._mod->SPIreadRegister(reg);
@@ -1045,6 +1048,8 @@ bool xmitDatagramMpTrainingAck(uint8_t * serverID)
   return (transmitDatagram());
 }
 
+//Copy the training parameters received from the server into the settings structure
+//that will eventually be written into the NVM
 void updateRadioParameters(uint8_t * rxData)
 {
   Settings params;
@@ -1181,6 +1186,7 @@ bool xmitDatagramMpRadioParameters(const uint8_t * clientID)
 //Virtual Circuit frames
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+//Broadcast a datagram to all of the VCs
 bool xmitVcDatagram()
 {
   /*
@@ -1199,6 +1205,7 @@ bool xmitVcDatagram()
   return (transmitDatagram());
 }
 
+//Broadcast a HEARTBEAT to all of the VCs
 bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
 {
   uint32_t currentMillis = millis();
@@ -1893,6 +1900,10 @@ PacketType rcvDatagram()
   return datagramType;
 }
 
+//Determine what PacketType value should be returned to the receiving code, options are:
+// * Received datagramType
+// * DATAGRAM_DUPLICATE
+// * DATAGRAM_BAD
 PacketType validateDatagram(VIRTUAL_CIRCUIT * vc, PacketType datagramType, uint8_t ackNumber, uint16_t freeBytes)
 {
   if (ackNumber != vc->rmtTxAckNumber)
@@ -2478,11 +2489,13 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   return (true); //Tranmission has started
 }
 
+//Use the maximum dwell setting to start the timer that indicates when to hop channels
 void startChannelTimer()
 {
   startChannelTimer(settings.maxDwellTime);
 }
 
+//Use the specified value to start the timer that indicates when to hop channels
 void startChannelTimer(int16_t startAmount)
 {
   channelTimer.disableTimer();
@@ -2492,6 +2505,7 @@ void startChannelTimer(int16_t startAmount)
   triggerEvent(TRIGGER_HOP_TIMER_START);
 }
 
+//Stop the channel (hop) timer
 void stopChannelTimer()
 {
   channelTimer.disableTimer();
@@ -2684,6 +2698,7 @@ void setHeartbeatMultipoint()
   heartbeatRandomTime += frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset();
 }
 
+//Determine the delay for the next VC HEARTBEAT
 void setVcHeartbeatTimer()
 {
   long deltaMillis;

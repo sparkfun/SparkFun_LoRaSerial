@@ -63,6 +63,7 @@ WDTZero myWatchDog;
                           +--------------+
 */
 
+//Initialize the LoRaSerial board
 void samdBeginBoard()
 {
   //Use ADC to check resistor divider
@@ -135,6 +136,7 @@ void samdBeginBoard()
   }
 }
 
+//Initialize the USB serial port and the UART
 void samdBeginSerial(uint16_t serialSpeed)
 {
   if (settings.usbSerialWait)
@@ -144,16 +146,19 @@ void samdBeginSerial(uint16_t serialSpeed)
   Serial1.begin(serialSpeed);
 }
 
+//Initialize the watch dog timer
 void samdBeginWDT()
 {
   myWatchDog.setup(WDT_HARDCYCLE2S);  // Initialize WDT with 2s timeout
   petTimeout = 1800;
 }
 
+//Initilaize the EEPROM controller or simulation
 void samdEepromBegin()
 {
 }
 
+//Write any remaining data to EEPROM
 void samdEepromCommit()
 {
   EEPROM.commit();
@@ -166,22 +171,26 @@ void samdPetWDT()
   myWatchDog.clear();
 }
 
+//Initialize the radio module
 Module * samdRadio()
 {
   return new Module(pin_cs, pin_dio0, pin_rst, pin_dio1);
 }
 
+//Determine if serial input data is available
 bool samdSerialAvailable()
 {
   return (Serial.available() || Serial1.available());
 }
 
+//Ensure that all serial output data has been sent over USB and via the UART
 void samdSerialFlush()
 {
   Serial.flush();
   Serial1.flush();
 }
 
+//Read in the serial input data
 uint8_t samdSerialRead()
 {
   byte incoming = 0;
@@ -192,17 +201,20 @@ uint8_t samdSerialRead()
   return (incoming);
 }
 
+//Provide the serial output data to the USB layer or the UART TX FIFO
 void samdSerialWrite(uint8_t value)
 {
   Serial.write(value);
   Serial1.write(value);
 }
 
+//Reset the CPU
 void samdSystemReset()
 {
   NVIC_SystemReset();
 }
 
+//Get the CPU's unique ID value
 void samdUniqueID(uint8_t * unique128_BitID)
 {
   uint32_t id[UNIQUE_ID_BYTES/4];
@@ -216,6 +228,7 @@ void samdUniqueID(uint8_t * unique128_BitID)
   memcpy(unique128_BitID, id, UNIQUE_ID_BYTES);
 }
 
+//Provide the hardware abstraction layer (HAL) interface
 const ARCH_TABLE arch = {
   samdBeginBoard,             //beginBoard
   samdBeginSerial,            //beginSerial

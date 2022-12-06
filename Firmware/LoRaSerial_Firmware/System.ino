@@ -1,3 +1,4 @@
+//Copy the string into the serialTransmitBuffer or command response buffer (commandTXBuffer)
 void systemPrint(const char* string)
 {
   uint16_t length;
@@ -19,12 +20,14 @@ void systemPrint(const char* string)
   }
 }
 
+//Print a string with a carriage return and linefeed
 void systemPrintln(const char* value)
 {
   systemPrint(value);
   systemPrint("\r\n");
 }
 
+//Print an integer value
 void systemPrint(int value)
 {
   char temp[20];
@@ -32,6 +35,7 @@ void systemPrint(int value)
   systemPrint(temp);
 }
 
+//Print an integer value as HEX or decimal
 void systemPrint(int value, uint8_t printType)
 {
   char temp[20];
@@ -44,12 +48,14 @@ void systemPrint(int value, uint8_t printType)
   systemPrint(temp);
 }
 
+//Print an integer value with a carriage return and line feed
 void systemPrintln(int value)
 {
   systemPrint(value);
   systemPrint("\r\n");
 }
 
+//Print an 8-bit value as HEX or decimal
 void systemPrint(uint8_t value, uint8_t printType)
 {
   char temp[20];
@@ -62,12 +68,14 @@ void systemPrint(uint8_t value, uint8_t printType)
   systemPrint(temp);
 }
 
+//Print an 8-bit value as HEX or decimal with a carriage return and linefeed
 void systemPrintln(uint8_t value, uint8_t printType)
 {
   systemPrint(value, printType);
   systemPrint("\r\n");
 }
 
+//Print a 16-bit value as HEX or decimal
 void systemPrint(uint16_t value, uint8_t printType)
 {
   char temp[20];
@@ -80,12 +88,14 @@ void systemPrint(uint16_t value, uint8_t printType)
   systemPrint(temp);
 }
 
+//Print a 16-bit value as HEX or decimal with a carriage return and linefeed
 void systemPrintln(uint16_t value, uint8_t printType)
 {
   systemPrint(value, printType);
   systemPrint("\r\n");
 }
 
+//Print a floating point value with a specified number of decimal places
 void systemPrint(float value, uint8_t decimals)
 {
   char temp[20];
@@ -93,12 +103,16 @@ void systemPrint(float value, uint8_t decimals)
   systemPrint(temp);
 }
 
+//Print a floating point value with a specified number of decimal places and a
+//carriage return and linefeed
 void systemPrintln(float value, uint8_t decimals)
 {
   systemPrint(value, decimals);
   systemPrint("\r\n");
 }
 
+//Print a double precision floating point value with a specified number of decimal
+//places
 void systemPrint(double value, uint8_t decimals)
 {
   char temp[300];
@@ -106,17 +120,21 @@ void systemPrint(double value, uint8_t decimals)
   systemPrint(temp);
 }
 
+//Print a double precision floating point value with a specified number of decimal
+//places and a carriage return and linefeed
 void systemPrintln(double value, uint8_t decimals)
 {
   systemPrint(value, decimals);
   systemPrint("\r\n");
 }
 
+//Print a carriage return and linefeed
 void systemPrintln()
 {
   systemPrint("\r\n");
 }
 
+//Print a timestamp value: days hours:minutes:seconds.milliseconds
 void systemPrintTimestamp(unsigned int milliseconds)
 {
   unsigned int seconds;
@@ -169,6 +187,7 @@ void systemPrintTimestamp(unsigned int milliseconds)
   petWDT();
 }
 
+//Print a timestamp value with an offset
 void systemPrintTimestamp()
 {
   unsigned int milliseconds;
@@ -188,6 +207,7 @@ void systemPrintTimestamp()
   }
 }
 
+//Print the unique ID value
 void systemPrintUniqueID(uint8_t * uniqueID)
 {
   int index;
@@ -197,11 +217,13 @@ void systemPrintUniqueID(uint8_t * uniqueID)
     systemPrint(uniqueID[index], HEX);
 }
 
+//Output a byte to the serial port
 void systemWrite(uint8_t value)
 {
   serialOutputByte(value);
 }
 
+//Output a buffer of the specified length to the serial port
 void systemWrite(uint8_t * buffer, uint16_t length)
 {
   uint8_t * end;
@@ -212,11 +234,13 @@ void systemWrite(uint8_t * buffer, uint16_t length)
     serialOutputByte(*buffer++);
 }
 
+//Ensure all serial output has been transmitted, FIFOs are empty
 void systemFlush()
 {
   arch.serialFlush();
 }
 
+//Read a byte from the serial port
 uint8_t systemRead()
 {
   return (arch.serialRead());
@@ -278,6 +302,7 @@ void systemReset()
   arch.systemReset();
 }
 
+//Display any debug serial data and then loop forever
 void waitForever()
 {
   //Output the remaining serial data
@@ -409,6 +434,7 @@ uint8_t charHexToDec(char a, char b)
   return ((a << 4) | b);
 }
 
+//Dump a buffer with offset from buffer start, 16 bytes per row, displaying hex and ASCII
 void dumpBuffer(uint8_t * data, int length)
 {
   char byte[2];
@@ -466,6 +492,7 @@ void dumpBuffer(uint8_t * data, int length)
   }
 }
 
+//Dump a buffer assuming that it contains text
 void dumpBufferRaw(uint8_t * data, int length)
 {
   systemPrint("0x ");
@@ -477,6 +504,7 @@ void dumpBufferRaw(uint8_t * data, int length)
   systemPrintln();
 }
 
+//Dump a circular buffer with offset from buffer start, 16 bytes per row, displaying hex and ASCII
 void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, int length)
 {
   int bytes;
@@ -534,6 +562,7 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
   }
 }
 
+//Compute the RSSI value
 void updateRSSI()
 {
   //Calculate the average RSSI if possible
@@ -550,6 +579,7 @@ void updateRSSI()
   }
 }
 
+//Update the state of the 4 green LEDs
 void setRSSI(uint8_t ledBits)
 {
   if (ledBits & 0b0001)
@@ -573,6 +603,7 @@ void setRSSI(uint8_t ledBits)
     digitalWrite(pin_rssi4LED, LOW);
 }
 
+//Set the serial TX (blue) LED value
 void txLED(bool illuminate)
 {
   if (settings.selectLedUse != LEDS_RSSI)
@@ -586,6 +617,7 @@ void txLED(bool illuminate)
   }
 }
 
+//Set the serial RX (yellow) LED value
 void rxLED(bool illuminate)
 {
   if (settings.selectLedUse != LEDS_RSSI)
@@ -599,6 +631,13 @@ void rxLED(bool illuminate)
   }
 }
 
+//Radio LED display
+// Green1: Radio RX data received
+// Green2: Receiving HEARTBEATs (link up)
+// Green3: RSSI level
+// Green4: Radio TX data sent
+// Blue: Bad frame received
+// Yellow: Bad CRC received
 void radioLeds()
 {
   uint32_t currentMillis;
@@ -690,6 +729,7 @@ void radioLeds()
   previousMillis = currentMillis;
 }
 
+//Update the LED values depending upon the selected display
 void updateLeds()
 {
   switch (settings.selectLedUse)
@@ -713,6 +753,7 @@ void updateLeds()
     }
 }
 
+//Case independent string comparison
 int stricmp(const char * str1, const char * str2)
 {
   char char1;
@@ -728,6 +769,7 @@ int stricmp(const char * str1, const char * str2)
   return char1 - char2;
 }
 
+//Case independent string comparison with specified maximum length
 int strnicmp(const char * str1, const char * str2, int length)
 {
   char char1;
@@ -743,6 +785,7 @@ int strnicmp(const char * str1, const char * str2, int length)
   return char1 - char2;
 }
 
+//Display the RSSI, SNR and frequency error values
 void printPacketQuality()
 {
   if (settings.displayPacketQuality == true)
