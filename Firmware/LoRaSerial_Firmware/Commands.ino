@@ -463,6 +463,10 @@ void checkCommand()
     || (commandString[commandLength -1] == '\n')))
     commandLength -= 1;
 
+  //Upper case the command
+  for (index = 0; index < commandLength; index++)
+    commandBuffer[index] = toupper(commandBuffer[index]);
+
   commandString[commandLength] = '\0'; //Terminate buffer
   if (commandLength < 2) //Too short
     reportERROR();
