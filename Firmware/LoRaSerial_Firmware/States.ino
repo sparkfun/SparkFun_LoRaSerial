@@ -1707,6 +1707,10 @@ void updateRadioState()
         PacketType packetType = rcvDatagram();
         vcHeader = (VC_RADIO_MESSAGE_HEADER *)rxData;
 
+        //Indicate receive traffic from this VC including HEARTBEATs
+        if ((rxSrcVc == VC_BROADCAST) || ((uint8_t)rxSrcVc < (uint8_t)MIN_RX_NOT_ALLOWED))
+          virtualCircuitList[rxSrcVc].lastTrafficMillis = currentMillis;
+
         //Process the received datagram
         switch (packetType)
         {
@@ -1844,7 +1848,7 @@ void updateRadioState()
         if (xmitVcHeartbeat(myVc, myUniqueId))
         {
           if (((uint8_t)myVc) < MAX_VC)
-            virtualCircuitList[myVc].lastHeartbeatMillis = millis();
+            virtualCircuitList[myVc].lastTrafficMillis = currentMillis;
           changeState(RADIO_VC_WAIT_TX_DONE);
         }
       }
@@ -2065,36 +2069,36 @@ void updateRadioState()
       //----------
       //Check for link timeout
       //----------
-      else
+      serverLinkBroken = false;
+      for (index = 0; index < MAX_VC; index++)
       {
-        serverLinkBroken = false;
-        for (index = 0; index < MAX_VC; index++)
-        {
-          //Don't timeout the connection to myself
-          if (index == myVc)
-            continue;
+        //Don't timeout the connection to myself
+        if (index == myVc)
+          continue;
 
-          //Determine if the link has timed out
-          vc = &virtualCircuitList[index];
-          if ((vc->vcState != VC_STATE_LINK_DOWN) && (serverLinkBroken
-            || ((currentMillis - vc->lastHeartbeatMillis) > (VC_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))))
+        //Determine if the link has timed out
+        vc = &virtualCircuitList[index];
+        if ((vc->vcState != VC_STATE_LINK_DOWN) && (serverLinkBroken
+          || ((currentMillis - vc->lastTrafficMillis) > (VC_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))))
+        {
+          if (index == VC_SERVER)
           {
             //When the server connection breaks, break all other connections and
-            //wait for the server
-            if (index == VC_SERVER)
-            {
-              serverLinkBroken = true;
-              changeState(RADIO_VC_WAIT_SERVER);
-            }
-
-            //If waiting for an ACK and the link breaks, stop the retransmissions
-            //by stopping the ACK timer.
-            if (vcAckTimer && (index == rexmtTxDestVc))
-              vcAckTimer = 0;
-
-            //Break the link
-            vcBreakLink(index);
+            //wait for the server.  The server provides the time (hop) synchronization
+            //between all of the nodes.  When the server fails, the clocks drift
+            //and the radios loose communications because they are hopping at different
+            //times.
+            serverLinkBroken = true;
+            changeState(RADIO_VC_WAIT_SERVER);
           }
+
+          //If waiting for an ACK and the link breaks, stop the retransmissions
+          //by stopping the ACK timer.
+          if (vcAckTimer && (index == rexmtTxDestVc))
+            vcAckTimer = 0;
+
+          //Break the link
+          vcBreakLink(index);
         }
       }
       break;
@@ -2561,7 +2565,6 @@ int8_t vcLinkAlive(int8_t vcIndex)
   //Update the link status
   if (vc->vcState == VC_STATE_LINK_DOWN)
     vcChangeState(vcIndex, VC_STATE_LINK_ALIVE);
-  vc->lastHeartbeatMillis = millis();
   return vcIndex;
 }
 
