@@ -515,6 +515,25 @@ bool vcSerialMessageReceived()
       break;
     }
 
+    //Verify that the destination link is up
+    if ((vcDest != VC_BROADCAST)
+      && (virtualCircuitList[vcDest & VCAB_NUMBER_MASK].linkUp == false))
+    {
+      if (settings.debugSerial || settings.debugTransmit)
+      {
+        systemPrint("Link down ");
+        systemPrint((vcDest == VC_BROADCAST) ? vcDest : vcDest & VCAB_NUMBER_MASK);
+        systemPrintln(", discarding message!");
+        outputSerialData(true);
+      }
+
+      //Discard this message
+      radioTxTail += msgLength;
+      if (radioTxTail >= sizeof(radioTxBuffer))
+        radioTxTail -= sizeof(radioTxBuffer);
+      break;
+    }
+
     //Print the data ready for transmission
     if (settings.debugSerial)
     {
