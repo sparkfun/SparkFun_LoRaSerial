@@ -172,27 +172,10 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI6 - Display AES key");
         systemPrintln("  ATI7 - Show current FHSS channel");
         systemPrintln("  ATI8 - Display unique ID");
-        systemPrintln("  ATI9 - Display the total datagrams sent");
-        systemPrintln("  ATI10 - Display the total datagrams received");
-        systemPrintln("  ATI11 - Display the total frames sent");
-        systemPrintln("  ATI12 - Display the total frames received");
-        systemPrintln("  ATI13 - Display the total bad frames received");
-        systemPrintln("  ATI14 - Display the total duplicate frames received");
-        systemPrintln("  ATI15 - Display the total lost TX frames");
-        systemPrintln("  ATI16 - Display the maximum datagram size");
-        systemPrintln("  ATI17 - Display the total link failures");
-        systemPrintln("  ATI18 - Display the VC frames sent");
-        systemPrintln("  ATI19 - Display the VC frames received");
-        systemPrintln("  ATI20 - Display the VC messages sent");
-        systemPrintln("  ATI21 - Display the VC messages received");
-        systemPrintln("  ATI22 - Display the VC bad length received");
-        systemPrintln("  ATI23 - Display the VC link failures");
-        systemPrintln("  ATI24 - Display the VC details");
-        systemPrintln("  ATI25 - Display the total insufficient buffer count");
-        systemPrintln("  ATI26 - Display the total number of bad CRC frames");
-        systemPrintln("  ATI27 - Display the total number of net ID mismatch frames");
-        systemPrintln("  ATI28 - Return myVc value");
-        systemPrintln("  ATI29 - Display metrics");
+        systemPrintln("  ATI9 - Display the maximum datagram size");
+        systemPrintln("  ATI10 - Display radio metrics");
+        systemPrintln("  ATI11 - Return myVc value");
+        systemPrintln("  ATI12 - Display the VC details");
         break;
       case ('0'): //ATI0 - Show user settable parameters
         displayParameters(0, true);
@@ -228,9 +211,9 @@ bool commandAT(const char * commandString)
         systemPrintUniqueID(myUniqueId);
         systemPrintln();
         break;
-      case ('9'): //ATI9 - Display the toal datagrams sent
-        systemPrint("Total datagrams sent: ");
-        systemPrintln(datagramsSent);
+      case ('9'): //ATI9 - Display the maximum datagram size
+        systemPrint("Maximum datagram size: ");
+        systemPrintln(maxDatagramSize);
         break;
     }
   }
@@ -240,158 +223,7 @@ bool commandAT(const char * commandString)
     {
       default:
         return false;
-      case ('0'): //ATI10 - Display the total datagrams received
-        systemPrint("Total datagrams received: ");
-        systemPrintln(datagramsReceived);
-        break;
-      case ('1'): //ATI11 - Display the total frames received
-        systemPrint("Total frames sent: ");
-        systemPrintln(framesReceived);
-        break;
-      case ('2'): //ATI12 - Display the total frames received
-        systemPrint("Total frames sent: ");
-        systemPrintln(framesReceived);
-        break;
-      case ('3'): //ATI13 - Display the total bad frames received
-        systemPrint("Total bad frames received: ");
-        systemPrintln(badFrames);
-        break;
-      case ('4'): //ATI14 - Display the total duplicate frames received
-        systemPrint("Total duplicate frames received: ");
-        systemPrintln(duplicateFrames);
-        break;
-      case ('5'): //ATI15 - Display the total lost TX frames
-        systemPrint("Total lost TX frames: ");
-        systemPrintln(lostFrames);
-        break;
-      case ('6'): //ATI16 - Display the maximum datagram size
-        systemPrint("Maximum datagram size: ");
-        systemPrintln(maxDatagramSize);
-        break;
-      case ('7'): //ATI17 - Display the total link failures
-        systemPrint("Total link failures: ");
-        systemPrintln(linkFailures);
-        break;
-      case ('8'): //ATI18 - Display the VC frames sent
-        systemPrint("VC ");
-        systemPrint(cmdVc);
-        systemPrint(" frames sent: ");
-        systemPrintln(vc->framesSent);
-        break;
-      case ('9'): //ATI19 - Display the VC frames received
-        systemPrint("VC ");
-        systemPrint(cmdVc);
-        systemPrint(" frames received: ");
-        systemPrintln(vc->framesReceived);
-        break;
-    }
-  }
-  else if ((commandString[2] == 'I') && (commandString[3] == '2') && (commandLength == 5))
-  {
-    switch (commandString[4])
-    {
-      default:
-        return false;
-      case ('0'): //ATI20 - Display the VC messages sent
-        systemPrint("VC ");
-        systemPrint(cmdVc);
-        systemPrint(" messages sent: ");
-        systemPrintln(vc->messagesSent);
-        break;
-      case ('1'): //ATI21 - Display the VC messages received
-        systemPrint("VC ");
-        systemPrint(cmdVc);
-        systemPrint(" messages received: ");
-        systemPrintln(vc->messagesReceived);
-        break;
-      case ('2'): //ATI22 - Display the VC bad length received
-        systemPrint("VC ");
-        systemPrint(cmdVc);
-        systemPrint(" bad length received: ");
-        systemPrintln(vc->badLength);
-        break;
-      case ('3'): //ATI23 - Display the VC link failures
-        systemPrint("VC ");
-        systemPrint(cmdVc);
-        systemPrint(" link failures: ");
-        systemPrintln(vc->linkFailures);
-        break;
-      case ('4'): //ATI24 - Display the VC details
-        systemPrint("VC ");
-        systemPrint(cmdVc);
-        systemPrint(": ");
-        if (!vc->valid)
-        {
-          systemPrint("Down, Not valid @ ");
-          systemPrintTimestamp(millis());
-          systemPrintln();
-        }
-        else
-        {
-          systemPrint(vc->linkUp ? "Up" : "Down");
-          systemPrint(" @ ");
-          systemPrintTimestamp(millis());
-          systemPrintln();
-          systemPrint("    ID: ");
-          systemPrintUniqueID(vc->uniqueId);
-          systemPrintln(vc->valid ? " (Valid)" : " (Invalid)");
-          systemPrintln("    Heartbeats");
-          if (cmdVc == myVc)
-          {
-            systemPrint("        Next TX: ");
-            systemPrintTimestamp(heartbeatTimer + heartbeatRandomTime);
-            systemPrintln();
-          }
-          systemPrint("        Last:    ");
-          systemPrintTimestamp(vc->lastHeartbeatMillis);
-          systemPrintln();
-          systemPrint("        First:   ");
-          systemPrintTimestamp(vc->firstHeartbeatMillis);
-          systemPrintln();
-          systemPrint("        Up Time: ");
-          systemPrintTimestamp(vc->lastHeartbeatMillis - vc->firstHeartbeatMillis);
-          systemPrintln();
-          systemPrintln("    Metrics");
-          systemPrint("        Frames Sent: ");
-          systemPrintln(vc->framesSent);
-          systemPrint("        Frames Received: ");
-          systemPrintln(vc->framesReceived);
-          systemPrint("        Messages Sent: ");
-          systemPrintln(vc->messagesSent);
-          systemPrint("        Messages Received: ");
-          systemPrintln(vc->messagesReceived);
-          systemPrint("        Bad Lengths Received: ");
-          systemPrintln(vc->badLength);
-          systemPrint("        Link Failures: ");
-          systemPrintln(linkFailures);
-          systemPrintln("    ACK Management");
-          systemPrint("        Last RX ACK number: ");
-          systemPrintln(vc->rxAckNumber);
-          systemPrint("        Next RX ACK number: ");
-          systemPrintln(vc->rmtTxAckNumber);
-          systemPrint("        Last TX ACK number: ");
-          systemPrintln(vc->txAckNumber);
-        }
-        break;
-      case ('5'): //ATI25 - Display the total insufficient buffer count
-        systemPrint("Total insufficient buffer count: ");
-        systemPrintln(insufficientSpace);
-        break;
-      case ('6'): //ATI26 - Display the total number of bad CRC frames
-        systemPrint("Total number of bad CRC frames: ");
-        systemPrintln(badCrc);
-        break;
-      case ('7'): //ATI27 - Display the total number of net ID mismatch frames
-        systemPrint("Total number of net ID mismatch frames: ");
-        systemPrintln(netIdMismatch);
-        break;
-      case ('8'): //ATI28 - Return myVc value
-        systemPrintln();
-        systemPrint("myVc: ");
-        systemPrintln(myVc);
-        reportOK();
-        break;
-      case ('9'): //ATI29 - Display metrics
+      case ('0'): //ATI10 - Display radio metrics
         systemPrint("Radio Metrics @ ");
         systemPrintTimestamp(millis());
         systemPrintln();
@@ -431,6 +263,83 @@ bool commandAT(const char * commandString)
         systemPrintln(insufficientSpace);
         systemPrint("        Net ID Mismatch: ");
         systemPrintln(netIdMismatch);
+        if (settings.operatingMode == MODE_POINT_TO_POINT)
+        {
+          vc = &virtualCircuitList[0];
+          systemPrintln("    ACK Management");
+          systemPrint("        Last RX ACK number: ");
+          systemPrintln(vc->rxAckNumber);
+          systemPrint("        Next RX ACK number: ");
+          systemPrintln(vc->rmtTxAckNumber);
+          systemPrint("        Last TX ACK number: ");
+          systemPrintln(vc->txAckNumber);
+        }
+        reportOK();
+        break;
+      case ('1'): //ATI11 - Return myVc value
+        systemPrintln();
+        systemPrint("myVc: ");
+        systemPrintln(myVc);
+        reportOK();
+        break;
+      case ('2'): //ATI12 - Display the VC details
+        systemPrint("VC ");
+        systemPrint(cmdVc);
+        systemPrint(": ");
+        if (!vc->valid)
+        {
+          systemPrint("Down, Not valid @ ");
+          systemPrintTimestamp(millis());
+          systemPrintln();
+        }
+        else
+        {
+          systemPrint(vc->linkUp ? "Up" : "Down");
+          systemPrint(" @ ");
+          systemPrintTimestamp(millis());
+          systemPrintln();
+          systemPrint("    ID: ");
+          systemPrintUniqueID(vc->uniqueId);
+          systemPrintln(vc->valid ? " (Valid)" : " (Invalid)");
+          systemPrintln("    Heartbeats");
+          if (cmdVc == myVc)
+          {
+            systemPrint("        Next TX: ");
+            systemPrintTimestamp(heartbeatTimer + heartbeatRandomTime);
+            systemPrintln();
+          }
+          systemPrint("        Last:    ");
+          systemPrintTimestamp(vc->lastHeartbeatMillis);
+          systemPrintln();
+          systemPrint("        First:   ");
+          systemPrintTimestamp(vc->firstHeartbeatMillis);
+          systemPrintln();
+          systemPrint("        Up Time: ");
+          systemPrintTimestamp(vc->lastHeartbeatMillis - vc->firstHeartbeatMillis);
+          systemPrintln();
+          systemPrintln("    Sent");
+          systemPrint("        Frames: ");
+          systemPrintln(vc->framesSent);
+          systemPrint("        Messages: ");
+          systemPrintln(vc->messagesSent);
+          systemPrintln("    Received");
+          systemPrint("        Frames: ");
+          systemPrintln(vc->framesReceived);
+          systemPrint("        Messages: ");
+          systemPrintln(vc->messagesReceived);
+          systemPrint("        Bad Lengths: ");
+          systemPrintln(vc->badLength);
+          systemPrint("        Link Failures: ");
+          systemPrintln(linkFailures);
+          systemPrintln("    ACK Management");
+          systemPrint("        Last RX ACK number: ");
+          systemPrintln(vc->rxAckNumber);
+          systemPrint("        Next RX ACK number: ");
+          systemPrintln(vc->rmtTxAckNumber);
+          systemPrint("        Last TX ACK number: ");
+          systemPrintln(vc->txAckNumber);
+        }
+        reportOK();
         break;
     }
   }
