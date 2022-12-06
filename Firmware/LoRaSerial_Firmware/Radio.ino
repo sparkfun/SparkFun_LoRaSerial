@@ -1332,6 +1332,31 @@ bool xmitVcAck1(int8_t destVc)
   return (transmitDatagram());
 }
 
+bool xmitVcAck2(int8_t destVc)
+{
+  VC_RADIO_MESSAGE_HEADER * vcHeader;
+
+  vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
+  vcHeader->length = VC_RADIO_HEADER_BYTES;
+  vcHeader->destVc = destVc;
+  vcHeader->srcVc = myVc;
+  endOfTxData += VC_RADIO_HEADER_BYTES;
+
+  /*
+                                        endOfTxData ---.
+                                                       |
+                                                       V
+      +--------+---------+--------+----------+---------+----------+
+      |        |         |        |          |         | Optional |
+      | NET ID | Control | Length | DestAddr | SrcAddr | Trailer  |
+      | 8 bits | 8 bits  | 8 bits |  8 bits  | 8 bits  | n Bytes  |
+      +--------+---------+--------+----------+---------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_ACK_2;
+  return (transmitDatagram());
+}
+
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Datagram reception
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
