@@ -12,6 +12,7 @@
 
 #define DEBUG_PC_TO_RADIO     0
 #define DEBUG_RADIO_TO_PC     0
+#define DISPLAY_DATA_ACK      1
 
 bool findMyVc;
 int myVc = VC_UNASSIGNED;
@@ -243,6 +244,15 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t length)
     printf("--------- Link %d DOWN ---------\n", header->radio.srcVc);
 }
 
+void radioDataAck(uint8_t * data, uint8_t length)
+{
+  VC_DATA_ACK_MESSAGE * ack;
+
+  ack = (VC_DATA_ACK_MESSAGE *)data;
+  if (DISPLAY_DATA_ACK)
+    printf("ACK from VC %d\n", ack->msgDestVc);
+}
+
 int radioToHost()
 {
   int bytesRead;
@@ -335,13 +345,23 @@ int radioToHost()
         dumpBuffer(data, length);
     }
 
+    //------------------------------
     //Process the message
+    //------------------------------
+
+    //Display link status
     if (header->radio.destVc == PC_LINK_STATUS)
       radioToPcLinkStatus(header, VC_SERIAL_HEADER_BYTES + length);
 
-    if (header->radio.destVc == (PC_REMOTE_RESPONSE | myVc))
-        status = hostToStdout(data, length);
+    //Display remote command response
+    else if (header->radio.destVc == (PC_REMOTE_RESPONSE | myVc))
+      status = hostToStdout(data, length);
 
+    //Display ACKs for transmitted messages
+    else if (header->radio.destVc == PC_DATA_ACK)
+      radioDataAck(data, length);
+
+    //Display received messages
     else
     {
       if ((header->radio.destVc == myVc) || (header->radio.destVc == VC_BROADCAST))
