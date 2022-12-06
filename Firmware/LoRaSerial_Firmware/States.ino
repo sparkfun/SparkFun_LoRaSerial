@@ -1629,6 +1629,10 @@ void updateRadioState()
       |                       | HEARTBEAT received
       | HB Timeout            v
       +<----------- VC_STATE_LINK_ALIVE
+      ^                       |
+      |                       | ATC command
+      | HB Timeout            V
+      +<------------- VC_STATE_SEND_PING
 
     */
 
@@ -2513,6 +2517,13 @@ void vcChangeState(int8_t vcIndex, uint8_t state)
     //Send the VC state message
     systemWrite((uint8_t *)&header, sizeof(header));
     systemWrite((uint8_t *)&message, sizeof(message));
+
+    //Determine if the VC is connecting
+    vcBit = 1 << vcIndex;
+    if ((state >= VC_STATE_LINK_ALIVE) && (state < VC_STATE_CONNECTED))
+      vcConnecting |= vcBit;
+    else
+      vcConnecting &= vcBit;
   }
 }
 

@@ -432,6 +432,7 @@ int8_t txDestVc;
 unsigned long vcAckTimer;
 VIRTUAL_CIRCUIT virtualCircuitList[MAX_VC];
 uint8_t serialOperatingMode;
+uint32_t vcConnecting;
 
 unsigned int multipointChannelLoops = 0; //Count the number of times Multipoint scanning has traversed the table
 unsigned int multipointAttempts = 0; //Throttle back scanning when a server is not detected
