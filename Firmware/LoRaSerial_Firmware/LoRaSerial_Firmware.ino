@@ -329,7 +329,6 @@ unsigned long lastTrainBlink = 0; //Controls LED during training
 //Global variables - Radio (General)
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 uint8_t outgoingPacket[MAX_PACKET_SIZE]; //Contains the current data in route to receiver
-uint8_t packetSize = 0; //Tracks how much data + control trailer
 uint16_t frameAirTime = 0; //Recalc'd with each new packet transmission
 uint16_t ackAirTime = 0; //Recalc'd with each change of settings
 uint8_t frameSentCount = 0; //Increases each time a frame is sent

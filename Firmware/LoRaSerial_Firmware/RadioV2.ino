@@ -1224,9 +1224,9 @@ PacketType rcvDatagram()
     systemPrint("RX: ");
     if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
     {
-      systemPrint((uint8_t)rxDestVc);
+      systemPrint((uint8_t)((rxDestVc == VC_BROADCAST) ? rxDestVc : rxDestVc & VCAB_NUMBER_MASK));
       systemPrint(" <-- ");
-      systemPrint((uint8_t)rxSrcVc);
+      systemPrint((uint8_t)((rxSrcVc == VC_UNASSIGNED) ? rxSrcVc : rxSrcVc & VCAB_NUMBER_MASK));
       systemWrite(' ');
     }
     systemPrint(v2DatagramType[datagramType]);
@@ -1399,9 +1399,9 @@ bool transmitDatagram()
     systemPrint("TX: ");
     if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
     {
-      systemPrint((uint8_t)srcVc);
+      systemPrint((uint8_t)((srcVc == VC_UNASSIGNED) ? srcVc : srcVc & VCAB_NUMBER_MASK));
       systemPrint(" --> ");
-      systemPrint((uint8_t)txDestVc);
+      systemPrint((uint8_t)((txDestVc == VC_BROADCAST) ? txDestVc : txDestVc & VCAB_NUMBER_MASK));
       systemWrite(' ');
     }
     systemPrint(v2DatagramType[txControl.datagramType]);
@@ -1792,6 +1792,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
     triggerEvent(TRIGGER_TRANSMIT_CANCELED);
     if (settings.debugReceive || settings.debugDatagrams)
     {
+      systemPrint("TX failed: ");
       if (transactionComplete)
         systemPrintln("RXTC");
       else if (receiveInProcess())

@@ -146,36 +146,73 @@ uint16_t availableTXCommandBytes()
   return (sizeof(commandTXBuffer) - commandTXTail + commandTXHead);
 }
 
-//Send a portion of the commandTXBuffer to outgoingPacket
-void readyOutgoingCommandPacket()
+//Send a portion of the commandTXBuffer to serialTransmitBuffer
+void readyLocalCommandPacket()
 {
+  uint16_t bytesToSend;
   uint16_t length;
-  uint16_t bytesToSend = availableTXCommandBytes();
-  if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize;
+  uint16_t maxLength;
 
-  //SF6 requires an implicit header which means there is no dataLength in the header
-  if (settings.radioSpreadFactor == 6)
+  bytesToSend = availableTXCommandBytes();
+  maxLength = maxDatagramSize;
+  if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+    maxLength -= VC_RADIO_HEADER_BYTES;
+  if (bytesToSend > maxLength)
+    bytesToSend = maxLength;
+  if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
   {
-    if (bytesToSend > maxDatagramSize) bytesToSend = maxDatagramSize; //We are going to transmit 255 bytes no matter what
+    //Build the VC header
+    serialOutputByte(START_OF_VC_SERIAL);
+    serialOutputByte(bytesToSend + VC_RADIO_HEADER_BYTES);
+    serialOutputByte(PC_REMOTE_RESPONSE | myVc);
+    serialOutputByte(myVc);
+    if (settings.debugSerial)
+      systemPrintln("Built VC header in serialTransmitBuffer");
   }
 
-  packetSize = bytesToSend;
+  //Place the command response bytes into serialTransmitBuffer
+  if (settings.debugSerial)
+  {
+    systemPrint("Moving ");
+    systemPrint(bytesToSend);
+    systemPrintln(" bytes from commandTXBuffer into serialTransmitBuffer");
+    outputSerialData(true);
+  }
+  for (length = 0; length < bytesToSend; length++)
+  {
+    serialOutputByte(commandTXBuffer[commandTXTail++]);
+    commandTXTail %= sizeof(commandTXBuffer);
+  }
+}
+
+//Send a portion of the commandTXBuffer to outgoingPacket
+uint8_t readyOutgoingCommandPacket(uint16_t offset)
+{
+  uint16_t bytesToSend = availableTXCommandBytes();
+  uint16_t length;
+  uint16_t maxLength;
+
+  maxLength = maxDatagramSize - offset;
+  bytesToSend = availableTXCommandBytes();
+  if (bytesToSend > maxLength)
+    bytesToSend = maxLength;
 
   //Determine the number of bytes to send
   length = 0;
-  if ((commandTXTail + packetSize) > sizeof(commandTXBuffer))
+  if ((commandTXTail + bytesToSend) > sizeof(commandTXBuffer))
   {
     //Copy the first portion of the buffer
     length = sizeof(commandTXBuffer) - commandTXTail;
-    memcpy(&outgoingPacket[headerBytes], &commandTXBuffer[commandTXTail], length);
+    memcpy(&outgoingPacket[headerBytes + offset], &commandTXBuffer[commandTXTail], length);
     commandTXTail = 0;
   }
 
   //Copy the remaining portion of the buffer
-  memcpy(&outgoingPacket[headerBytes + length], &commandTXBuffer[commandTXTail], packetSize - length);
-  commandTXTail += packetSize - length;
+  memcpy(&outgoingPacket[headerBytes + offset + length], &commandTXBuffer[commandTXTail], bytesToSend - length);
+  commandTXTail += bytesToSend - length;
   commandTXTail %= sizeof(commandTXBuffer);
-  endOfTxData += packetSize;
+  endOfTxData += bytesToSend;
+  return (uint8_t)bytesToSend;
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -432,6 +469,7 @@ uint8_t vcSerialMsgGetVcDest()
 //Determine if received serial data may be sent to the remote system
 bool vcSerialMessageReceived()
 {
+  int8_t channel;
   uint16_t dataBytes;
   uint8_t msgLength;
   int8_t vcDest;
@@ -498,7 +536,8 @@ bool vcSerialMessageReceived()
     }
 
     //Validate the destination VC
-    if ((vcDest < VC_BROADCAST) || (vcDest >= MAX_VC))
+    //None of the local host targets belong in the radioTxBuffer
+    if ((vcDest >= PC_COMMAND) && (vcDest < VC_BROADCAST))
     {
       if (settings.debugSerial || settings.debugTransmit)
       {
@@ -545,10 +584,12 @@ bool vcSerialMessageReceived()
 
     //If sending to ourself, just place the data in the serial output buffer
     readyOutgoingPacket(msgLength);
-    if (vcDest == myVc)
+    channel = GET_CHANNEL_NUMBER(vcDest);
+    if ((vcDest != VC_BROADCAST) && ((vcDest & VCAB_NUMBER_MASK) == myVc)
+      && (channel == 0))
     {
       if (settings.debugSerial)
-        systemPrintln("VC serial RX: Sending to ourself");
+        systemPrintln("VC: Sending data to ourself");
       systemWrite(START_OF_VC_SERIAL);
       systemWrite(outgoingPacket, msgLength);
       endOfTxData -= msgLength;
@@ -648,6 +689,7 @@ void vcProcessSerialInput()
       //Send data over the radio link
       default:
         //Validate the source virtual circuit
+        //Data that is being transmitted should always use myVC
         if ((vcSrc != myVc) || (myVc == VC_UNASSIGNED))
         {
           if (settings.debugSerial)
@@ -664,7 +706,7 @@ void vcProcessSerialInput()
         }
 
         //Verify the destination virtual circuit
-        if ((vcDest < VC_BROADCAST) || (vcDest >= MAX_VC))
+        if ((vcDest > PC_LINK_STATUS) && (vcDest < VC_BROADCAST))
         {
           if (settings.debugSerial)
           {
