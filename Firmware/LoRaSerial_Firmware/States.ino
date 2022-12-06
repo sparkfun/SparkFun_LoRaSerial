@@ -1643,10 +1643,10 @@ void updateRadioState()
       |                       | TX ACK2                     | TX Complete     |
       |                       | TX Complete                 V                 |
       |                       |                     VC_STATE_WAIT_ACK2 -------'
-      |                       |
-      |                       | Zero ACK values
-      | HB Timeout            V
-      '-------------- VC_STATE_CONNECTED
+      |                       |                             |
+      |                       | Zero ACK values             | RX ACK2
+      | HB Timeout            V                             | Zero ACK values
+      '-------------- VC_STATE_CONNECTED <------------------'
 
     */
 
@@ -1805,6 +1805,12 @@ void updateRadioState()
               vcZeroAcks(rxSrcVc);
               vcChangeState(rxSrcVc, VC_STATE_CONNECTED);
             }
+            break;
+
+          //Last step in the 3-way handshake, received ACK2, done
+          case DATAGRAM_ACK_2:
+            vcZeroAcks(rxSrcVc);
+            vcChangeState(rxSrcVc, VC_STATE_CONNECTED);
             break;
 
           case DATAGRAM_REMOTE_COMMAND:
