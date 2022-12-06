@@ -1624,29 +1624,29 @@ void updateRadioState()
 
     VC States:
 
-      .-------------> VC_STATE_LINK_DOWN <------------------------------------.
-      |                       |                                               |
-      |                       | HEARTBEAT received                            |
-      | HB Timeout            v                                               |
-      +<----------- VC_STATE_LINK_ALIVE                                       |
-      ^                       |                                               |
-      |                       | ATC command                                   |
-      | HB Timeout            V                                               |
-      +<------------- VC_STATE_SEND_PING--------------------.                 |
-      ^                       |                             |                 |
-      |                       | TX PING                     |                 |
-      |                       | TX Complete                 |      HB Timeout |
-      | HB Timeout            V                             |                 |
-      +<------------- VC_STATE_WAIT_ACK1                    |                 |
-      ^                       |                             |                 |
-      |                       | RX ACK1                     | TX ACK1         |
-      |                       | TX ACK2                     | TX Complete     |
-      |                       | TX Complete                 V                 |
-      |                       |                     VC_STATE_WAIT_ACK2 -------'
-      |                       |                             |
-      |                       | Zero ACK values             | RX ACK2
-      | HB Timeout            V                             | Zero ACK values
-      '-------------- VC_STATE_CONNECTED <------------------'
+      .-------------> VC_STATE_LINK_DOWN <-------------------------------------.
+      |                       |                                     HB Timeout |
+      |                       | HEARTBEAT received                             |
+      | HB Timeout            v                                                |
+      +<----------- VC_STATE_LINK_ALIVE ------------------------.              |
+      ^                       |                       RX PING   |              |
+      |                       | ATC command                     |              |
+      | HB Timeout            V                                 |              |
+      +<------------- VC_STATE_SEND_PING                        |              |
+      ^                       |                                 |              |
+      |                       | TX PING                         |              |
+      |                       | TX Complete                     |              |
+      | HB Timeout            V                                 |              |
+      +<------------- VC_STATE_WAIT_ACK1                        |              |
+      ^                       |                                 |              |
+      |                       | RX ACK1                         | TX ACK1      |
+      |                       | TX ACK2                         | TX Complete  |
+      |                       | TX Complete                     V              |
+      |       Zero ACK values |                         VC_STATE_WAIT_ACK2 ----'
+      |                       |                                 |
+      |                       |                                 | RX ACK2
+      | HB Timeout            V                                 | Zero ACK values
+      '-------------- VC_STATE_CONNECTED <----------------------'
 
     */
 
