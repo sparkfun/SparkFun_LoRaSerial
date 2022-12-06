@@ -367,6 +367,8 @@ uint32_t badCrc;            //Total number of bad CRC frames
 uint32_t netIdMismatch;     //Total number of mismatched Net ID frames
 
 unsigned long lastLinkUpTime = 0; //Mark when link was first established
+unsigned long lastRxDatagram; //Remember last valid receive
+
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - Radio Protocol
