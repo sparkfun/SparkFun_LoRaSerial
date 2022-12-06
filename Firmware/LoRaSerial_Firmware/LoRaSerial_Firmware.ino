@@ -472,9 +472,7 @@ void setup()
   systemPrintln("LRS");
   outputSerialData(true);
 
-  verifyRadioStateTable(); //Verify that the state table contains all of the states in increasing order
-
-  verifyRadioDatagramType(); //Verify that the datagram type table contains all of the datagram types
+  verifyTables(); //Verify that the enum counts match the name table lengths
 
   //Load the unique IDs for the virtual circuits
   //Always hand out the same VC number for a given unique ID
