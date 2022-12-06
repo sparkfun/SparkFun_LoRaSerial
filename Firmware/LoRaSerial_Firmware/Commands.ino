@@ -308,13 +308,13 @@ bool commandAT(const char * commandString)
             systemPrintln();
           }
           systemPrint("        Last:    ");
-          systemPrintTimestamp(vc->lastHeartbeatMillis);
+          systemPrintTimestamp(vc->lastTrafficMillis);
           systemPrintln();
           systemPrint("        First:   ");
           systemPrintTimestamp(vc->firstHeartbeatMillis);
           systemPrintln();
           systemPrint("        Up Time: ");
-          systemPrintTimestamp(vc->lastHeartbeatMillis - vc->firstHeartbeatMillis);
+          systemPrintTimestamp(vc->lastTrafficMillis - vc->firstHeartbeatMillis);
           systemPrintln();
           systemPrintln("    Sent");
           systemPrint("        Frames: ");
