@@ -1949,113 +1949,116 @@ void updateRadioState()
       //----------
       //Lowest Priority: Check for data to send
       //----------
-      else if ((receiveInProcess() == false) && (vcSerialMessageReceived()))
+      else if (vcSerialMessageReceived())
       {
-        //No need to add the VC header since the header is in the radioTxBuffer
-        //Get the VC header
-        vcHeader = (VC_RADIO_MESSAGE_HEADER *)&outgoingPacket[headerBytes];
-        if (vcHeader->destVc == VC_BROADCAST)
-          channel = 0;
-        else
-          channel = (vcHeader->destVc >> VCAB_NUMBER_BITS) & VCAB_CHANNEL_MASK;
-        switch (channel)
+        if (receiveInProcess() == false)
         {
-        case 0: //Data packets
-          //Check for datagram transmission
+          //No need to add the VC header since the header is in the radioTxBuffer
+          //Get the VC header
+          vcHeader = (VC_RADIO_MESSAGE_HEADER *)&outgoingPacket[headerBytes];
           if (vcHeader->destVc == VC_BROADCAST)
+            channel = 0;
+          else
+            channel = (vcHeader->destVc >> VCAB_NUMBER_BITS) & VCAB_CHANNEL_MASK;
+          switch (channel)
           {
-            //Broadcast this data to all VCs, no ACKs will be received
+          case 0: //Data packets
+            //Check for datagram transmission
+            if (vcHeader->destVc == VC_BROADCAST)
+            {
+              //Broadcast this data to all VCs, no ACKs will be received
+              triggerEvent(TRIGGER_VC_TX_DATA);
+              xmitVcDatagram();
+              break;
+            }
+
+            //Transmit the packet
             triggerEvent(TRIGGER_VC_TX_DATA);
-            xmitVcDatagram();
+            if (xmitDatagramP2PData() == true)
+              changeState(RADIO_VC_WAIT_TX_DONE);
+
+            //Since vcAckTimer is off when equal to zero, force it to a non-zero value
+            vcAckTimer = datagramTimer;
+            if (!vcAckTimer)
+              vcAckTimer = 1;
+
+            //Save the message for retransmission
+            SAVE_TX_BUFFER();
+            rexmtTxDestVc = txDestVc;
             break;
-          }
 
-          //Transmit the packet
-          triggerEvent(TRIGGER_VC_TX_DATA);
-          if (xmitDatagramP2PData() == true)
-            changeState(RADIO_VC_WAIT_TX_DONE);
-
-          //Since vcAckTimer is off when equal to zero, force it to a non-zero value
-          vcAckTimer = datagramTimer;
-          if (!vcAckTimer)
-            vcAckTimer = 1;
-
-          //Save the message for retransmission
-          SAVE_TX_BUFFER();
-          rexmtTxDestVc = txDestVc;
-          break;
-
-        case 1: //Remote command packets
-          //Remote commands must not be broadcast
-          if (vcHeader->destVc == VC_BROADCAST)
-          {
-            if (settings.debugSerial || settings.debugTransmit)
+          case 1: //Remote command packets
+            //Remote commands must not be broadcast
+            if (vcHeader->destVc == VC_BROADCAST)
             {
-              systemPrintln("ERROR: Remote commands may not be broadcast!");
-              outputSerialData(true);
+              if (settings.debugSerial || settings.debugTransmit)
+              {
+                systemPrintln("ERROR: Remote commands may not be broadcast!");
+                outputSerialData(true);
+              }
+
+              //Discard this message
+              endOfTxData = &outgoingPacket[headerBytes];
+              break;
             }
 
-            //Discard this message
-            endOfTxData = &outgoingPacket[headerBytes];
-            break;
-          }
-
-          //Determine if this remote command gets processed on the local node
-          if ((vcHeader->destVc & VCAB_NUMBER_MASK) == myVc)
-          {
-            //Copy the command into the command buffer
-            commandLength = endOfTxData - &outgoingPacket[headerBytes + VC_RADIO_HEADER_BYTES];
-            memcpy(commandBuffer, &outgoingPacket[headerBytes + VC_RADIO_HEADER_BYTES], commandLength);
-            if (settings.debugSerial)
+            //Determine if this remote command gets processed on the local node
+            if ((vcHeader->destVc & VCAB_NUMBER_MASK) == myVc)
             {
-              systemPrint("RX: Moving ");
-              systemPrint(commandLength);
-              systemPrintln(" bytes into commandBuffer");
-              outputSerialData(true);
-              dumpBuffer((uint8_t *)commandBuffer, commandLength);
-            }
-            petWDT();
-
-            //Reset the buffer data pointer for the next transmit operation
-            endOfTxData = &outgoingPacket[headerBytes];
-
-            //Process the command
-            petWDT();
-            printerEndpoint = PRINT_TO_RF; //Send prints to RF link
-            checkCommand(); //Parse the command buffer
-            petWDT();
-            printerEndpoint = PRINT_TO_SERIAL;
-            length = availableTXCommandBytes();
-            if (settings.debugSerial)
-            {
-              systemPrint("RX: checkCommand placed ");
-              systemPrint(length);
-              systemPrintln(" bytes into commandTXBuffer");
-              dumpCircularBuffer(commandTXBuffer, commandTXTail, sizeof(commandTXBuffer), length);
-              outputSerialData(true);
+              //Copy the command into the command buffer
+              commandLength = endOfTxData - &outgoingPacket[headerBytes + VC_RADIO_HEADER_BYTES];
+              memcpy(commandBuffer, &outgoingPacket[headerBytes + VC_RADIO_HEADER_BYTES], commandLength);
+              if (settings.debugSerial)
+              {
+                systemPrint("RX: Moving ");
+                systemPrint(commandLength);
+                systemPrintln(" bytes into commandBuffer");
+                outputSerialData(true);
+                dumpBuffer((uint8_t *)commandBuffer, commandLength);
+              }
               petWDT();
+
+              //Reset the buffer data pointer for the next transmit operation
+              endOfTxData = &outgoingPacket[headerBytes];
+
+              //Process the command
+              petWDT();
+              printerEndpoint = PRINT_TO_RF; //Send prints to RF link
+              checkCommand(); //Parse the command buffer
+              petWDT();
+              printerEndpoint = PRINT_TO_SERIAL;
+              length = availableTXCommandBytes();
+              if (settings.debugSerial)
+              {
+                systemPrint("RX: checkCommand placed ");
+                systemPrint(length);
+                systemPrintln(" bytes into commandTXBuffer");
+                dumpCircularBuffer(commandTXBuffer, commandTXTail, sizeof(commandTXBuffer), length);
+                outputSerialData(true);
+                petWDT();
+              }
+
+              //Break up the command response
+              while (availableTXCommandBytes())
+                readyLocalCommandPacket();
+              break;
             }
 
-            //Break up the command response
-            while (availableTXCommandBytes())
-              readyLocalCommandPacket();
+            //Send the remote command
+            vcHeader->destVc &= VCAB_NUMBER_MASK;
+            if (xmitDatagramP2PCommand() == true)
+              changeState(RADIO_VC_WAIT_TX_DONE);
+
+            //Since vcAckTimer is off when equal to zero, force it to a non-zero value
+            vcAckTimer = datagramTimer;
+            if (!vcAckTimer)
+              vcAckTimer = 1;
+
+            //Save the message for retransmission
+            SAVE_TX_BUFFER();
+            rexmtTxDestVc = txDestVc;
             break;
           }
-
-          //Send the remote command
-          vcHeader->destVc &= VCAB_NUMBER_MASK;
-          if (xmitDatagramP2PCommand() == true)
-            changeState(RADIO_VC_WAIT_TX_DONE);
-
-          //Since vcAckTimer is off when equal to zero, force it to a non-zero value
-          vcAckTimer = datagramTimer;
-          if (!vcAckTimer)
-            vcAckTimer = 1;
-
-          //Save the message for retransmission
-          SAVE_TX_BUFFER();
-          rexmtTxDestVc = txDestVc;
-          break;
         }
       }
 
