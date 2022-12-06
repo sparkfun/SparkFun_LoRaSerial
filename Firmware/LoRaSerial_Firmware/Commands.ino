@@ -320,14 +320,27 @@ bool commandAT(const char * commandString)
         systemPrint(cmdVc);
         systemPrint(": ");
         if (!vc->valid)
-          systemPrintln("Down, Not valid");
+        {
+          systemPrint("Down, Not valid @ ");
+          systemPrintTimestamp(millis());
+          systemPrintln();
+        }
         else
         {
-          systemPrintln(vc->linkUp ? "Up" : "Down");
+          systemPrint(vc->linkUp ? "Up" : "Down");
+          systemPrint(" @ ");
+          systemPrintTimestamp(millis());
+          systemPrintln();
           systemPrint("    ID: ");
           systemPrintUniqueID(vc->uniqueId);
           systemPrintln(vc->valid ? " (Valid)" : " (Invalid)");
           systemPrintln("    Heartbeats");
+          if (cmdVc == myVc)
+          {
+            systemPrint("        Next TX: ");
+            systemPrintTimestamp(heartbeatTimer + heartbeatRandomTime);
+            systemPrintln();
+          }
           systemPrint("        Last:    ");
           systemPrintTimestamp(vc->lastHeartbeatMillis);
           systemPrintln();

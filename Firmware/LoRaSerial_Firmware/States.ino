@@ -1824,7 +1824,11 @@ void updateRadioState()
       {
         //Send another heartbeat
         if (xmitVcHeartbeat(myVc, myUniqueId))
+        {
+          if (((uint8_t)myVc) < MAX_VC)
+            virtualCircuitList[myVc].lastHeartbeatMillis = millis();
           changeState(RADIO_VC_WAIT_TX_DONE);
+        }
       }
 
       //----------
