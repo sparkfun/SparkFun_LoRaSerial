@@ -1199,6 +1199,24 @@ bool xmitDatagramMpRadioParameters(const uint8_t * clientID)
 //Virtual Circuit frames
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+bool xmitVcDatagram()
+{
+  /*
+                                                    endOfTxData ---.
+                                                                   |
+                                                                   V
+      +----------+---------+--------+----------+---------+---------+----------+
+      | Optional |         |        |          |         |         | Optional |
+      |  NET ID  | Control | Length | DestAddr | SrcAddr |  Data   | Trailer  |
+      |  8 bits  | 8 bits  | 8 bits |  8 bits  | 8 bits  | n Bytes | n Bytes  |
+      +----------+---------+--------+----------+---------+---------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_DATAGRAM;
+  txControl.ackNumber = 0;
+  return (transmitDatagram());
+}
+
 bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
 {
   uint8_t * txData;
