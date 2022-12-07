@@ -34,6 +34,7 @@ typedef struct
 bool commandAT(const char * commandString)
 {
   uint32_t delayMillis;
+  const char * string;
   unsigned long timer;
   VIRTUAL_CIRCUIT * vc = &virtualCircuitList[cmdVc];
 
@@ -300,8 +301,15 @@ bool commandAT(const char * commandString)
         if (txFailureMillis)
         {
           systemPrintTimestamp(txFailureMillis);
-          systemPrint(", State: ");
-          systemPrintln(txFailureState);
+          systemPrint(", Status: ");
+          systemPrint(txFailureState);
+          string = getRadioStatusCode(txFailureState);
+          if (string)
+          {
+            systemPrint(", ");
+            systemPrint(string);
+          }
+          systemPrintln();
         }
         else
           systemPrintln("None");
@@ -317,8 +325,15 @@ bool commandAT(const char * commandString)
         if (rxFailureMillis)
         {
           systemPrintTimestamp(rxFailureMillis);
-          systemPrint(", State: ");
-          systemPrintln(rxFailureState);
+          systemPrint(", Status: ");
+          systemPrint(rxFailureState);
+          string = getRadioStatusCode(rxFailureState);
+          if (string)
+          {
+            systemPrint(", ");
+            systemPrint(string);
+          }
+          systemPrintln();
         }
         else
           systemPrintln("None");
