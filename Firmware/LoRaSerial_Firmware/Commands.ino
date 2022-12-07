@@ -262,10 +262,10 @@ bool commandAT(const char * commandString)
         systemPrint("        Lost Frames: ");
         systemPrintln(lostFrames);
         systemPrintln("    Received");
-        systemPrint("        Datagrams: ");
-        systemPrintln(datagramsReceived);
         systemPrint("        Frames: ");
         systemPrintln(framesReceived);
+        systemPrint("        Datagrams: ");
+        systemPrintln(datagramsReceived);
         systemPrint("        Bad CRC: ");
         systemPrintln(badCrc);
         systemPrint("        Bad Frames: ");
@@ -287,6 +287,11 @@ bool commandAT(const char * commandString)
           systemPrint("        Last TX ACK number: ");
           systemPrintln(vc->txAckNumber);
         }
+        systemPrintln("    Radio");
+        systemPrint("        transactionComplete: ");
+        systemPrintln(transactionComplete ? "True" : "False");
+        systemPrint("        receiveInProcess: ");
+        systemPrintln(receiveInProcess() ? "True" : "False");
         reportOK();
         break;
       case ('1'): //ATI11 - Return myVc value
