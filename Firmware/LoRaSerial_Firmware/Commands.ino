@@ -341,7 +341,8 @@ bool commandAT(const char * commandString)
         systemPrintln(transactionComplete ? "True" : "False");
         systemPrint("        receiveInProcess: ");
         systemPrintln(receiveInProcess() ? "True" : "False");
-
+        systemPrintln("    Call History");
+        displayRadioCallHistory();
         reportOK();
         break;
       case ('1'): //ATI11 - Return myVc value
