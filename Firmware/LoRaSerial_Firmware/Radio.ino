@@ -176,17 +176,15 @@ void convertAirSpeedToSettings()
 //Set radio frequency
 bool setRadioFrequency(bool rxAdjust)
 {
-  float frequency;
-
   radioCallHistory[RADIO_CALL_setRadioFrequency] = millis();
 
   //Determine the frequency to use
-  frequency = channels[channelNumber];
+  radioFrequency = channels[channelNumber];
   if (rxAdjust && settings.autoTuneFrequency)
-    frequency -= frequencyCorrection;
+    radioFrequency -= frequencyCorrection;
 
   //Set the new frequency
-  if (radio.setFrequency(frequency) == RADIOLIB_ERR_INVALID_FREQUENCY)
+  if (radio.setFrequency(radioFrequency) == RADIOLIB_ERR_INVALID_FREQUENCY)
     return false;
   //triggerFrequency(frequency);
 
@@ -199,7 +197,7 @@ bool setRadioFrequency(bool rxAdjust)
     systemPrintTimestamp();
     systemPrint(channelNumber);
     systemPrint(": ");
-    systemPrint(frequency, 3);
+    systemPrint(radioFrequency, 3);
     systemPrint(" MHz, Ch 0 in ");
     systemPrint(nextChannelZeroTimeInMillis - millis());
     systemPrintln(" mSec");
