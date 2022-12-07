@@ -288,10 +288,45 @@ bool commandAT(const char * commandString)
           systemPrintln(vc->txAckNumber);
         }
         systemPrintln("    Radio");
+        systemPrint("        Last Successful Transmit: ");
+        if (txSuccessMillis)
+        {
+          systemPrintTimestamp(txSuccessMillis);
+          systemPrintln();
+        }
+        else
+          systemPrintln("None");
+        systemPrint("        Last Transmit Failure: ");
+        if (txFailureMillis)
+        {
+          systemPrintTimestamp(txFailureMillis);
+          systemPrint(", State: ");
+          systemPrintln(txFailureState);
+        }
+        else
+          systemPrintln("None");
+        systemPrint("        Last Successful Receive: ");
+        if (rxSuccessMillis)
+        {
+          systemPrintTimestamp(rxSuccessMillis);
+          systemPrintln();
+        }
+        else
+          systemPrintln("None");
+        systemPrint("        Last Receive Failure: ");
+        if (rxFailureMillis)
+        {
+          systemPrintTimestamp(rxFailureMillis);
+          systemPrint(", State: ");
+          systemPrintln(rxFailureState);
+        }
+        else
+          systemPrintln("None");
         systemPrint("        transactionComplete: ");
         systemPrintln(transactionComplete ? "True" : "False");
         systemPrint("        receiveInProcess: ");
         systemPrintln(receiveInProcess() ? "True" : "False");
+
         reportOK();
         break;
       case ('1'): //ATI11 - Return myVc value

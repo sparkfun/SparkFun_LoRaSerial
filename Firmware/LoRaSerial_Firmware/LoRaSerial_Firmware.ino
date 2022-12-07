@@ -369,6 +369,15 @@ uint32_t netIdMismatch;     //Total number of mismatched Net ID frames
 unsigned long lastLinkUpTime = 0; //Mark when link was first established
 unsigned long lastRxDatagram; //Remember last valid receive
 
+//Receiver and Transmitter status
+unsigned long rxSuccessMillis;
+unsigned long rxFailureMillis;
+int rxFailureState;
+
+unsigned long txSuccessMillis;
+unsigned long txFailureMillis;
+int txFailureState;
+
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - Radio Protocol

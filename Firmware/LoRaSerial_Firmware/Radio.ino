@@ -1383,30 +1383,35 @@ PacketType rcvDatagram()
 
   if (state == RADIOLIB_ERR_NONE)
   {
-    //Do nothing
-  }
-  else if (state == RADIOLIB_ERR_CRC_MISMATCH)
-  {
-    if (settings.debug || settings.debugDatagrams || settings.debugReceive)
-    {
-      systemPrintln("Receive CRC error!");
-      outputSerialData(true);
-    }
-    badCrc++;
-    returnToReceiving(); //Return to listening
-    return (DATAGRAM_CRC_ERROR);
+    rxSuccessMillis = rcvTimeMillis;
   }
   else
   {
-    if (settings.debug || settings.debugDatagrams || settings.debugReceive)
+    rxFailureMillis = rcvTimeMillis;
+    rxFailureState = state;
+    if (state == RADIOLIB_ERR_CRC_MISMATCH)
     {
-      systemPrint("Receive error: ");
-      systemPrintln(state);
-      outputSerialData(true);
+      if (settings.debug || settings.debugDatagrams || settings.debugReceive)
+      {
+        systemPrintln("Receive CRC error!");
+        outputSerialData(true);
+      }
+      badCrc++;
+      returnToReceiving(); //Return to listening
+      return (DATAGRAM_CRC_ERROR);
     }
-    returnToReceiving(); //Return to listening
-    badFrames++;
-    return (DATAGRAM_BAD);
+    else
+    {
+      if (settings.debug || settings.debugDatagrams || settings.debugReceive)
+      {
+        systemPrint("Receive error: ");
+        systemPrintln(state);
+        outputSerialData(true);
+      }
+      returnToReceiving(); //Return to listening
+      badFrames++;
+      return (DATAGRAM_BAD);
+    }
   }
 
   rxDataBytes = radio.getPacketLength();
@@ -2521,11 +2526,12 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
 
     if (state == RADIOLIB_ERR_NONE)
     {
+      xmitTimeMillis = millis();
+      txSuccessMillis = xmitTimeMillis;
       frameSentCount++;
       if (vc)
         vc->framesSent++;
       framesSent++;
-      xmitTimeMillis = millis();
       if (settings.debugTransmit)
       {
         systemPrintTimestamp();
@@ -2545,12 +2551,17 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
           hopChannel();
       }
     }
-    else if (settings.debugTransmit)
+    else
     {
-      systemPrintTimestamp();
-      systemPrint("TX: Transmit error, state ");
-      systemPrintln(state);
-      outputSerialData(true);
+      txFailureMillis = millis();
+      txFailureState = state;
+      if (settings.debugTransmit)
+      {
+        systemPrintTimestamp();
+        systemPrint("TX: Transmit error, state ");
+        systemPrintln(state);
+        outputSerialData(true);
+      }
     }
   }
   frameAirTime += responseDelay;
