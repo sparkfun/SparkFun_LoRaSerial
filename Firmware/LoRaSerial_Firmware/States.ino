@@ -1726,8 +1726,8 @@ void updateRadioState()
         vcHeader = (VC_RADIO_MESSAGE_HEADER *)rxData;
 
         //Indicate receive traffic from this VC including HEARTBEATs
-        if ((rxSrcVc == VC_BROADCAST) || ((uint8_t)rxSrcVc < (uint8_t)MIN_RX_NOT_ALLOWED))
-          virtualCircuitList[rxSrcVc].lastTrafficMillis = currentMillis;
+        if ((uint8_t)rxSrcVc < (uint8_t)MIN_RX_NOT_ALLOWED)
+          virtualCircuitList[rxSrcVc & VCAB_NUMBER_MASK].lastTrafficMillis = currentMillis;
 
         //Process the received datagram
         switch (packetType)
