@@ -2592,7 +2592,7 @@ void vcChangeState(int8_t vcIndex, uint8_t state)
 
     //Determine if the VC is connecting
     vcBit = 1 << vcIndex;
-    if ((state >= VC_STATE_LINK_ALIVE) && (state < VC_STATE_CONNECTED))
+    if ((state > VC_STATE_LINK_ALIVE) && (state < VC_STATE_CONNECTED))
       vcConnecting |= vcBit;
     else
       vcConnecting &= vcBit;
