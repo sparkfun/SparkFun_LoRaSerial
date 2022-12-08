@@ -509,6 +509,7 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
 {
   int bytes;
   uint8_t data;
+  uint16_t delta;
   const int displayWidth = 16;
   uint16_t i;
   int index;
@@ -517,17 +518,31 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
   offset = tail;
   while (length > 0)
   {
-    // Display the offset
+    //Display the offset
     systemPrint("    0x");
-    systemPrint((uint16_t)(offset), HEX);
+    systemPrint((uint16_t)(offset % bufferLength), HEX);
     systemPrint(": ");
 
-    // Determine the number of bytes to display
+    //Determine the number of bytes to display
     bytes = length;
     if (bytes > displayWidth)
       bytes = displayWidth;
 
-    // Display the data bytes in hex
+    //Adjust for the offset
+    delta = offset % displayWidth;
+    if (delta)
+    {
+      bytes -= delta;
+      for (index = 0; index < delta; index++)
+      {
+        systemPrint("   ");
+        if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+          hopChannel();
+        petWDT();
+      }
+    }
+
+    //Display the data bytes in hex
     for (index = 0; index < bytes; index++)
     {
       systemWrite(' ');
@@ -538,8 +553,8 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
       petWDT();
     }
 
-    // Space over to the ASCII display
-    for (; index < displayWidth; index++)
+    //Space over to the ASCII display
+    for (; (delta + index) < displayWidth; index++)
     {
       systemPrint("   ");
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
@@ -548,7 +563,9 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
     }
     systemPrint("  ");
 
-    // Display the ASCII bytes
+    //Display the ASCII bytes
+    for (index = 0; index < delta; index++)
+      systemWrite(' ');
     for (index = 0; index < bytes; index++) {
       data = buffer[(offset + index) % bufferLength];
       systemWrite(((data < ' ') || (data >= 0x7f)) ? '.' : data);
