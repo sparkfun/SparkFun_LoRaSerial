@@ -162,4 +162,18 @@ typedef struct _VC_DATA_ACK_MESSAGE
 #define DATA_BUFFER(data)                 (data + VC_RADIO_HEADER_BYTES)
 #define GET_CHANNEL_NUMBER(vc)            (vc & (VCAB_CHANNEL_MASK << VCAB_NUMBER_BITS))
 
+//------------------------------------------------------------------------------
+// Constants
+//------------------------------------------------------------------------------
+
+//Only one instance of this table is necessary
+#ifdef ADD_VC_STATE_NAMES_TABLE
+const char * const vcStateNames[] =
+{ //   0            1
+  "LINK-DOWN", "LINK-ALIVE",
+  //   2            3            4            5
+  "SEND-PING", "WAIT-ACK1", "WAIT-ACK2", "CONNECTED",
+};
+#endif  //ADD_VC_STATE_NAMES_TABLE
+
 #endif  //__VIRTUAL_CIRCUIT_PROTOCOL_H__

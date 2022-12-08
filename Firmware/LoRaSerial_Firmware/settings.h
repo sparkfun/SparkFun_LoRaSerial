@@ -161,13 +161,6 @@ const char * const radioDatagramType[] =
   "VC_HEARTBEAT",
 };
 
-const char * const vcStateNames[] =
-{ //   0            1
-  "LINK-DOWN", "LINK-ALIVE",
-  //   2            3            4            5
-  "SEND-PING", "WAIT-ACK1", "WAIT-ACK2", "CONNECTED",
-};
-
 typedef struct _VIRTUAL_CIRCUIT
 {
   uint8_t uniqueId[UNIQUE_ID_BYTES];
@@ -225,6 +218,7 @@ typedef struct _VIRTUAL_CIRCUIT
   //incremented when successfully acknowledged via DATA_ACK frame
 } VIRTUAL_CIRCUIT;
 
+#define ADD_VC_STATE_NAMES_TABLE
 #include "Virtual_Circuit_Protocol.h"
 
 //Train button states
