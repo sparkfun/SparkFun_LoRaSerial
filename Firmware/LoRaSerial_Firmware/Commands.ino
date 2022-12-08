@@ -309,6 +309,26 @@ bool commandAT(const char * commandString)
           }
           else
             systemPrintln("Not Running");
+          systemPrint("    vcConnecting: ");
+          systemPrint((int)vcConnecting, HEX);
+          if (vcConnecting)
+          {
+            systemPrintln();
+            for (int index = 0; index < MAX_VC; index++)
+            {
+              if (vcConnecting & (1 << index))
+              {
+                systemPrint("        VC ");
+                if (index < 10)
+                  systemWrite(' ');
+                systemPrint(index);
+                systemPrint(" State: ");
+                systemPrintln(vcStateNames[virtualCircuitList[index].vcState]);
+              }
+            }
+          }
+          else
+            systemPrintln("None");
         }
         systemPrintln("    Circular Buffers");
         systemPrint("        serialReceiveBuffer: rxHead: ");
