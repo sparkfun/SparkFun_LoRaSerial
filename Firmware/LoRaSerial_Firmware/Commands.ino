@@ -434,6 +434,12 @@ bool commandAT(const char * commandString)
           systemPrint("        Next RX ACK number: ");
           systemPrintln(vc->rmtTxAckNumber);
           systemPrint("        Last TX ACK number: ");
+          if (vcAckTimer && (txDestVc == cmdVc))
+          {
+            systemPrint("        vcAackTimer: ");
+            systemPrintTimestamp(vcAckTimer);
+            systemPrintln();
+          }
           systemPrintln(vc->txAckNumber);
         }
         reportOK();
