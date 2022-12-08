@@ -287,6 +287,27 @@ bool commandAT(const char * commandString)
           systemPrintln(vc->rmtTxAckNumber);
           systemPrint("        Last TX ACK number: ");
           systemPrintln(vc->txAckNumber);
+          systemPrint("        transmitTimer: ");
+          if (transmitTimer)
+            systemPrintTimestamp(transmitTimer);
+          else
+            systemPrint("Not Running");
+          systemPrintln();
+        }
+        else if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+        {
+          systemPrintln("    ACK Management");
+          systemPrint("        vcAackTimer: ");
+          if (vcAckTimer)
+          {
+            systemPrint("VC ");
+            systemPrint(txDestVc);
+            systemPrint(", ");
+            systemPrintTimestamp(vcAckTimer);
+            systemPrintln();
+          }
+          else
+            systemPrintln("Not Running");
         }
         systemPrintln("    Radio");
         systemPrint("        Channel: ");
@@ -434,13 +455,16 @@ bool commandAT(const char * commandString)
           systemPrint("        Next RX ACK number: ");
           systemPrintln(vc->rmtTxAckNumber);
           systemPrint("        Last TX ACK number: ");
-          if (vcAckTimer && (txDestVc == cmdVc))
+          systemPrintln(vc->txAckNumber);
+          if (txDestVc == cmdVc)
           {
             systemPrint("        vcAackTimer: ");
-            systemPrintTimestamp(vcAckTimer);
+            if (vcAckTimer)
+              systemPrintTimestamp(vcAckTimer);
+            else
+              systemPrint("Not Running");
             systemPrintln();
           }
-          systemPrintln(vc->txAckNumber);
         }
         reportOK();
         break;
