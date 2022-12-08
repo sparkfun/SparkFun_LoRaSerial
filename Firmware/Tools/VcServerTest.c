@@ -14,6 +14,7 @@
 #define DEBUG_PC_TO_RADIO         0
 #define DEBUG_RADIO_TO_PC         0
 #define DISPLAY_DATA_ACK          1
+#define DISPLAY_DATA_NACK         1
 #define DISPLAY_VC_STATE          0
 #define DISPLAY_STATE_TRANSITION  1
 
@@ -302,10 +303,19 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t length)
 
 void radioDataAck(uint8_t * data, uint8_t length)
 {
-  VC_DATA_ACK_MESSAGE * vcMsg;
+  VC_DATA_ACK_NACK_MESSAGE * vcMsg;
 
-  vcMsg = (VC_DATA_ACK_MESSAGE *)data;
+  vcMsg = (VC_DATA_ACK_NACK_MESSAGE *)data;
   if (DISPLAY_DATA_ACK)
+    printf("ACK from VC %d\n", vcMsg->msgDestVc);
+}
+
+void radioDataNack(uint8_t * data, uint8_t length)
+{
+  VC_DATA_ACK_NACK_MESSAGE * vcMsg;
+
+  vcMsg = (VC_DATA_ACK_NACK_MESSAGE *)data;
+  if (DISPLAY_DATA_NACK)
     printf("ACK from VC %d\n", vcMsg->msgDestVc);
 }
 
@@ -415,6 +425,10 @@ int radioToHost()
 
     //Display ACKs for transmitted messages
     else if (header->radio.destVc == PC_DATA_ACK)
+      radioDataAck(data, length);
+
+    //Display NACKs for transmitted messages
+    else if (header->radio.destVc == PC_DATA_NACK)
       radioDataAck(data, length);
 
     //Display received messages

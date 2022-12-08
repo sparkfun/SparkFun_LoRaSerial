@@ -1773,6 +1773,7 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DATA_ACK:
+            vcSendPcAckNack(rexmtTxDestVc, true);
             vcAckTimer = 0;
             break;
 
@@ -2647,6 +2648,7 @@ void vcBreakLink(int8_t vcIndex)
   if (vcAckTimer && (txDestVc == vcIndex))
   {
     vcAckTimer = 0;
+    vcSendPcAckNack(vcIndex, false);
   }
 
   //Get the virtual circuit data structure

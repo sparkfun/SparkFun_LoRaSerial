@@ -474,7 +474,8 @@ bool vcSerialMessageReceived()
   int8_t channel;
   uint16_t dataBytes;
   uint8_t msgLength;
-  int8_t vcDest;
+  int8_t vcDest; //Byte from VC_RADIO_MESSAGE_HEADER
+  int8_t vcIndex; //Index into virtualCircuitList
 
   do
   {
@@ -517,7 +518,10 @@ bool vcSerialMessageReceived()
     //that internally generated traffic uses valid vcDest values.  Only messages
     //enabled for receive on a remote radio may be transmitted.
     vcDest = vcSerialMsgGetVcDest();
-    if (((uint8_t)vcDest >= (uint8_t)MIN_RX_NOT_ALLOWED) && (vcDest != VC_BROADCAST))
+    vcIndex = -1;
+    if ((uint8_t)vcDest < (uint8_t)MIN_RX_NOT_ALLOWED)
+      vcIndex = vcDest & VCAB_NUMBER_MASK;
+    if ((vcIndex < 0) && (vcDest != VC_BROADCAST))
     {
       if (settings.debugSerial || settings.debugTransmit)
       {
@@ -560,12 +564,12 @@ bool vcSerialMessageReceived()
 
     //Verify that the destination link is up
     if ((vcDest != VC_BROADCAST)
-      && (virtualCircuitList[vcDest & VCAB_NUMBER_MASK].vcState == VC_STATE_LINK_DOWN))
+      && (virtualCircuitList[vcIndex].vcState == VC_STATE_LINK_DOWN))
     {
       if (settings.debugSerial || settings.debugTransmit)
       {
         systemPrint("Link down ");
-        systemPrint((vcDest == VC_BROADCAST) ? vcDest : vcDest & VCAB_NUMBER_MASK);
+        systemPrint((vcDest == VC_BROADCAST) ? vcDest : vcIndex);
         systemPrintln(", discarding message!");
         outputSerialData(true);
       }
@@ -574,6 +578,10 @@ bool vcSerialMessageReceived()
       radioTxTail += msgLength;
       if (radioTxTail >= sizeof(radioTxBuffer))
         radioTxTail -= sizeof(radioTxBuffer);
+
+      //If the PC is trying to send this message then notify the PC of the delivery failure
+      if ((uint8_t)vcDest < (uint8_t)MIN_TX_NOT_ALLOWED)
+        vcSendPcAckNack(vcIndex, false);
       break;
     }
 
@@ -606,6 +614,25 @@ bool vcSerialMessageReceived()
 
   //Nothing to send at this time
   return false;
+}
+
+//Notify the PC of the message delivery failure
+void vcSendPcAckNack(int8_t vcIndex, bool ackMsg)
+{
+    //Build the VC state message
+    VC_DATA_ACK_NACK_MESSAGE message;
+    message.msgDestVc = vcIndex;
+
+    //Build the message header
+    VC_SERIAL_MESSAGE_HEADER header;
+    header.start = START_OF_VC_SERIAL;
+    header.radio.length = VC_RADIO_HEADER_BYTES + sizeof(message);
+    header.radio.destVc = ackMsg ? PC_DATA_ACK : PC_DATA_NACK;
+    header.radio.srcVc = myVc;
+
+    //Send the VC state message
+    systemWrite((uint8_t *)&header, sizeof(header));
+    systemWrite((uint8_t *)&message, sizeof(message));
 }
 
 //Process serial input when running in MODE_VIRTUAL_CIRCUIT

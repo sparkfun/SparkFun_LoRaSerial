@@ -32,7 +32,8 @@
 //Source and destinations reserved for the local host
 #define PC_COMMAND          VC_RSVD_SPECIAL_VCS //Command input and command response
 #define PC_LINK_STATUS      (PC_COMMAND + 1)    //Asynchronous link status output
-#define PC_DATA_ACK         (PC_LINK_STATUS + 1)//Indicate successful delivery of the data
+#define PC_DATA_ACK         (PC_LINK_STATUS + 1)//Indicate data delivery success
+#define PC_DATA_NACK        (PC_DATA_ACK + 1)   //Indicate data delivery failure
 
 //Address space 1 and 2 are reserved for the host PC interface to support remote
 //command processing.  The radio removes these bits and converts them to the
@@ -149,10 +150,10 @@ typedef enum
   VC_STATE_MAX
 } VC_STATE_TYPE;
 
-typedef struct _VC_DATA_ACK_MESSAGE
+typedef struct _VC_DATA_ACK_NACK_MESSAGE
 {
   uint8_t msgDestVc;      //message destination VC
-} VC_DATA_ACK_MESSAGE;
+} VC_DATA_ACK_NACK_MESSAGE;
 
 //------------------------------------------------------------------------------
 // Macros
