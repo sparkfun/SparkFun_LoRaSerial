@@ -2603,6 +2603,19 @@ void vcChangeState(int8_t vcIndex, uint8_t state)
       outputSerialData(true);
     }
 
+    //Determine if the VC is connecting
+    vcBit = 1 << vcIndex;
+    if ((state > VC_STATE_LINK_ALIVE) && (state < VC_STATE_CONNECTED))
+      vcConnecting |= vcBit;
+    else
+      vcConnecting &= vcBit;
+  }
+  vcSendPcStateMessage(vcIndex, state);
+}
+
+//Send the PC the state message
+void vcSendPcStateMessage(int8_t vcIndex, uint8_t state)
+{
     //Build the VC state message
     VC_STATE_MESSAGE message;
     message.vcState = state;
@@ -2617,14 +2630,6 @@ void vcChangeState(int8_t vcIndex, uint8_t state)
     //Send the VC state message
     systemWrite((uint8_t *)&header, sizeof(header));
     systemWrite((uint8_t *)&message, sizeof(message));
-
-    //Determine if the VC is connecting
-    vcBit = 1 << vcIndex;
-    if ((state > VC_STATE_LINK_ALIVE) && (state < VC_STATE_CONNECTED))
-      vcConnecting |= vcBit;
-    else
-      vcConnecting &= vcBit;
-  }
 }
 
 //Break the virtual-circuit link
