@@ -52,6 +52,7 @@ bool commandAT(const char * commandString)
       case ('?'): //Display the command help
         systemPrintln("Command summary:");
         systemPrintln("  AT? - Print the command summary");
+        systemPrintln("  ATA - Get the current VC status");
         systemPrintln("  ATB - Break the link");
         systemPrintln("  ATC - Establish VC connection for data");
         systemPrintln("  ATD - Display the debug settings");
@@ -72,7 +73,12 @@ bool commandAT(const char * commandString)
         systemPrintln("  AT&F - Restore factory settings");
         systemPrintln("  AT&W - Save current settings to NVM");
         break;
-      case ('B'): //Break the link
+      case ('A'): //ATA - Get the current VC status
+        for (int index = 0; index < MAX_VC; index++)
+          vcSendPcStateMessage(index, virtualCircuitList[index].vcState);
+        reportOK();
+        break;
+      case ('B'): //ATB - Break the link
         reportOK();
 
         //Compute the time delay
