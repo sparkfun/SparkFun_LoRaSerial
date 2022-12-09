@@ -198,7 +198,7 @@ bool rtsAsserted; //When RTS is asserted, host says it's ok to send data
                                   |
                                   | processSerialInput
                                   |
-                                  | inCommandMode?
+                                  | inCommandMode or local VC command?
                                   |
                      true         V        false
                     .-------------+--------------------------.
@@ -215,19 +215,22 @@ bool rtsAsserted; //When RTS is asserted, host says it's ok to send data
       |                    outgoingPacket                    V
       |                           |                   incomingBuffer
       |                           V                          |
-      |                 Send to remote system                V
-      |                           |                serialTransmitBuffer
+      |                 Send to remote system                |
+      |                           |                          |
       |                           V                          |
       |                    incomingBuffer                    |
       |                           |                          |
       |                           V                          |
       |                    commandRXBuffer                   |
       |                           |                          |
-      |                           V                          |
-      |                  Command processing                  |
-      |                     checkCommand                     |
+      |                           V          VC Remote Cmd   V
+      |                     commandBuffer <------------------+
       |                           |                          |
       |                           V                          |
+      |                  Command processing                  |
+      |                     checkCommand                     | Data or
+      |                           |                          | VC Data or
+      |                           V                          | VC Rmt Cmd Resp
       |                    commandTXBuffer                   |
       |                           |                          |
       |                           V                          |
@@ -241,6 +244,10 @@ bool rtsAsserted; //When RTS is asserted, host says it's ok to send data
       |                           |                          |
       |                           V                          |
       `-------------------------->+<-------------------------'
+                                  |
+                                  |
+                                  V
+                         serialTransmitBuffer
                                   |
                                   |
                                   V
