@@ -1,6 +1,6 @@
 #include "settings.h"
 
-int openTty(const char *ttyName)
+int openLoRaSerial(const char *ttyName)
 {
   struct termios params;
   int status;
@@ -39,7 +39,7 @@ int openTty(const char *ttyName)
   return 0;
 }
 
-int readTty(uint8_t * buffer, int bufferLength)
+int readLoRaSerial(uint8_t * buffer, int bufferLength)
 {
   int bytes;
   int length;

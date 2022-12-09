@@ -37,7 +37,7 @@ FRAME_TYPE rcvDatagram()
 
   //Receive a datagram from the client
   if (usingTerminal)
-    rxBytes = readTty(rxBuffer, sizeof(rxBuffer));
+    rxBytes = readLoRaSerial(rxBuffer, sizeof(rxBuffer));
   else
   {
     remoteAddrLength = sizeof(remoteAddr);

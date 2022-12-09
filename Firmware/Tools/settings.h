@@ -136,8 +136,8 @@ void petWDT();
 int processData();
 
 //Terminal
-int openTty(const char *ttyName);
-int readTty(uint8_t * buffer, int bufferLength);
+int openLoRaSerial(const char *ttyName);
+int readLoRaSerial(uint8_t * buffer, int bufferLength);
 int updateTerm(int fd);
 
 #endif  // __settings_h__
