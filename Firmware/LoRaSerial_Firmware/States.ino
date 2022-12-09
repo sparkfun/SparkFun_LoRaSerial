@@ -1632,16 +1632,16 @@ void updateRadioState()
       ^                       |                       RX PING   |              |
       |                       | ATC command                     |              |
       | HB Timeout            V                                 |              |
-      +<------------- VC_STATE_SEND_PING                        |              |
-      ^                       |                                 |              |
-      |                       | TX PING                         |              |
-      |                       | TX Complete            RX       |              |
-      | HB Timeout            V                       PING      V              |
-      +<------------- VC_STATE_WAIT_ACK1 --------->+----------->+              |
-      |                       |                    ^            |              |
-      |                       | RX ACK1            |            | TX ACK1      |
-      |                       | TX ACK2            |            | TX Complete  |
-      |                       | TX Complete        |            V              |
+      +<------------- VC_STATE_SEND_PING <---------.            |              |
+      ^                       |            ACK1 RX |            |              |
+      |                       | TX PING    Timeout |            |              |
+      |                       | TX Complete        |   RX       |              |
+      | HB Timeout            V                    |  PING      V              |
+      +<------------- VC_STATE_WAIT_ACK1 --------->+------->+-->+              |
+      ^                       |                    ^        ^   |              |
+      |                       | RX ACK1            |   ACK2 |   | TX ACK1      |
+      |                       | TX ACK2            |     RX |   | TX Complete  |
+      |                       | TX Complete        |    TMO |   V              |
       |       Zero ACK values |                    |    VC_STATE_WAIT_ACK2 ----'
       |                       |      .-------------'            |
       |                       |      | RX PING                  | RX ACK2
@@ -1997,28 +1997,67 @@ void updateRadioState()
       //----------
       else if (vcConnecting)
       {
-        if (receiveInProcess() == false)
+        for (index = 0; index < MAX_VC; index++)
         {
-          for (index = 0; index < MAX_VC; index++)
+          if (receiveInProcess())
+            break;
+
+          //Determine the first VC that is walking through connections
+          if (vcConnecting & (1 << index))
           {
-            //Determine the first VC that is walking through connections
-            if (vcConnecting & (1 << index))
+            //Determine if PING needs to be sent
+            if (virtualCircuitList[index].vcState == VC_STATE_SEND_PING)
             {
-              //Determine if PING needs to be sent
-              if (virtualCircuitList[index].vcState == VC_STATE_SEND_PING)
+              //Send the PING datagram, first part of the 3-way handshake
+              if (xmitVcPing(index))
               {
-                //Send the PING datagram, first part of the 3-way handshake
+                vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
+                virtualCircuitList[index].lastPingMillis = datagramTimer;
+                changeState(RADIO_VC_WAIT_TX_DONE);
+
+                //Only a single transmit is possible at a time
+                break;
+              }
+            }
+
+            //The ACK1 is handled with the receive code
+            //Check for a timeout waiting for the ACK1
+            if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK1)
+            {
+              if ((currentMillis - virtualCircuitList[index].lastPingMillis)
+                >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+              {
+                //Retransmit the PING
                 if (xmitVcPing(index))
                 {
                   vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
                   virtualCircuitList[index].lastPingMillis = datagramTimer;
                   changeState(RADIO_VC_WAIT_TX_DONE);
+
+                  //Only a single transmit is possible at a time
                   break;
                 }
               }
+            }
 
-//Retransmit after lastPingMillis + (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+            //The ACK2 is handled with the receive code
+            //Check for a timeout waiting for the ACK2
+            if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK2)
+            {
+              if ((currentMillis - virtualCircuitList[index].lastPingMillis)
+                >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+              {
+                //Retransmit the ACK1
+                if (xmitVcAck1(index))
+                {
+                  vcChangeState(index, VC_STATE_WAIT_FOR_ACK2);
+                  virtualCircuitList[index].lastPingMillis = datagramTimer;
+                  changeState(RADIO_VC_WAIT_TX_DONE);
 
+                  //Only a single transmit is possible at a time
+                  break;
+                }
+              }
             }
           }
         }
