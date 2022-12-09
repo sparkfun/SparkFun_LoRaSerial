@@ -1477,6 +1477,7 @@ PacketType rcvDatagram()
   }
 
   rxDataBytes = radio.getPacketLength();
+  packetLength = rxDataBytes; //Total bytes received, used for calculating clock sync times in multi-point mode
 
   returnToReceiving(); //Immediately begin listening while we process new data
 
@@ -2663,6 +2664,9 @@ void syncChannelTimer()
   int16_t msToNextHopRemote; //Can be negative
 
   radioCallHistory[RADIO_CALL_syncChannelTimer] = millis();
+  //If the sync arrived in an ACK, we know how long that packet took to transmit
+  //Calculate the packet airTime based on the size of data received
+  msToNextHopRemote -= calcAirTime(packetLength);
 
   memcpy(&msToNextHopRemote, &rxVcData[rxDataBytes - 2], sizeof(msToNextHopRemote));
   msToNextHopRemote -= ackAirTime;

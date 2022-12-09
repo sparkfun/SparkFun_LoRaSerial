@@ -396,6 +396,9 @@ int txFailureState;
 //History
 unsigned long radioCallHistory[RADIO_CALL_MAX];
 unsigned long radioStateHistory[RADIO_MAX_STATE];
+
+uint8_t packetLength = 0; //Total bytes received, used for calculating clock sync times in multi-point mode
+
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - Radio Protocol
