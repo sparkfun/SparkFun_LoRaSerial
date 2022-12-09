@@ -331,6 +331,12 @@ typedef enum
   LEDS_RSSI = 0,    //Green: RSSI, Blue: Serial TX, Yellow: Serial RX
   LEDS_RADIO_USE,   //Green1: RX, Green2: Link, Green3: RSSI, Green4: TX
                     //Blue: Bad frames, Yellow: Bad CRC
+  LEDS_BLUE_ON,     //Blue: ON, other: OFF
+  LEDS_YELLOW_ON,   //Yellow: ON, other: OFF
+  LEDS_GREEN_1_ON,  //Green 1: ON, other: OFF
+  LEDS_GREEN_2_ON,  //Green 2: ON, other: OFF
+  LEDS_GREEN_3_ON,  //Green 3: ON, other: OFF
+  LEDS_GREEN_4_ON,  //Green 4: ON, other: OFF
 
   //Add user LED types from 255 working down
 } LEDS_USE_TYPE;
@@ -405,7 +411,7 @@ typedef struct struct_settings {
   bool printLinkUpDown = false; //Print the link up and link down messages
   bool invertCts = false; //Invert the input of CTS
   bool invertRts = false; //Invert the output of RTS
-  bool selectLedUse = 0; //Select LED use
+  uint8_t selectLedUse = 0; //Select LED use
   uint8_t trainingTimeout = 1; //Timeout in minutes to complete the training
   bool debugSerial = false; //Debug the serial input
   bool debugSync = false; //Print clock sync processing
