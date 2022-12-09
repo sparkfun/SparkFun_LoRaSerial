@@ -316,7 +316,7 @@ void radioDataNack(uint8_t * data, uint8_t length)
 
   vcMsg = (VC_DATA_ACK_NACK_MESSAGE *)data;
   if (DISPLAY_DATA_NACK)
-    printf("ACK from VC %d\n", vcMsg->msgDestVc);
+    printf("NACK from VC %d\n", vcMsg->msgDestVc);
 }
 
 int radioToHost()
@@ -429,7 +429,7 @@ int radioToHost()
 
     //Display NACKs for transmitted messages
     else if (header->radio.destVc == PC_DATA_NACK)
-      radioDataAck(data, length);
+      radioDataNack(data, length);
 
     //Display received messages
     else
