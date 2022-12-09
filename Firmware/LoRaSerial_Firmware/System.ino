@@ -749,11 +749,26 @@ void radioLeds()
 //Update the LED values depending upon the selected display
 void updateLeds()
 {
+  static uint8_t previousLedUse;
+
+  //When changing patterns, start with the LEDs off
+  if (previousLedUse != settings.selectLedUse)
+  {
+    previousLedUse = settings.selectLedUse;
+    digitalWrite(GREEN_LED_1, LED_OFF);
+    digitalWrite(GREEN_LED_2, LED_OFF);
+    digitalWrite(GREEN_LED_3, LED_OFF);
+    digitalWrite(GREEN_LED_4, LED_OFF);
+    digitalWrite(BLUE_LED, LED_OFF);
+    digitalWrite(YELLOW_LED, LED_OFF);
+  }
+
+  //Display the LEDs
   switch (settings.selectLedUse)
   {
     //Set LEDs according to RSSI level
     default:
-    case 0:
+    case LEDS_RSSI:
       if (rssi > rssiLevelLow)
         setRSSI(0b0001);
       if (rssi > rssiLevelMed)
@@ -764,8 +779,38 @@ void updateLeds()
         setRSSI(0b1111);
       break;
 
-    case 1:
+    case LEDS_RADIO_USE:
       radioLeds();
+      break;
+
+    //Turn on the blue LED for testing and to identify this radio
+    case LEDS_BLUE_ON:
+      digitalWrite(BLUE_LED, LED_ON);
+      break;
+
+    //Turn on the yellow LED for testing
+    case LEDS_YELLOW_ON:
+      digitalWrite(YELLOW_LED, LED_ON);
+      break;
+
+    //Turn on the green 1 LED for testing
+    case LEDS_GREEN_1_ON:
+      digitalWrite(GREEN_LED_1, LED_ON);
+      break;
+
+    //Turn on the green 2 LED for testing
+    case LEDS_GREEN_2_ON:
+      digitalWrite(GREEN_LED_2, LED_ON);
+      break;
+
+    //Turn on the green 3 LED for testing
+    case LEDS_GREEN_3_ON:
+      digitalWrite(GREEN_LED_3, LED_ON);
+      break;
+
+    //Turn on the green 4 LED for testing
+    case LEDS_GREEN_4_ON:
+      digitalWrite(GREEN_LED_4, LED_ON);
       break;
     }
 }

@@ -96,6 +96,13 @@ uint8_t pin_trigger = PIN_UNDEFINED;
 #define ALT_LED_BAD_FRAMES  pin_txLED     //Blue
 #define ALT_LED_BAD_CRC     pin_rxLED     //Yellow
 
+#define GREEN_LED_1         pin_rssi1LED
+#define GREEN_LED_2         pin_rssi2LED
+#define GREEN_LED_3         pin_rssi3LED
+#define GREEN_LED_4         pin_rssi4LED
+#define BLUE_LED            pin_txLED
+#define YELLOW_LED          pin_rxLED
+
 #define LED_ON              HIGH
 #define LED_OFF             LOW
 
