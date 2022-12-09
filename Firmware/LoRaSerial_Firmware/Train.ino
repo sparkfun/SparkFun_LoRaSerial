@@ -138,7 +138,7 @@ void commonTrainingInitialization()
 
   //Use common radio settings between the client and server for training
   settings = defaultSettings;
-  settings.operatingMode = MODE_DATAGRAM; // 3: Use datagrams
+  settings.operatingMode = MODE_MULTIPOINT; // 3: Use datagrams
   settings.encryptData = true;            // 4: Enable packet encryption
   settings.dataScrambling = true;         // 6: Scramble the data
   settings.radioBroadcastPower_dbm = 14;  // 7: Minimum, assume radios are near each other

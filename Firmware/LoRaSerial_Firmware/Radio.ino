@@ -1868,7 +1868,7 @@ PacketType rcvDatagram()
   }
 
   //Verify the packet number last so that the expected datagram or ACK number can be updated
-  if (vc && (settings.operatingMode != MODE_DATAGRAM))
+  if (vc && (settings.operatingMode != MODE_MULTIPOINT))
   {
     switch (datagramType)
     {
@@ -2004,7 +2004,7 @@ PacketType rcvDatagram()
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
       case DATAGRAM_HEARTBEAT:
-        if (settings.operatingMode != MODE_DATAGRAM)
+        if (settings.operatingMode != MODE_MULTIPOINT)
         {
           systemPrint(" (");
           if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
@@ -2185,7 +2185,7 @@ bool transmitDatagram()
       case DATAGRAM_REMOTE_COMMAND:
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
       case DATAGRAM_HEARTBEAT:
-        if (settings.operatingMode != MODE_DATAGRAM)
+        if (settings.operatingMode != MODE_MULTIPOINT)
         {
           systemPrint(" (");
           if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)

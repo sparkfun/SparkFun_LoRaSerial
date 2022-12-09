@@ -299,7 +299,7 @@ PrinterEndpoints printerEndpoint = PRINT_TO_SERIAL;
 //Select the operating mode
 typedef enum
 {
-  MODE_DATAGRAM = 0,
+  MODE_MULTIPOINT = 0,
   MODE_POINT_TO_POINT,
   MODE_VIRTUAL_CIRCUIT,
 } OPERATING_MODE;
