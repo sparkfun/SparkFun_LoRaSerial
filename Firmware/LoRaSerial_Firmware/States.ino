@@ -2409,6 +2409,7 @@ bool verifyRadioDatagramType()
 void changeState(RadioStates newState)
 {
   radioState = newState;
+  radioStateHistory[radioState] = millis();
 
   if ((settings.debug == false) && (settings.debugStates == false))
     return;
@@ -2467,6 +2468,41 @@ void displayState(RadioStates newState)
   }
 
   systemPrintln();
+}
+
+//Display the radio state history
+void displayRadioStateHistory()
+{
+  uint8_t index;
+  uint8_t sortOrder[RADIO_MAX_STATE];
+  uint8_t temp;
+
+  //Set the default sort order
+  petWDT();
+  for (index = 0; index < RADIO_MAX_STATE; index++)
+    sortOrder[index] = index;
+
+  //Perform a bubble sort
+  for (index = 0; index < RADIO_MAX_STATE; index++)
+    for (int x = index + 1; x < RADIO_MAX_STATE; x++)
+      if (radioStateHistory[sortOrder[index]] > radioStateHistory[sortOrder[x]])
+      {
+        temp = sortOrder[index];
+        sortOrder[index] = sortOrder[x];
+        sortOrder[x] = temp;
+      }
+
+  //Display the radio state history
+  for (index = 0; index < RADIO_MAX_STATE; index++)
+    if (radioStateHistory[sortOrder[index]])
+    {
+      systemPrint("        ");
+      systemPrintTimestamp(radioStateHistory[sortOrder[index]]);
+      systemPrint(": ");
+      systemPrint(radioStateTable[sortOrder[index]].name);
+      systemPrintln();
+    }
+  petWDT();
 }
 
 //Break a point-to-point link
