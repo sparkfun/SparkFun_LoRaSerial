@@ -463,3 +463,9 @@ typedef struct _ARCH_TABLE
   ARCH_SYSTEM_RESET systemReset;  //Reset the system
   ARCH_UNIQUE_ID uniqueID;        //Get the 128 bit unique ID value
 } ARCH_TABLE;
+
+typedef struct _U16_TO_STRING
+{
+  uint16_t value;
+  const char * string;
+} U16_TO_STRING;
