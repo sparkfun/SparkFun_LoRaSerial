@@ -1635,17 +1635,17 @@ void updateRadioState()
       +<------------- VC_STATE_SEND_PING                        |              |
       ^                       |                                 |              |
       |                       | TX PING                         |              |
-      |                       | TX Complete                     |              |
-      | HB Timeout            V                                 |              |
-      +<------------- VC_STATE_WAIT_ACK1                        |              |
-      ^                       |                                 |              |
-      |                       | RX ACK1                         | TX ACK1      |
-      |                       | TX ACK2                         | TX Complete  |
-      |                       | TX Complete                     V              |
-      |       Zero ACK values |                         VC_STATE_WAIT_ACK2 ----'
-      |                       |                                 |
-      |                       |                                 | RX ACK2
-      | HB Timeout            V                                 | Zero ACK values
+      |                       | TX Complete            RX       |              |
+      | HB Timeout            V                       PING      V              |
+      +<------------- VC_STATE_WAIT_ACK1 --------->+----------->+              |
+      |                       |                    ^            |              |
+      |                       | RX ACK1            |            | TX ACK1      |
+      |                       | TX ACK2            |            | TX Complete  |
+      |                       | TX Complete        |            V              |
+      |       Zero ACK values |                    |    VC_STATE_WAIT_ACK2 ----'
+      |                       |      .-------------'            |
+      |                       |      | RX PING                  | RX ACK2
+      | HB Timeout            V      |                          | Zero ACK values
       '-------------- VC_STATE_CONNECTED <----------------------'
 
     */
@@ -1790,11 +1790,9 @@ void updateRadioState()
           //Second step in the 3-way handshake, received PING, respond with ACK1
           case DATAGRAM_PING:
             if (xmitVcAck1(rxSrcVc))
-            {
               changeState(RADIO_VC_WAIT_TX_DONE);
-              vcChangeState(rxSrcVc, VC_STATE_WAIT_FOR_ACK2);
-              virtualCircuitList[rxSrcVc].lastPingMillis = datagramTimer;
-            }
+            vcChangeState(rxSrcVc, VC_STATE_WAIT_FOR_ACK2);
+            virtualCircuitList[rxSrcVc].lastPingMillis = datagramTimer;
             break;
 
           //Third step in the 3-way handshake, received ACK1, respond with ACK2
