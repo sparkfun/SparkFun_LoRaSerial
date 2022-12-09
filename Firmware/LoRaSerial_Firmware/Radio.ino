@@ -2661,15 +2661,14 @@ void stopChannelTimer()
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
 void syncChannelTimer()
 {
-  int16_t msToNextHopRemote; //Can be negative
+  int16_t msToNextHopRemote; //Can become negative
+  memcpy(&msToNextHopRemote, &rxVcData[rxDataBytes - 2], sizeof(msToNextHopRemote));
 
   radioCallHistory[RADIO_CALL_syncChannelTimer] = millis();
   //If the sync arrived in an ACK, we know how long that packet took to transmit
   //Calculate the packet airTime based on the size of data received
   msToNextHopRemote -= calcAirTime(packetLength);
 
-  memcpy(&msToNextHopRemote, &rxVcData[rxDataBytes - 2], sizeof(msToNextHopRemote));
-  msToNextHopRemote -= ackAirTime;
   msToNextHopRemote -= SYNC_PROCESSING_OVERHEAD;
 
   //Different airspeeds complete the transmitComplete ISR at different rates
@@ -2694,10 +2693,12 @@ void syncChannelTimer()
       msToNextHopRemote -= getReceiveCompletionOffset();
       break;
     case (4800):
+      msToNextHopRemote -= 2;
       break;
     case (9600):
       break;
     case (19200):
+      msToNextHopRemote -= 2;
       break;
     case (28800):
       msToNextHopRemote -= 2;
@@ -2706,9 +2707,6 @@ void syncChannelTimer()
       msToNextHopRemote -= 3;
       break;
   }
-
-  //Calculate the remote's absolute distance to its next hop
-  //A remote hop may be very negative for
 
   int16_t msToNextHopLocal = settings.maxDwellTime - (millis() - timerStart);
 
