@@ -503,7 +503,7 @@ main (
     }
 
     //Open the terminal
-    status = openTty(terminal);
+    status = openLoRaSerial(terminal);
     if (status)
       break;
     if (maxfds < tty)
@@ -534,7 +534,7 @@ main (
         sleep(1);
 
         //Open the terminal
-        status = openTty(terminal);
+        status = openLoRaSerial(terminal);
       } while (status);
 
       //Delay a while to let the radio complete its reset operation
