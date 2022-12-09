@@ -8,9 +8,11 @@
 
 #define BREAK_LINKS_COMMAND   "atb"
 #define GET_MY_VC_ADDRESS     "atI11"
+#define GET_VC_STATUS         "ata"
 #define LINK_RESET_COMMAND    "atz"
 #define MY_VC_ADDRESS         "myVc: "
 
+#define DEBUG_LOCAL_COMMANDS      0
 #define DEBUG_PC_TO_RADIO         0
 #define DEBUG_RADIO_TO_PC         0
 #define DISPLAY_DATA_ACK          1
@@ -50,6 +52,8 @@ int cmdToRadio(uint8_t * buffer, int length)
     dumpBuffer((uint8_t *)&header, VC_SERIAL_HEADER_BYTES);
     dumpBuffer(buffer, length);
   }
+  if (DEBUG_LOCAL_COMMANDS)
+    printf("Sending LoRaSerial command: %s\n", buffer);
 
   //Send the header
   bytesWritten = write(tty, (uint8_t *)&header, VC_SERIAL_HEADER_BYTES);
@@ -201,7 +205,13 @@ int hostToStdout(uint8_t * data, uint8_t bytesToSend)
           && ((uint8_t)vcNumber < MAX_VC))
         {
           findMyVc = false;
+
+          //Set the local radio's VC number
           myVc = (int8_t)vcNumber;
+          printf("myVc: %d\n", myVc);
+
+          //Request the status for all of the VCs
+          cmdToRadio((uint8_t *)GET_VC_STATUS, strlen(GET_VC_STATUS));
           break;
         }
       }
@@ -277,17 +287,17 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t length)
     break;
 
   case VC_STATE_LINK_ALIVE:
-    //Upon transition to ALIVE, if this matches the target VC, bring up the connection
-    if (SEND_ATC_COMMAND && (srcVc == remoteVc) && (previousState != newState))
+    //Upon transition to ALIVE, if is the server or the source VC matches the
+    //target VC or myVc, bring up the connection
+    if (SEND_ATC_COMMAND && (previousState != newState)
+      && ((myVc == VC_SERVER) || (srcVc == remoteVc) || (srcVc == myVc)))
     {
       //Select the VC to use
-      sprintf(cmdBuffer, "at-CmdVc=%d", remoteVc);
-      printf("Sending %s to VC%d\r\n", cmdBuffer, remoteVc);
+      sprintf(cmdBuffer, "at-CmdVc=%d", srcVc);
       cmdToRadio((uint8_t *)cmdBuffer, strlen(cmdBuffer));
 
       //Bring up the VC connection to this remote system
       strcpy(cmdBuffer, "atC");
-      printf("Sending %s to VC%d\r\n", cmdBuffer, remoteVc);
       cmdToRadio((uint8_t *)cmdBuffer, strlen(cmdBuffer));
     }
 
@@ -557,11 +567,8 @@ main (
       sleep(2);
     }
 
-    //Get myVc address
-    findMyVc = true;
-    cmdToRadio((uint8_t *)GET_MY_VC_ADDRESS, strlen(GET_MY_VC_ADDRESS));
-
     //Break the links if requested
+    findMyVc = true;
     if (breakLinks)
       cmdToRadio((uint8_t *)BREAK_LINKS_COMMAND, strlen(BREAK_LINKS_COMMAND));
 
