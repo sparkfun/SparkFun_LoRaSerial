@@ -2648,7 +2648,7 @@ void vcChangeState(int8_t vcIndex, uint8_t state)
     if ((state > VC_STATE_LINK_ALIVE) && (state < VC_STATE_CONNECTED))
       vcConnecting |= vcBit;
     else
-      vcConnecting &= vcBit;
+      vcConnecting &= ~vcBit;
   }
   vcSendPcStateMessage(vcIndex, state);
 }
