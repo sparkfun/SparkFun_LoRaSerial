@@ -470,11 +470,11 @@ typedef struct _U8_TO_STRING
   const char * string;
 } U8_TO_STRING;
 
-typedef struct _U16_TO_STRING
+typedef struct _I16_TO_STRING
 {
-  uint16_t value;
+  int16_t value;
   const char * string;
-} U16_TO_STRING;
+} I16_TO_STRING;
 
 //Declare the radio call types
 typedef enum

@@ -2914,7 +2914,7 @@ void setVcHeartbeatTimer()
 }
 
 //Conversion table from radio status value into a status string
-const U16_TO_STRING radioStatusCodes[] =
+const I16_TO_STRING radioStatusCodes[] =
 {
   {RADIOLIB_ERR_NONE, "RADIOLIB_ERR_NONE"},
   {RADIOLIB_ERR_UNKNOWN, "RADIOLIB_ERR_UNKNOWN"},
@@ -2955,7 +2955,7 @@ const char * getRadioStatusCode(int status)
 }
 
 //Conversion table from radio call value into a name string
-const U16_TO_STRING radioCallName[] =
+const I16_TO_STRING radioCallName[] =
 {
   {RADIO_CALL_configureRadio, "configureRadio"},
   {RADIO_CALL_setRadioFrequency, "setRadioFrequency"},
