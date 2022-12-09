@@ -1906,19 +1906,7 @@ PacketType rcvDatagram()
           outputSerialData(true);
         }
 
-        //Notify the PC when an ACK is received for a DATA frame
-        if ((settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
-          && (rexmtControl.datagramType == DATAGRAM_DATA))
-        {
-          //Build the VC header
-          serialOutputByte(START_OF_VC_SERIAL);
-          serialOutputByte(sizeof(VC_DATA_ACK_MESSAGE) + VC_RADIO_HEADER_BYTES); //Length
-          serialOutputByte(PC_DATA_ACK); //Destination
-          serialOutputByte(myVc);        //Source
-
-          //Build the VC_DATA_ACK_MESSAGE
-          serialOutputByte(rexmtTxDestVc);//Message destination VC
-        }
+        //Remember when the last datagram was received
         lastRxDatagram = rcvTimeMillis;
         break;
 
