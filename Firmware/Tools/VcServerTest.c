@@ -1,3 +1,4 @@
+#define ADD_VC_STATE_NAMES_TABLE
 #include "settings.h"
 
 #define BUFFER_SIZE           2048
