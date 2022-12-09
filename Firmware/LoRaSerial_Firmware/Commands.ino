@@ -289,6 +289,32 @@ bool commandAT(const char * commandString)
           systemPrintln(vc->txAckNumber);
         }
         systemPrintln("    Radio");
+        systemPrint("        Channel: ");
+        systemPrintln(channelNumber);
+        systemPrint("        Frequency: ");
+        systemPrint(radioFrequency, 3);
+        systemPrint(" MHz");
+        if (radioFrequency != channels[channelNumber])
+        {
+          systemPrint(" = ");
+          systemPrint(channels[channelNumber], 3);
+          systemPrint(" MHz + ");
+          systemPrint((radioFrequency - channels[channelNumber]) * 1000, 0);
+          systemPrint(" KHz");
+        }
+        systemPrintln();
+        systemPrint("        maxDwellTime: ");
+        systemPrint(settings.maxDwellTime);
+        systemPrintln(" mSec");
+        if (channelNumber)
+        {
+          systemPrint("        Next Ch 0 time: ");
+          systemPrintTimestamp(nextChannelZeroTimeInMillis);
+          int hopCount = settings.numberOfChannels - channelNumber;
+          systemPrint(", in ");
+          systemPrint(hopCount);
+          systemPrintln(" hops");
+        }
         systemPrint("        Last Successful Transmit: ");
         if (txSuccessMillis)
         {

@@ -340,6 +340,7 @@ volatile bool transactionComplete = false; //Used in dio0ISR
 volatile bool timeToHop = false; //Used in dio1ISR
 uint8_t sf6ExpectedSize = MAX_PACKET_SIZE; //Used during SF6 operation to reduce packet size when needed
 
+float radioFrequency; //Current radio frequency
 float frequencyCorrection = 0; //Adjust receive freq based on the last packet received freqError
 
 volatile bool hop = true; //Clear the DIO1 hop ISR when possible
