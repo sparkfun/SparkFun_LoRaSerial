@@ -1223,12 +1223,16 @@ void updateRadioState()
             break;
 
           case DATAGRAM_PING:
+            triggerEvent(TRIGGER_MP_SEND_ACK_FOR_PING);
             //A new radio is saying hello
             if (settings.server == true)
             {
               //Ack their ping with sync data
               if (xmitDatagramMpAck() == true)
+              {
+                triggerEvent(TRIGGER_MP_SEND_ACK_FOR_PING);
                 changeState(RADIO_MP_WAIT_TX_ACK_DONE);
+              }
             }
             else
             {
