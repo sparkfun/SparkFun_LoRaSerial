@@ -56,7 +56,6 @@ void updateRadioState()
 
       //Initialize the radio
       rssi = -200;
-      setRSSI(0b0000); //Turn off LEDs
       radioSeed = radio.randomByte(); //Puts radio into standy-by state
       randomSeed(radioSeed);
       if ((settings.debug == true) || (settings.debugRadio == true))
@@ -1315,22 +1314,6 @@ void updateRadioState()
           }
         }
       }
-
-      //Toggle 2 LEDs if we have recently transmitted
-      if (millis() - datagramTimer < 5000)
-      {
-        if (millis() - lastLinkBlink > 250) //Blink at 4Hz
-        {
-          lastLinkBlink = millis();
-          if (digitalRead(pin_rssi2LED) == HIGH)
-            setRSSI(0b0001);
-          else
-            setRSSI(0b0010);
-        }
-      }
-      else if (millis() - lastPacketReceived > 5000)
-        setRSSI(0); //Turn off RSSI after 5 seconds of no new packets received
-
       break;
 
     //====================
@@ -1345,7 +1328,6 @@ void updateRadioState()
       if (transactionComplete == true)
       {
         transactionComplete = false; //Reset ISR flag
-        setRSSI(0b0001);
         returnToReceiving();
         changeState(RADIO_MP_STANDBY);
       }
@@ -1389,7 +1371,6 @@ void updateRadioState()
     //Wait for the PING to complete transmission
     //====================
     case RADIO_MP_WAIT_TX_TRAINING_PING_DONE:
-      updateCylonLEDs();
 
       //If dio0ISR has fired, we are done transmitting
       if (transactionComplete == true)
@@ -1411,7 +1392,6 @@ void updateRadioState()
     //Wait to receive the radio parameters
     //====================
     case RADIO_MP_WAIT_RX_RADIO_PARAMETERS:
-      updateCylonLEDs();
 
       //If dio0ISR has fired, a packet has arrived
       if (transactionComplete == true)
@@ -1469,7 +1449,6 @@ void updateRadioState()
     //Wait for the ACK frame to complete transmission
     //====================
     case RADIO_MP_WAIT_TX_PARAM_ACK_DONE:
-      updateCylonLEDs();
 
       //If dio0ISR has fired, we are done transmitting
       if (transactionComplete == true)
@@ -1515,7 +1494,6 @@ void updateRadioState()
     //Wait for a PING frame from a client
     //====================
     case RADIO_MP_WAIT_FOR_TRAINING_PING:
-      updateCylonLEDs();
 
       //If dio0ISR has fired, a packet has arrived
       if (transactionComplete == true)
@@ -1570,7 +1548,6 @@ void updateRadioState()
     //Wait for the radio parameters to complete transmission
     //====================
     case RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE:
-      updateCylonLEDs();
 
       //If dio0ISR has fired, we are done transmitting
       if (transactionComplete == true)

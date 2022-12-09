@@ -257,41 +257,20 @@ void updateButton()
 
     if (trainState == TRAIN_NO_PRESS && trainBtn->pressedFor(trainButtonTime))
     {
-      trainState = TRAIN_PRESSED_2S;
-      lastTrainBlink = millis();
-    }
-    else if (trainState == TRAIN_PRESSED_2S && trainBtn->wasReleased())
-    {
-      setRSSI(0b1111);
+      trainState = TRAIN_PRESSED;
 
       selectTraining();
-
+    }
+    else if (trainState == TRAIN_PRESSED && trainBtn->wasReleased())
+    {
       trainState = TRAIN_IN_PROCESS;
     }
     else if (trainState == TRAIN_IN_PROCESS && trainBtn->wasReleased())
     {
-      //Exiting training
-      setRSSI(0b0000); //Turn off LEDs
-
       //Reboot the radio
       petWDT();
       systemFlush();
       systemReset();
-    }
-
-    //Blink LEDs according to our state while we wait for user to release button
-    if (trainState == TRAIN_PRESSED_2S)
-    {
-      if (millis() - lastTrainBlink > 500) //Slow blink
-      {
-        lastTrainBlink = millis();
-
-        //Toggle RSSI LEDs
-        if (digitalRead(pin_rssi1LED) == HIGH)
-          setRSSI(0);
-        else
-          setRSSI(0b1111);
-      }
     }
   }
 }
@@ -579,7 +558,7 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
   }
 }
 
-//Compute the RSSI value
+//Compute the RSSI value after a packet has been received
 void updateRSSI()
 {
   //Calculate the average RSSI if possible
@@ -747,6 +726,7 @@ void radioLeds()
 }
 
 //Update the LED values depending upon the selected display
+//This is the only function that touches the LEDs
 void updateLeds()
 {
   static uint8_t previousLedUse;
@@ -763,56 +743,70 @@ void updateLeds()
     digitalWrite(YELLOW_LED, LED_OFF);
   }
 
-  //Display the LEDs
-  switch (settings.selectLedUse)
+  //Update LEDs according to state
+  //If we are in training, cylon the LEDs
+  //If we are in data radio mode, control according to selectLedUse setting
+
+  if (radioState == RADIO_MP_WAIT_TX_TRAINING_PING_DONE
+      || radioState == RADIO_MP_WAIT_RX_RADIO_PARAMETERS
+      || radioState == RADIO_MP_WAIT_TX_PARAM_ACK_DONE
+      || radioState == RADIO_MP_WAIT_FOR_TRAINING_PING
+      || radioState == RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE)
   {
-    //Set LEDs according to RSSI level
-    default:
-    case LEDS_RSSI:
-      if (rssi > rssiLevelLow)
-        setRSSI(0b0001);
-      if (rssi > rssiLevelMed)
-        setRSSI(0b0011);
-      if (rssi > rssiLevelHigh)
-        setRSSI(0b0111);
-      if (rssi > rssiLevelMax)
-        setRSSI(0b1111);
-      break;
+    updateCylonLEDs();
+  }
+  else
+  {
+    switch (settings.selectLedUse)
+    {
+      //Set LEDs according to RSSI level
+      default:
+      case LEDS_RSSI:
+        if (rssi > rssiLevelLow)
+          setRSSI(0b0001);
+        if (rssi > rssiLevelMed)
+          setRSSI(0b0011);
+        if (rssi > rssiLevelHigh)
+          setRSSI(0b0111);
+        if (rssi > rssiLevelMax)
+          setRSSI(0b1111);
+        break;
 
-    case LEDS_RADIO_USE:
-      radioLeds();
-      break;
+      case LEDS_RADIO_USE:
+        radioLeds();
+        break;
 
-    //Turn on the blue LED for testing and to identify this radio
-    case LEDS_BLUE_ON:
-      digitalWrite(BLUE_LED, LED_ON);
-      break;
+      //Turn on the blue LED for testing and to identify this radio
+      case LEDS_BLUE_ON:
+        digitalWrite(BLUE_LED, LED_ON);
+        break;
 
-    //Turn on the yellow LED for testing
-    case LEDS_YELLOW_ON:
-      digitalWrite(YELLOW_LED, LED_ON);
-      break;
+      //Turn on the yellow LED for testing
+      case LEDS_YELLOW_ON:
+        digitalWrite(YELLOW_LED, LED_ON);
+        break;
 
-    //Turn on the green 1 LED for testing
-    case LEDS_GREEN_1_ON:
-      digitalWrite(GREEN_LED_1, LED_ON);
-      break;
+      //Turn on the green 1 LED for testing
+      case LEDS_GREEN_1_ON:
+        digitalWrite(GREEN_LED_1, LED_ON);
+        break;
 
-    //Turn on the green 2 LED for testing
-    case LEDS_GREEN_2_ON:
-      digitalWrite(GREEN_LED_2, LED_ON);
-      break;
+      //Turn on the green 2 LED for testing
+      case LEDS_GREEN_2_ON:
+        digitalWrite(GREEN_LED_2, LED_ON);
+        break;
 
-    //Turn on the green 3 LED for testing
-    case LEDS_GREEN_3_ON:
-      digitalWrite(GREEN_LED_3, LED_ON);
-      break;
+      //Turn on the green 3 LED for testing
+      case LEDS_GREEN_3_ON:
+        digitalWrite(GREEN_LED_3, LED_ON);
+        break;
 
-    //Turn on the green 4 LED for testing
-    case LEDS_GREEN_4_ON:
-      digitalWrite(GREEN_LED_4, LED_ON);
-      break;
+      //Turn on the green 4 LED for testing
+      case LEDS_GREEN_4_ON:
+        digitalWrite(GREEN_LED_4, LED_ON);
+        break;
     }
+  }
 }
 
 //Case independent string comparison

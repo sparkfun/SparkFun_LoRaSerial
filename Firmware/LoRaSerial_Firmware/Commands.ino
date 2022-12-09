@@ -158,7 +158,6 @@ bool commandAT(const char * commandString)
           generateHopTable(); //Generate freq with new settings
           configureRadio(); //Apply any new settings
 
-          setRSSI(0); //Turn off LEDs
           inCommandMode = false; //Return to printing normal RF serial data
           reportOK();
           changeState(RADIO_RESET);
