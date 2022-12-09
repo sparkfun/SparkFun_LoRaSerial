@@ -16,6 +16,7 @@
 #define DISPLAY_DATA_ACK          1
 #define DISPLAY_DATA_NACK         1
 #define DISPLAY_VC_STATE          0
+#define SEND_ATC_COMMAND          1
 #define DISPLAY_STATE_TRANSITION  1
 
 typedef struct _VIRTUAL_CIRCUIT
@@ -245,6 +246,7 @@ int hostToStdout(uint8_t * data, uint8_t bytesToSend)
 
 void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t length)
 {
+  char cmdBuffer[128];
   int newState;
   int previousState;
   int srcVc;
@@ -275,6 +277,20 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t length)
     break;
 
   case VC_STATE_LINK_ALIVE:
+    //Upon transition to ALIVE, if this matches the target VC, bring up the connection
+    if (SEND_ATC_COMMAND && (srcVc == remoteVc) && (previousState != newState))
+    {
+      //Select the VC to use
+      sprintf(cmdBuffer, "at-CmdVc=%d", remoteVc);
+      printf("Sending %s to VC%d\r\n", cmdBuffer, remoteVc);
+      cmdToRadio((uint8_t *)cmdBuffer, strlen(cmdBuffer));
+
+      //Bring up the VC connection to this remote system
+      strcpy(cmdBuffer, "atC");
+      printf("Sending %s to VC%d\r\n", cmdBuffer, remoteVc);
+      cmdToRadio((uint8_t *)cmdBuffer, strlen(cmdBuffer));
+    }
+
     if (DISPLAY_VC_STATE)
       printf("-=--=--=- VC %d ALIVE =--=--=-\n", srcVc);
     break;
