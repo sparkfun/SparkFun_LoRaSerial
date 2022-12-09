@@ -867,6 +867,9 @@ void verifyTables()
   //Verify the VC state name table
   valid &= verifyVcStateNames();
 
+  //Verify the RADIO_CALLS enum against the radioCallName
+  valid &= verifyRadioCallNames();
+
   if (!valid)
   {
     outputSerialData(true);

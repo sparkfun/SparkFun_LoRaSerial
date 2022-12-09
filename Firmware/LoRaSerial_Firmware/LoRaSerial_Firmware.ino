@@ -378,6 +378,8 @@ unsigned long txSuccessMillis;
 unsigned long txFailureMillis;
 int txFailureState;
 
+//History
+unsigned long radioCallHistory[RADIO_CALL_MAX];
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - Radio Protocol

@@ -4,6 +4,8 @@ void configureRadio()
 {
   bool success = true;
 
+  radioCallHistory[RADIO_CALL_configureRadio] = millis();
+
   channelNumber = 0;
   if (!setRadioFrequency(false))
     success = false;
@@ -176,6 +178,8 @@ bool setRadioFrequency(bool rxAdjust)
 {
   float frequency;
 
+  radioCallHistory[RADIO_CALL_setRadioFrequency] = millis();
+
   //Determine the frequency to use
   frequency = channels[channelNumber];
   if (rxAdjust && settings.autoTuneFrequency)
@@ -207,6 +211,8 @@ bool setRadioFrequency(bool rxAdjust)
 //Place the radio in receive mode
 void returnToReceiving()
 {
+  radioCallHistory[RADIO_CALL_returnToReceiving] = millis();
+
   if (receiveInProcess() == true) return; //Do not touch the radio if it is already receiving
 
   int state;
@@ -243,6 +249,8 @@ void returnToReceiving()
 //Given spread factor, bandwidth, coding rate and number of bytes, return total Air Time in ms for packet
 uint16_t calcAirTime(uint8_t bytesToSend)
 {
+  radioCallHistory[RADIO_CALL_calcAirTime] = millis();
+
   float tSym = calcSymbolTime();
   float tPreamble = (settings.radioPreambleLength + 4.25) * tSym;
   float p1 = (8 * bytesToSend - 4 * settings.radioSpreadFactor + 28 + 16 * 1 - 20 * 0) / (4.0 * (settings.radioSpreadFactor - 2 * 0));
@@ -482,6 +490,8 @@ uint8_t covertdBmToSetting(uint8_t userSetting)
 //Read a register from the SX1276 chip
 uint8_t readSX1276Register(uint8_t reg)
 {
+  radioCallHistory[RADIO_CALL_readSX1276Register] = millis();
+
   return radio._mod->SPIreadRegister(reg);
 }
 
@@ -494,6 +504,8 @@ void printSX1276Registers ()
     0xc2, 0xff, 0xff, 0xff, 0x7f, 0x97, 0xcb, 0x0e,
     0x07, 0x28, 0x00, 0x08, 0x1e, 0x00, 0x01, 0x00
   };
+
+  radioCallHistory[RADIO_CALL_printSX1276Registers] = millis();
 
   systemPrint("Registers:");
   for (uint8_t i = 0; i < (sizeof(valid_regs) * 8); i++)
@@ -515,6 +527,8 @@ void printSX1276Registers ()
 //Called when transmission is complete or when RX is received
 void transactionCompleteISR(void)
 {
+  radioCallHistory[RADIO_CALL_transactionCompleteISR] = millis();
+
   transactionComplete = true;
 }
 
@@ -524,6 +538,8 @@ void transactionCompleteISR(void)
 //We use the hop ISR to measure RSSI during reception
 void hopISR(void)
 {
+  radioCallHistory[RADIO_CALL_hopISR] = millis();
+
   hop = true;
 }
 
@@ -621,6 +637,8 @@ const uint16_t crc16Table[256] =
 //Ping the other radio in the point-to-point configuration
 bool xmitDatagramP2PTrainingPing()
 {
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PTrainingPing] = millis();
+
   /*
             endOfTxData ---.
                            |
@@ -640,6 +658,8 @@ bool xmitDatagramP2PTrainingPing()
 bool xmitDatagramP2pTrainingParams()
 {
   Settings params;
+
+  radioCallHistory[RADIO_CALL_xmitDatagramP2pTrainingParams] = millis();
 
   //Initialize the radio parameters
   memcpy(&params, &originalSettings, sizeof(settings));
@@ -723,6 +743,8 @@ bool xmitDatagramP2pTrainingParams()
 //First packet in the three way handshake to bring up the link
 bool xmitDatagramP2PPing()
 {
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PPing] = millis();
+
   unsigned long currentMillis = millis();
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   endOfTxData += sizeof(unsigned long);
@@ -745,6 +767,8 @@ bool xmitDatagramP2PPing()
 //Second packet in the three way handshake to bring up the link
 bool xmitDatagramP2PAck1()
 {
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PAck1] = millis();
+
   unsigned long currentMillis = millis();
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   endOfTxData += sizeof(unsigned long);
@@ -767,6 +791,8 @@ bool xmitDatagramP2PAck1()
 //Last packet in the three way handshake to bring up the link
 bool xmitDatagramP2PAck2()
 {
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PAck2] = millis();
+
   unsigned long currentMillis = millis();
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   endOfTxData += sizeof(unsigned long);
@@ -793,6 +819,8 @@ bool xmitDatagramP2PAck2()
 //Send a command datagram to the remote system
 bool xmitDatagramP2PCommand()
 {
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PCommand] = millis();
+
   /*
                        endOfTxData ---.
                                       |
@@ -811,6 +839,8 @@ bool xmitDatagramP2PCommand()
 //Send a command response datagram to the remote system
 bool xmitDatagramP2PCommandResponse()
 {
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PCommandResponse] = millis();
+
   /*
                        endOfTxData ---.
                                       |
@@ -829,6 +859,8 @@ bool xmitDatagramP2PCommandResponse()
 //Send a data datagram to the remote system
 bool xmitDatagramP2PData()
 {
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PData] = millis();
+
   /*
                        endOfTxData ---.
                                       |
@@ -847,6 +879,8 @@ bool xmitDatagramP2PData()
 //Heartbeat packet to keep the link up
 bool xmitDatagramP2PHeartbeat()
 {
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PHeartbeat] = millis();
+
   unsigned long currentMillis = millis();
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   endOfTxData += sizeof(currentMillis);
@@ -870,6 +904,8 @@ bool xmitDatagramP2PHeartbeat()
 bool xmitDatagramP2PAck()
 {
   int ackLength;
+
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PAck] = millis();
 
   uint8_t * ackStart = endOfTxData;
   uint16_t msToNextHop = settings.maxDwellTime - (millis() - timerStart);
@@ -907,6 +943,8 @@ bool xmitDatagramP2PAck()
 //Send a data datagram to the remote system, including sync data
 bool xmitDatagramMpData()
 {
+  radioCallHistory[RADIO_CALL_xmitDatagramMpData] = millis();
+
   uint16_t msToNextHop = settings.maxDwellTime - (millis() - timerStart);
   memcpy(endOfTxData, &msToNextHop, sizeof(msToNextHop));
   endOfTxData += sizeof(msToNextHop);
@@ -931,6 +969,8 @@ bool xmitDatagramMpData()
 //Heartbeat packet to sync other units in multipoint mode
 bool xmitDatagramMpHeartbeat()
 {
+  radioCallHistory[RADIO_CALL_xmitDatagramMpHeartbeat] = millis();
+
   uint16_t msToNextHop = settings.maxDwellTime - (millis() - timerStart);
   memcpy(endOfTxData, &msToNextHop, sizeof(msToNextHop));
   endOfTxData += sizeof(msToNextHop);
@@ -955,6 +995,8 @@ bool xmitDatagramMpHeartbeat()
 //The channel Number ensures that the client gets the next hop correct
 bool xmitDatagramMpAck()
 {
+  radioCallHistory[RADIO_CALL_xmitDatagramMpAck] = millis();
+
   memcpy(endOfTxData, &channelNumber, sizeof(channelNumber));
   endOfTxData += sizeof(channelNumber);
 
@@ -981,6 +1023,8 @@ bool xmitDatagramMpAck()
 //Ping packet sent during scanning
 bool xmitDatagramMpPing()
 {
+  radioCallHistory[RADIO_CALL_xmitDatagramMpPing] = millis();
+
   /*
           endOfTxData ---.
                          |
@@ -1003,6 +1047,8 @@ bool xmitDatagramMpPing()
 //Build the client ping packet used for training
 bool xmitDatagramMpTrainingPing()
 {
+  radioCallHistory[RADIO_CALL_xmitDatagramMpTrainingPing] = millis();
+
   //Add the source (server) ID
   memcpy(endOfTxData, myUniqueId, UNIQUE_ID_BYTES);
   endOfTxData += UNIQUE_ID_BYTES;
@@ -1025,6 +1071,8 @@ bool xmitDatagramMpTrainingPing()
 //Build the client ACK packet used for training
 bool xmitDatagramMpTrainingAck(uint8_t * serverID)
 {
+  radioCallHistory[RADIO_CALL_xmitDatagramMpTrainingAck] = millis();
+
   //Add the destination (server) ID
   memcpy(endOfTxData, serverID, UNIQUE_ID_BYTES);
   endOfTxData += UNIQUE_ID_BYTES;
@@ -1151,6 +1199,8 @@ bool xmitDatagramMpRadioParameters(const uint8_t * clientID)
 {
   Settings params;
 
+  radioCallHistory[RADIO_CALL_xmitDatagramMpRadioParameters] = millis();
+
   //Initialize the radio parameters
   memcpy(&params, &originalSettings, sizeof(settings));
   params.server = false;
@@ -1189,6 +1239,8 @@ bool xmitDatagramMpRadioParameters(const uint8_t * clientID)
 //Broadcast a datagram to all of the VCs
 bool xmitVcDatagram()
 {
+  radioCallHistory[RADIO_CALL_xmitVcDatagram] = millis();
+
   /*
                                                     endOfTxData ---.
                                                                    |
@@ -1210,6 +1262,8 @@ bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
 {
   uint32_t currentMillis = millis();
   uint8_t * txData;
+
+  radioCallHistory[RADIO_CALL_xmitVcHeartbeat] = currentMillis;
 
   //Build the VC header
   txData = endOfTxData;
@@ -1261,6 +1315,8 @@ bool xmitVcAckFrame(int8_t destVc)
 {
   VC_RADIO_MESSAGE_HEADER * vcHeader;
 
+  radioCallHistory[RADIO_CALL_xmitVcAckFrame] = millis();
+
   vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
   vcHeader->length = VC_RADIO_HEADER_BYTES + CLOCK_SYNC_BYTES;
   vcHeader->destVc = destVc;
@@ -1285,6 +1341,8 @@ bool xmitVcAckFrame(int8_t destVc)
 bool xmitVcPing(int8_t destVc)
 {
   VC_RADIO_MESSAGE_HEADER * vcHeader;
+
+  radioCallHistory[RADIO_CALL_xmitVcPing] = millis();
 
   vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
   vcHeader->length = VC_RADIO_HEADER_BYTES;
@@ -1311,6 +1369,8 @@ bool xmitVcAck1(int8_t destVc)
 {
   VC_RADIO_MESSAGE_HEADER * vcHeader;
 
+  radioCallHistory[RADIO_CALL_xmitVcAck1] = millis();
+
   vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
   vcHeader->length = VC_RADIO_HEADER_BYTES;
   vcHeader->destVc = destVc;
@@ -1335,6 +1395,8 @@ bool xmitVcAck1(int8_t destVc)
 bool xmitVcAck2(int8_t destVc)
 {
   VC_RADIO_MESSAGE_HEADER * vcHeader;
+
+  radioCallHistory[RADIO_CALL_xmitVcAck2] = millis();
 
   vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
   vcHeader->length = VC_RADIO_HEADER_BYTES;
@@ -1370,6 +1432,8 @@ PacketType rcvDatagram()
   CONTROL_U8 rxControl;
   VIRTUAL_CIRCUIT * vc;
   VC_RADIO_MESSAGE_HEADER * vcHeader;
+
+  radioCallHistory[RADIO_CALL_rcvDatagram] = millis();
 
   //Acknowledge the receive interrupt
   transactionComplete = false;
@@ -2077,6 +2141,8 @@ bool transmitDatagram()
   VIRTUAL_CIRCUIT * vc;
   VC_RADIO_MESSAGE_HEADER * vcHeader;
 
+  radioCallHistory[RADIO_CALL_transmitDatagram] = millis();
+
   if (timeToHop == true) //If the channelTimer has expired, move to next frequency
     hopChannel();
 
@@ -2461,6 +2527,8 @@ void printControl(uint8_t value)
 //Returns false if we could not start tranmission due to packet received or RX in process
 bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
 {
+  radioCallHistory[RADIO_CALL_retransmitDatagram] = millis();
+
   /*
       +----------+----------+------------+---  ...  ---+----------+
       | Optional |          |  Optional  |             | Optional |
@@ -2584,6 +2652,8 @@ void startChannelTimer()
 //Use the specified value to start the timer that indicates when to hop channels
 void startChannelTimer(int16_t startAmount)
 {
+  radioCallHistory[RADIO_CALL_startChannelTimer] = millis();
+
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(startAmount, channelTimerHandler);
   channelTimer.enableTimer();
@@ -2594,6 +2664,8 @@ void startChannelTimer(int16_t startAmount)
 //Stop the channel (hop) timer
 void stopChannelTimer()
 {
+  radioCallHistory[RADIO_CALL_stopChannelTimer] = millis();
+
   channelTimer.disableTimer();
   triggerEvent(TRIGGER_HOP_TIMER_STOP);
 }
@@ -2603,6 +2675,9 @@ void stopChannelTimer()
 void syncChannelTimer()
 {
   int16_t msToNextHopRemote; //Can be negative
+
+  radioCallHistory[RADIO_CALL_syncChannelTimer] = millis();
+
   memcpy(&msToNextHopRemote, &rxVcData[rxDataBytes - 2], sizeof(msToNextHopRemote));
   msToNextHopRemote -= ackAirTime;
   msToNextHopRemote -= SYNC_PROCESSING_OVERHEAD;
@@ -2755,6 +2830,8 @@ void syncChannelTimer()
 void setHeartbeatShort()
 {
   heartbeatTimer = millis();
+  radioCallHistory[RADIO_CALL_setHeartbeatShort] = heartbeatTimer;
+
   heartbeatRandomTime = random(settings.heartbeatTimeout * 2 / 10, settings.heartbeatTimeout / 2); //20-50%
 
   //Slow datarates can have significant ack transmission times
@@ -2765,6 +2842,8 @@ void setHeartbeatShort()
 void setHeartbeatLong()
 {
   heartbeatTimer = millis();
+  radioCallHistory[RADIO_CALL_setHeartbeatLong] = heartbeatTimer;
+
   heartbeatRandomTime = random(settings.heartbeatTimeout * 8 / 10, settings.heartbeatTimeout); //80-100%
 
   //Slow datarates can have significant ack transmission times
@@ -2777,6 +2856,8 @@ void setHeartbeatLong()
 void setHeartbeatMultipoint()
 {
   heartbeatTimer = millis();
+  radioCallHistory[RADIO_CALL_setHeartbeatMultipoint] = heartbeatTimer;
+
   heartbeatRandomTime = settings.heartbeatTimeout;
 
   //Slow datarates can have significant ack transmission times
@@ -2788,6 +2869,9 @@ void setHeartbeatMultipoint()
 void setVcHeartbeatTimer()
 {
   long deltaMillis;
+
+  heartbeatTimer = millis();
+  radioCallHistory[RADIO_CALL_setVcHeartbeatTimer] = heartbeatTimer;
 
   /*
    * The goal of this routine is to randomize the placement of the HEARTBEAT
@@ -2813,7 +2897,6 @@ void setVcHeartbeatTimer()
   petWDT();
 
   //Determine the delay before channel zero is reached
-  heartbeatTimer = millis();
   deltaMillis = nextChannelZeroTimeInMillis - heartbeatTimer;
   if (deltaMillis <= 0)
   {
@@ -2883,4 +2966,115 @@ const char * getRadioStatusCode(int status)
       return radioStatusCodes[index].string;
   }
   return NULL;
+}
+
+//Conversion table from radio call value into a name string
+const U16_TO_STRING radioCallName[] =
+{
+  {RADIO_CALL_configureRadio, "configureRadio"},
+  {RADIO_CALL_setRadioFrequency, "setRadioFrequency"},
+  {RADIO_CALL_returnToReceiving, "returnToReceiving"},
+  {RADIO_CALL_calcAirTime, "calcAirTime"},
+  {RADIO_CALL_xmitDatagramP2PTrainingPing, "xmitDatagramP2PTrainingPing"},
+  {RADIO_CALL_xmitDatagramP2pTrainingParams, "xmitDatagramP2pTrainingParams"},
+  {RADIO_CALL_xmitDatagramP2PPing, "xmitDatagramP2PPing"},
+  {RADIO_CALL_xmitDatagramP2PAck1, "xmitDatagramP2PAck1"},
+  {RADIO_CALL_xmitDatagramP2PAck2, "xmitDatagramP2PAck2"},
+  {RADIO_CALL_xmitDatagramP2PCommand, "xmitDatagramP2PCommand"},
+  {RADIO_CALL_xmitDatagramP2PCommandResponse, "xmitDatagramP2PCommandResponse"},
+  {RADIO_CALL_xmitDatagramP2PData, "xmitDatagramP2PData"},
+  {RADIO_CALL_xmitDatagramP2PHeartbeat, "xmitDatagramP2PHeartbeat"},
+  {RADIO_CALL_xmitDatagramP2PAck, "xmitDatagramP2PAck"},
+  {RADIO_CALL_xmitDatagramMpData, "xmitDatagramMpData"},
+  {RADIO_CALL_xmitDatagramMpHeartbeat, "xmitDatagramMpHeartbeat"},
+  {RADIO_CALL_xmitDatagramMpAck, "xmitDatagramMpAck"},
+  {RADIO_CALL_xmitDatagramMpPing, "xmitDatagramMpPing"},
+  {RADIO_CALL_xmitDatagramMpTrainingPing, "xmitDatagramMpTrainingPing"},
+  {RADIO_CALL_xmitDatagramMpTrainingAck, "xmitDatagramMpTrainingAck"},
+  {RADIO_CALL_xmitDatagramMpRadioParameters, "xmitDatagramMpRadioParameters"},
+  {RADIO_CALL_xmitVcDatagram, "xmitVcDatagram"},
+  {RADIO_CALL_xmitVcHeartbeat, "xmitVcHeartbeat"},
+  {RADIO_CALL_xmitVcAckFrame, "xmitVcAckFrame"},
+  {RADIO_CALL_xmitVcPing, "xmitVcPing"},
+  {RADIO_CALL_xmitVcAck1, "xmitVcAck1"},
+  {RADIO_CALL_xmitVcAck2, "xmitVcAck2"},
+  {RADIO_CALL_rcvDatagram, "rcvDatagram"},
+  {RADIO_CALL_transmitDatagram, "transmitDatagram"},
+  {RADIO_CALL_retransmitDatagram, "retransmitDatagram"},
+  {RADIO_CALL_startChannelTimer, "startChannelTimer"},
+  {RADIO_CALL_stopChannelTimer, "stopChannelTimer"},
+  {RADIO_CALL_syncChannelTimer, "syncChannelTimer"},
+  {RADIO_CALL_setHeartbeatShort, "setHeartbeatShort"},
+  {RADIO_CALL_setHeartbeatLong, "setHeartbeatLong"},
+  {RADIO_CALL_setHeartbeatMultipoint, "setHeartbeatMultipoint"},
+  {RADIO_CALL_setVcHeartbeatTimer, "setVcHeartbeatTimer"},
+  //Insert new values before this line
+  {RADIO_CALL_hopISR, "hopISR"},
+  {RADIO_CALL_transactionCompleteISR, "transactionCompleteISR"},
+#ifdef  RADIOLIB_LOW_LEVEL
+  {RADIO_CALL_readSX1276Register, "readSX1276Register"},
+  {RADIO_CALL_printSX1276Registers, "printSX1276Registers"},
+#endif  //RADIOLIB_LOW_LEVEL
+};
+
+//Verify the RADIO_CALLS enum against the radioCallName
+bool verifyRadioCallNames()
+{
+  bool valid;
+
+  valid = ((sizeof(radioCallName) / sizeof(radioCallName[0])) == RADIO_CALL_MAX);
+  if (!valid)
+    systemPrintln("ERROR - Please update the radioCallName");
+  return valid;
+}
+
+//Convert a radio call value into a string, return NULL if not found
+const char * getRadioCall(uint8_t radioCall)
+{
+  for (int index = 0; index < sizeof(radioCallName) / sizeof(radioCallName[0]); index++)
+  {
+    if (radioCallName[index].value == radioCall)
+      return radioCallName[index].string;
+  }
+  return NULL;
+}
+
+//Display the radio call history
+void displayRadioCallHistory()
+{
+  uint8_t index;
+  uint8_t sortOrder[RADIO_CALL_MAX];
+  const char * string;
+  uint8_t temp;
+
+  //Set the default sort order
+  petWDT();
+  for (index = 0; index < RADIO_CALL_MAX; index++)
+    sortOrder[index] = index;
+
+  //Perform a bubble sort
+  for (index = 0; index < RADIO_CALL_MAX; index++)
+    for (int x = index + 1; x < RADIO_CALL_MAX; x++)
+      if (radioCallHistory[sortOrder[index]] > radioCallHistory[sortOrder[x]])
+      {
+        temp = sortOrder[index];
+        sortOrder[index] = sortOrder[x];
+        sortOrder[x] = temp;
+      }
+
+  //Display the radio call history
+  for (index = 0; index < RADIO_CALL_MAX; index++)
+    if (radioCallHistory[sortOrder[index]])
+    {
+      systemPrint("        ");
+      systemPrintTimestamp(radioCallHistory[sortOrder[index]]);
+      string = getRadioCall(sortOrder[index]);
+      if (string)
+      {
+        systemPrint(": ");
+        systemPrint(string);
+      }
+      systemPrintln();
+    }
+  petWDT();
 }

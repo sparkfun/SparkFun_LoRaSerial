@@ -464,8 +464,64 @@ typedef struct _ARCH_TABLE
   ARCH_UNIQUE_ID uniqueID;        //Get the 128 bit unique ID value
 } ARCH_TABLE;
 
+typedef struct _U8_TO_STRING
+{
+  uint8_t value;
+  const char * string;
+} U8_TO_STRING;
+
 typedef struct _U16_TO_STRING
 {
   uint16_t value;
   const char * string;
 } U16_TO_STRING;
+
+//Declare the radio call types
+typedef enum
+{
+  RADIO_CALL_configureRadio = 0,
+  RADIO_CALL_setRadioFrequency,
+  RADIO_CALL_returnToReceiving,
+  RADIO_CALL_calcAirTime,
+  RADIO_CALL_xmitDatagramP2PTrainingPing,
+  RADIO_CALL_xmitDatagramP2pTrainingParams,
+  RADIO_CALL_xmitDatagramP2PPing,
+  RADIO_CALL_xmitDatagramP2PAck1,
+  RADIO_CALL_xmitDatagramP2PAck2,
+  RADIO_CALL_xmitDatagramP2PCommand,
+  RADIO_CALL_xmitDatagramP2PCommandResponse,
+  RADIO_CALL_xmitDatagramP2PData,
+  RADIO_CALL_xmitDatagramP2PHeartbeat,
+  RADIO_CALL_xmitDatagramP2PAck,
+  RADIO_CALL_xmitDatagramMpData,
+  RADIO_CALL_xmitDatagramMpHeartbeat,
+  RADIO_CALL_xmitDatagramMpAck,
+  RADIO_CALL_xmitDatagramMpPing,
+  RADIO_CALL_xmitDatagramMpTrainingPing,
+  RADIO_CALL_xmitDatagramMpTrainingAck,
+  RADIO_CALL_xmitDatagramMpRadioParameters,
+  RADIO_CALL_xmitVcDatagram,
+  RADIO_CALL_xmitVcHeartbeat,
+  RADIO_CALL_xmitVcAckFrame,
+  RADIO_CALL_xmitVcPing,
+  RADIO_CALL_xmitVcAck1,
+  RADIO_CALL_xmitVcAck2,
+  RADIO_CALL_rcvDatagram,
+  RADIO_CALL_transmitDatagram,
+  RADIO_CALL_retransmitDatagram,
+  RADIO_CALL_startChannelTimer,
+  RADIO_CALL_stopChannelTimer,
+  RADIO_CALL_syncChannelTimer,
+  RADIO_CALL_setHeartbeatShort,
+  RADIO_CALL_setHeartbeatLong,
+  RADIO_CALL_setHeartbeatMultipoint,
+  RADIO_CALL_setVcHeartbeatTimer,
+  //Insert new values before this line
+  RADIO_CALL_transactionCompleteISR,
+  RADIO_CALL_hopISR,
+#ifdef  RADIOLIB_LOW_LEVEL
+  RADIO_CALL_readSX1276Register,
+  RADIO_CALL_printSX1276Registers,
+#endif  //RADIOLIB_LOW_LEVEL
+  RADIO_CALL_MAX
+} RADIO_CALLS;
