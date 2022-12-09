@@ -11,10 +11,16 @@
 #define LINK_RESET_COMMAND    "atz"
 #define MY_VC_ADDRESS         "myVc: "
 
-#define DEBUG_PC_TO_RADIO     0
-#define DEBUG_RADIO_TO_PC     0
-#define DISPLAY_DATA_ACK      1
-#define DISPLAY_VC_STATE      1
+#define DEBUG_PC_TO_RADIO         0
+#define DEBUG_RADIO_TO_PC         0
+#define DISPLAY_DATA_ACK          1
+#define DISPLAY_VC_STATE          0
+#define DISPLAY_STATE_TRANSITION  1
+
+typedef struct _VIRTUAL_CIRCUIT
+{
+  int vcState;
+} VIRTUAL_CIRCUIT;
 
 bool findMyVc;
 int myVc = VC_UNASSIGNED;
@@ -22,6 +28,7 @@ int remoteVc;
 uint8_t inputBuffer[BUFFER_SIZE];
 uint8_t outputBuffer[VC_SERIAL_HEADER_BYTES + BUFFER_SIZE];
 int timeoutCount;
+VIRTUAL_CIRCUIT virtualCircuitList[MAX_VC];
 
 int cmdToRadio(uint8_t * buffer, int length)
 {
@@ -237,41 +244,59 @@ int hostToStdout(uint8_t * data, uint8_t bytesToSend)
 
 void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t length)
 {
+  int newState;
+  int previousState;
+  int srcVc;
   VC_STATE_MESSAGE * vcMsg;
 
+  //Remember the previous state
+  srcVc = header->radio.srcVc;
+  previousState = virtualCircuitList[srcVc].vcState;
   vcMsg = (VC_STATE_MESSAGE *)&header[1];
-  if (DISPLAY_VC_STATE)
+
+  //Set the new state
+  newState = vcMsg->vcState;
+  virtualCircuitList[srcVc].vcState = newState;
+
+  //Display the state if requested
+  if (DISPLAY_STATE_TRANSITION)
+    printf("VC%d: %s --> %s\n", srcVc, vcStateNames[previousState], vcStateNames[newState]);
+  switch (newState)
   {
-    switch (vcMsg->vcState)
-    {
-    default:
-      printf("------- VC %d State %3d ------\n", header->radio.srcVc, vcMsg->vcState);
-      break;
+  default:
+    if (DISPLAY_VC_STATE)
+      printf("------- VC %d State %3d ------\n", srcVc, vcMsg->vcState);
+    break;
 
-    case VC_STATE_LINK_DOWN:
-      printf("--------- VC %d DOWN ---------\n", header->radio.srcVc);
-      break;
+  case VC_STATE_LINK_DOWN:
+    if (DISPLAY_VC_STATE)
+      printf("--------- VC %d DOWN ---------\n", srcVc);
+    break;
 
-    case VC_STATE_LINK_ALIVE:
-      printf("-=--=--=- VC %d ALIVE =--=--=-\n", header->radio.srcVc);
-      break;
+  case VC_STATE_LINK_ALIVE:
+    if (DISPLAY_VC_STATE)
+      printf("-=--=--=- VC %d ALIVE =--=--=-\n", srcVc);
+    break;
 
-    case VC_STATE_SEND_PING:
-      printf("-=--=-- VC %d ALIVE P1 --=--=-\n", header->radio.srcVc);
-      break;
+  case VC_STATE_SEND_PING:
+    if (DISPLAY_VC_STATE)
+      printf("-=--=-- VC %d ALIVE P1 --=--=-\n", srcVc);
+    break;
 
-    case VC_STATE_WAIT_FOR_ACK1:
-      printf("-=--=-- VC %d ALIVE WA1 -=--=-\n", header->radio.srcVc);
-      break;
+  case VC_STATE_WAIT_FOR_ACK1:
+    if (DISPLAY_VC_STATE)
+      printf("-=--=-- VC %d ALIVE WA1 -=--=-\n", srcVc);
+    break;
 
-    case VC_STATE_WAIT_FOR_ACK2:
-      printf("-=--=-- VC %d ALIVE WA2 -=--=-\n", header->radio.srcVc);
-      break;
+  case VC_STATE_WAIT_FOR_ACK2:
+    if (DISPLAY_VC_STATE)
+      printf("-=--=-- VC %d ALIVE WA2 -=--=-\n", srcVc);
+    break;
 
-    case VC_STATE_CONNECTED:
-      printf("======= VC %d CONNECTED ======\n", header->radio.srcVc);
-      break;
-    }
+  case VC_STATE_CONNECTED:
+    if (DISPLAY_VC_STATE)
+      printf("======= VC %d CONNECTED ======\n", srcVc);
+    break;
   }
 }
 
