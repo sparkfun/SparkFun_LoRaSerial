@@ -192,6 +192,7 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI10 - Display radio metrics");
         systemPrintln("  ATI11 - Return myVc value");
         systemPrintln("  ATI12 - Display the VC details");
+        systemPrintln("  ATI13 - Dump the radioTxBuffer");
         break;
       case ('0'): //ATI0 - Show user settable parameters
         displayParameters(0, true);
@@ -467,6 +468,10 @@ bool commandAT(const char * commandString)
           }
         }
         reportOK();
+        break;
+      case ('3'): //ATI13 - Dump the radioTxBuffer
+        systemPrintln("radioTxBuffer:");
+        dumpCircularBuffer(radioTxBuffer, radioTxTail, sizeof(radioTxBuffer), availableRadioTXBytes());
         break;
     }
   }
