@@ -1960,7 +1960,6 @@ void updateRadioState()
           else
           {
             //Failed to reach the other system, break the link
-            vcAckTimer = 0;
             vcBreakLink(txDestVc);
           }
         }
@@ -2165,11 +2164,6 @@ void updateRadioState()
             serverLinkBroken = true;
             changeState(RADIO_VC_WAIT_SERVER);
           }
-
-          //If waiting for an ACK and the link breaks, stop the retransmissions
-          //by stopping the ACK timer.
-          if (vcAckTimer && (index == rexmtTxDestVc))
-            vcAckTimer = 0;
 
           //Break the link
           vcBreakLink(index);
@@ -2643,6 +2637,13 @@ void vcBreakLink(int8_t vcIndex)
     return;
   vcIndex &= VCAB_NUMBER_MASK;
 
+  //If waiting for an ACK and the link breaks, stop the retransmissions
+  //by stopping the ACK timer.
+  if (vcAckTimer && (txDestVc == vcIndex))
+  {
+    vcAckTimer = 0;
+  }
+
   //Get the virtual circuit data structure
   if ((vcIndex >= 0) && (vcIndex != myVc) && (vcIndex < MAX_VC))
   {
@@ -2652,9 +2653,6 @@ void vcBreakLink(int8_t vcIndex)
     vcChangeState(vcIndex, VC_STATE_LINK_DOWN);
   }
   linkFailures++;
-
-  //Stop the transmit timer
-  transmitTimer = 0;
 
   //Flush the buffers
   outputSerialData(true);
