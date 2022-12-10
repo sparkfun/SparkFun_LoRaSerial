@@ -184,7 +184,7 @@ void updateRadioState()
       }
 
       //Clear residual RSSI to make sure RSSI LEDs are off
-      if(rssi > -200) rssi = -200;
+      if (rssi > -200) rssi = -200;
 
       //Determine if a PING was received
       if (transactionComplete)
@@ -1419,7 +1419,22 @@ void updateRadioState()
 
       //Check for a receive timeout
       else if ((millis() - datagramTimer) > (settings.clientPingRetryInterval * 1000))
-        xmitDatagramTrainingPing();
+      {
+        if (trainViaButton)
+        {
+          //Give up and change to Server automatically
+
+          settings = originalSettings; //Return to original radio settings
+
+          generateRandomKeysID(); //Generate random netID and AES key
+
+          beginTrainingServer(); //Change to server
+        }
+        else
+        {
+          xmitDatagramTrainingPing(); //Continue retrying as client
+        }
+      }
       break;
 
     //====================
@@ -1507,6 +1522,18 @@ void updateRadioState()
               systemPrint("Client ");
               systemPrintUniqueID(trainingPartnerID);
               systemPrintln(" Trained");
+
+              //If we are training via button, and in point to point mode, and the user has not manually set the server
+              //then reboot with current settings after a single client acks
+              if (trainViaButton
+                  && originalSettings.operatingMode == MODE_POINT_TO_POINT
+                  && originalServer == false)
+              {
+                //Reboot the radio with the newly generated random netID/Key parameters
+                petWDT();
+                systemFlush();
+                systemReset();
+              }
             }
             break;
         }
@@ -1548,7 +1575,7 @@ void updateRadioState()
 
     /*
 
-    Radio States:
+      Radio States:
 
                    RADIO_RESET
                         |
@@ -1574,13 +1601,13 @@ void updateRadioState()
       |                 |
       '-----------------'
 
-    3-way Handshake to zero ACKs:
+      3-way Handshake to zero ACKs:
 
         TX PING --> RX ACK1 --> TX ACK2
            or
         RX PING --> TX ACK1 --> RX ACK2
 
-    VC States:
+      VC States:
 
       .-------------> VC_STATE_LINK_DOWN <-------------------------------------.
       |                       |                                     HB Timeout |
@@ -1858,7 +1885,7 @@ void updateRadioState()
         //Verify that the link is still up
         txDestVc = rexmtTxDestVc;
         if ((txDestVc != VC_BROADCAST)
-          && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].vcState == VC_STATE_LINK_DOWN))
+            && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].vcState == VC_STATE_LINK_DOWN))
         {
           //Stop the retransmits
           vcAckTimer = 0;
@@ -1931,7 +1958,7 @@ void updateRadioState()
         vcHeader->destVc = rmtCmdVc;
         vcHeader->srcVc = myVc;
         vcHeader->length = readyOutgoingCommandPacket(VC_RADIO_HEADER_BYTES)
-                         + VC_RADIO_HEADER_BYTES;
+                           + VC_RADIO_HEADER_BYTES;
         if (xmitDatagramP2PCommandResponse())
           changeState(RADIO_VC_WAIT_TX_DONE);
 
@@ -1978,7 +2005,7 @@ void updateRadioState()
             if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK1)
             {
               if ((currentMillis - virtualCircuitList[index].lastPingMillis)
-                >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+                  >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
               {
                 //Retransmit the PING
                 if (xmitVcPing(index))
@@ -1998,7 +2025,7 @@ void updateRadioState()
             if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK2)
             {
               if ((currentMillis - virtualCircuitList[index].lastPingMillis)
-                >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+                  >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
               {
                 //Retransmit the ACK1
                 if (xmitVcAck1(index))
@@ -2032,102 +2059,102 @@ void updateRadioState()
             channel = (vcHeader->destVc >> VCAB_NUMBER_BITS) & VCAB_CHANNEL_MASK;
           switch (channel)
           {
-          case 0: //Data packets
-            //Check for datagram transmission
-            if (vcHeader->destVc == VC_BROADCAST)
-            {
-              //Broadcast this data to all VCs, no ACKs will be received
+            case 0: //Data packets
+              //Check for datagram transmission
+              if (vcHeader->destVc == VC_BROADCAST)
+              {
+                //Broadcast this data to all VCs, no ACKs will be received
+                triggerEvent(TRIGGER_VC_TX_DATA);
+                xmitVcDatagram();
+                break;
+              }
+
+              //Transmit the packet
               triggerEvent(TRIGGER_VC_TX_DATA);
-              xmitVcDatagram();
+              if (xmitDatagramP2PData() == true)
+                changeState(RADIO_VC_WAIT_TX_DONE);
+
+              //Since vcAckTimer is off when equal to zero, force it to a non-zero value
+              vcAckTimer = datagramTimer;
+              if (!vcAckTimer)
+                vcAckTimer = 1;
+
+              //Save the message for retransmission
+              SAVE_TX_BUFFER();
+              rexmtTxDestVc = txDestVc;
               break;
-            }
 
-            //Transmit the packet
-            triggerEvent(TRIGGER_VC_TX_DATA);
-            if (xmitDatagramP2PData() == true)
-              changeState(RADIO_VC_WAIT_TX_DONE);
-
-            //Since vcAckTimer is off when equal to zero, force it to a non-zero value
-            vcAckTimer = datagramTimer;
-            if (!vcAckTimer)
-              vcAckTimer = 1;
-
-            //Save the message for retransmission
-            SAVE_TX_BUFFER();
-            rexmtTxDestVc = txDestVc;
-            break;
-
-          case 1: //Remote command packets
-            //Remote commands must not be broadcast
-            if (vcHeader->destVc == VC_BROADCAST)
-            {
-              if (settings.debugSerial || settings.debugTransmit)
+            case 1: //Remote command packets
+              //Remote commands must not be broadcast
+              if (vcHeader->destVc == VC_BROADCAST)
               {
-                systemPrintln("ERROR: Remote commands may not be broadcast!");
-                outputSerialData(true);
+                if (settings.debugSerial || settings.debugTransmit)
+                {
+                  systemPrintln("ERROR: Remote commands may not be broadcast!");
+                  outputSerialData(true);
+                }
+
+                //Discard this message
+                endOfTxData = &outgoingPacket[headerBytes];
+                break;
               }
 
-              //Discard this message
-              endOfTxData = &outgoingPacket[headerBytes];
-              break;
-            }
-
-            //Determine if this remote command gets processed on the local node
-            if ((vcHeader->destVc & VCAB_NUMBER_MASK) == myVc)
-            {
-              //Copy the command into the command buffer
-              commandLength = endOfTxData - &outgoingPacket[headerBytes + VC_RADIO_HEADER_BYTES];
-              memcpy(commandBuffer, &outgoingPacket[headerBytes + VC_RADIO_HEADER_BYTES], commandLength);
-              if (settings.debugSerial)
+              //Determine if this remote command gets processed on the local node
+              if ((vcHeader->destVc & VCAB_NUMBER_MASK) == myVc)
               {
-                systemPrint("RX: Moving ");
-                systemPrint(commandLength);
-                systemPrintln(" bytes into commandBuffer");
-                outputSerialData(true);
-                dumpBuffer((uint8_t *)commandBuffer, commandLength);
-              }
-              petWDT();
-
-              //Reset the buffer data pointer for the next transmit operation
-              endOfTxData = &outgoingPacket[headerBytes];
-
-              //Process the command
-              petWDT();
-              printerEndpoint = PRINT_TO_RF; //Send prints to RF link
-              checkCommand(); //Parse the command buffer
-              petWDT();
-              printerEndpoint = PRINT_TO_SERIAL;
-              length = availableTXCommandBytes();
-              if (settings.debugSerial)
-              {
-                systemPrint("RX: checkCommand placed ");
-                systemPrint(length);
-                systemPrintln(" bytes into commandTXBuffer");
-                dumpCircularBuffer(commandTXBuffer, commandTXTail, sizeof(commandTXBuffer), length);
-                outputSerialData(true);
+                //Copy the command into the command buffer
+                commandLength = endOfTxData - &outgoingPacket[headerBytes + VC_RADIO_HEADER_BYTES];
+                memcpy(commandBuffer, &outgoingPacket[headerBytes + VC_RADIO_HEADER_BYTES], commandLength);
+                if (settings.debugSerial)
+                {
+                  systemPrint("RX: Moving ");
+                  systemPrint(commandLength);
+                  systemPrintln(" bytes into commandBuffer");
+                  outputSerialData(true);
+                  dumpBuffer((uint8_t *)commandBuffer, commandLength);
+                }
                 petWDT();
+
+                //Reset the buffer data pointer for the next transmit operation
+                endOfTxData = &outgoingPacket[headerBytes];
+
+                //Process the command
+                petWDT();
+                printerEndpoint = PRINT_TO_RF; //Send prints to RF link
+                checkCommand(); //Parse the command buffer
+                petWDT();
+                printerEndpoint = PRINT_TO_SERIAL;
+                length = availableTXCommandBytes();
+                if (settings.debugSerial)
+                {
+                  systemPrint("RX: checkCommand placed ");
+                  systemPrint(length);
+                  systemPrintln(" bytes into commandTXBuffer");
+                  dumpCircularBuffer(commandTXBuffer, commandTXTail, sizeof(commandTXBuffer), length);
+                  outputSerialData(true);
+                  petWDT();
+                }
+
+                //Break up the command response
+                while (availableTXCommandBytes())
+                  readyLocalCommandPacket();
+                break;
               }
 
-              //Break up the command response
-              while (availableTXCommandBytes())
-                readyLocalCommandPacket();
+              //Send the remote command
+              vcHeader->destVc &= VCAB_NUMBER_MASK;
+              if (xmitDatagramP2PCommand() == true)
+                changeState(RADIO_VC_WAIT_TX_DONE);
+
+              //Since vcAckTimer is off when equal to zero, force it to a non-zero value
+              vcAckTimer = datagramTimer;
+              if (!vcAckTimer)
+                vcAckTimer = 1;
+
+              //Save the message for retransmission
+              SAVE_TX_BUFFER();
+              rexmtTxDestVc = txDestVc;
               break;
-            }
-
-            //Send the remote command
-            vcHeader->destVc &= VCAB_NUMBER_MASK;
-            if (xmitDatagramP2PCommand() == true)
-              changeState(RADIO_VC_WAIT_TX_DONE);
-
-            //Since vcAckTimer is off when equal to zero, force it to a non-zero value
-            vcAckTimer = datagramTimer;
-            if (!vcAckTimer)
-              vcAckTimer = 1;
-
-            //Save the message for retransmission
-            SAVE_TX_BUFFER();
-            rexmtTxDestVc = txDestVc;
-            break;
           }
         }
       }
@@ -2145,7 +2172,7 @@ void updateRadioState()
         //Determine if the link has timed out
         vc = &virtualCircuitList[index];
         if ((vc->vcState != VC_STATE_LINK_DOWN) && (serverLinkBroken
-          || ((currentMillis - vc->lastTrafficMillis) > (VC_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))))
+            || ((currentMillis - vc->lastTrafficMillis) > (VC_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))))
         {
           if (index == VC_SERVER)
           {
@@ -2607,20 +2634,20 @@ void vcChangeState(int8_t vcIndex, uint8_t state)
 //Send the PC the state message
 void vcSendPcStateMessage(int8_t vcIndex, uint8_t state)
 {
-    //Build the VC state message
-    VC_STATE_MESSAGE message;
-    message.vcState = state;
+  //Build the VC state message
+  VC_STATE_MESSAGE message;
+  message.vcState = state;
 
-    //Build the message header
-    VC_SERIAL_MESSAGE_HEADER header;
-    header.start = START_OF_VC_SERIAL;
-    header.radio.length = VC_RADIO_HEADER_BYTES + sizeof(message);
-    header.radio.destVc = PC_LINK_STATUS;
-    header.radio.srcVc = vcIndex;
+  //Build the message header
+  VC_SERIAL_MESSAGE_HEADER header;
+  header.start = START_OF_VC_SERIAL;
+  header.radio.length = VC_RADIO_HEADER_BYTES + sizeof(message);
+  header.radio.destVc = PC_LINK_STATUS;
+  header.radio.srcVc = vcIndex;
 
-    //Send the VC state message
-    systemWrite((uint8_t *)&header, sizeof(header));
-    systemWrite((uint8_t *)&message, sizeof(message));
+  //Send the VC state message
+  systemWrite((uint8_t *)&header, sizeof(header));
+  systemWrite((uint8_t *)&message, sizeof(message));
 }
 
 //Break the virtual-circuit link

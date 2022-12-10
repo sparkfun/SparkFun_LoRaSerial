@@ -134,6 +134,7 @@ uint8_t AESiv[AES_IV_BYTES] = {0}; //Set during hop table generation
 Button *trainBtn = NULL; //We can't instantiate the button here because we don't yet know what pin number to use
 
 const int trainButtonTime = 2000; //ms press and hold before entering training
+bool trainViaButton = false; //Allows auto-creation of server if client times out
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Hardware Timers
@@ -472,6 +473,9 @@ unsigned long retransmitTimeout = 0; //Throttle back re-transmits
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const Settings defaultSettings;
 Settings originalSettings; //Create a duplicate of settings during training so that we can resort as needed
+uint8_t originalEncryptionKey[AES_KEY_BYTES] = {0}; //Temp store key if we need to exit button training
+uint8_t originalNetID = 0; //Temp store ID if we need to exit button training
+bool originalServer = false; //Temp store server setting if we need to exit button training
 
 char platformPrefix[25]; //Used for printing platform specific device name, ie "SAMD21 1W 915MHz"
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

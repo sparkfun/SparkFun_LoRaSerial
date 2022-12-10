@@ -259,6 +259,7 @@ void updateButton()
     {
       trainState = TRAIN_PRESSED;
 
+      trainViaButton = true;
       selectTraining();
     }
     else if (trainState == TRAIN_PRESSED && trainBtn->wasReleased())
@@ -267,6 +268,15 @@ void updateButton()
     }
     else if (trainState == TRAIN_IN_PROCESS && trainBtn->wasReleased())
     {
+      settings = originalSettings; //Return to original radio settings
+
+      //Return to original keys, ID, and server state
+      memcpy(&settings.encryptionKey, &originalEncryptionKey, AES_KEY_BYTES);
+      settings.netID = originalNetID;
+      settings.server = originalServer;
+
+      recordSystemSettings(); //Record original settings
+
       //Reboot the radio
       petWDT();
       systemFlush();
