@@ -537,8 +537,6 @@ void transactionCompleteISR(void)
 void hopISR(void)
 {
   radioCallHistory[RADIO_CALL_hopISR] = millis();
-
-  hop = true;
 }
 
 //As we complete linkup, different airspeeds exit at different rates
@@ -1442,7 +1440,10 @@ PacketType rcvDatagram()
   //Get the received datagram
   framesReceived++;
   int state = radio.readData(incomingBuffer, MAX_PACKET_SIZE);
-
+  
+  rssi = radio.getRSSI();
+  printPacketQuality(); //Display the RSSI, SNR and frequency error values
+  
   if (state == RADIOLIB_ERR_NONE)
   {
     rxSuccessMillis = rcvTimeMillis;
@@ -1851,18 +1852,18 @@ PacketType rcvDatagram()
     //Validate the destination VC
     if ((rxDestVc != VC_BROADCAST) && (rxDestVc != myVc))
     {
-        if (settings.debugReceive || settings.debugDatagrams)
-        {
-          systemPrintTimestamp();
-          systemPrint("Not my VC: ");
-          systemPrintln(rxDestVc);
-          outputSerialData(true);
-          if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-            hopChannel();
-          if (settings.printPktData && rxDataBytes)
-            dumpBuffer(incomingBuffer, rxDataBytes);
-          outputSerialData(true);
-        }
+      if (settings.debugReceive || settings.debugDatagrams)
+      {
+        systemPrintTimestamp();
+        systemPrint("Not my VC: ");
+        systemPrintln(rxDestVc);
+        outputSerialData(true);
+        if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+          hopChannel();
+        if (settings.printPktData && rxDataBytes)
+          dumpBuffer(incomingBuffer, rxDataBytes);
+        outputSerialData(true);
+      }
       return DATAGRAM_NOT_MINE;
     }
   }
@@ -2557,8 +2558,8 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   frameAirTime = calcAirTime(txDatagramSize); //Calculate frame air size while we're transmitting in the background
   uint16_t responseDelay = frameAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
   if ((receiveInProcess() == true) || (transactionComplete == true)
-    || ((settings.operatingMode == MODE_VIRTUAL_CIRCUIT) && (txDestVc != VC_BROADCAST)
-        && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].vcState == VC_STATE_LINK_DOWN)))
+      || ((settings.operatingMode == MODE_VIRTUAL_CIRCUIT) && (txDestVc != VC_BROADCAST)
+          && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].vcState == VC_STATE_LINK_DOWN)))
   {
     triggerEvent(TRIGGER_TRANSMIT_CANCELED);
     if (settings.debugReceive || settings.debugDatagrams)
@@ -2862,26 +2863,26 @@ void setVcHeartbeatTimer()
   radioCallHistory[RADIO_CALL_setVcHeartbeatTimer] = heartbeatTimer;
 
   /*
-   * The goal of this routine is to randomize the placement of the HEARTBEAT
-   * messages, allowing traffic to flow normally.  However since clients are
-   * waiting in channel zero (0) for a HEARTBEAT, the last couple of invervals
-   * are adjusted for the server to ensure that a HEARTBEAT is sent in channel
-   * zero.
-   *
-   * dwellTime: 400 mSec
-   * heartbeatTimeout: 3000 mSec
-   * 50% heartbeatTimeout: 1500 mSec
-   *
-   * channel     38  39  40  41  42  43  44  45  46  47  48  49   0   1   2
-   * dwellTime    |   |   |   |   |   |   |   |   |   |   |   |   |   |   |
-   * seconds    |    .    |    .    |    .    |    .    |    .    |    .    |
-   * case 1: > 4.5, Use random, then remaining
-   *                ^--------------^^^^^^^^^^^^^^^^---------------^
-   * case 2: 4.5 >= X >= 3, Use half, then second half
-   *                 ^^^^^^^^^^^^^^^^-------^^^^^^^^--------------^
-   * case 3: X < 3, Use remaining
-   *                                 ^----------------------------^
-   */
+     The goal of this routine is to randomize the placement of the HEARTBEAT
+     messages, allowing traffic to flow normally.  However since clients are
+     waiting in channel zero (0) for a HEARTBEAT, the last couple of invervals
+     are adjusted for the server to ensure that a HEARTBEAT is sent in channel
+     zero.
+
+     dwellTime: 400 mSec
+     heartbeatTimeout: 3000 mSec
+     50% heartbeatTimeout: 1500 mSec
+
+     channel     38  39  40  41  42  43  44  45  46  47  48  49   0   1   2
+     dwellTime    |   |   |   |   |   |   |   |   |   |   |   |   |   |   |
+     seconds    |    .    |    .    |    .    |    .    |    .    |    .    |
+     case 1: > 4.5, Use random, then remaining
+                    ^--------------^^^^^^^^^^^^^^^^---------------^
+     case 2: 4.5 >= X >= 3, Use half, then second half
+                     ^^^^^^^^^^^^^^^^-------^^^^^^^^--------------^
+     case 3: X < 3, Use remaining
+                                     ^----------------------------^
+  */
   petWDT();
 
   //Determine the delay before channel zero is reached
@@ -2894,7 +2895,7 @@ void setVcHeartbeatTimer()
 
   //Determine the delay before the next HEARTBEAT frame
   if ((!settings.server) || (deltaMillis > ((3 * settings.heartbeatTimeout) / 2))
-    || (deltaMillis <= 0))
+      || (deltaMillis <= 0))
     //Use the random interval: 50% - 100%
     heartbeatRandomTime = random(settings.heartbeatTimeout / 2,
                                  settings.heartbeatTimeout);

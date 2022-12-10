@@ -183,6 +183,9 @@ void updateRadioState()
         radio.setFrequency(channels[channelNumber]);
       }
 
+      //Clear residual RSSI to make sure RSSI LEDs are off
+      if(rssi > -200) rssi = -200;
+
       //Determine if a PING was received
       if (transactionComplete)
       {
@@ -328,6 +331,7 @@ void updateRadioState()
       }
       else
       {
+        //If we timeout during handshake, return to link down
         if ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
         {
           if (settings.debugDatagrams)
@@ -416,6 +420,7 @@ void updateRadioState()
       }
       else
       {
+        //If we timeout during handshake, return to link down
         if ((millis() - datagramTimer) >= (frameAirTime +  ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
         {
           if (settings.debugDatagrams)
@@ -572,9 +577,6 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DUPLICATE:
-            printPacketQuality();
-
-            updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DUP);
@@ -595,9 +597,6 @@ void updateRadioState()
             clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
             timestampOffset = clockOffset;
 
-            printPacketQuality();
-
-            updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
@@ -609,12 +608,9 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DATA:
-            printPacketQuality();
-
             //Place the data in the serial output buffer
             serialBufferOutput(rxData, rxDataBytes);
 
-            updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DATA);
@@ -641,7 +637,6 @@ void updateRadioState()
             commandRXHead += rxDataBytes - length;
             commandRXHead %= sizeof(commandRXBuffer);
 
-            updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND);
@@ -657,7 +652,6 @@ void updateRadioState()
             for (int x = 0 ; x < rxDataBytes ; x++)
               Serial.write(rxData[x]);
 
-            updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND_RESPONSE);
@@ -826,9 +820,6 @@ void updateRadioState()
 
             setHeartbeatLong(); //Those who send an ACK have short time to next heartbeat. Those who send a heartbeat or data have long time to next heartbeat.
 
-            printPacketQuality();
-
-            updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             triggerEvent(TRIGGER_LINK_ACK_RECEIVED);
@@ -845,9 +836,6 @@ void updateRadioState()
             clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
             timestampOffset = clockOffset;
 
-            printPacketQuality();
-
-            updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
@@ -861,12 +849,10 @@ void updateRadioState()
 
           case DATAGRAM_DATA:
             //Received data while waiting for ack.
-            printPacketQuality();
 
             //Place the data in the serial output buffer
             serialBufferOutput(rxData, rxDataBytes);
 
-            updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DATA);
@@ -1086,9 +1072,6 @@ void updateRadioState()
 
             channelNumber = rxData[0]; //Change to the server's channel number
 
-            printPacketQuality();
-
-            updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             lastPacketReceived = millis(); //Reset
@@ -1243,9 +1226,6 @@ void updateRadioState()
             //Received data or heartbeat. Sync clock, do not ack.
             syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
 
-            printPacketQuality();
-
-            updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             lastPacketReceived = millis(); //Update timestamp for Link LED
@@ -1259,12 +1239,9 @@ void updateRadioState()
 
             setHeartbeatMultipoint(); //We're sync'd so reset heartbeat timer
 
-            printPacketQuality();
-
             //Place any available data in the serial output buffer
             serialBufferOutput(rxData, rxDataBytes - sizeof(uint16_t)); //Remove the two bytes of sync data
 
-            updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             triggerEvent(TRIGGER_MP_DATA_PACKET);
@@ -1759,9 +1736,6 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DUPLICATE:
-            printPacketQuality();
-
-            updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DUP);
@@ -1809,7 +1783,6 @@ void updateRadioState()
             }
             petWDT();
 
-            updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
             triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND);
 
@@ -1851,7 +1824,6 @@ void updateRadioState()
             vcHeader->destVc |= PC_REMOTE_RESPONSE;
             serialBufferOutput(rxData, rxDataBytes);
 
-            updateRSSI(); //Adjust LEDs to RSSI level
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             //ACK the command response
@@ -2548,8 +2520,6 @@ void enterLinkUp()
   //Bring up the link
   triggerEvent(TRIGGER_HANDSHAKE_COMPLETE);
   hopChannel(); //Leave home
-
-  updateRSSI();
 
   //Synchronize the ACK numbers
   vc = &virtualCircuitList[0];

@@ -357,9 +357,6 @@ uint8_t sf6ExpectedSize = MAX_PACKET_SIZE; //Used during SF6 operation to reduce
 float radioFrequency; //Current radio frequency
 float frequencyCorrection = 0; //Adjust receive freq based on the last packet received freqError
 
-volatile bool hop = true; //Clear the DIO1 hop ISR when possible
-int hopCount = 0; //Used to average the RSSI measured during hops
-
 //RSSI must be above these negative numbers for LED to illuminate
 const int rssiLevelLow = -150;
 const int rssiLevelMed = -70;
@@ -546,12 +543,4 @@ void loop()
   updateRadioState(); //Ping/ack/send packets as needed
 
   updateLeds(); //Update the LEDs on the board
-
-  if (hop) //If the hop ISR has triggered, measure RSSI during reception
-  {
-    hop = false;
-    radio.clearFHSSInt(); //Clear the interrupt
-    rssi = radio.getRSSI();
-    hopCount++;
-  }
 }

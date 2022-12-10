@@ -558,23 +558,6 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
   }
 }
 
-//Compute the RSSI value after a packet has been received
-void updateRSSI()
-{
-  //Calculate the average RSSI if possible
-  if (hopCount > 0)
-    rssi /= hopCount;
-  else
-    rssi = radio.getRSSI();
-
-  if (hopCount > 0)
-  {
-    //Reset RSSI measurements
-    hopCount = 0;
-    rssi = 0;
-  }
-}
-
 //Update the state of the 4 green LEDs
 void setRSSI(uint8_t ledBits)
 {
@@ -762,14 +745,16 @@ void updateLeds()
       //Set LEDs according to RSSI level
       default:
       case LEDS_RSSI:
-        if (rssi > rssiLevelLow)
-          setRSSI(0b0001);
-        if (rssi > rssiLevelMed)
-          setRSSI(0b0011);
-        if (rssi > rssiLevelHigh)
-          setRSSI(0b0111);
         if (rssi > rssiLevelMax)
           setRSSI(0b1111);
+        else if (rssi > rssiLevelHigh)
+          setRSSI(0b0111);
+        else if (rssi > rssiLevelMed)
+          setRSSI(0b0011);
+        else if (rssi > rssiLevelLow)
+          setRSSI(0b0001);
+        else
+          setRSSI(0b0000);
         break;
 
       case LEDS_RADIO_USE:
