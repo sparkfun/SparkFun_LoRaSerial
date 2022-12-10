@@ -2691,7 +2691,6 @@ void syncChannelTimer()
   //Calculate the packet airTime based on the size of data received
   msToNextHopRemote -= calcAirTime(packetLength);
 
-  msToNextHopRemote -= SYNC_PROCESSING_OVERHEAD;
 
   //Different airspeeds complete the transmitComplete ISR at different rates
   //We adjust the clock setup as needed
