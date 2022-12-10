@@ -234,6 +234,8 @@ void returnToReceiving()
   }
 
   if (state != RADIOLIB_ERR_NONE) {
+    startReceiveFailureMillis = rcvTimeMillis;
+    startReceiveFailureState = state;
     if ((settings.debug == true) || (settings.debugRadio == true))
     {
       systemPrint("Receive failed: ");

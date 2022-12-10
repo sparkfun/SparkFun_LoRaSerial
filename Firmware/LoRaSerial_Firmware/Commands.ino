@@ -476,6 +476,16 @@ bool commandAT(const char * commandString)
         }
         else
           systemPrintln("None");
+        systemPrint("        radio.startReceive Failure: ");
+        if (startReceiveFailureMillis)
+        {
+          systemPrintTimestamp(startReceiveFailureMillis);
+          systemPrintln();
+          systemPrint("        radio.startReceive Status: ");
+          systemPrintln(startReceiveFailureState);
+        }
+        else
+          systemPrintln("None");
         systemPrint("        transactionComplete: ");
         systemPrintln(transactionComplete ? "True" : "False");
         systemPrint("        receiveInProcess: ");
