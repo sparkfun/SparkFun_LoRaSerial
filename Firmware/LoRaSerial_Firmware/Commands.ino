@@ -42,7 +42,7 @@ bool commandAT(const char * commandString)
   if (commandLength == 2)
     reportOK();
 
-  //ATI, ATO, ATZ commands
+  //AT?, ATA, ATB, ATC, ATG, ATI, ATO, ATZ commands
   else if (commandLength == 3)
   {
     switch (commandString[2])
@@ -132,11 +132,11 @@ bool commandAT(const char * commandString)
           reportOK;
         }
         break;
-      case ('G'): //Generate a new netID and encryption key
+      case ('G'): //ATG - Generate a new netID and encryption key
         generateTrainingSettings();
         reportOK();
         break;
-      case ('I'):
+      case ('I'): //ATI
         //Shows the radio version
         reportOK();
         systemPrint("SparkFun LoRaSerial ");
@@ -146,7 +146,7 @@ bool commandAT(const char * commandString)
         systemPrint(".");
         systemPrintln(FIRMWARE_VERSION_MINOR);
         break;
-      case ('O'): //Exit command mode
+      case ('O'): //ATO - Exit command mode
         if (printerEndpoint == PRINT_TO_RF)
         {
           //If we are pointed at the RF link, send ok and wait for response ACK before applying settings
@@ -163,11 +163,11 @@ bool commandAT(const char * commandString)
           changeState(RADIO_RESET);
         }
         break;
-      case ('T'): //Enter training mode
+      case ('T'): //ATT - Enter training mode
         reportOK();
         selectTraining();
         break;
-      case ('Z'): //Reboots the radio
+      case ('Z'): //ATZ - Reboots the radio
         reportOK();
         outputSerialData(true);
         systemFlush();
