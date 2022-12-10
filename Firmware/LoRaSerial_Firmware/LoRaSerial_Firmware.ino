@@ -56,7 +56,7 @@ const int FIRMWARE_VERSION_MINOR = 0;
 //    the minor firmware version
 #define LRS_IDENTIFIER (FIRMWARE_VERSION_MAJOR * 0x10 + FIRMWARE_VERSION_MINOR)
 
-#define CLOCK_SYNC_BYTES sizeof(uint16_t) //Number of bytes used within in ACK packet for clock sync (uint16_t msToNextHop)
+#define CHANNEL_TIMER_BYTES sizeof(uint16_t) //Number of bytes used within in control header for clock sync (uint16_t msToNextHop)
 #define CLOCK_MILLIS_BYTES sizeof(unsigned long) //Number of bytes used within in various packets for system timestamps sync (unsigned long currentMillis)
 #define MAX_PACKET_SIZE 255 //Limited by SX127x
 #define AES_IV_BYTES    12  //Number of bytes for AESiv

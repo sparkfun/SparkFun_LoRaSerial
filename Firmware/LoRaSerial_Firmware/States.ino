@@ -758,7 +758,7 @@ void updateRadioState()
 
       if (transactionComplete)
       {
-        sf6ExpectedSize = headerBytes + CLOCK_SYNC_BYTES + trailerBytes; //Tell SF6 to receive ACK packet
+        sf6ExpectedSize = headerBytes + CHANNEL_TIMER_BYTES + trailerBytes; //Tell SF6 to receive ACK packet
 
         triggerEvent(TRIGGER_LINK_WAIT_FOR_ACK);
         transactionComplete = false; //Reset ISR flag
@@ -1205,7 +1205,6 @@ void updateRadioState()
             break;
 
           case DATAGRAM_PING:
-            triggerEvent(TRIGGER_MP_SEND_ACK_FOR_PING);
             //A new radio is saying hello
             if (settings.server == true)
             {

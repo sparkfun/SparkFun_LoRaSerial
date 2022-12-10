@@ -63,7 +63,7 @@ void configureRadio()
     success = false;
 
   //Precalculate the ACK packet time
-  ackAirTime = calcAirTime(headerBytes + CLOCK_SYNC_BYTES + trailerBytes); //Used for response timeout during ACK
+  ackAirTime = calcAirTime(headerBytes + CHANNEL_TIMER_BYTES + trailerBytes); //Used for response timeout during ACK
 
   if ((settings.debug == true) || (settings.debugRadio == true))
   {
@@ -372,7 +372,7 @@ void generateHopTable()
 
     systemPrint("AES IV: ");
     for (uint8_t i = 0 ; i < AES_IV_BYTES ; i++)
-       systemPrint(AESiv[i], HEX);
+      systemPrint(AESiv[i], HEX);
     systemPrintln();
 
     outputSerialData(true);
@@ -1333,7 +1333,7 @@ bool xmitVcAckFrame(int8_t destVc)
   radioCallHistory[RADIO_CALL_xmitVcAckFrame] = millis();
 
   vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
-  vcHeader->length = VC_RADIO_HEADER_BYTES + CLOCK_SYNC_BYTES;
+  vcHeader->length = VC_RADIO_HEADER_BYTES + CHANNEL_TIMER_BYTES;
   vcHeader->destVc = destVc;
   vcHeader->srcVc = myVc;
   endOfTxData += VC_RADIO_HEADER_BYTES;
@@ -1574,7 +1574,7 @@ PacketType rcvDatagram()
     outputSerialData(true);
   }
 
-  //All packets must include the 2-byte control header
+  //All packets must include the control header
   if (rxDataBytes < minDatagramSize)
   {
     //Display the packet contents
