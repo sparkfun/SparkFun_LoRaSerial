@@ -186,7 +186,9 @@ bool setRadioFrequency(bool rxAdjust)
   //Set the new frequency
   if (radio.setFrequency(radioFrequency) == RADIOLIB_ERR_INVALID_FREQUENCY)
     return false;
-  //triggerFrequency(frequency);
+
+  if (settings.debugSync)
+    triggerFrequency(radioFrequency);
 
   //Determine the time in milliseconds when channel zero is reached again
   nextChannelZeroTimeInMillis = millis() + ((settings.numberOfChannels - channelNumber) * settings.maxDwellTime);
