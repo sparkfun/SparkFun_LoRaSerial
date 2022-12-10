@@ -544,6 +544,18 @@ void transactionCompleteISR(void)
 void hopISR(void)
 {
   radioCallHistory[RADIO_CALL_hopISR] = millis();
+
+  hop = true;
+}
+
+//We clear the hop ISR just to make logic analyzer data cleaner
+void updateHopISR()
+{
+  if (hop) //Clear hop ISR as needed
+  {
+    hop = false;
+    radio.clearFHSSInt(); //Clear the interrupt
+  }  
 }
 
 //As we complete linkup, different airspeeds exit at different rates

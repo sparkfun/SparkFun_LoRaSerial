@@ -358,6 +358,8 @@ uint8_t sf6ExpectedSize = MAX_PACKET_SIZE; //Used during SF6 operation to reduce
 float radioFrequency; //Current radio frequency
 float frequencyCorrection = 0; //Adjust receive freq based on the last packet received freqError
 
+volatile bool hop = true; //Clear the DIO1 hop ISR when possible
+
 //RSSI must be above these negative numbers for LED to illuminate
 const int rssiLevelLow = -150;
 const int rssiLevelMed = -70;
@@ -540,11 +542,13 @@ void loop()
 {
   petWDT();
 
-  updateButton();
+  updateButton(); //Check if train button is pressed
 
   updateSerial(); //Store incoming and print outgoing
 
   updateRadioState(); //Ping/ack/send packets as needed
 
   updateLeds(); //Update the LEDs on the board
+
+  updateHopISR(); //Clear hop ISR as needed
 }
