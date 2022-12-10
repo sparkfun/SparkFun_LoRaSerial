@@ -10,7 +10,7 @@ void selectTraining()
 //Generate new netID/AES key to share
 //We assume the user needs to maintain their settings (airSpeed, numberOfChannels, freq min/max, bandwidth/spread/hop)
 //but need to be on a different netID/AES key.
-void generateTrainingSettings()
+void generateRandomKeysID()
 {
   if ((settings.debug == true) || (settings.debugTraining == true))
   {
@@ -74,10 +74,10 @@ void updateCylonLEDs()
 }
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-//Multi-Point Client/Server Training
+//Client/Server Training
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-//Start the multi-point training in client mode
+//Start the training in client mode
 void beginTrainingClient()
 {
   //Common initialization
@@ -92,7 +92,7 @@ void beginTrainingClient()
   trainingTimer = millis();
 }
 
-//Start the multi-point training in server mode
+//Start the training in server mode
 void beginTrainingServer()
 {
   trainingServerRunning = true;

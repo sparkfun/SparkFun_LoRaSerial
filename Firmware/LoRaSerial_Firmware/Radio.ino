@@ -360,14 +360,21 @@ void generateHopTable()
       systemPrintln();
     }
 
-    systemPrint("AES IV:");
-    for (uint8_t i = 0 ; i < sizeof(AESiv) ; i++)
-    {
-      petWDT();
-      systemPrint(" 0x");
-      systemPrint(AESiv[i], HEX);
-    }
+    petWDT();
+
+    systemPrint("NetID: ");
+    systemPrintln(settings.netID);
+
+    systemPrint("AES Key: ");
+    for (uint8_t i = 0 ; i < AES_KEY_BYTES ; i++)
+      systemPrint(settings.encryptionKey[i], HEX);
     systemPrintln();
+
+    systemPrint("AES IV: ");
+    for (uint8_t i = 0 ; i < AES_IV_BYTES ; i++)
+       systemPrint(AESiv[i], HEX);
+    systemPrintln();
+
     outputSerialData(true);
   }
 }
@@ -1440,10 +1447,10 @@ PacketType rcvDatagram()
   //Get the received datagram
   framesReceived++;
   int state = radio.readData(incomingBuffer, MAX_PACKET_SIZE);
-  
+
   rssi = radio.getRSSI();
   printPacketQuality(); //Display the RSSI, SNR and frequency error values
-  
+
   if (state == RADIOLIB_ERR_NONE)
   {
     rxSuccessMillis = rcvTimeMillis;

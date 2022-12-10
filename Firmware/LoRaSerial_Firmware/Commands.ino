@@ -133,7 +133,7 @@ bool commandAT(const char * commandString)
         }
         break;
       case ('G'): //ATG - Generate a new netID and encryption key
-        generateTrainingSettings();
+        generateRandomKeysID();
         reportOK();
         break;
       case ('I'): //ATI
