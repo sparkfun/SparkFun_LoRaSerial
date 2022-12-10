@@ -268,13 +268,21 @@ bool commandAT(const char * commandString)
           systemPrint("        Up Time:  ");
           systemPrintTimestamp(lastRxDatagram - lastLinkUpTime);
           systemPrintln();
+          outputSerialData(true);
+          petWDT();
         }
+
+        //Transmitter metrics
         systemPrintln("    Sent");
         systemPrint("        Datagrams: ");
         systemPrintln(datagramsSent);
         systemPrint("        Frames: ");
         systemPrintln(framesSent);
         systemPrint("        Lost Frames: ");
+        outputSerialData(true);
+        petWDT();
+
+        //Receiver metrics
         systemPrintln(lostFrames);
         systemPrintln("    Received");
         systemPrint("        Frames: ");
@@ -291,6 +299,10 @@ bool commandAT(const char * commandString)
         systemPrintln(insufficientSpace);
         systemPrint("        Net ID Mismatch: ");
         systemPrintln(netIdMismatch);
+        outputSerialData(true);
+        petWDT();
+
+        //ACK management metrics
         if (settings.operatingMode == MODE_POINT_TO_POINT)
         {
           vc = &virtualCircuitList[0];
@@ -343,6 +355,10 @@ bool commandAT(const char * commandString)
           else
             systemPrintln("None");
         }
+        outputSerialData(true);
+        petWDT();
+
+        //Circular buffer metrics
         systemPrintln("    Circular Buffers");
         systemPrint("        serialReceiveBuffer: rxHead: ");
         systemPrint(rxHead);
@@ -381,6 +397,10 @@ bool commandAT(const char * commandString)
         systemPrint(", ");
         systemPrint(availableTXCommandBytes());
         systemPrintln(" bytes");
+        outputSerialData(true);
+        petWDT();
+
+        //Radio metrics
         systemPrintln("    Radio");
         systemPrint("        Channel: ");
         systemPrintln(channelNumber);
@@ -460,8 +480,16 @@ bool commandAT(const char * commandString)
         systemPrintln(transactionComplete ? "True" : "False");
         systemPrint("        receiveInProcess: ");
         systemPrintln(receiveInProcess() ? "True" : "False");
+        outputSerialData(true);
+        petWDT();
+
+        //Call history
         systemPrintln("    Call History");
         displayRadioCallHistory();
+        outputSerialData(true);
+        petWDT();
+
+        //State history
         systemPrintln("    State History");
         displayRadioStateHistory();
         return true;
@@ -491,6 +519,8 @@ bool commandAT(const char * commandString)
           systemPrint("    ID: ");
           systemPrintUniqueID(vc->uniqueId);
           systemPrintln(vc->valid ? " (Valid)" : " (Invalid)");
+
+          //Heartbeat metrics
           systemPrintln("    Heartbeats");
           if (cmdVc == myVc)
           {
@@ -507,11 +537,19 @@ bool commandAT(const char * commandString)
           systemPrint("        Up Time: ");
           systemPrintTimestamp(vc->lastTrafficMillis - vc->firstHeartbeatMillis);
           systemPrintln();
+          outputSerialData(true);
+          petWDT();
+
+          //Transmitter metrics
           systemPrintln("    Sent");
           systemPrint("        Frames: ");
           systemPrintln(vc->framesSent);
           systemPrint("        Messages: ");
           systemPrintln(vc->messagesSent);
+          outputSerialData(true);
+          petWDT();
+
+          //Receiver metrics
           systemPrintln("    Received");
           systemPrint("        Frames: ");
           systemPrintln(vc->framesReceived);
@@ -521,6 +559,10 @@ bool commandAT(const char * commandString)
           systemPrintln(vc->badLength);
           systemPrint("        Link Failures: ");
           systemPrintln(linkFailures);
+          outputSerialData(true);
+          petWDT();
+
+          //ACK Management metrics
           systemPrintln("    ACK Management");
           systemPrint("        Last RX ACK number: ");
           systemPrintln(vc->rxAckNumber);
