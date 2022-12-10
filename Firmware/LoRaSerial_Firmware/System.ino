@@ -730,11 +730,11 @@ void updateLeds()
   //If we are in training, cylon the LEDs
   //If we are in data radio mode, control according to selectLedUse setting
 
-  if (radioState == RADIO_MP_WAIT_TX_TRAINING_PING_DONE
-      || radioState == RADIO_MP_WAIT_RX_RADIO_PARAMETERS
-      || radioState == RADIO_MP_WAIT_TX_PARAM_ACK_DONE
-      || radioState == RADIO_MP_WAIT_FOR_TRAINING_PING
-      || radioState == RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE)
+  if (radioState == RADIO_TRAIN_WAIT_TX_PING_DONE
+      || radioState == RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS
+      || radioState == RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE
+      || radioState == RADIO_TRAIN_WAIT_FOR_PING
+      || radioState == RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE)
   {
     updateCylonLEDs();
   }

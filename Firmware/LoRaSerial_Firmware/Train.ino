@@ -80,17 +80,15 @@ void updateCylonLEDs()
 //Start the multi-point training in client mode
 void beginTrainingClient()
 {
-  systemPrintln("Begin client training");
-
   //Common initialization
   commonTrainingInitialization();
 
   //Transmit client ping to the training server
-  if (xmitDatagramMpTrainingPing() == true)
+  if (xmitDatagramTrainingPing() == true)
     //Set the next state
-    changeState(RADIO_MP_WAIT_TX_TRAINING_PING_DONE);
+    changeState(RADIO_TRAIN_WAIT_TX_PING_DONE);
   else
-    changeState(RADIO_MP_WAIT_RX_RADIO_PARAMETERS);
+    changeState(RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS);
   trainingTimer = millis();
 }
 
@@ -127,7 +125,7 @@ void beginTrainingServer()
   returnToReceiving();
 
   //Set the next state
-  changeState(RADIO_MP_WAIT_FOR_TRAINING_PING);
+  changeState(RADIO_TRAIN_WAIT_FOR_PING);
 }
 
 //Perform the common training initialization

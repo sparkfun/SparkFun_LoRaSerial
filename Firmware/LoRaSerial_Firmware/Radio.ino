@@ -1041,9 +1041,9 @@ bool xmitDatagramMpPing()
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Build the client ping packet used for training
-bool xmitDatagramMpTrainingPing()
+bool xmitDatagramTrainingPing()
 {
-  radioCallHistory[RADIO_CALL_xmitDatagramMpTrainingPing] = millis();
+  radioCallHistory[RADIO_CALL_xmitDatagramTrainingPing] = millis();
 
   //Add the source (server) ID
   memcpy(endOfTxData, myUniqueId, UNIQUE_ID_BYTES);
@@ -1065,9 +1065,9 @@ bool xmitDatagramMpTrainingPing()
 }
 
 //Build the client ACK packet used for training
-bool xmitDatagramMpTrainingAck(uint8_t * serverID)
+bool xmitDatagramTrainingAck(uint8_t * serverID)
 {
-  radioCallHistory[RADIO_CALL_xmitDatagramMpTrainingAck] = millis();
+  radioCallHistory[RADIO_CALL_xmitDatagramTrainingAck] = millis();
 
   //Add the destination (server) ID
   memcpy(endOfTxData, serverID, UNIQUE_ID_BYTES);
@@ -1191,11 +1191,11 @@ void updateRadioParameters(uint8_t * rxData)
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Build the server parameters packet used for training
-bool xmitDatagramMpRadioParameters(const uint8_t * clientID)
+bool xmitDatagramTrainRadioParameters(const uint8_t * clientID)
 {
   Settings params;
 
-  radioCallHistory[RADIO_CALL_xmitDatagramMpRadioParameters] = millis();
+  radioCallHistory[RADIO_CALL_xmitDatagramTrainRadioParameters] = millis();
 
   //Initialize the radio parameters
   memcpy(&params, &originalSettings, sizeof(settings));
@@ -2978,9 +2978,9 @@ const I16_TO_STRING radioCallName[] =
   {RADIO_CALL_xmitDatagramMpHeartbeat, "xmitDatagramMpHeartbeat"},
   {RADIO_CALL_xmitDatagramMpAck, "xmitDatagramMpAck"},
   {RADIO_CALL_xmitDatagramMpPing, "xmitDatagramMpPing"},
-  {RADIO_CALL_xmitDatagramMpTrainingPing, "xmitDatagramMpTrainingPing"},
-  {RADIO_CALL_xmitDatagramMpTrainingAck, "xmitDatagramMpTrainingAck"},
-  {RADIO_CALL_xmitDatagramMpRadioParameters, "xmitDatagramMpRadioParameters"},
+  {RADIO_CALL_xmitDatagramTrainingPing, "xmitDatagramTrainingPing"},
+  {RADIO_CALL_xmitDatagramTrainingAck, "xmitDatagramTrainingAck"},
+  {RADIO_CALL_xmitDatagramTrainRadioParameters, "xmitDatagramTrainRadioParameters"},
   {RADIO_CALL_xmitVcDatagram, "xmitVcDatagram"},
   {RADIO_CALL_xmitVcHeartbeat, "xmitVcHeartbeat"},
   {RADIO_CALL_xmitVcAckFrame, "xmitVcAckFrame"},

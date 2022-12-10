@@ -1311,7 +1311,7 @@ void updateRadioState()
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    //Multi-Point Client Training
+    //Client Training
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     /*
@@ -1325,16 +1325,16 @@ void updateRadioState()
                 | Send client ping                |
                 |                                 |
                 V                                 |
-        RADIO_MP_WAIT_TX_TRAINING_PING_DONE       |
+        RADIO_TRAIN_WAIT_TX_PING_DONE             |
                 |                                 |
                 V                                 | Timeout
-        RADIO_MP_WAIT_RX_RADIO_PARAMETERS --------'
+        RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS -----'
                 |
                 | Update settings
                 | Send client ACK
                 |
                 V
-        RADIO_MP_WAIT_TX_PARAM_ACK_DONE
+        RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE
                 |
                 V
       endTrainingClientServer
@@ -1347,7 +1347,7 @@ void updateRadioState()
     //====================
     //Wait for the PING to complete transmission
     //====================
-    case RADIO_MP_WAIT_TX_TRAINING_PING_DONE:
+    case RADIO_TRAIN_WAIT_TX_PING_DONE:
 
       //If dio0ISR has fired, we are done transmitting
       if (transactionComplete == true)
@@ -1361,14 +1361,14 @@ void updateRadioState()
         returnToReceiving();
 
         //Set the next state
-        changeState(RADIO_MP_WAIT_RX_RADIO_PARAMETERS);
+        changeState(RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS);
       }
       break;
 
     //====================
     //Wait to receive the radio parameters
     //====================
-    case RADIO_MP_WAIT_RX_RADIO_PARAMETERS:
+    case RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS:
 
       //If dio0ISR has fired, a packet has arrived
       if (transactionComplete == true)
@@ -1401,8 +1401,8 @@ void updateRadioState()
             updateRadioParameters(&rxData[UNIQUE_ID_BYTES * 2]);
 
             //Acknowledge the radio parameters
-            if (xmitDatagramMpTrainingAck(&rxData[UNIQUE_ID_BYTES]) == true)
-              changeState(RADIO_MP_WAIT_TX_PARAM_ACK_DONE);
+            if (xmitDatagramTrainingAck(&rxData[UNIQUE_ID_BYTES]) == true)
+              changeState(RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE);
             break;
         }
       }
@@ -1419,13 +1419,13 @@ void updateRadioState()
 
       //Check for a receive timeout
       else if ((millis() - datagramTimer) > (settings.clientPingRetryInterval * 1000))
-        xmitDatagramMpTrainingPing();
+        xmitDatagramTrainingPing();
       break;
 
     //====================
     //Wait for the ACK frame to complete transmission
     //====================
-    case RADIO_MP_WAIT_TX_PARAM_ACK_DONE:
+    case RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE:
 
       //If dio0ISR has fired, we are done transmitting
       if (transactionComplete == true)
@@ -1436,7 +1436,7 @@ void updateRadioState()
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    //Multi-Point Server Training
+    //Server Training
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     /*
@@ -1448,12 +1448,12 @@ void updateRadioState()
                         +<--------------------------------.
                         |                                 |
                         V                                 |
-        .------ RADIO_MP_WAIT_FOR_TRAINING_PING           |
+        .------ RADIO_TRAIN_WAIT_FOR_PING                 |
         |               |                                 |
         |               | Send client ping                |
         |               |                                 |
         |               V                                 |
-        |      RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE --------'
+        |      RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE -----'
         |
         |
         `---------------.
@@ -1470,7 +1470,7 @@ void updateRadioState()
     //====================
     //Wait for a PING frame from a client
     //====================
-    case RADIO_MP_WAIT_FOR_TRAINING_PING:
+    case RADIO_TRAIN_WAIT_FOR_PING:
 
       //If dio0ISR has fired, a packet has arrived
       if (transactionComplete == true)
@@ -1492,8 +1492,8 @@ void updateRadioState()
             memcpy(trainingPartnerID, rxData, UNIQUE_ID_BYTES);
 
             //Wait for the transmit to complete
-            if (xmitDatagramMpRadioParameters(trainingPartnerID) == true)
-              changeState(RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE);
+            if (xmitDatagramTrainRadioParameters(trainingPartnerID) == true)
+              changeState(RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE);
             break;
 
           case DATAGRAM_TRAINING_ACK:
@@ -1524,7 +1524,7 @@ void updateRadioState()
     //====================
     //Wait for the radio parameters to complete transmission
     //====================
-    case RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE:
+    case RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE:
 
       //If dio0ISR has fired, we are done transmitting
       if (transactionComplete == true)
@@ -1538,7 +1538,7 @@ void updateRadioState()
         returnToReceiving();
 
         //Set the next state
-        changeState(RADIO_MP_WAIT_FOR_TRAINING_PING);
+        changeState(RADIO_TRAIN_WAIT_FOR_PING);
       }
       break;
 

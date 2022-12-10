@@ -25,14 +25,14 @@ typedef enum
   RADIO_MP_STANDBY,
   RADIO_MP_WAIT_TX_DONE,
 
-  //Multi-Point Training client states
-  RADIO_MP_WAIT_TX_TRAINING_PING_DONE,
-  RADIO_MP_WAIT_RX_RADIO_PARAMETERS,
-  RADIO_MP_WAIT_TX_PARAM_ACK_DONE,
+  //Training client states
+  RADIO_TRAIN_WAIT_TX_PING_DONE,
+  RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS,
+  RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE,
 
-  //Multi-Point Training server states
-  RADIO_MP_WAIT_FOR_TRAINING_PING,
-  RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,
+  //Training server states
+  RADIO_TRAIN_WAIT_FOR_PING,
+  RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,
 
   //Virtual-Circuit states
   RADIO_VC_WAIT_SERVER,
@@ -84,16 +84,16 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   {RADIO_MP_STANDBY,                     1, "MP_STANDBY",                     "MP: Wait for TX or RX"},           //19
   {RADIO_MP_WAIT_TX_DONE,                0, "MP_WAIT_TX_DONE",                "MP: Waiting for TX done"},         //20
 
-  //Multi-Point training client states
+  //Training client states
   //    State                           RX      Name                              Description
-  {RADIO_MP_WAIT_TX_TRAINING_PING_DONE,  0, "MP_WAIT_TX_TRAINING_PING_DONE",  "MP: Wait TX training PING done"},  //21
-  {RADIO_MP_WAIT_RX_RADIO_PARAMETERS,    1, "MP_WAIT_RX_RADIO_PARAMETERS",    "MP: Wait for radio parameters"},   //22
-  {RADIO_MP_WAIT_TX_PARAM_ACK_DONE,      0, "MP_WAIT_TX_PARAM_ACK_DONE",      "MP: Wait for TX param ACK done"},  //23
+  {RADIO_TRAIN_WAIT_TX_PING_DONE,        0, "TRAIN_WAIT_TX_PING_DONE",        "Train: Wait TX training PING done"},  //21
+  {RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS, 1, "TRAIN_WAIT_RX_RADIO_PARAMETERS", "Train: Wait for radio parameters"},   //22
+  {RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE,   0, "TRAIN_WAIT_TX_PARAM_ACK_DONE",   "Train: Wait for TX param ACK done"},  //23
 
-  //Multi-Point training server states
+  //Training server states
   //    State                           RX      Name                              Description
-  {RADIO_MP_WAIT_FOR_TRAINING_PING,      1, "MP_WAIT_FOR_TRAINING_PING",      "MP: Wait for training PING"},      //24
-  {RADIO_MP_WAIT_TX_RADIO_PARAMS_DONE,   0, "MP_WAIT_TX_RADIO_PARAMS_DONE",   "MP: Wait for TX params done"},     //25
+  {RADIO_TRAIN_WAIT_FOR_PING,            1, "TRAIN_WAIT_FOR_PING",            "Train: Wait for training PING"},      //24
+  {RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,0, "TRAIN_WAIT_TX_RADIO_PARAMS_DONE","Train: Wait for TX params done"},     //25
 
   //Virtual circuit states
   //    State                           RX      Name                              Description
@@ -498,9 +498,9 @@ typedef enum
   RADIO_CALL_xmitDatagramMpHeartbeat,
   RADIO_CALL_xmitDatagramMpAck,
   RADIO_CALL_xmitDatagramMpPing,
-  RADIO_CALL_xmitDatagramMpTrainingPing,
-  RADIO_CALL_xmitDatagramMpTrainingAck,
-  RADIO_CALL_xmitDatagramMpRadioParameters,
+  RADIO_CALL_xmitDatagramTrainingPing,
+  RADIO_CALL_xmitDatagramTrainingAck,
+  RADIO_CALL_xmitDatagramTrainRadioParameters,
   RADIO_CALL_xmitVcDatagram,
   RADIO_CALL_xmitVcHeartbeat,
   RADIO_CALL_xmitVcAckFrame,
