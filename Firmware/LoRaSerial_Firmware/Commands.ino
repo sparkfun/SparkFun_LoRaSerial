@@ -34,6 +34,7 @@ typedef struct
 bool commandAT(const char * commandString)
 {
   uint32_t delayMillis;
+  long deltaMillis;
   const char * string;
   unsigned long timer;
   VIRTUAL_CIRCUIT * vc = &virtualCircuitList[cmdVc];
@@ -551,7 +552,10 @@ bool commandAT(const char * commandString)
           systemPrintTimestamp(vc->firstHeartbeatMillis);
           systemPrintln();
           systemPrint("        Up Time: ");
-          systemPrintTimestamp(vc->lastTrafficMillis - vc->firstHeartbeatMillis);
+          deltaMillis = vc->lastTrafficMillis - vc->firstHeartbeatMillis;
+          if (deltaMillis < 0)
+            deltaMillis = -deltaMillis;
+          systemPrintTimestamp(deltaMillis);
           systemPrintln();
           outputSerialData(true);
           petWDT();
