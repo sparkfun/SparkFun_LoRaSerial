@@ -2014,15 +2014,12 @@ void updateRadioState()
                 vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
                 virtualCircuitList[index].lastPingMillis = datagramTimer;
                 changeState(RADIO_VC_WAIT_TX_DONE);
-
-                //Only a single transmit is possible at a time
-                break;
               }
             }
 
             //The ACK1 is handled with the receive code
             //Check for a timeout waiting for the ACK1
-            if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK1)
+            else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK1)
             {
               if ((currentMillis - virtualCircuitList[index].lastPingMillis)
                   >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
@@ -2033,16 +2030,13 @@ void updateRadioState()
                   vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
                   virtualCircuitList[index].lastPingMillis = datagramTimer;
                   changeState(RADIO_VC_WAIT_TX_DONE);
-
-                  //Only a single transmit is possible at a time
-                  break;
                 }
               }
             }
 
             //The ACK2 is handled with the receive code
             //Check for a timeout waiting for the ACK2
-            if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK2)
+            else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK2)
             {
               if ((currentMillis - virtualCircuitList[index].lastPingMillis)
                   >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
@@ -2053,12 +2047,12 @@ void updateRadioState()
                   vcChangeState(index, VC_STATE_WAIT_FOR_ACK2);
                   virtualCircuitList[index].lastPingMillis = datagramTimer;
                   changeState(RADIO_VC_WAIT_TX_DONE);
-
-                  //Only a single transmit is possible at a time
-                  break;
                 }
               }
             }
+
+            //Work on only one connection at a time
+            break;
           }
         }
       }
