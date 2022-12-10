@@ -193,7 +193,8 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI10 - Display radio metrics");
         systemPrintln("  ATI11 - Return myVc value");
         systemPrintln("  ATI12 - Display the VC details");
-        systemPrintln("  ATI13 - Dump the radioTxBuffer");
+        systemPrintln("  ATI13 - Display the SX1276 registers");
+        systemPrintln("  ATI14 - Dump the radioTxBuffer");
         return true;
 
       case ('0'): //ATI0 - Show user settable parameters
@@ -537,7 +538,11 @@ bool commandAT(const char * commandString)
         }
         return true;
 
-      case ('3'): //ATI13 - Dump the radioTxBuffer
+      case ('3'): //ATI13 - Display the SX1276 registers
+        printSX1276Registers();
+        return true;
+
+      case ('4'): //ATI14 - Dump the radioTxBuffer
         systemPrintln("radioTxBuffer:");
         dumpCircularBuffer(radioTxBuffer, radioTxTail, sizeof(radioTxBuffer), availableRadioTXBytes());
         return true;
