@@ -142,13 +142,14 @@ void commonTrainingInitialization()
 
   //Use common radio settings between the client and server for training
   settings = defaultSettings;
-  settings.operatingMode = MODE_MULTIPOINT; // 3: Use datagrams
-  settings.encryptData = true;            // 4: Enable packet encryption
-  settings.dataScrambling = true;         // 6: Scramble the data
-  settings.radioBroadcastPower_dbm = 14;  // 7: Minimum, assume radios are near each other
-  settings.frequencyHop = false;          //11: Stay on the training frequency
-  settings.verifyRxNetID = false;         //37: Disable netID checking
-  settings.enableCRC16 = true;            //49: Use CRC-16
+  settings.dataScrambling = true;           //Scramble the data
+  settings.enableCRC16 = true;              //Use CRC-16
+  settings.encryptData = true;              //Enable packet encryption
+  settings.frequencyHop = false;            //Stay on the training frequency
+  settings.netID = 'T';                     //NetID for training
+  settings.operatingMode = MODE_MULTIPOINT; //Use datagrams
+  settings.radioBroadcastPower_dbm = 14;    //Minimum, assume radios are near each other
+  settings.verifyRxNetID = true;            //Disable netID checking
   memcpy(&settings.trainingKey, &originalSettings.trainingKey, AES_KEY_BYTES); //56: Common training key
 
   //Determine the components of the frame header and trailer
