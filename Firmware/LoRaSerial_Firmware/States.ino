@@ -1014,6 +1014,9 @@ void updateRadioState()
       multipointChannelLoops = 0;
       multipointAttempts = 0;
 
+      //Clear residual RSSI to make sure RSSI LEDs are off
+      if (rssi > -200) rssi = -200;
+      
       triggerEvent(TRIGGER_MP_SCAN);
       changeState(RADIO_MP_SCANNING);
       break;
