@@ -1079,7 +1079,7 @@ void updateRadioState()
               if (timeToHop == true) //If the channelTimer has expired, move to next frequency
                 hopChannel();
             }
-            
+
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             lastPacketReceived = millis(); //Reset
@@ -1427,7 +1427,11 @@ void updateRadioState()
       //Check for a receive timeout
       else if ((millis() - datagramTimer) > (settings.clientPingRetryInterval * 1000))
       {
-        if (trainViaButton)
+        //If we are training with button, in P2P mode, and user has not set server mode
+        //Automatically switch to server
+        if (trainViaButton
+            && originalSettings.operatingMode == MODE_POINT_TO_POINT
+            && originalServer == false)
         {
           //Give up and change to Server automatically
 
