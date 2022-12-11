@@ -340,7 +340,6 @@ void processSerialInput()
         printerEndpoint = PRINT_TO_SERIAL;
         systemPrintln();
         checkCommand(); //Process command buffer
-        outputSerialData(true);
       }
       else if (incoming == '\n')
         ; //Do nothing

@@ -40,15 +40,16 @@ bool commandAT(const char * commandString)
 
   //'AT'
   if (commandLength == 2)
-    reportOK();
+    return true;
 
   //AT?, ATA, ATB, ATC, ATG, ATI, ATO, ATZ commands
-  else if (commandLength == 3)
+  if (commandLength == 3)
   {
     switch (commandString[2])
     {
       default:
         return false;
+
       case ('?'): //Display the command help
         systemPrintln("Command summary:");
         systemPrintln("  AT? - Print the command summary");
@@ -72,26 +73,23 @@ bool commandAT(const char * commandString)
         systemPrintln("  AT-Param=xxx - Set parameter's value to xxx by name (Param)");
         systemPrintln("  AT-Param? - Print parameter's current value by name (Param)");
         systemPrintln("  AT-? - Display the setting values");
-        break;
+        return true;
+
       case ('A'): //ATA - Get the current VC status
         for (int index = 0; index < MAX_VC; index++)
           vcSendPcStateMessage(index, virtualCircuitList[index].vcState);
-        reportOK();
-        break;
+        return true;
+
       case ('B'): //ATB - Break the link
-        reportOK();
 
         //Compute the time delay
         delayMillis = (VC_LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout;
 
         //Warn the user of the delay
-        if (settings.printLinkUpDown)
-        {
-          systemPrint("Delaying ");
-          systemPrint(delayMillis / 1000);
-          systemPrintln(" seconds to break the link");
-          outputSerialData(true);
-        }
+        systemPrint("Delaying ");
+        systemPrint(delayMillis / 1000);
+        systemPrintln(" seconds to break the link");
+        outputSerialData(true);
 
         //Flag the links as broken
         if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
@@ -113,86 +111,74 @@ bool commandAT(const char * commandString)
           petWDT();
 
         //Display the end of the delay
-        if (settings.printLinkUpDown)
-        {
-          systemPrintln("Delay done");
-          outputSerialData(true);
-        }
-        break;
+        systemPrintln("Delay done");
+        return true;
+
       case ('C'): //ATC - Establish VC connection for data
         if ((settings.operatingMode != MODE_VIRTUAL_CIRCUIT)
             || (vc->vcState != VC_STATE_LINK_ALIVE))
-          reportERROR();
+          return false;
+        if (cmdVc == myVc)
+          vcChangeState(cmdVc, VC_STATE_CONNECTED);
         else
-        {
-          if (cmdVc == myVc)
-            vcChangeState(cmdVc, VC_STATE_CONNECTED);
-          else
-            vcChangeState(cmdVc, VC_STATE_SEND_PING);
-          reportOK;
-        }
-        break;
+          vcChangeState(cmdVc, VC_STATE_SEND_PING);
+        return true;
+
       case ('F'): //ATF - Restore default parameters
         settings = defaultSettings; //Overwrite all current settings with defaults
         validateSettings(); //Modify defaults for each radio type (915, 868, 433, etc)
         recordSystemSettings();
-        reportOK();
-        break;
+        return true;
+
       case ('G'): //ATG - Generate a new netID and encryption key
         generateRandomKeysID();
-        reportOK();
-        break;
+        return true;
+
       case ('I'): //ATI
         //Shows the radio version
-        reportOK();
         systemPrint("SparkFun LoRaSerial ");
         systemPrint(platformPrefix);
         systemPrint(" v");
         systemPrint(FIRMWARE_VERSION_MAJOR);
         systemPrint(".");
         systemPrintln(FIRMWARE_VERSION_MINOR);
-        break;
+        return true;
+
       case ('O'): //ATO - Exit command mode
         if (printerEndpoint == PRINT_TO_RF)
-        {
           //If we are pointed at the RF link, send ok and wait for response ACK before applying settings
-          reportOK();
-        }
-        else
-        {
-          //Apply settings and return
-          generateHopTable(); //Generate freq with new settings
-          configureRadio(); //Apply any new settings
+          return true;
 
-          inCommandMode = false; //Return to printing normal RF serial data
-          reportOK();
-          changeState(RADIO_RESET);
-        }
-        break;
+        //Apply raio settings by entering the reset state
+        inCommandMode = false; //Return to printing normal RF serial data
+        changeState(RADIO_RESET);
+        return true;
+
       case ('T'): //ATT - Enter training mode
-        reportOK();
         selectTraining();
-        break;
+        return true;
+
       case ('W'): //ATW - Write parameters to the flash memory
         recordSystemSettings();
-        reportOK();
-        break;
+        return true;
+
       case ('Z'): //ATZ - Reboots the radio
         reportOK();
         outputSerialData(true);
         systemFlush();
         systemReset();
-        break;
+        return true;
     }
   }
 
   //ATIx commands
-  else if (commandString[2] == 'I' && commandLength == 4)
+  if (commandString[2] == 'I' && commandLength == 4)
   {
     switch (commandString[3])
     {
       default:
         return false;
+
       case ('?'): //ATI? - Display the information commands
         systemPrintln("  ATI0 - Show user settable parameters");
         systemPrintln("  ATI1 - Show board variant");
@@ -208,51 +194,62 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI11 - Return myVc value");
         systemPrintln("  ATI12 - Display the VC details");
         systemPrintln("  ATI13 - Dump the radioTxBuffer");
-        break;
+        return true;
+
       case ('0'): //ATI0 - Show user settable parameters
         displayParameters(0, true);
-        break;
+        return true;
+
       case ('1'): //ATI1 - Show board variant
         systemPrint("SparkFun LoRaSerial ");
         systemPrint(platformPrefix);
         systemPrint("\r\n");
-        break;
+        return true;
+
       case ('2'): //ATI2 - Show firmware version
         systemPrint(FIRMWARE_VERSION_MAJOR);
         systemPrint(".");
         systemPrintln(FIRMWARE_VERSION_MINOR);
-        break;
+        return true;
+
       case ('3'): //ATI3 - Display latest RSSI
         systemPrintln(radio.getRSSI());
-        break;
+        return true;
+
       case ('4'): //ATI4 - Get random byte from RSSI
         systemPrintln(radio.randomByte());
-        break;
+        return true;
+
       case ('5'): //ATI5 - Show max possible bytes per second
         systemPrintln(calcMaxThroughput());
-        break;
+        return true;
+
       case ('6'): //ATI6 - Display currentState
         displayState(radioState);
-        break;
+        return true;
+
       case ('7'): //ATI7 - Show current FHSS channel
         systemPrintln(channelNumber);
-        break;
+        return true;
+
       case ('8'): //ATI8 - Display the system's unique ID
         systemPrintUniqueID(myUniqueId);
         systemPrintln();
-        break;
+        return true;
+
       case ('9'): //ATI9 - Display the maximum datagram size
         systemPrint("Maximum datagram size: ");
         systemPrintln(maxDatagramSize);
-        break;
+        return true;
     }
   }
-  else if ((commandString[2] == 'I') && (commandString[3] == '1') && (commandLength == 5))
+  if ((commandString[2] == 'I') && (commandString[3] == '1') && (commandLength == 5))
   {
     switch (commandString[4])
     {
       default:
         return false;
+
       case ('0'): //ATI10 - Display radio metrics
         systemPrint("Radio Metrics @ ");
         systemPrintTimestamp(millis());
@@ -464,14 +461,14 @@ bool commandAT(const char * commandString)
         displayRadioCallHistory();
         systemPrintln("    State History");
         displayRadioStateHistory();
-        reportOK();
-        break;
+        return true;
+
       case ('1'): //ATI11 - Return myVc value
         systemPrintln();
         systemPrint("myVc: ");
         systemPrintln(myVc);
-        reportOK();
-        break;
+        return true;
+
       case ('2'): //ATI12 - Display the VC details
         systemPrint("VC ");
         systemPrint(cmdVc);
@@ -538,17 +535,17 @@ bool commandAT(const char * commandString)
             systemPrintln();
           }
         }
-        reportOK();
-        break;
+        return true;
+
       case ('3'): //ATI13 - Dump the radioTxBuffer
         systemPrintln("radioTxBuffer:");
         dumpCircularBuffer(radioTxBuffer, radioTxTail, sizeof(radioTxBuffer), availableRadioTXBytes());
-        break;
+        return true;
     }
   }
-  else
-    return false;
-  return true;
+
+  //Invalid command
+  return false;
 }
 
 //Send the AT command over RF link
@@ -599,6 +596,7 @@ void checkCommand()
   bool success;
 
   //Verify the command length
+  success = false;
   commandString = trimCommand(); //Remove any leading whitespace
 
   //Remove trailing CR and LF
@@ -611,27 +609,32 @@ void checkCommand()
     commandBuffer[index] = toupper(commandBuffer[index]);
 
   commandString[commandLength] = '\0'; //Terminate buffer
-  if (commandLength < 2) //Too short
-    reportERROR();
 
-  //Locate the correct processing routine for the command prefix
-  success = false;
-  for (index = 0; index < prefixCount; index++)
+  //Verify the command length
+  if (commandLength >= 2)
   {
-    //Locate the prefix
-    prefixLength = strlen(prefixTable[index].prefix);
-    if (strncmp(commandString, prefixTable[index].prefix, prefixLength) != 0)
-      continue;
+    //Locate the correct processing routine for the command prefix
+    for (index = 0; index < prefixCount; index++)
+    {
+      //Locate the prefix
+      prefixLength = strlen(prefixTable[index].prefix);
+      if (strncmp(commandString, prefixTable[index].prefix, prefixLength) != 0)
+        continue;
 
-    //Process the command
-    success = prefixTable[index].processCommand(commandString);
-    break;
+      //Process the command
+      success = prefixTable[index].processCommand(commandString);
+      break;
+    }
   }
 
   //Print the command failure
-  if (!success)
-    reportERROR();
+  petWDT();
+  if (success)
+    reportOK();
+  else
+    systemPrintln("ERROR");
   outputSerialData(true);
+  petWDT();
 
   commandLength = 0; //Get ready for next command
 }
@@ -640,12 +643,6 @@ void checkCommand()
 void reportOK()
 {
   systemPrintln("OK");
-}
-
-//Indicate command failure
-void reportERROR()
-{
-  systemPrintln("ERROR");
 }
 
 //Remove any preceeding or following whitespace chars
@@ -1089,7 +1086,6 @@ bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer
       break;
 
     //The parameter was successfully set
-    reportOK();
     return true;
   } while (0);
 
