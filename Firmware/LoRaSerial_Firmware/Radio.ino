@@ -1896,8 +1896,6 @@ PacketType rcvDatagram()
   //Verify the packet number last so that the expected datagram or ACK number can be updated
   if (vc && (settings.operatingMode != MODE_MULTIPOINT))
   {
-    Serial.println("Not here for multipoint!");
-    
     switch (datagramType)
     {
       default:
