@@ -56,6 +56,7 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATB - Break the link");
         systemPrintln("  ATC - Establish VC connection for data");
         systemPrintln("  ATD - Display the debug settings");
+        systemPrintln("  ATF - Restore factory settings");
         systemPrintln("  ATG - Generate new netID and encryption key");
         systemPrintln("  ATI - Display the radio version");
         systemPrintln("  ATI? - Display the information commands");
@@ -66,12 +67,11 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATS - Display the serial settings");
         systemPrintln("  ATT - Enter training mode");
         systemPrintln("  ATV - Display virtual circuit settings");
+        systemPrintln("  ATW - Save current settings to NVM");
         systemPrintln("  ATZ - Reboot the radio");
         systemPrintln("  AT-Param=xxx - Set parameter's value to xxx by name (Param)");
         systemPrintln("  AT-Param? - Print parameter's current value by name (Param)");
         systemPrintln("  AT-? - Display the setting values");
-        systemPrintln("  AT&F - Restore factory settings");
-        systemPrintln("  AT&W - Save current settings to NVM");
         break;
       case ('A'): //ATA - Get the current VC status
         for (int index = 0; index < MAX_VC; index++)
@@ -96,7 +96,7 @@ bool commandAT(const char * commandString)
         //Flag the links as broken
         if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
         {
-          for (int i=0; i < MAX_VC; i++)
+          for (int i = 0; i < MAX_VC; i++)
             if ((virtualCircuitList[i].vcState != VC_STATE_LINK_DOWN) && (i != myVc))
               vcBreakLink(i);
         }
@@ -121,7 +121,7 @@ bool commandAT(const char * commandString)
         break;
       case ('C'): //ATC - Establish VC connection for data
         if ((settings.operatingMode != MODE_VIRTUAL_CIRCUIT)
-          || (vc->vcState != VC_STATE_LINK_ALIVE))
+            || (vc->vcState != VC_STATE_LINK_ALIVE))
           reportERROR();
         else
         {
@@ -131,6 +131,11 @@ bool commandAT(const char * commandString)
             vcChangeState(cmdVc, VC_STATE_SEND_PING);
           reportOK;
         }
+        break;
+      case ('F'): //ATF - Restore default parameters
+        settings = defaultSettings; //Overwrite all current settings with defaults
+        recordSystemSettings();
+        reportOK();
         break;
       case ('G'): //ATG - Generate a new netID and encryption key
         generateRandomKeysID();
@@ -166,6 +171,10 @@ bool commandAT(const char * commandString)
       case ('T'): //ATT - Enter training mode
         reportOK();
         selectTraining();
+        break;
+      case ('W'): //ATW - Write parameters to the flash memory
+        recordSystemSettings();
+        reportOK();
         break;
       case ('Z'): //ATZ - Reboots the radio
         reportOK();
@@ -536,33 +545,6 @@ bool commandAT(const char * commandString)
         break;
     }
   }
-
-  //AT&x commands
-  else if (commandString[2] == '&')
-  {
-    //&W and &F
-    if (commandLength == 4)
-    {
-      switch (commandString[3])
-      {
-        case ('W'): //AT&W - Write parameters to the flash memory
-          {
-            recordSystemSettings();
-            reportOK();
-          }
-          break;
-        case ('F'): //AT&F - Restore default parameters
-          {
-            settings = defaultSettings; //Overwrite all current settings with defaults
-            recordSystemSettings();
-            reportOK();
-          }
-          break;
-        default:
-          return false;
-      }
-    }
-  }
   else
     return false;
   return true;
@@ -620,7 +602,7 @@ void checkCommand()
 
   //Remove trailing CR and LF
   while ((commandLength > 0) && ((commandString[commandLength - 1] == '\r')
-    || (commandString[commandLength -1] == '\n')))
+                                 || (commandString[commandLength - 1] == '\n')))
     commandLength -= 1;
 
   //Upper case the command
@@ -874,7 +856,7 @@ bool valSpeedSerial (void * value, uint32_t valMin, uint32_t valMax)
 const COMMAND_ENTRY commands[] =
 {
   /*Debug parameters
-   Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
+    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "CopyDebug",            &settings.copyDebug},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "Debug",                &settings.debug},
   {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &settings.debugDatagrams},
@@ -899,7 +881,7 @@ const COMMAND_ENTRY commands[] =
   {'D',   1,   0, 255,    0, TYPE_U8,           valInt,         "SelectLedUse",         &settings.selectLedUse},
 
   /*Radio parameters
-   Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
+    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
   {'R',   0,   0,   0,    0, TYPE_SPEED_AIR,    valSpeedAir,    "AirSpeed",             &settings.airSpeed},
   {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "AutoTune",             &settings.autoTuneFrequency},
   {'R',   0,   0,   0,    2, TYPE_FLOAT,        valBandwidth,   "Bandwidth",            &settings.radioBandwidth},
@@ -915,7 +897,7 @@ const COMMAND_ENTRY commands[] =
   {'R',   0,  14,  30,    0, TYPE_U8,           valInt,         "TxPower",              &settings.radioBroadcastPower_dbm},
 
   /*Radio protocol parameters
-   Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
+    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
   {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "DataScrambling",       &settings.dataScrambling},
   {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "EnableCRC16",          &settings.enableCRC16},
   {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "EncryptData",          &settings.encryptData},
@@ -930,7 +912,7 @@ const COMMAND_ENTRY commands[] =
   {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "VerifyRxNetID",        &settings.verifyRxNetID},
 
   /*Serial parameters
-   Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
+    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
   {'S',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "CopySerial",           &settings.copySerial},
   {'S',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "Echo",                 &settings.echo},
   {'S',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "FlowControl",          &settings.flowControl},
@@ -940,13 +922,13 @@ const COMMAND_ENTRY commands[] =
   {'S',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "UsbSerialWait",        &settings.usbSerialWait},
 
   /*Training parameters
-   Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
+    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
   {'R',   0,   1, 255,    0, TYPE_U8,           valInt,      "ClientPingRetryInterval", &settings.clientPingRetryInterval},
   {'R',   0,   0,   0,    0, TYPE_KEY,          valKey,         "TrainingKey",          &settings.trainingKey},
   {'R',   0,   1, 255,    0, TYPE_U8,           valInt,         "TrainingTimeout",      &settings.trainingTimeout},
 
   /*Trigger parameters
-   Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
+    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
   {'P',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "CopyTriggers",         &settings.copyTriggers},
   {'P',   1,   0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable_31-0",   &settings.triggerEnable},
   {'P',   1,   0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable_63-32",  &settings.triggerEnable2},
@@ -954,8 +936,8 @@ const COMMAND_ENTRY commands[] =
   {'P',   1,   0,   1,    0, TYPE_BOOL,         valInt,     "TriggerWidthIsMultiplier", &settings.triggerWidthIsMultiplier},
 
   /*Virtual circuit parameters
-   Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
-  {'V',   0,   0, MAX_VC-1, 0, TYPE_U8,         valInt,         "CmdVC",                &cmdVc},
+    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
+  {'V',   0,   0, MAX_VC - 1, 0, TYPE_U8,         valInt,         "CmdVC",                &cmdVc},
 };
 
 const int commandCount = sizeof(commands) / sizeof(commands[0]);
@@ -1146,7 +1128,7 @@ void displayParameters(char letter, bool displayAll)
   for (index = 0; index < commandCount; index++)
   {
     if (displayAll || (letter == commands[sortOrder[index]].letter)
-      || ((letter == 0) && (!commands[sortOrder[index]].requireAll)))
+        || ((letter == 0) && (!commands[sortOrder[index]].requireAll)))
     {
       petWDT(); //Printing may take longer than WDT at 9600, so pet the WDT.
 
