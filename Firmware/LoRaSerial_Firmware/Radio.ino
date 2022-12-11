@@ -1693,6 +1693,30 @@ PacketType rcvDatagram()
     return (DATAGRAM_BAD);
   }
 
+  //Display the CRC
+  if (settings.enableCRC16 && settings.debugReceive)
+  {
+    systemPrintTimestamp();
+    systemPrint("    CRC-16: 0x");
+    systemPrint(incomingBuffer[rxDataBytes - 2], HEX);
+    systemPrintln(incomingBuffer[rxDataBytes - 1], HEX);
+    outputSerialData(true);
+    if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+      hopChannel();
+  }
+  
+  /*
+      |<--------------------------- rxDataBytes ---------------------------->|
+      |                                                                      |
+      +----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional | Optional   |             | Optional |
+      | NET ID   | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
+      | 8 bits   | 8 bits   | 2 bytes  | 8 bits     |   n bytes   | n Bytes  |
+      +----------+----------+----------+------------+-------------+----------+
+                            ^
+                            |
+                            '---- rxData
+  */
   //If hopping is enabled, sync data is located next within the header
   if (settings.frequencyHop == true)
   {
@@ -1710,18 +1734,6 @@ PacketType rcvDatagram()
     }
   }
 
-  //Display the CRC
-  if (settings.enableCRC16 && settings.debugReceive)
-  {
-    systemPrintTimestamp();
-    systemPrint("    CRC-16: 0x");
-    systemPrint(incomingBuffer[rxDataBytes - 2], HEX);
-    systemPrintln(incomingBuffer[rxDataBytes - 1], HEX);
-    outputSerialData(true);
-    if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-      hopChannel();
-  }
-
   /*
       |<--------------------------- rxDataBytes ---------------------------->|
       |                                                                      |
@@ -1730,9 +1742,9 @@ PacketType rcvDatagram()
       | NET ID   | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
       | 8 bits   | 8 bits   | 2 bytes  | 8 bits     |   n bytes   | n Bytes  |
       +----------+----------+----------+------------+-------------+----------+
-                            ^
-                            |
-                            '---- rxData
+                                       ^
+                                       |
+                                       '---- rxData
   */
 
   //Get the spread factor 6 length
@@ -1884,6 +1896,8 @@ PacketType rcvDatagram()
   //Verify the packet number last so that the expected datagram or ACK number can be updated
   if (vc && (settings.operatingMode != MODE_MULTIPOINT))
   {
+    Serial.println("Not here for multipoint!");
+    
     switch (datagramType)
     {
       default:
@@ -2727,12 +2741,12 @@ void syncChannelTimer()
       msToNextHopRemote -= getReceiveCompletionOffset();
       break;
     case (4800):
-      msToNextHopRemote -= 2;
+      msToNextHopRemote -= 5;
       break;
     case (9600):
       break;
     case (19200):
-      msToNextHopRemote -= 2;
+      msToNextHopRemote -= 4;
       break;
     case (28800):
       msToNextHopRemote -= 2;
