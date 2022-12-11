@@ -1071,7 +1071,15 @@ void updateRadioState()
             syncChannelTimer(); //Start and adjust freq hop ISR based on remote's remaining clock
 
             channelNumber = rxData[0]; //Change to the server's channel number
-
+            if (settings.debugReceive)
+            {
+              systemPrint("    Channel Number: ");
+              systemPrintln(channelNumber);
+              outputSerialData(true);
+              if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+                hopChannel();
+            }
+            
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             lastPacketReceived = millis(); //Reset
@@ -1239,7 +1247,7 @@ void updateRadioState()
             setHeartbeatMultipoint(); //We're sync'd so reset heartbeat timer
 
             //Place any available data in the serial output buffer
-            serialBufferOutput(rxData, rxDataBytes - sizeof(uint16_t)); //Remove the two bytes of sync data
+            serialBufferOutput(rxData, rxDataBytes);
 
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
@@ -2206,6 +2214,10 @@ void selectHeaderAndTrailerBytes()
 
   //Add the control byte to the header
   headerBytes += 1;
+
+  //Add channel timer bytes to header
+  if (settings.frequencyHop == true)
+    headerBytes += CHANNEL_TIMER_BYTES;
 
   //Add the byte containing the frame size (only needed in SF6)
   if (settings.radioSpreadFactor == 6)
