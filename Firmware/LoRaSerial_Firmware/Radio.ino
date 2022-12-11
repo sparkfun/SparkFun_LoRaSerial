@@ -62,8 +62,9 @@ void configureRadio()
   if (radio.setFHSSHoppingPeriod(hoppingPeriod) != RADIOLIB_ERR_NONE)
     success = false;
 
-  //Precalculate the ACK packet time
+  //Precalculate the packet times
   ackAirTime = calcAirTime(headerBytes + CHANNEL_TIMER_BYTES + trailerBytes); //Used for response timeout during ACK
+  maxPacketAirTime = calcAirTime(MAX_PACKET_SIZE);
 
   if ((settings.debug == true) || (settings.debugRadio == true))
   {
@@ -273,7 +274,7 @@ float calcSymbolTime()
 //Given spread factor, bandwidth, coding rate and frame size, return most bytes we can push per second
 uint16_t calcMaxThroughput()
 {
-  uint8_t mostFramesPerSecond = 1000 / calcAirTime(MAX_PACKET_SIZE);
+  uint8_t mostFramesPerSecond = 1000 / maxPacketAirTime;
   uint16_t mostBytesPerSecond = maxDatagramSize * mostFramesPerSecond;
 
   return (mostBytesPerSecond);
@@ -557,7 +558,7 @@ void updateHopISR()
   {
     hop = false;
     radio.clearFHSSInt(); //Clear the interrupt
-  }  
+  }
 }
 
 //As we complete linkup, different airspeeds exit at different rates
@@ -666,7 +667,7 @@ bool xmitDatagramP2PTrainingPing()
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | n Bytes  |
       +----------+---------+----------+------------+----------+
   */
-        
+
   txControl.datagramType = DATAGRAM_P2P_TRAINING_PING;
   return (transmitDatagram());
 }
@@ -695,7 +696,7 @@ bool xmitDatagramP2pTrainingParams()
       | NET ID   | Control | C-Timer  | SF6 Length | Parameters  | Trailer  |
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | n bytes     | n Bytes  |
       +----------+---------+----------+------------+-------------+----------+
- */
+  */
 
   txControl.datagramType = DATAGRAM_P2P_TRAINING_PARAMS;
   return (transmitDatagram());
@@ -775,7 +776,7 @@ bool xmitDatagramP2PPing()
       | NET ID   | Control | C-Timer  | SF6 Length | Millis  | Trailer  |
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 4 bytes | n Bytes  |
       +----------+---------+----------+------------+---------+----------+
-*/
+  */
 
   txControl.datagramType = DATAGRAM_PING;
   return (transmitDatagram());
@@ -887,8 +888,8 @@ bool xmitDatagramP2PData()
       | NET ID   | Control | C-Timer  | SF6 Length |   Data      | Trailer  |
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     |   n bytes   | n Bytes  |
       +----------+---------+----------+------------+-------------+----------+
-  */  
-  
+  */
+
   txControl.datagramType = DATAGRAM_DATA;
   return (transmitDatagram());
 }
@@ -911,17 +912,15 @@ bool xmitDatagramP2PHeartbeat()
       | NET ID   | Control | C-Timer  | SF6 Length | Millis  | Trailer  |
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 4 bytes | n Bytes  |
       +----------+---------+----------+------------+---------+----------+
-  */ 
+  */
 
   txControl.datagramType = DATAGRAM_HEARTBEAT;
   return (transmitDatagram());
 }
 
-//Create short packet of 2 control bytes - do not expect ack
+//Create short packet - do not expect ack
 bool xmitDatagramP2PAck()
 {
-  int ackLength;
-
   radioCallHistory[RADIO_CALL_xmitDatagramP2PAck] = millis();
 
   /*
@@ -957,7 +956,7 @@ bool xmitDatagramMpData()
       | NET ID   | Control | C-Timer  | SF6 Length |   Data      | Trailer  |
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     |   n bytes   | n Bytes  |
       +----------+---------+----------+------------+-------------+----------+
-  */  
+  */
 
   txControl.datagramType = DATAGRAM_DATA;
   return (transmitDatagram());
@@ -977,8 +976,8 @@ bool xmitDatagramMpHeartbeat()
       | NET ID   | Control | C-Timer  | SF6 Length | Trailer  |
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | n Bytes  |
       +----------+---------+----------+------------+----------+
-  */ 
-  
+  */
+
   txControl.datagramType = DATAGRAM_HEARTBEAT;
   return (transmitDatagram());
 }
@@ -1011,8 +1010,8 @@ bool xmitDatagramMpAck()
       | NET ID   | Control | C-Timer  | SF6 Length | Number  | Trailer  |
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 1 byte  | n Bytes  |
       +----------+---------+----------+------------+---------+----------+
-  */ 
-  
+  */
+
   txControl.datagramType = DATAGRAM_ACK_1;
   return (transmitDatagram());
 }
@@ -1130,6 +1129,7 @@ void updateRadioParameters(uint8_t * rxData)
   originalSettings.overheadTime = params.overheadTime;
   originalSettings.server = params.server;
   originalSettings.verifyRxNetID = params.verifyRxNetID;
+  originalSettings.framesToYield = params.framesToYield;
 
   //Update the debug parameters
   if (params.copyDebug)
@@ -1289,7 +1289,7 @@ bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | 16 Bytes | 4 Bytes | n Bytes  |
       +----------+---------+----------+------------+----------+---------+----------+---------+----------+
   */
-                          
+
   txControl.datagramType = DATAGRAM_VC_HEARTBEAT;
   txControl.ackNumber = 0;
 
@@ -1325,7 +1325,7 @@ bool xmitVcAckFrame(int8_t destVc)
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | n Bytes  |
       +----------+---------+----------+------------+----------+---------+----------+
   */
-  
+
   //Finish building the ACK frame
   return xmitDatagramP2PAck();
 }
@@ -1678,8 +1678,10 @@ PacketType rcvDatagram()
   rxControl = *((CONTROL_U8 *)rxData++);
   datagramType = rxControl.datagramType;
   ackNumber = rxControl.ackNumber;
+
   if (settings.debugReceive)
     printControl(*((uint8_t *)&rxControl));
+
   if (datagramType >= MAX_DATAGRAM_TYPE)
   {
     if (settings.debugReceive || settings.debugDatagrams)
@@ -1704,7 +1706,7 @@ PacketType rcvDatagram()
     if (timeToHop == true) //If the channelTimer has expired, move to next frequency
       hopChannel();
   }
-  
+
   /*
       |<--------------------------- rxDataBytes ---------------------------->|
       |                                                                      |
@@ -1976,6 +1978,16 @@ PacketType rcvDatagram()
     vc->framesReceived++;
   }
 
+  //If packet is good, check requestYield bit
+  //If bit is set, this radio supresses transmissions for X number of frames
+  //Datagram sender can both set and clear yield requests
+  requestYield = rxControl.requestYield;
+  if (requestYield)
+  {
+    triggerEvent(TRIGGER_LINK_REQUEST_YIELD_RECEIVED);
+    yieldTimerStart = millis();
+  }
+
   /*
                                                     |<-- rxDataBytes -->|
                                                     |                                                                      |
@@ -2038,6 +2050,9 @@ PacketType rcvDatagram()
           systemPrint("ACK #");
           systemPrint(ackNumber);
           systemPrint(")");
+
+          if (rxControl.requestYield)
+            systemPrint(" (Y)");
         }
         systemPrintln();
         break;
@@ -2187,7 +2202,17 @@ bool transmitDatagram()
   else
     txControl.ackNumber = vc->txAckNumber;
 
-  //Process the packet
+  //If we are ACK'ing data, and we have data to send ourselves, request that
+  //the sender yield to give us an opportunity to send our data
+  if ((txControl.datagramType == DATAGRAM_DATA_ACK) && availableRadioTXBytes()) 
+  {
+    triggerEvent(TRIGGER_LINK_REQUEST_YIELD_SENT);
+    txControl.requestYield = 1;
+  }
+  else
+    txControl.requestYield = 0;
+
+  //Print debug info as needed
   if (settings.debugDatagrams)
   {
     systemPrintTimestamp();
@@ -2219,6 +2244,9 @@ bool transmitDatagram()
           systemPrint("ACK #");
           systemPrint(txControl.ackNumber);
           systemPrint(")");
+
+          if (txControl.requestYield)
+            systemPrint(" (requestYield)");
         }
         systemPrintln();
         break;
@@ -2470,7 +2498,7 @@ bool transmitDatagram()
     outputSerialData(true);
   }
 
-  //Print before encryption
+  //Print raw packet bytes before encryption
   if (settings.debugTransmit)
   {
     systemPrint("out: ");
@@ -2531,13 +2559,17 @@ void printControl(uint8_t value)
   systemPrintTimestamp();
   systemPrint("    Control: 0x");
   systemPrintln(value, HEX);
+
   if (timeToHop == true) //If the channelTimer has expired, move to next frequency
     hopChannel();
+
   systemPrintTimestamp();
   systemPrint("        ACK # ");
   systemPrintln(value & 3);
+
   if (timeToHop == true) //If the channelTimer has expired, move to next frequency
     hopChannel();
+
   systemPrintTimestamp();
   systemPrint("        datagramType ");
   if (control->datagramType < MAX_DATAGRAM_TYPE)
@@ -2547,9 +2579,19 @@ void printControl(uint8_t value)
     systemPrint("Unknown ");
     systemPrintln(control->datagramType);
   }
+
+  systemPrintTimestamp();
+  systemPrint("        requestYield ");
+  if (control->requestYield)
+    systemPrintln("1");
+  else
+    systemPrintln("0");
+
   outputSerialData(true);
+
   if (timeToHop == true) //If the channelTimer has expired, move to next frequency
     hopChannel();
+
   petWDT();
 }
 
@@ -2560,13 +2602,13 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   radioCallHistory[RADIO_CALL_retransmitDatagram] = millis();
 
   /*
-      +----------+----------+------------+---  ...  ---+----------+
-      | Optional |          |  Optional  |             | Optional |
-      |  NET ID  | Control  | SF6 Length |    Data     | Trailer  |
-      |  8 bits  |  8 bits  |   8 bits   |   n bytes   | n Bytes  |
-      +----------+----------+------------+-------------+----------+
-      |                                                           |
-      |<-------------------- txDatagramSize --------------------->|
+      +----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional | Optional   |             | Optional |
+      | NET ID   | Control  | C-Timer  | SF6 Length |   Data      | Trailer  |
+      | 8 bits   | 8 bits   | 2 bytes  | 8 bits     |   n bytes   | n Bytes  |
+      +----------+----------+----------+------------+-------------+----------+
+      |                                                                      |
+      |<------------------------- txDatagramSize --------------------------->|
   */
 
   if (timeToHop == true) //If the channelTimer has expired, move to next frequency
@@ -2596,9 +2638,10 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   if (timeToHop == true) //If the channelTimer has expired, move to next frequency
     hopChannel();
 
-  //Drop this datagram if the receiver is active
   frameAirTime = calcAirTime(txDatagramSize); //Calculate frame air size while we're transmitting in the background
   uint16_t responseDelay = frameAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
+  
+  //Drop this datagram if the receiver is active
   if ((receiveInProcess() == true) || (transactionComplete == true)
       || ((settings.operatingMode == MODE_VIRTUAL_CIRCUIT) && (txDestVc != VC_BROADCAST)
           && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].vcState == VC_STATE_LINK_DOWN)))
@@ -2619,7 +2662,6 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   }
   else
   {
-
     int state = radio.startTransmit(outgoingPacket, txDatagramSize);
 
     if (state == RADIOLIB_ERR_NONE)
@@ -2662,6 +2704,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
       }
     }
   }
+  
   frameAirTime += responseDelay;
   datagramTimer = millis(); //Move timestamp even if error
   retransmitTimeout = random(ackAirTime, frameAirTime + ackAirTime); //Wait this number of ms between retransmits. Increases with each re-transmit.
@@ -2670,7 +2713,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   if (settings.selectLedUse == LEDS_RADIO_USE)
     digitalWrite(ALT_LED_TX_DATA, LED_ON);
 
-  return (true); //Tranmission has started
+  return (true); //Transmission has started
 }
 
 //Use the maximum dwell setting to start the timer that indicates when to hop channels

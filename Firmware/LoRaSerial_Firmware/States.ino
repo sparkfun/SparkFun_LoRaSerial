@@ -669,22 +669,35 @@ void updateRadioState()
       {
         heartbeatTimeout = ((millis() - heartbeatTimer) > heartbeatRandomTime);
 
-        //Check for time to send serial data
-        if (availableRadioTXBytes() && (processWaitingSerial(heartbeatTimeout) == true))
+        //If we have data, try to send it out
+        if (availableRadioTXBytes())
         {
-          triggerEvent(TRIGGER_LINK_DATA_XMIT);
-
-          if (xmitDatagramP2PData() == true)
+          //Check if we are yielding for 2-way comm
+          if (requestYield == false ||
+              (requestYield == true && (millis() - yieldTimerStart > (settings.framesToYield * maxPacketAirTime)))
+             )
           {
-            setHeartbeatLong(); //We're sending data, so don't be the first to send next heartbeat
-            transmitTimer = datagramTimer;
+            //Yield has expired, allow transmit.
+            requestYield = false;
 
-            //Save the previous transmit in case the previous ACK was lost or a
-            //HEARTBEAT must be transmitted.  Restore the buffer when a retransmission
-            //is necessary.
-            petWDT();
-            SAVE_TX_BUFFER();
-            changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+            //Check for time to send serial data
+            if (processWaitingSerial(heartbeatTimeout) == true)
+            {
+              triggerEvent(TRIGGER_LINK_DATA_XMIT);
+
+              if (xmitDatagramP2PData() == true)
+              {
+                setHeartbeatLong(); //We're sending data, so don't be the first to send next heartbeat
+                transmitTimer = datagramTimer;
+
+                //Save the previous transmit in case the previous ACK was lost or a
+                //HEARTBEAT must be transmitted.  Restore the buffer when a retransmission
+                //is necessary.
+                petWDT();
+                SAVE_TX_BUFFER();
+                changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+              }
+            }
           }
         }
         else if (availableTXCommandBytes()) //If we have command bytes to send out
@@ -1016,7 +1029,7 @@ void updateRadioState()
 
       //Clear residual RSSI to make sure RSSI LEDs are off
       if (rssi > -200) rssi = -200;
-      
+
       triggerEvent(TRIGGER_MP_SCAN);
       changeState(RADIO_MP_SCANNING);
       break;

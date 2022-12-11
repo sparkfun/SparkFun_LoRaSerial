@@ -249,6 +249,8 @@ enum
   TRIGGER_LINK_WAIT_FOR_ACK,
   TRIGGER_LINK_DATA_XMIT,
   TRIGGER_LINK_RETRANSMIT_FAIL,
+  TRIGGER_LINK_REQUEST_YIELD_SENT,
+  TRIGGER_LINK_REQUEST_YIELD_RECEIVED,
   TRIGGER_MP_SCAN,
   TRIGGER_MP_DATA_PACKET,
   TRIGGER_MP_PACKET_RECEIVED,
@@ -309,7 +311,8 @@ typedef struct _CONTROL_U8
 {
   PacketType datagramType: 4;
   uint8_t ackNumber : 2;
-  uint8_t filler : 2;
+  uint8_t requestYield : 1;
+  uint8_t filler : 1;
 } CONTROL_U8;
 
 typedef bool (* VALIDATION_ROUTINE)(void * value, uint32_t valMin, uint32_t valMax);
@@ -419,6 +422,7 @@ typedef struct struct_settings {
   bool debugNvm = false; //Debug NVM operation
   bool printAckNumbers = false; //Print the ACK numbers
   bool debugHeartbeat = false; //Print the HEARTBEAT timing values
+  uint8_t framesToYield = 3; //If remote requests it, supress transmission for this number of max packet frames
 
   //Add new parameters immediately before this line
   //-- Add commands to set the parameters
@@ -432,7 +436,7 @@ struct struct_online {
   bool eeprom = false;
 } online;
 
-#include <RadioLib.h> //Click here to get the library: http://librarymanager/All#RadioLib v5.1.0
+#include <RadioLib.h> //Click here to get the library: http://librarymanager/All#RadioLib v5.5.0
 
 typedef void (* ARCH_BEGIN_BOARD)();
 typedef void (* ARCH_BEGIN_SERIAL)(uint16_t serialSpeed);

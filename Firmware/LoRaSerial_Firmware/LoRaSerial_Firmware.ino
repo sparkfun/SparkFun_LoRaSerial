@@ -345,6 +345,7 @@ unsigned long lastTrainBlink = 0; //Controls LED during training
 uint8_t outgoingPacket[MAX_PACKET_SIZE]; //Contains the current data in route to receiver
 uint16_t frameAirTime = 0; //Recalc'd with each new packet transmission
 uint16_t ackAirTime = 0; //Recalc'd with each change of settings
+uint16_t maxPacketAirTime = 0; //Recalc'd with each change of settings
 uint8_t frameSentCount = 0; //Increases each time a frame is sent
 
 unsigned long lastPacketReceived = 0; //Controls link LED in broadcast mode
@@ -398,6 +399,9 @@ unsigned long radioStateHistory[RADIO_MAX_STATE];
 
 uint8_t packetLength = 0; //Total bytes received, used for calculating clock sync times in multi-point mode
 int16_t msToNextHopRemote; //Can become negative
+
+bool requestYield = false; //Datagram sender can tell this radio to stop transmitting to enable two-way comm
+unsigned long yieldTimerStart = 0;
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

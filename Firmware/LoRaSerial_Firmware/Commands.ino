@@ -902,6 +902,7 @@ const COMMAND_ENTRY commands[] =
   {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "EnableCRC16",          &settings.enableCRC16},
   {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "EncryptData",          &settings.encryptData},
   {'R',   0,   0,   0,    0, TYPE_KEY,          valKey,         "EncryptionKey",        &settings.encryptionKey},
+  {'R',   0,   0, 255,    0, TYPE_U8,           valInt,         "FramesToYield",        &settings.framesToYield},
   {'R',   0,  10, 2000,   0, TYPE_U16,          valInt,         "FrameTimeout",         &settings.serialTimeoutBeforeSendingFrame_ms},
   {'R',   0, 250, 65535,  0, TYPE_U16,          valInt,         "HeartBeatTimeout",     &settings.heartbeatTimeout},
   {'R',   0,   0, 255,    0, TYPE_U8,           valInt,         "MaxResends",           &settings.maxResends},
