@@ -192,7 +192,7 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI5 - Show max possible bytes per second");
         systemPrintln("  ATI6 - Display AES key");
         systemPrintln("  ATI7 - Show current FHSS channel");
-        systemPrintln("  ATI8 - Display unique ID");
+        systemPrintln("  ATI8 - Display system unique ID");
         systemPrintln("  ATI9 - Display the maximum datagram size");
         systemPrintln("  ATI10 - Display radio metrics");
         systemPrintln("  ATI11 - Return myVc value");
@@ -227,7 +227,7 @@ bool commandAT(const char * commandString)
       case ('7'): //ATI7 - Show current FHSS channel
         systemPrintln(channelNumber);
         break;
-      case ('8'): //ATI8 - Display the unique ID
+      case ('8'): //ATI8 - Display the system's unique ID
         systemPrintUniqueID(myUniqueId);
         systemPrintln();
         break;
