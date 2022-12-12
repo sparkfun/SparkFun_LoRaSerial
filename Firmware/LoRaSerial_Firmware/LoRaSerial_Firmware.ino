@@ -502,7 +502,7 @@ void setup()
 
   beginSerial(57600); //Default for debug messages before board begins
 
-  beginBoard(); //Determine what hardware platform we are running on.
+  arch.beginBoard(); //Initialize the board specific hardware, and ID platform type
 
   loadSettings(); //Load settings from EEPROM
   serialOperatingMode = settings.operatingMode;
@@ -537,6 +537,8 @@ void setup()
   outputSerialData(true);
 
   triggerEvent(TRIGGER_RADIO_RESET);
+
+  blinkStartup(); //Blink LEDs to indicate the completion of system setup
 }
 
 //Idle loop for the CPU

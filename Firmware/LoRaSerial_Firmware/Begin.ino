@@ -1,10 +1,6 @@
-//Based on hardware features, determine which hardware this is
-void beginBoard()
+//Blink LEDs to indicate the completion of system setup
+void blinkStartup()
 {
-  //Initialize the board specific hardware
-  arch.beginBoard();
-
-  //Dashboard Blink LEDs
   for (int x = 0 ; x < 3 ; x++)
   {
     digitalWrite(pin_rssi1LED, HIGH);
@@ -23,7 +19,6 @@ void beginBoard()
     digitalWrite(pin_rxLED, LOW);
     delay(50);
   }
-
 }
 
 //Initialize the radio layer
