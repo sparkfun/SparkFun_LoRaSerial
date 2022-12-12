@@ -755,6 +755,11 @@ void updateLeds()
       //Set LEDs according to RSSI level
       default:
       case LEDS_RSSI:
+        //Force RSSI LEDs off when link is down
+        if (radioState == RADIO_MP_SCANNING
+            || radioState == RADIO_P2P_LINK_DOWN)
+          rssi = -200;
+
         if (rssi > rssiLevelMax)
           setRSSI(0b1111);
         else if (rssi > rssiLevelHigh)

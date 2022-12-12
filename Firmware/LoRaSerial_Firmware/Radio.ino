@@ -1437,12 +1437,12 @@ PacketType rcvDatagram()
   framesReceived++;
   int state = radio.readData(incomingBuffer, MAX_PACKET_SIZE);
 
-  rssi = radio.getRSSI();
   printPacketQuality(); //Display the RSSI, SNR and frequency error values
 
   if (state == RADIOLIB_ERR_NONE)
   {
     rxSuccessMillis = rcvTimeMillis;
+    rssi = radio.getRSSI();
   }
   else
   {
@@ -2204,7 +2204,7 @@ bool transmitDatagram()
 
   //If we are ACK'ing data, and we have data to send ourselves, request that
   //the sender yield to give us an opportunity to send our data
-  if ((txControl.datagramType == DATAGRAM_DATA_ACK) && availableRadioTXBytes()) 
+  if ((txControl.datagramType == DATAGRAM_DATA_ACK) && availableRadioTXBytes())
   {
     triggerEvent(TRIGGER_LINK_REQUEST_YIELD_SENT);
     txControl.requestYield = 1;
@@ -2640,7 +2640,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
 
   frameAirTime = calcAirTime(txDatagramSize); //Calculate frame air size while we're transmitting in the background
   uint16_t responseDelay = frameAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
-  
+
   //Drop this datagram if the receiver is active
   if ((receiveInProcess() == true) || (transactionComplete == true)
       || ((settings.operatingMode == MODE_VIRTUAL_CIRCUIT) && (txDestVc != VC_BROADCAST)
@@ -2704,7 +2704,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
       }
     }
   }
-  
+
   frameAirTime += responseDelay;
   datagramTimer = millis(); //Move timestamp even if error
   retransmitTimeout = random(ackAirTime, frameAirTime + ackAirTime); //Wait this number of ms between retransmits. Increases with each re-transmit.

@@ -183,9 +183,6 @@ void updateRadioState()
         setRadioFrequency(false);
       }
 
-      //Clear residual RSSI to make sure RSSI LEDs are off
-      if (rssi > -200) rssi = -200;
-
       //Determine if a PING was received
       if (transactionComplete)
       {
@@ -1027,9 +1024,6 @@ void updateRadioState()
       multipointChannelLoops = 0;
       multipointAttempts = 0;
 
-      //Clear residual RSSI to make sure RSSI LEDs are off
-      if (rssi > -200) rssi = -200;
-
       triggerEvent(TRIGGER_MP_SCAN);
       changeState(RADIO_MP_SCANNING);
       break;
@@ -1038,7 +1032,6 @@ void updateRadioState()
     //Walk through channel table transmitting a Ping and looking for an Ack
     //====================
     case RADIO_MP_SCANNING:
-
       if (transactionComplete)
       {
         //Decode the received datagram
