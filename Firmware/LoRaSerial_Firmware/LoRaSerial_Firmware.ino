@@ -501,6 +501,8 @@ void setup()
 
   beginSerial(57600); //Default for debug messages before board begins
 
+  beginBoard(); //Determine what hardware platform we are running on.
+
   loadSettings(); //Load settings from EEPROM
   serialOperatingMode = settings.operatingMode;
 
@@ -522,7 +524,6 @@ void setup()
 
   arch.uniqueID(myUniqueId); //Get the unique ID
 
-  beginBoard(); //Determine what hardware platform we are running on.
 
   beginLoRa(); //Start radio
 
