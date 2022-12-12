@@ -50,7 +50,40 @@ void loadSettings()
   }
   EEPROM.get(0, settings);
 
+  validateSettings(); //Confirm these settings are within regulatory bounds
+
   recordSystemSettings();
+}
+
+//Modify defaults for each radio type (915, 868, 433, etc)
+//Confirm various settings are within regulatory bounds
+void validateSettings()
+{
+  if (radioBand == 915)
+  {
+    //Radio limits are 900-931MHz
+    //USA ISM bounds are 902-928MHz
+    if (settings.frequencyMin < 900.0 || settings.frequencyMin > 931.0) settings.frequencyMin = 902.0;
+    if (settings.frequencyMax > 931.0 || settings.frequencyMax < 900.0) settings.frequencyMax = 928.0;
+  }
+  else if (radioBand == 868)
+  {
+    //Radio limits are 862-893MHz
+    //EU ESTI limits are 862-893MHz
+    if (settings.frequencyMin < 862.0 || settings.frequencyMin > 893.0) settings.frequencyMin = 862.0;
+    if (settings.frequencyMax > 893.0 || settings.frequencyMax < 862.0) settings.frequencyMax = 893.0;
+  }
+  else if (radioBand == 433)
+  {
+    //Radio limits are 410-510MHz
+    //USA amateur radio limits are 420-450MHz
+    if (settings.frequencyMin < 410.0 || settings.frequencyMin > 510.0) settings.frequencyMin = 420.0;
+    if (settings.frequencyMax > 510.0 || settings.frequencyMax < 410.0) settings.frequencyMax = 450.0;
+  }
+  else
+  {
+    systemPrintln("Error: Unknown radioBand");
+  }
 }
 
 //Record the current settings struct to EEPROM

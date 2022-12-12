@@ -134,6 +134,7 @@ bool commandAT(const char * commandString)
         break;
       case ('F'): //ATF - Restore default parameters
         settings = defaultSettings; //Overwrite all current settings with defaults
+        validateSettings(); //Modify defaults for each radio type (915, 868, 433, etc)
         recordSystemSettings();
         reportOK();
         break;
@@ -887,8 +888,8 @@ const COMMAND_ENTRY commands[] =
   {'R',   0,   0,   0,    2, TYPE_FLOAT,        valBandwidth,   "Bandwidth",            &settings.radioBandwidth},
   {'R',   0,   5,   8,    0, TYPE_U8,           valOverride,    "CodingRate",           &settings.radioCodingRate},
   {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "FrequencyHop",         &settings.frequencyHop},
-  {'R',   0,   0, 928,    3, TYPE_FLOAT,        valFreqMax,     "FrequencyMax",         &settings.frequencyMax},
-  {'R',   0, 902,   0,    3, TYPE_FLOAT,        valFreqMin,     "FrequencyMin",         &settings.frequencyMin},
+  {'R',   0,   0, 931,    3, TYPE_FLOAT,        valFreqMax,     "FrequencyMax",         &settings.frequencyMax},
+  {'R',   0, 900,   0,    3, TYPE_FLOAT,        valFreqMin,     "FrequencyMin",         &settings.frequencyMin},
   {'R',   0,  10, 65535,  0, TYPE_U16,          valInt,         "MaxDwellTime",         &settings.maxDwellTime},
   {'R',   0,   1, 255,    0, TYPE_U8,           valInt,         "NumberOfChannels",     &settings.numberOfChannels},
   {'R',   0,   6, 65535,  0, TYPE_U16,          valInt,         "PreambleLength",       &settings.radioPreambleLength},

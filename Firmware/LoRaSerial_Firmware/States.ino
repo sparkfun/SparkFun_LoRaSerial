@@ -180,7 +180,7 @@ void updateRadioState()
       {
         stopChannelTimer();
         channelNumber = 0;
-        radio.setFrequency(channels[channelNumber]);
+        setRadioFrequency(false);
       }
 
       //Clear residual RSSI to make sure RSSI LEDs are off
