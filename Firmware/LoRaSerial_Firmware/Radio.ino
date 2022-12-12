@@ -1147,7 +1147,7 @@ void updateRadioParameters(uint8_t * rxData)
     originalSettings.debugTraining = params.debugTraining;
     originalSettings.debugTransmit = params.debugTransmit;
     originalSettings.debugSerial = params.debugSerial;
-    originalSettings.displayPacketQuality = params.displayPacketQuality;
+    originalSettings.printPacketQuality = params.printPacketQuality;
     originalSettings.displayRealMillis = params.displayRealMillis;
     originalSettings.printAckNumbers = params.printAckNumbers;
     originalSettings.printFrequency = params.printFrequency;

@@ -844,7 +844,7 @@ int strnicmp(const char * str1, const char * str2, int length)
 //Display the RSSI, SNR and frequency error values
 void printPacketQuality()
 {
-  if (settings.displayPacketQuality == true)
+  if (settings.printPacketQuality == true)
   {
     systemPrintln();
     systemPrint("R:");

@@ -168,7 +168,7 @@ void commonTrainingInitialization()
     settings.debugStates = originalSettings.debugStates;
     settings.debugTraining = originalSettings.debugTraining;
     settings.debugTransmit = originalSettings.debugTransmit;
-    settings.displayPacketQuality = originalSettings.displayPacketQuality;
+    settings.printPacketQuality = originalSettings.printPacketQuality;
     settings.displayRealMillis = originalSettings.displayRealMillis;
     settings.printAckNumbers = originalSettings.printAckNumbers;
     settings.printFrequency = originalSettings.printFrequency;

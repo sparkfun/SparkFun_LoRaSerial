@@ -379,7 +379,7 @@ typedef struct struct_settings {
   uint16_t heartbeatTimeout = 5000; //ms before sending ping to see if link is active
   bool flowControl = false; //Enable the use of CTS/RTS flow control signals
   bool autoTuneFrequency = false; //Based on the last packets frequency error, adjust our next transaction frequency
-  bool displayPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
+  bool printPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
   uint8_t maxResends = 0; //Attempt resends up to this number, 0 = infinite retries
   bool printFrequency = false; //Print the updated frequency
   bool debugRadio = false; //Print radio info
