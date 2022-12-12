@@ -509,10 +509,6 @@ void setup()
 
   beginSerial(settings.serialSpeed);
 
-  systemPrintTimestamp();
-  systemPrintln("LRS");
-  outputSerialData(true);
-
   verifyTables(); //Verify that the enum counts match the name table lengths
 
   //Load the unique IDs for the virtual circuits
@@ -537,7 +533,7 @@ void setup()
   updateRTS(true); //Enable serial input
 
   systemPrintTimestamp();
-  systemPrintln("LRS Setup Complete");
+  systemPrintln("LRS");
   outputSerialData(true);
 
   triggerEvent(TRIGGER_RADIO_RESET);
