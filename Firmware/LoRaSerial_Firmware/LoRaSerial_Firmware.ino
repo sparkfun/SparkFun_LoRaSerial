@@ -363,11 +363,10 @@ volatile bool hop = true; //Clear the DIO1 hop ISR when possible
 
 //RSSI must be above these negative numbers for LED to illuminate
 const int rssiLevelLow = -150;
-const int rssiLevelMed = -70;
-const int rssiLevelHigh = -50;
-const int rssiLevelMax = -20;
+const int rssiLevelMed = -120;
+const int rssiLevelHigh = -100;
+const int rssiLevelMax = -70;
 int rssi; //Average signal level, measured during reception of a packet
-int avgRssi;  //Average signal level, measured during reception of a packet
 
 //Link quality metrics
 uint32_t datagramsSent;     //Total number of datagrams sent
