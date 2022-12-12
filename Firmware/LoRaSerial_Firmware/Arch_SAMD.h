@@ -126,9 +126,20 @@ void samdBeginBoard()
   float boardID = 3.3 * val / 1024;
 
   //Use ADC to check board ID resistor divider
-  if (boardID > 1.64 * 0.9 && boardID < 1.64 * 1.1)
+  if (boardID > 1.64 * 0.95 && boardID < 1.64 * 1.05)
   {
+    radioBand = 915;
     strcpy(platformPrefix, "SAMD21 1W 915MHz");
+  }
+  else if (boardID > 2.20 * 0.95 && boardID < 2.20 * 1.05)
+  {
+    radioBand = 433;
+    strcpy(platformPrefix, "SAMD21 1W 433MHz");
+  }
+  else if (boardID > 2.48 * 0.95 && boardID < 2.48 * 1.05)
+  {
+    radioBand = 868;
+    strcpy(platformPrefix, "SAMD21 1W 868MHz");
   }
   else
   {
