@@ -2104,7 +2104,9 @@ PacketType rcvDatagram()
 
   //Blink the RX LED
   if (settings.selectLedUse == LEDS_RADIO_USE)
-    digitalWrite(ALT_LED_RX_DATA, LED_ON);
+    digitalWrite(RADIO_USE_RX_DATA_LED, LED_ON);
+  else if (settings.selectLedUse == LEDS_CYLON)
+    digitalWrite(CYLON_RX_DATA_LED, LED_ON);
   return datagramType;
 }
 
@@ -2747,7 +2749,9 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
 
   //BLink the RX LED
   if (settings.selectLedUse == LEDS_RADIO_USE)
-    digitalWrite(ALT_LED_TX_DATA, LED_ON);
+    digitalWrite(RADIO_USE_TX_DATA_LED, LED_ON);
+  else if (settings.selectLedUse == LEDS_CYLON)
+    digitalWrite(CYLON_TX_DATA_LED, LED_ON);
 
   return (true); //Transmission has started
 }

@@ -52,33 +52,6 @@ void generateRandomKeysID()
   }
 }
 
-//Start the cylon LEDs
-void startCylonLEDs()
-{
-  trainCylonNumber = 0b0001;
-  trainCylonDirection = -1;
-}
-
-//Update the cylon LEDs
-void updateCylonLEDs()
-{
-  if ( (millis() - lastTrainBlink) > 75) //Blink while unit waits in training state
-  {
-    lastTrainBlink = millis();
-
-    //Cylon the RSSI LEDs
-    setRSSI(trainCylonNumber);
-
-    if (trainCylonNumber == 0b1000 || trainCylonNumber == 0b0001)
-      trainCylonDirection *= -1; //Change direction
-
-    if (trainCylonDirection > 0)
-      trainCylonNumber <<= 1;
-    else
-      trainCylonNumber >>= 1;
-  }
-}
-
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 //Client/Server Training
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -149,6 +122,7 @@ void commonTrainingInitialization()
   settings.netID = 'T';                     //NetID for training
   settings.operatingMode = MODE_MULTIPOINT; //Use datagrams
   settings.radioBroadcastPower_dbm = 14;    //Minimum, assume radios are near each other
+  settings.selectLedUse = LEDS_CYLON;       //Display the CYLON pattern on the LEDs
   settings.verifyRxNetID = true;            //Disable netID checking
   memcpy(&settings.trainingKey, &originalSettings.trainingKey, AES_KEY_BYTES); //56: Common training key
 

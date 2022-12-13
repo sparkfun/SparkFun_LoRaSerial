@@ -89,13 +89,6 @@ uint8_t pin_boardID = PIN_UNDEFINED;
 
 uint8_t pin_trigger = PIN_UNDEFINED;
 
-#define ALT_LED_RX_DATA     pin_rssi1LED  //Green
-#define ALT_LED_RADIO_LINK  pin_rssi2LED  //Green
-#define ALT_LED_RSSI        pin_rssi3LED  //Green
-#define ALT_LED_TX_DATA     pin_rssi4LED  //Green
-#define ALT_LED_BAD_FRAMES  pin_txLED     //Blue
-#define ALT_LED_BAD_CRC     pin_rxLED     //Yellow
-
 #define GREEN_LED_1         pin_rssi1LED
 #define GREEN_LED_2         pin_rssi2LED
 #define GREEN_LED_3         pin_rssi3LED
@@ -103,10 +96,20 @@ uint8_t pin_trigger = PIN_UNDEFINED;
 #define BLUE_LED            pin_txLED
 #define YELLOW_LED          pin_rxLED
 
+#define RADIO_USE_BLINK_MILLIS    15
+
+#define RADIO_USE_RX_DATA_LED     GREEN_LED_1 //Green
+#define RADIO_USE_LINK_LED        GREEN_LED_2 //Green
+#define RADIO_USE_RSSI_LED        GREEN_LED_3 //Green
+#define RADIO_USE_TX_DATA_LED     GREEN_LED_4 //Green
+#define RADIO_USE_BAD_FRAMES_LED  BLUE_LED    //Blue
+#define RADIO_USE_BAD_CRC_LED     YELLOW_LED  //Yellow
+
+#define CYLON_TX_DATA_LED   BLUE_LED
+#define CYLON_RX_DATA_LED   YELLOW_LED
+
 #define LED_ON              HIGH
 #define LED_OFF             LOW
-
-#define ALT_LED_BLINK_MILLIS    15
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Radio Library
