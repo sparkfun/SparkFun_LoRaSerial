@@ -150,7 +150,7 @@ bool commandAT(const char * commandString)
           //If we are pointed at the RF link, send ok and wait for response ACK before applying settings
           return true;
 
-        //Apply raio settings by entering the reset state
+        //Apply radio settings by entering the reset state
         inCommandMode = false; //Return to printing normal RF serial data
         changeState(RADIO_RESET);
         return true;
@@ -163,7 +163,7 @@ bool commandAT(const char * commandString)
         recordSystemSettings();
         return true;
 
-      case ('Z'): //ATZ - Reboots the radio
+      case ('Z'): //ATZ - Reboots the system
         reportOK();
         outputSerialData(true);
         systemFlush();
