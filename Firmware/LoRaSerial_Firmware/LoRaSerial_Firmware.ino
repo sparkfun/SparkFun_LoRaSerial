@@ -392,6 +392,10 @@ unsigned long rxSuccessMillis;
 unsigned long rxFailureMillis;
 int rxFailureState;
 
+//Receive failures
+unsigned long startReceiveFailureMillis;
+int startReceiveFailureState;
+
 unsigned long txSuccessMillis;
 unsigned long txFailureMillis;
 int txFailureState;
