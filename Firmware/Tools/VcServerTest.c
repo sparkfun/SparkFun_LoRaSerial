@@ -19,7 +19,7 @@
 #define DISPLAY_DATA_NACK         1
 #define DISPLAY_VC_STATE          0
 #define SEND_ATC_COMMAND          1
-#define DISPLAY_STATE_TRANSITION  1
+#define DISPLAY_STATE_TRANSITION  0
 
 typedef struct _VIRTUAL_CIRCUIT
 {
