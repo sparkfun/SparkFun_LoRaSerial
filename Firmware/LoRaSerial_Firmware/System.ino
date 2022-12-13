@@ -640,25 +640,25 @@ void radioLeds()
 
   //Turn off the RX LED to end the blink
   currentMillis = millis();
-  if ((currentMillis - linkDownTimer) >= ALT_LED_BLINK_MILLIS)
-    digitalWrite(ALT_LED_RX_DATA, LED_OFF);
+  if ((currentMillis - linkDownTimer) >= RADIO_USE_BLINK_MILLIS)
+    digitalWrite(RADIO_USE_RX_DATA_LED, LED_OFF);
 
   //Turn off the TX LED to end the blink
   currentMillis = millis();
-  if ((currentMillis - datagramTimer) >= ALT_LED_BLINK_MILLIS)
-    digitalWrite(ALT_LED_TX_DATA, LED_OFF);
+  if ((currentMillis - datagramTimer) >= RADIO_USE_BLINK_MILLIS)
+    digitalWrite(RADIO_USE_TX_DATA_LED, LED_OFF);
 
   //Blink the bad frames LED
   if (badFrames != previousBadFrames)
   {
     previousBadFrames = badFrames;
     badFramesMillis = currentMillis;
-    digitalWrite(ALT_LED_BAD_FRAMES, LED_ON);
+    digitalWrite(RADIO_USE_BAD_FRAMES_LED, LED_ON);
   }
-  else if (badFramesMillis && ((currentMillis - badFramesMillis) >= ALT_LED_BLINK_MILLIS))
+  else if (badFramesMillis && ((currentMillis - badFramesMillis) >= RADIO_USE_BLINK_MILLIS))
   {
     badFramesMillis = 0;
-    digitalWrite(ALT_LED_BAD_FRAMES, LED_OFF);
+    digitalWrite(RADIO_USE_BAD_FRAMES_LED, LED_OFF);
   }
 
   //Blink the bad CRC or duplicate frames LED
@@ -666,18 +666,18 @@ void radioLeds()
   {
     previousBadCrc = badCrc;
     badCrcMillis = currentMillis;
-    digitalWrite(ALT_LED_BAD_CRC, LED_ON);
+    digitalWrite(RADIO_USE_BAD_CRC_LED, LED_ON);
   }
   if ((!settings.enableCRC16) && (duplicateFrames != previousBadCrc))
   {
     previousBadCrc = duplicateFrames;
     badCrcMillis = currentMillis;
-    digitalWrite(ALT_LED_BAD_CRC, LED_ON);
+    digitalWrite(RADIO_USE_BAD_CRC_LED, LED_ON);
   }
-  else if (badCrcMillis && ((currentMillis - badCrcMillis) >= ALT_LED_BLINK_MILLIS))
+  else if (badCrcMillis && ((currentMillis - badCrcMillis) >= RADIO_USE_BLINK_MILLIS))
   {
     badCrcMillis = 0;
-    digitalWrite(ALT_LED_BAD_CRC, LED_OFF);
+    digitalWrite(RADIO_USE_BAD_CRC_LED, LED_OFF);
   }
 
   //Update the link LED
@@ -685,7 +685,7 @@ void radioLeds()
   {
     //Turn off the LED
     default:
-      digitalWrite(ALT_LED_RADIO_LINK, LED_OFF);
+      digitalWrite(RADIO_USE_LINK_LED, LED_OFF);
       break;
 
     //Turn on the LED
@@ -694,7 +694,7 @@ void radioLeds()
     case RADIO_P2P_LINK_UP_WAIT_TX_DONE:
     case RADIO_P2P_LINK_UP_WAIT_ACK:
     case RADIO_P2P_LINK_UP_HB_ACK_REXMT:
-      digitalWrite(ALT_LED_RADIO_LINK, LED_ON);
+      digitalWrite(RADIO_USE_LINK_LED, LED_ON);
       break;
   }
 
@@ -706,16 +706,55 @@ void radioLeds()
       rssiValue = (150 + rssi) / 10;
       rssiCount = 0;
       if (rssiValue >= rssiCount)
-        digitalWrite(ALT_LED_RSSI, LED_ON);
+        digitalWrite(RADIO_USE_RSSI_LED, LED_ON);
     }
 
     //Turn off the RSSI LED
     else if (rssiValue < rssiCount++)
-      digitalWrite(ALT_LED_RSSI, LED_OFF);
+      digitalWrite(RADIO_USE_RSSI_LED, LED_OFF);
   }
 
   //Save the last millis value
   previousMillis = currentMillis;
+}
+
+//Start the cylon LEDs
+void startCylonLEDs()
+{
+  trainCylonNumber = 0b0001;
+  trainCylonDirection = -1;
+}
+
+//Update the cylon LEDs
+void updateCylonLEDs()
+{
+  unsigned long currentMillis;
+
+  currentMillis = millis();
+  if ((currentMillis - lastTrainBlink) > 75) //Blink while unit waits in training state
+  {
+    lastTrainBlink = millis();
+
+    //Cylon the RSSI LEDs
+    setRSSI(trainCylonNumber);
+
+    if (trainCylonNumber == 0b1000 || trainCylonNumber == 0b0001)
+      trainCylonDirection *= -1; //Change direction
+
+    if (trainCylonDirection > 0)
+      trainCylonNumber <<= 1;
+    else
+      trainCylonNumber >>= 1;
+  }
+
+  //Use the blue and yellow LEDS to indicate radio activity during training
+  //Turn off the RX LED to end the blink
+  if ((currentMillis - linkDownTimer) >= RADIO_USE_BLINK_MILLIS)
+    digitalWrite(CYLON_RX_DATA_LED, LED_OFF);
+
+  //Turn off the TX LED to end the blink
+  if ((currentMillis - datagramTimer) >= RADIO_USE_BLINK_MILLIS)
+    digitalWrite(CYLON_TX_DATA_LED, LED_OFF);
 }
 
 //Update the LED values depending upon the selected display
@@ -736,76 +775,54 @@ void updateLeds()
     digitalWrite(YELLOW_LED, LED_OFF);
   }
 
-  //Update LEDs according to state
-  //If we are in training, cylon the LEDs
-  //If we are in data radio mode, control according to selectLedUse setting
-
-  if (radioState == RADIO_TRAIN_WAIT_TX_PING_DONE
-      || radioState == RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS
-      || radioState == RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE
-      || radioState == RADIO_TRAIN_WAIT_FOR_PING
-      || radioState == RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE)
+  //Display the LEDs
+  switch (settings.selectLedUse)
   {
-    updateCylonLEDs();
-  }
-  else
-  {
-    switch (settings.selectLedUse)
-    {
-      //Set LEDs according to RSSI level
-      default:
-      case LEDS_RSSI:
-        //Force RSSI LEDs off when link is down
-        if (radioState == RADIO_MP_SCANNING
-            || radioState == RADIO_P2P_LINK_DOWN)
-          rssi = -200;
+    //Set LEDs according to RSSI level
+    default:
+    case LEDS_RSSI:
+      if (rssi > rssiLevelLow)
+        setRSSI(0b0001);
+      if (rssi > rssiLevelMed)
+        setRSSI(0b0011);
+      if (rssi > rssiLevelHigh)
+        setRSSI(0b0111);
+      if (rssi > rssiLevelMax)
+        setRSSI(0b1111);
+      break;
 
-        if (rssi > rssiLevelMax)
-          setRSSI(0b1111);
-        else if (rssi > rssiLevelHigh)
-          setRSSI(0b0111);
-        else if (rssi > rssiLevelMed)
-          setRSSI(0b0011);
-        else if (rssi > rssiLevelLow)
-          setRSSI(0b0001);
-        else
-          setRSSI(0b0000);
-        break;
+    case LEDS_RADIO_USE:
+      radioLeds();
+      break;
 
-      case LEDS_RADIO_USE:
-        radioLeds();
-        break;
+    //Display the cylon pattern during training
+    case LEDS_CYLON:
+      updateCylonLEDs();
+      break;
 
-      //Turn on the blue LED for testing and to identify this radio
-      case LEDS_BLUE_ON:
-        digitalWrite(BLUE_LED, LED_ON);
-        break;
+    //Turn off all the LEDs
+    case LEDS_ALL_OFF:
+      break;
 
-      //Turn on the yellow LED for testing
-      case LEDS_YELLOW_ON:
-        digitalWrite(YELLOW_LED, LED_ON);
-        break;
+    //Turn on the blue LED for testing and to identify this radio
+    case LEDS_BLUE_ON:
+      digitalWrite(BLUE_LED, LED_ON);
+      break;
 
-      //Turn on the green 1 LED for testing
-      case LEDS_GREEN_1_ON:
-        digitalWrite(GREEN_LED_1, LED_ON);
-        break;
+    //Turn on the yellow LED for testing
+    case LEDS_YELLOW_ON:
+      digitalWrite(YELLOW_LED, LED_ON);
+      break;
 
-      //Turn on the green 2 LED for testing
-      case LEDS_GREEN_2_ON:
-        digitalWrite(GREEN_LED_2, LED_ON);
-        break;
+    //Turn on the green 1 LED for testing
+    case LEDS_GREEN_1_ON:
+      digitalWrite(GREEN_LED_1, LED_ON);
+      break;
 
-      //Turn on the green 3 LED for testing
-      case LEDS_GREEN_3_ON:
-        digitalWrite(GREEN_LED_3, LED_ON);
-        break;
-
-      //Turn on the green 4 LED for testing
-      case LEDS_GREEN_4_ON:
-        digitalWrite(GREEN_LED_4, LED_ON);
-        break;
-    }
+    //Turn on the green 2 LED for testing
+    case LEDS_GREEN_2_ON:
+      digitalWrite(GREEN_LED_2, LED_ON);
+      break;
   }
 }
 
