@@ -1,6 +1,6 @@
 //Apply settings to radio
 //Called after begin() and once user exits from command interface
-void configureRadio()
+bool configureRadio()
 {
   bool success = true;
 
@@ -90,15 +90,11 @@ void configureRadio()
   }
 
   if (success == false)
-  {
-    reportERROR();
     systemPrintln("Radio init failed. Check settings.");
-  }
-  if ((settings.debug == true) || (settings.debugRadio == true))
-  {
+  else if ((settings.debug == true) || (settings.debugRadio == true))
     systemPrintln("Radio configured");
-    outputSerialData(true);
-  }
+  outputSerialData(true);
+  return success;
 }
 
 //Update the settings based upon the airSpeed value
