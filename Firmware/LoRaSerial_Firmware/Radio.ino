@@ -499,28 +499,68 @@ uint8_t readSX1276Register(uint8_t reg)
   return radio._mod->SPIreadRegister(reg);
 }
 
-//Print the SX1276 LoRa registers
-void printSX1276Registers ()
+//SX1276 LoRa Register Names
+const char * const sx1276RegisterNames[] =
 {
-  //Define the valid LoRa registers
-  const uint8_t valid_regs [16] =
-  {
-    0xc2, 0xff, 0xff, 0xff, 0x7f, 0x97, 0xcb, 0x0e,
-    0x07, 0x28, 0x00, 0x08, 0x1e, 0x00, 0x01, 0x00
-  };
+  NULL,           "RegOpMode",      NULL,                 NULL,                 // 0 -  3
+  NULL,           NULL,             "RegFrfMsb",          "RegFrfMid",          // 4 -  7
+  "RegFrfLsb",    "RegPaConfig",    "RegPaRamp",          "RegOcp",             // 8 -  b
+  "RegLna",       "RegFifoAddrPtr", "RegFifoTxBaseAddr",  "regFifoRxBaseAddr",  // c -  f
 
+  "FifoRxCurrentAddr", "RegIrqFlagsMask", "RegIrqFlags",  "RegRxNbBytes",       //10 - 13
+  "RegRxHeaderCntValueMsb", "RegRxHeaderCntValueLsb", "RegRxPacketCntValueMsb", "RegRxPacketCntValueLsb", //14 - 17
+  "RegModemStat", "RegPktSnrValue", "RegPktRssiValue",    "RegRssiValue",       //18 - 1b
+  "RegHopChannel","RegModemConfig1", "RegModemConfig2",   "RegSymbTimeoutLsb",  //1c - 1f
+
+  "RegPreambleMsb", "RegPreambleLsb", "RegPayloadLength", "RegMaxPayloadLength",//20 - 23
+  "RegHopPeriod", "RegFifoRxByteAddr", "RegModemConfig3", NULL,                 //24 - 27
+  "RegFeiMsb",    "RegFeiMid",        "RegFeiLsb",        NULL,                 //28 - 2b
+  "RegRssiWideband", NULL,              NULL,             "RegIfFreq1",         //2c - 2f
+
+  "RegIfFreq2",   "ReqDetectOptimize",  NULL,             "ReqInvertIQ",        //30 - 33
+  NULL,           NULL,         "RegHighBwOpimize1",  "RegDetectionThreshold",  //34 - 37
+  NULL,           "RegSyncWord",      "RegHighBwOptimize2", "RegInvertIQ2",     //38 - 3b
+  NULL,           NULL,               NULL,               NULL,                 //3c - 3f
+
+  "RegDioMapping1", "RegDioMapping2", "RegVersion",       NULL,                 //40 - 43
+  NULL,           NULL,               NULL,               NULL,                 //44 - 47
+  NULL,           NULL,               NULL,               "RegTcxo",            //48 - 4b
+  NULL,           "RegPaDac",         NULL,               NULL,                 //4C - 4F
+
+  NULL,           NULL,               NULL,               NULL,                 //50 - 53
+  NULL,           NULL,               NULL,               NULL,                 //54 - 57
+  NULL,           NULL,               NULL,               "RegFormerTemp",      //58 - 5b
+  NULL,           NULL,               NULL,               NULL,                 //5c - 5f
+
+  NULL,           "RegAgcRef",        "RegAgcThresh1",    "RegAgcThresh2",      //60 - 63
+  "RegAgcThresh3", NULL,              NULL,               NULL,                 //64 - 67
+  NULL,           NULL,               NULL,               NULL,                 //68 - 6b
+  NULL,           NULL,               NULL,               NULL,                 //6c - 6f
+
+  "RegPII",                                                                     //70
+};
+
+//Print the SX1276 LoRa registers
+void printSX1276Registers()
+{
   radioCallHistory[RADIO_CALL_printSX1276Registers] = millis();
 
-  systemPrint("Registers:");
-  for (uint8_t i = 0; i < (sizeof(valid_regs) * 8); i++)
+  petWDT();
+  systemPrintln("SX1276 Registers:");
+  systemPrintln("     Reg Value  Name");
+  for (uint8_t i = 0; i < (sizeof(sx1276RegisterNames) / sizeof(sx1276RegisterNames[0])); i++)
   {
     //Only read and print the valid registers
-    if (valid_regs[i >> 3] & (1 << (i & 7)))
+    if (sx1276RegisterNames[i])
     {
       systemPrint("    0x");
       systemPrint(i, HEX);
       systemPrint(": 0x");
-      systemPrintln(readSX1276Register(i), HEX);
+      systemPrint(readSX1276Register(i), HEX);
+      systemPrint(", ");
+      systemPrintln(sx1276RegisterNames[i]);
+      outputSerialData(true);
+      petWDT();
     }
   }
 }
