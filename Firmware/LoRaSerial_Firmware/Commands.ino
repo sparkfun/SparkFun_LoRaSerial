@@ -365,6 +365,8 @@ bool commandAT(const char * commandString)
         systemPrint(", ");
         systemPrint(availableRadioTXBytes());
         systemPrintln(" bytes");
+        systemPrint("        inCommandMode: ");
+        systemPrintln(inCommandMode ? "True" : "False");
         systemPrint("        commandRXBuffer: commandRXHead: ");
         systemPrint(commandRXHead);
         systemPrint(", commandRXTail: ");
