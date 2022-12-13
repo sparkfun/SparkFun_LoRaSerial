@@ -488,6 +488,12 @@ bool commandAT(const char * commandString)
           systemPrintln("None");
         systemPrint("        transactionComplete: ");
         systemPrintln(transactionComplete ? "True" : "False");
+        systemPrint("        lastReceiveInProcessTrue @ ");
+        systemPrintTimestamp(lastReceiveInProcessTrue);
+        systemPrintln();
+        systemPrint("        lastModemStatus: ");
+        systemPrint(lastModemStatus, HEX);
+        systemPrintln();
         systemPrint("        receiveInProcess: ");
         systemPrintln(receiveInProcess() ? "True" : "False");
         outputSerialData(true);

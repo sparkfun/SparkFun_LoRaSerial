@@ -437,31 +437,19 @@ void hopChannel(bool moveForwardThroughTable)
 }
 
 //Returns true if the radio indicates we have an ongoing reception
-//Bit 0: Signal Detected indicates that a valid LoRa preamble has been detected
-//Bit 1: Signal Synchronized indicates that the end of Preamble has been detected, the modem is in lock
-//Bit 3: Header Info Valid toggles high when a valid Header (with correct CRC) is detected
 bool receiveInProcess()
 {
   //triggerEvent(TRIGGER_RECEIVE_IN_PROCESS_START);
 
   uint8_t radioStatus = radio.getModemStatus();
-  if (radioStatus & 0b1011) return (true); //If any bits are set there is a receive in progress
-  return false;
-
-  //A remote unit may have started transmitting but this unit has not received enough preamble to detect it.
-  //Wait X * symbol time for clear air.
-  //This was found by sending two nearly simultaneous packets and using a logic analyzer to establish the point at which
-  //the 'Signal Detected' bit goes high.
-  uint8_t clearAirDelay = calcSymbolTime() * 18;
-  while (clearAirDelay-- > 0)
+  if (radioStatus & RECEIVE_IN_PROCESS_MASK)
   {
-    radioStatus = radio.getModemStatus();
-    if (radioStatus & 0b1011) return (true); //If any bits are set there is a receive in progress
-    if (timeToHop) hopChannel(); //If the channelTimer has expired, move to next frequency
-    delay(1);
+    //If any bits are set there is a receive in progress
+    if ((lastModemStatus & RECEIVE_IN_PROCESS_MASK) == 0)
+      lastReceiveInProcessTrue = millis();
+    return (true);
   }
-
-  //triggerEvent(TRIGGER_RECEIVE_IN_PROCESS_END);
+  lastModemStatus = radioStatus;
   return (false); //No receive in process
 }
 
