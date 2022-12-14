@@ -14,6 +14,21 @@
     frameSentCount = rexmtFrameSentCount;                 \
   }
 
+#define P2P_SEND_ACK(trigger)                                                   \
+  {                                                                             \
+    /*Compute the frequency correction*/                                        \
+    frequencyCorrection += radio.getFrequencyError() / 1000000.0;               \
+                                                                                \
+    /*Send the ACK to the remote system*/                                       \
+    triggerEvent(trigger);                                                      \
+    if (xmitDatagramP2PAck() == true)                                           \
+    {                                                                           \
+      /*We ack'd the packet so be responsible for sending the next heartbeat*/  \
+      setHeartbeatShort();                                                      \
+      changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);                             \
+    }                                                                           \
+  }
+
 //Process the radio states
 void updateRadioState()
 {
@@ -603,28 +618,16 @@ void updateRadioState()
             clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
             timestampOffset = clockOffset;
 
-            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-
-            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
-            if (xmitDatagramP2PAck() == true) //Transmit ACK
-            {
-              setHeartbeatShort(); //We ack'd this heartbeat so be responsible for sending the next heartbeat
-              changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
-            }
+            //Transmit ACK
+            P2P_SEND_ACK(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
             break;
 
           case DATAGRAM_DATA:
             //Place the data in the serial output buffer
             serialBufferOutput(rxData, rxDataBytes);
 
-            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-
-            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DATA);
-            if (xmitDatagramP2PAck() == true) //Transmit ACK
-            {
-              setHeartbeatShort(); //We ack'd this data, so be responsible for sending the next heartbeat
-              changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
-            }
+            //Transmit ACK
+            P2P_SEND_ACK(TRIGGER_LINK_SEND_ACK_FOR_DATA);
             break;
 
           case DATAGRAM_REMOTE_COMMAND:
@@ -643,14 +646,8 @@ void updateRadioState()
             commandRXHead += rxDataBytes - length;
             commandRXHead %= sizeof(commandRXBuffer);
 
-            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-
-            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND);
-            if (xmitDatagramP2PAck() == true) //Transmit ACK
-            {
-              setHeartbeatShort(); //We ack'd the packet so be responsible for sending the next heartbeat
-              changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
-            }
+            //Transmit ACK
+            P2P_SEND_ACK(TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND);
             break;
 
           case DATAGRAM_REMOTE_COMMAND_RESPONSE:
@@ -658,14 +655,8 @@ void updateRadioState()
             for (int x = 0 ; x < rxDataBytes ; x++)
               Serial.write(rxData[x]);
 
-            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-
-            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND_RESPONSE);
-            if (xmitDatagramP2PAck() == true) //Transmit ACK
-            {
-              setHeartbeatShort(); //We ack'd the packet so be responsible for sending the next heartbeat
-              changeState(RADIO_P2P_LINK_UP_WAIT_ACK_DONE);
-            }
+            //Transmit ACK
+            P2P_SEND_ACK(TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND_RESPONSE);
             break;
         }
       }
