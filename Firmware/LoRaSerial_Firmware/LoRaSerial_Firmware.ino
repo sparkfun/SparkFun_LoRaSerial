@@ -454,7 +454,7 @@ unsigned long nextChannelZeroTimeInMillis;
 //Transmit control
 uint8_t * endOfTxData;
 CONTROL_U8 txControl;
-uint32_t transmitTimer;
+unsigned long ackTimer;
 
 //Retransmit support
 uint8_t rmtCmdVc;
@@ -479,7 +479,6 @@ int8_t rxDestVc;
 int8_t rxSrcVc;
 uint8_t *rxVcData;
 int8_t txDestVc;
-unsigned long vcAckTimer;
 VIRTUAL_CIRCUIT virtualCircuitList[MAX_VC];
 uint8_t serialOperatingMode;
 uint32_t vcConnecting;
