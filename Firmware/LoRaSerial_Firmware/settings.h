@@ -12,10 +12,7 @@ typedef enum
 
   //Point-to-Point: Link up, data exchange
   RADIO_P2P_LINK_UP,
-  RADIO_P2P_LINK_UP_WAIT_ACK_DONE,
   RADIO_P2P_LINK_UP_WAIT_TX_DONE,
-  RADIO_P2P_LINK_UP_WAIT_ACK,
-  RADIO_P2P_LINK_UP_HB_ACK_REXMT,
 
   //Server-client discovery
   RADIO_DISCOVER_BEGIN,
@@ -71,38 +68,35 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   //Point-to-Point, link up, data exchange
   //    State                           RX      Name                              Description
   {RADIO_P2P_LINK_UP,                    1, "P2P_LINK_UP",                    "P2P: Receiving Standby"},          //10
-  {RADIO_P2P_LINK_UP_WAIT_ACK_DONE,      0, "P2P_LINK_UP_WAIT_ACK_DONE",      "P2P: Waiting ACK TX Done"},        //11
-  {RADIO_P2P_LINK_UP_WAIT_TX_DONE,       0, "P2P_LINK_UP_WAIT_TX_DONE",       "P2P: Waiting TX done"},            //12
-  {RADIO_P2P_LINK_UP_WAIT_ACK,           1, "P2P_LINK_UP_WAIT_ACK",           "P2P: Waiting for ACK"},            //13
-  {RADIO_P2P_LINK_UP_HB_ACK_REXMT,       0, "P2P_LINK_UP_HB_ACK_REXMT",       "P2P: Heartbeat ACK ReXmt"},        //14
+  {RADIO_P2P_LINK_UP_WAIT_TX_DONE,       0, "P2P_LINK_UP_WAIT_TX_DONE",       "P2P: Waiting TX done"},            //11
 
   //Server-client discovery
   //    State                           RX      Name                              Description
-  {RADIO_DISCOVER_BEGIN,                 0, "DISCOVER_BEGIN",                 "Disc: Setup for scanning"},        //15
-  {RADIO_DISCOVER_SCANNING,              0, "DISCOVER_SCANNING",              "Disc: Scanning for servers"},      //16
-  {RADIO_DISCOVER_WAIT_TX_PING_DONE,     0, "DISCOVER_WAIT_TX_PING_DONE",     "Disc: Wait for ping to xmit"},     //17
+  {RADIO_DISCOVER_BEGIN,                 0, "DISCOVER_BEGIN",                 "Disc: Setup for scanning"},        //12
+  {RADIO_DISCOVER_SCANNING,              0, "DISCOVER_SCANNING",              "Disc: Scanning for servers"},      //13
+  {RADIO_DISCOVER_WAIT_TX_PING_DONE,     0, "DISCOVER_WAIT_TX_PING_DONE",     "Disc: Wait for ping to xmit"},     //14
 
   //Multi-Point data exchange
   //    State                           RX      Name                              Description
-  {RADIO_MP_WAIT_TX_ACK_DONE,            0, "MP_WAIT_TX_ACK_DONE",            "MP: Wait for ACK to xmit"},        //18
-  {RADIO_MP_STANDBY,                     1, "MP_STANDBY",                     "MP: Wait for TX or RX"},           //19
-  {RADIO_MP_WAIT_TX_DONE,                0, "MP_WAIT_TX_DONE",                "MP: Waiting for TX done"},         //20
+  {RADIO_MP_WAIT_TX_ACK_DONE,            0, "MP_WAIT_TX_ACK_DONE",            "MP: Wait for ACK to xmit"},        //15
+  {RADIO_MP_STANDBY,                     1, "MP_STANDBY",                     "MP: Wait for TX or RX"},           //16
+  {RADIO_MP_WAIT_TX_DONE,                0, "MP_WAIT_TX_DONE",                "MP: Waiting for TX done"},         //17
 
   //Training client states
   //    State                           RX      Name                              Description
-  {RADIO_TRAIN_WAIT_TX_PING_DONE,        0, "TRAIN_WAIT_TX_PING_DONE",        "Train: Wait TX training PING done"},  //21
-  {RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS, 1, "TRAIN_WAIT_RX_RADIO_PARAMETERS", "Train: Wait for radio parameters"},   //22
-  {RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE,   0, "TRAIN_WAIT_TX_PARAM_ACK_DONE",   "Train: Wait for TX param ACK done"},  //23
+  {RADIO_TRAIN_WAIT_TX_PING_DONE,        0, "TRAIN_WAIT_TX_PING_DONE",        "Train: Wait TX training PING done"},  //18
+  {RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS, 1, "TRAIN_WAIT_RX_RADIO_PARAMETERS", "Train: Wait for radio parameters"},   //19
+  {RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE,   0, "TRAIN_WAIT_TX_PARAM_ACK_DONE",   "Train: Wait for TX param ACK done"},  //20
 
   //Training server states
   //    State                           RX      Name                              Description
-  {RADIO_TRAIN_WAIT_FOR_PING,            1, "TRAIN_WAIT_FOR_PING",            "Train: Wait for training PING"},      //24
-  {RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,0, "TRAIN_WAIT_TX_RADIO_PARAMS_DONE","Train: Wait for TX params done"},     //25
+  {RADIO_TRAIN_WAIT_FOR_PING,            1, "TRAIN_WAIT_FOR_PING",            "Train: Wait for training PING"},      //21
+  {RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,0, "TRAIN_WAIT_TX_RADIO_PARAMS_DONE","Train: Wait for TX params done"},     //22
 
   //Virtual circuit states
   //    State                           RX      Name                              Description
-  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "VC: Wait for TX done"},            //27
-  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "VC: Wait for receive"},            //28
+  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "VC: Wait for TX done"},            //23
+  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "VC: Wait for receive"},            //24
 };
 
 //Possible types of packets received
