@@ -675,60 +675,6 @@ const uint16_t crc16Table[256] =
 };
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//Point-To-Point Training
-//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-//Ping the other radio in the point-to-point configuration
-bool xmitDatagramP2PTrainingPing()
-{
-  radioCallHistory[RADIO_CALL_xmitDatagramP2PTrainingPing] = millis();
-
-  /*
-                                               endOfTxData ---.
-                                                              |
-                                                              V
-      +----------+---------+----------+------------+----------+
-      | Optional |         | Optional | Optional   | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | n Bytes  |
-      +----------+---------+----------+------------+----------+
-  */
-
-  txControl.datagramType = DATAGRAM_P2P_TRAINING_PING;
-  return (transmitDatagram());
-}
-
-//Build the parameters packet used for training
-bool xmitDatagramP2pTrainingParams()
-{
-  Settings params;
-
-  radioCallHistory[RADIO_CALL_xmitDatagramP2pTrainingParams] = millis();
-
-  //Initialize the radio parameters
-  memcpy(&params, &tempSettings, sizeof(settings));
-  params.operatingMode = MODE_POINT_TO_POINT;
-
-  //Add the radio parameters
-  memcpy(endOfTxData, &params, sizeof(params));
-  endOfTxData += sizeof(params);
-
-  /*
-                                                  endOfTxData ---.
-                                                                 |
-                                                                 V
-      +----------+---------+----------+------------+---  ...  ---+----------+
-      | Optional |         | Optional | Optional   | Radio       | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | Parameters  | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | n bytes     | n Bytes  |
-      +----------+---------+----------+------------+-------------+----------+
-  */
-
-  txControl.datagramType = DATAGRAM_P2P_TRAINING_PARAMS;
-  return (transmitDatagram());
-}
-
-//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Point-To-Point: Bring up the link
 //
 //A three way handshake is used to get both systems to agree that data can flow in both
