@@ -108,7 +108,7 @@ void updateRadioState()
         {
           //Unknown client address
           myVc = VC_UNASSIGNED;
-          changeState(RADIO_MP_BEGIN_SCAN);
+          changeState(RADIO_BEGIN_SERVER_SCAN);
         }
       }
       else
@@ -120,7 +120,7 @@ void updateRadioState()
         }
         else
         {
-          changeState(RADIO_MP_BEGIN_SCAN);
+          changeState(RADIO_BEGIN_SERVER_SCAN);
         }
       }
       break;
@@ -1027,20 +1027,20 @@ void updateRadioState()
     //====================
     //Start searching for other radios
     //====================
-    case RADIO_MP_BEGIN_SCAN:
+    case RADIO_BEGIN_SERVER_SCAN:
       stopChannelTimer(); //Stop hopping
 
       multipointChannelLoops = 0;
       multipointAttempts = 0;
 
       triggerEvent(TRIGGER_MP_SCAN);
-      changeState(RADIO_MP_SCANNING);
+      changeState(RADIO_SERVER_SCANNING);
       break;
 
     //====================
     //Walk through channel table backwards, transmitting a Ping and looking for an ACK1
     //====================
-    case RADIO_MP_SCANNING:
+    case RADIO_SERVER_SCANNING:
       if (transactionComplete)
       {
         //Decode the received datagram
@@ -1185,7 +1185,7 @@ void updateRadioState()
       {
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
-        changeState(RADIO_MP_SCANNING);
+        changeState(RADIO_SERVER_SCANNING);
       }
       break;
 
@@ -1341,7 +1341,7 @@ void updateRadioState()
         {
           if ((millis() - lastPacketReceived) > (settings.heartbeatTimeout * 3))
           {
-            changeState(RADIO_MP_BEGIN_SCAN);
+            changeState(RADIO_BEGIN_SERVER_SCAN);
           }
         }
       }
@@ -1638,7 +1638,7 @@ void updateRadioState()
                    RADIO_RESET
                         |
                         V
-               RADIO_VC_WAIT_SERVER
+              RADIO_SERVER_SCANNING
                         |
                         V
                         +<-------------------------.
@@ -2205,7 +2205,7 @@ void updateRadioState()
             //and the radios loose communications because they are hopping at different
             //times.
             serverLinkBroken = true;
-            changeState(RADIO_MP_BEGIN_SCAN);
+            changeState(RADIO_BEGIN_SERVER_SCAN);
           }
 
           //Break the link

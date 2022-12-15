@@ -17,9 +17,11 @@ typedef enum
   RADIO_P2P_LINK_UP_WAIT_ACK,
   RADIO_P2P_LINK_UP_HB_ACK_REXMT,
 
+  //Server-client discovery
+  RADIO_BEGIN_SERVER_SCAN,
+  RADIO_SERVER_SCANNING,
+
   //Multi-Point: Datagrams
-  RADIO_MP_BEGIN_SCAN,
-  RADIO_MP_SCANNING,
   RADIO_MP_WAIT_TX_PING_DONE,
   RADIO_MP_WAIT_TX_ACK_DONE,
   RADIO_MP_STANDBY,
@@ -74,10 +76,13 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   {RADIO_P2P_LINK_UP_WAIT_ACK,           1, "P2P_LINK_UP_WAIT_ACK",           "P2P: Waiting for ACK"},            //13
   {RADIO_P2P_LINK_UP_HB_ACK_REXMT,       0, "P2P_LINK_UP_HB_ACK_REXMT",       "P2P: Heartbeat ACK ReXmt"},        //14
 
+  //Server-client discovery
+  //    State                           RX      Name                              Description
+  {RADIO_BEGIN_SERVER_SCAN,              0, "MP_BEGIN_SERVER_SCAN",           "Scan: Setup for Scanning"},        //15
+  {RADIO_SERVER_SCANNING,                0, "MP_SERVER_SCANNING",             "Scan: Scanning for server"},       //16
+
   //Multi-Point data exchange
   //    State                           RX      Name                              Description
-  {RADIO_MP_BEGIN_SCAN,                  0, "MP_BEGIN_SCAN",                  "MP: Setup for Scanning"},      //15
-  {RADIO_MP_SCANNING,                    0, "MP_SCANNING",                    "MP: Scanning for activity"},       //16
   {RADIO_MP_WAIT_TX_PING_DONE,           0, "MP_WAIT_TX_PING_DONE",           "MP: Wait for ping to xmit"},       //17
   {RADIO_MP_WAIT_TX_ACK_DONE,            0, "MP_WAIT_TX_ACK_DONE",            "MP: Wait for ACK to xmit"},        //18
   {RADIO_MP_STANDBY,                     1, "MP_STANDBY",                     "MP: Wait for TX or RX"},           //19
