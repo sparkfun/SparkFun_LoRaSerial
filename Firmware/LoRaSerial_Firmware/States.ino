@@ -2851,6 +2851,9 @@ void vcReceiveHeartbeat(uint32_t rxMillis)
   uint32_t deltaMillis;
   int vcSrc;
 
+  if (rxSrcVc == VC_SERVER)
+    syncChannelTimer(); //Adjust freq hop ISR based on server's remaining clock
+
   //Update the timestamp offset
   if (rxSrcVc == VC_SERVER)
   {
