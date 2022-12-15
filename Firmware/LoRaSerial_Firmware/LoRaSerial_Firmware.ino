@@ -199,6 +199,7 @@ uint8_t commandLength = 0;
 bool remoteCommandResponse;
 
 bool rtsAsserted; //When RTS is asserted, host says it's ok to send data
+bool forceRadioReset = false; //Goes true when a setting requires a link/radio reset to work
 
 /* Data Flow - Point-to-Point and Multi-Point
 

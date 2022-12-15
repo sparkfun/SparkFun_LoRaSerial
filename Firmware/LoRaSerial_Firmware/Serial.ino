@@ -385,6 +385,9 @@ void processSerialInput()
             outputSerialData(true);
 
             inCommandMode = true; //Allow AT parsing. Prevent received RF data from being printed.
+            forceRadioReset = false; //Don't reset the radio link unless a setting requires it
+
+            tempSettings = settings;
 
             escapeCharsReceived = 0;
             lastByteReceived_ms = millis();

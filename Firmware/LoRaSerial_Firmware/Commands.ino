@@ -150,9 +150,14 @@ bool commandAT(const char * commandString)
           //If we are pointed at the RF link, send ok and wait for response ACK before applying settings
           return true;
 
-        //Apply radio settings by entering the reset state
         inCommandMode = false; //Return to printing normal RF serial data
-        changeState(RADIO_RESET);
+
+        settings = tempSettings; //Apply user's modifications
+        
+        //If a setting was applied that requires radio reset, do so
+        if(forceRadioReset)
+          changeState(RADIO_RESET);
+          
         return true;
 
       case ('T'): //ATT - Enter training mode
@@ -1153,6 +1158,10 @@ bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer
     }
     if (valid == false)
       break;
+  
+    //See if this command requires a radio reset to be apply
+    if(valid && command->forceRadioReset)
+      forceRadioReset = true;
 
     //The parameter was successfully set
     return true;
