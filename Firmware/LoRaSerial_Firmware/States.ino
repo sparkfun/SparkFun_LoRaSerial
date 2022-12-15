@@ -2036,67 +2036,67 @@ void updateRadioState()
       //----------
       //Priority 4: Walk through the 3-way handshake
       //----------
-      else if (vcConnecting)
-      {
-        for (index = 0; index < MAX_VC; index++)
-        {
-          if (receiveInProcess())
-            break;
-
-          //Determine the first VC that is walking through connections
-          if (vcConnecting & (1 << index))
-          {
-            //Determine if PING needs to be sent
-            if (virtualCircuitList[index].vcState == VC_STATE_SEND_PING)
-            {
-              //Send the PING datagram, first part of the 3-way handshake
-              if (xmitVcPing(index))
-              {
-                vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
-                virtualCircuitList[index].lastPingMillis = datagramTimer;
-                changeState(RADIO_VC_WAIT_TX_DONE);
-              }
-            }
-
-            //The ACK1 is handled with the receive code
-            //Check for a timeout waiting for the ACK1
-            else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK1)
-            {
-              if ((currentMillis - virtualCircuitList[index].lastPingMillis)
-                  >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
-              {
-                //Retransmit the PING
-                if (xmitVcPing(index))
-                {
-                  vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
-                  virtualCircuitList[index].lastPingMillis = datagramTimer;
-                  changeState(RADIO_VC_WAIT_TX_DONE);
-                }
-              }
-            }
-
-            //The ACK2 is handled with the receive code
-            //Check for a timeout waiting for the ACK2
-            else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK2)
-            {
-              if ((currentMillis - virtualCircuitList[index].lastPingMillis)
-                  >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
-              {
-                //Retransmit the ACK1
-                if (xmitVcAck1(index))
-                {
-                  vcChangeState(index, VC_STATE_WAIT_FOR_ACK2);
-                  virtualCircuitList[index].lastPingMillis = datagramTimer;
-                  changeState(RADIO_VC_WAIT_TX_DONE);
-                }
-              }
-            }
-
-            //Work on only one connection at a time
-            break;
-          }
-        }
-      }
+      //      else if (vcConnecting)
+      //      {
+      //        for (index = 0; index < MAX_VC; index++)
+      //        {
+      //          if (receiveInProcess())
+      //            break;
+      //
+      //          //Determine the first VC that is walking through connections
+      //          if (vcConnecting & (1 << index))
+      //          {
+      //            //Determine if PING needs to be sent
+      //            if (virtualCircuitList[index].vcState == VC_STATE_SEND_PING)
+      //            {
+      //              //Send the PING datagram, first part of the 3-way handshake
+      //              if (xmitVcPing(index))
+      //              {
+      //                vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
+      //                virtualCircuitList[index].lastPingMillis = datagramTimer;
+      //                changeState(RADIO_VC_WAIT_TX_DONE);
+      //              }
+      //            }
+      //
+      //            //The ACK1 is handled with the receive code
+      //            //Check for a timeout waiting for the ACK1
+      //            else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK1)
+      //            {
+      //              if ((currentMillis - virtualCircuitList[index].lastPingMillis)
+      //                  >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+      //              {
+      //                //Retransmit the PING
+      //                if (xmitVcPing(index))
+      //                {
+      //                  vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
+      //                  virtualCircuitList[index].lastPingMillis = datagramTimer;
+      //                  changeState(RADIO_VC_WAIT_TX_DONE);
+      //                }
+      //              }
+      //            }
+      //
+      //            //The ACK2 is handled with the receive code
+      //            //Check for a timeout waiting for the ACK2
+      //            else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK2)
+      //            {
+      //              if ((currentMillis - virtualCircuitList[index].lastPingMillis)
+      //                  >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+      //              {
+      //                //Retransmit the ACK1
+      //                if (xmitVcAck1(index))
+      //                {
+      //                  vcChangeState(index, VC_STATE_WAIT_FOR_ACK2);
+      //                  virtualCircuitList[index].lastPingMillis = datagramTimer;
+      //                  changeState(RADIO_VC_WAIT_TX_DONE);
+      //                }
+      //              }
+      //            }
+      //
+      //            //Work on only one connection at a time
+      //            break;
+      //          }
+      //        }
+      //      }
 
       //----------
       //Lowest Priority: Check for data to send
