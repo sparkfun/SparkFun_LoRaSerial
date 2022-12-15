@@ -2697,6 +2697,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
       && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].vcState == VC_STATE_LINK_DOWN)
       && (radioState != RADIO_MP_SCANNING)
     )
+  )
   {
     triggerEvent(TRIGGER_TRANSMIT_CANCELED);
     if (settings.debugReceive || settings.debugDatagrams)
