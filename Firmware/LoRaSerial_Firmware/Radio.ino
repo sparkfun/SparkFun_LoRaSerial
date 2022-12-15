@@ -1008,9 +1008,9 @@ bool xmitDatagramMpHeartbeat()
   return (transmitDatagram());
 }
 
-//Ack packet sent by server in response the client ping, includes channel number
-//During Multipoint scanning, it's possible for the client to get an ack but be 500kHz off
-//The channel Number ensures that the client gets the next hop correct
+//ACK packet sent by server in response the client ping, includes channel number
+//During discovery scanning, it's possible for the client to get an ACK but be on an adjacent channel
+//The channel number ensures that the client gets the next hop correct
 bool xmitDatagramMpAck()
 {
   radioCallHistory[RADIO_CALL_xmitDatagramMpAck] = millis();
@@ -1383,6 +1383,9 @@ bool xmitVcPing(int8_t destVc)
   return (transmitDatagram());
 }
 
+//ACK packet sent by server in response the client ping, includes channel number
+//During discovery scanning, it's possible for the client to get an ACK but be on an adjacent channel
+//The channel number ensures that the client gets the next hop correct
 bool xmitVcAck1(int8_t destVc)
 {
   VC_RADIO_MESSAGE_HEADER * vcHeader;
@@ -1395,15 +1398,26 @@ bool xmitVcAck1(int8_t destVc)
   vcHeader->srcVc = myVc;
   endOfTxData += VC_RADIO_HEADER_BYTES;
 
+  memcpy(endOfTxData, &channelNumber, sizeof(channelNumber));
+  endOfTxData += sizeof(channelNumber);
+  vcHeader->length++;
+
+  if(settings.debugSync)
+  {
+    systemPrint("    channelNumber: ");
+    systemPrintln(channelNumber);
+    outputSerialData(true);
+  }
+
   /*
-                                                         endOfTxData ---.
-                                                                        |
-                                                                        V
-      +----------+---------+----------+------------+----------+---------+----------+
-      | Optional |         | Optional | Optional   |          |         | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | DestAddr | SrcAddr | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | n Bytes  |
-      +----------+---------+----------+------------+----------+---------+----------+
+                                                                   endOfTxData ---.
+                                                                                  |
+                                                                                  V
+      +----------+---------+----------+------------+----------+---------+---------+----------+
+      | Optional |         | Optional | Optional   |          |         | Channel | Optional |
+      | NET ID   | Control | C-Timer  | SF6 Length | DestAddr | SrcAddr | Number  | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | 1 byte  | n Bytes  |
+      +----------+---------+----------+------------+----------+---------+---------+----------+
   */
 
   txControl.datagramType = DATAGRAM_ACK_1;
