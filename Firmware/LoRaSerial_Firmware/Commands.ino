@@ -923,89 +923,89 @@ bool valSpeedSerial (void * value, uint32_t valMin, uint32_t valMax)
 const COMMAND_ENTRY commands[] =
 {
   /*Debug parameters
-    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "CopyDebug",            &settings.copyDebug},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "Debug",                &settings.debug},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &settings.debugDatagrams},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugHeartbeat",       &settings.debugHeartbeat},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugNvm",             &settings.debugNvm},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugRadio",           &settings.debugRadio},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugReceive",         &settings.debugReceive},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugStates",          &settings.debugStates},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugSync",            &settings.debugSync},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugTraining",        &settings.debugTraining},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &settings.debugTransmit},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DebugSerial",          &settings.debugSerial},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "DisplayRealMillis",    &settings.displayRealMillis},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintAckNumbers",      &settings.printAckNumbers},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintFrequency",       &settings.printFrequency},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintLinkUpDown",      &settings.printLinkUpDown},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintPacketQuality",   &settings.printPacketQuality},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintPktData",         &settings.printPktData},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintRfData",          &settings.printRfData},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintTimestamp",       &settings.printTimestamp},
-  {'D',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "PrintTxErrors",        &settings.printTxErrors},
-  {'D',   1,   0, 255,    0, TYPE_U8,           valInt,         "SelectLedUse",         &settings.selectLedUse},
+    Ltr, All, reset, min, max, digits,    type,         validation,     name,                   setting addr, */
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "CopyDebug",            &tempSettings.copyDebug},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "Debug",                &tempSettings.debug},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &tempSettings.debugDatagrams},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugHeartbeat",       &tempSettings.debugHeartbeat},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugNvm",             &tempSettings.debugNvm},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugRadio",           &tempSettings.debugRadio},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugReceive",         &tempSettings.debugReceive},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugStates",          &tempSettings.debugStates},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugSync",            &tempSettings.debugSync},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTraining",        &tempSettings.debugTraining},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &tempSettings.debugTransmit},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugSerial",          &tempSettings.debugSerial},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DisplayRealMillis",    &tempSettings.displayRealMillis},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintAckNumbers",      &tempSettings.printAckNumbers},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintFrequency",       &tempSettings.printFrequency},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintLinkUpDown",      &tempSettings.printLinkUpDown},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintPacketQuality",   &tempSettings.printPacketQuality},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintPktData",         &tempSettings.printPktData},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintRfData",          &tempSettings.printRfData},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTimestamp",       &tempSettings.printTimestamp},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintTxErrors",        &tempSettings.printTxErrors},
+  {'D',   1,   0,    0, 255,    0, TYPE_U8,           valInt,         "SelectLedUse",         &tempSettings.selectLedUse},
 
   /*Radio parameters
-    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
-  {'R',   0,   0,   0,    0, TYPE_SPEED_AIR,    valSpeedAir,    "AirSpeed",             &settings.airSpeed},
-  {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "AutoTune",             &settings.autoTuneFrequency},
-  {'R',   0,   0,   0,    2, TYPE_FLOAT,        valBandwidth,   "Bandwidth",            &settings.radioBandwidth},
-  {'R',   0,   5,   8,    0, TYPE_U8,           valOverride,    "CodingRate",           &settings.radioCodingRate},
-  {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "FrequencyHop",         &settings.frequencyHop},
-  {'R',   0,   0, 931,    3, TYPE_FLOAT,        valFreqMax,     "FrequencyMax",         &settings.frequencyMax},
-  {'R',   0, 900,   0,    3, TYPE_FLOAT,        valFreqMin,     "FrequencyMin",         &settings.frequencyMin},
-  {'R',   0,  10, 65535,  0, TYPE_U16,          valInt,         "MaxDwellTime",         &settings.maxDwellTime},
-  {'R',   0,   1, 255,    0, TYPE_U8,           valInt,         "NumberOfChannels",     &settings.numberOfChannels},
-  {'R',   0,   6, 65535,  0, TYPE_U16,          valInt,         "PreambleLength",       &settings.radioPreambleLength},
-  {'R',   0,   6,  12,    0, TYPE_U8,           valOverride,    "SpreadFactor",         &settings.radioSpreadFactor},
-  {'R',   0,   0, 255,    0, TYPE_U8,           valInt,         "SyncWord",             &settings.radioSyncWord},
-  {'R',   0,  14,  30,    0, TYPE_U8,           valInt,         "TxPower",              &settings.radioBroadcastPower_dbm},
+    Ltr, All, reset, min, max, digits,    type,         validation,     name,                   setting addr */
+  {'R',   0,   1,    0,   0,    0, TYPE_SPEED_AIR,    valSpeedAir,    "AirSpeed",             &tempSettings.airSpeed},
+  {'R',   0,   1,    0,   1,    0, TYPE_BOOL,         valInt,         "AutoTune",             &tempSettings.autoTuneFrequency},
+  {'R',   0,   1,    0,   0,    2, TYPE_FLOAT,        valBandwidth,   "Bandwidth",            &tempSettings.radioBandwidth},
+  {'R',   0,   1,    5,   8,    0, TYPE_U8,           valOverride,    "CodingRate",           &tempSettings.radioCodingRate},
+  {'R',   0,   1,    0,   1,    0, TYPE_BOOL,         valInt,         "FrequencyHop",         &tempSettings.frequencyHop},
+  {'R',   0,   1,    0, 931,    3, TYPE_FLOAT,        valFreqMax,     "FrequencyMax",         &tempSettings.frequencyMax},
+  {'R',   0,   1,  900,   0,    3, TYPE_FLOAT,        valFreqMin,     "FrequencyMin",         &tempSettings.frequencyMin},
+  {'R',   0,   1,   10, 65535,  0, TYPE_U16,          valInt,         "MaxDwellTime",         &tempSettings.maxDwellTime},
+  {'R',   0,   1,    1, 255,    0, TYPE_U8,           valInt,         "NumberOfChannels",     &tempSettings.numberOfChannels},
+  {'R',   0,   1,    6, 65535,  0, TYPE_U16,          valInt,         "PreambleLength",       &tempSettings.radioPreambleLength},
+  {'R',   0,   1,    6,  12,    0, TYPE_U8,           valOverride,    "SpreadFactor",         &tempSettings.radioSpreadFactor},
+  {'R',   0,   1,    0, 255,    0, TYPE_U8,           valInt,         "SyncWord",             &tempSettings.radioSyncWord},
+  {'R',   0,   1,   14,  30,    0, TYPE_U8,           valInt,         "TxPower",              &tempSettings.radioBroadcastPower_dbm},
 
   /*Radio protocol parameters
-    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
-  {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "DataScrambling",       &settings.dataScrambling},
-  {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "EnableCRC16",          &settings.enableCRC16},
-  {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "EncryptData",          &settings.encryptData},
-  {'R',   0,   0,   0,    0, TYPE_KEY,          valKey,         "EncryptionKey",        &settings.encryptionKey},
-  {'R',   0,   0, 255,    0, TYPE_U8,           valInt,         "FramesToYield",        &settings.framesToYield},
-  {'R',   0,  10, 2000,   0, TYPE_U16,          valInt,         "FrameTimeout",         &settings.serialTimeoutBeforeSendingFrame_ms},
-  {'R',   0, 250, 65535,  0, TYPE_U16,          valInt,         "HeartBeatTimeout",     &settings.heartbeatTimeout},
-  {'R',   0,   0, 255,    0, TYPE_U8,           valInt,         "MaxResends",           &settings.maxResends},
-  {'R',   0,   0, 255,    0, TYPE_U8,           valInt,         "NetID",                &settings.netID},
-  {'R',   0,   0,   2,    0, TYPE_U8,           valInt,         "OperatingMode",        &settings.operatingMode},
-  {'R',   0,   0, 1000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &settings.overheadTime},
-  {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "Server",               &settings.server},
-  {'R',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "VerifyRxNetID",        &settings.verifyRxNetID},
+    Ltr, All, reset, min, max, digits,    type,         validation,     name,                   setting addr */
+  {'R',   0,   1,    0,   1,    0, TYPE_BOOL,         valInt,         "DataScrambling",       &tempSettings.dataScrambling},
+  {'R',   0,   1,    0,   1,    0, TYPE_BOOL,         valInt,         "EnableCRC16",          &tempSettings.enableCRC16},
+  {'R',   0,   1,    0,   1,    0, TYPE_BOOL,         valInt,         "EncryptData",          &tempSettings.encryptData},
+  {'R',   0,   1,    0,   0,    0, TYPE_KEY,          valKey,         "EncryptionKey",        &tempSettings.encryptionKey},
+  {'R',   0,   0,    0, 255,    0, TYPE_U8,           valInt,         "FramesToYield",        &tempSettings.framesToYield},
+  {'R',   0,   0,   10, 2000,   0, TYPE_U16,          valInt,         "FrameTimeout",         &tempSettings.serialTimeoutBeforeSendingFrame_ms},
+  {'R',   0,   0,  250, 65535,  0, TYPE_U16,          valInt,         "HeartBeatTimeout",     &tempSettings.heartbeatTimeout},
+  {'R',   0,   0,    0, 255,    0, TYPE_U8,           valInt,         "MaxResends",           &tempSettings.maxResends},
+  {'R',   0,   1,    0, 255,    0, TYPE_U8,           valInt,         "NetID",                &tempSettings.netID},
+  {'R',   0,   1,    0,   2,    0, TYPE_U8,           valInt,         "OperatingMode",        &tempSettings.operatingMode},
+  {'R',   0,   1,    0, 1000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &tempSettings.overheadTime},
+  {'R',   0,   1,    0,   1,    0, TYPE_BOOL,         valInt,         "Server",               &tempSettings.server},
+  {'R',   0,   1,    0,   1,    0, TYPE_BOOL,         valInt,         "VerifyRxNetID",        &tempSettings.verifyRxNetID},
 
   /*Serial parameters
-    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
-  {'S',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "CopySerial",           &settings.copySerial},
-  {'S',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "Echo",                 &settings.echo},
-  {'S',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "FlowControl",          &settings.flowControl},
-  {'S',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "InvertCts",            &settings.invertCts},
-  {'S',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "InvertRts",            &settings.invertRts},
-  {'S',   0,   0,   0,    0, TYPE_SPEED_SERIAL, valSpeedSerial, "SerialSpeed",          &settings.serialSpeed},
-  {'S',   0,   0,   1,    0, TYPE_BOOL,         valInt,         "UsbSerialWait",        &settings.usbSerialWait},
+    Ltr, All, reset, min, max, digits,    type,         validation,     name,                   setting addr */
+  {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "CopySerial",           &tempSettings.copySerial},
+  {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "Echo",                 &tempSettings.echo},
+  {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "FlowControl",          &tempSettings.flowControl},
+  {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertCts",            &tempSettings.invertCts},
+  {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertRts",            &tempSettings.invertRts},
+  {'S',   0,   0,    0,   0,    0, TYPE_SPEED_SERIAL, valSpeedSerial, "SerialSpeed",          &tempSettings.serialSpeed},
+  {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "UsbSerialWait",        &tempSettings.usbSerialWait},
 
   /*Training parameters
-    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
-  {'R',   0,   1, 255,    0, TYPE_U8,           valInt,      "ClientPingRetryInterval", &settings.clientPingRetryInterval},
-  {'R',   0,   0,   0,    0, TYPE_KEY,          valKey,         "TrainingKey",          &settings.trainingKey},
-  {'R',   0,   1, 255,    0, TYPE_U8,           valInt,         "TrainingTimeout",      &settings.trainingTimeout},
+    Ltr, All, reset, min, max, digits,    type,         validation,     name,                   setting addr */
+  {'R',   0,   1,    1, 255,    0, TYPE_U8,           valInt,      "ClientPingRetryInterval", &tempSettings.clientPingRetryInterval},
+  {'R',   0,   0,    0,   0,    0, TYPE_KEY,          valKey,         "TrainingKey",          &tempSettings.trainingKey},
+  {'R',   0,   0,    1, 255,    0, TYPE_U8,           valInt,         "TrainingTimeout",      &tempSettings.trainingTimeout},
 
   /*Trigger parameters
-    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
-  {'P',   1,   0,   1,    0, TYPE_BOOL,         valInt,         "CopyTriggers",         &settings.copyTriggers},
-  {'P',   1,   0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable_31-0",   &settings.triggerEnable},
-  {'P',   1,   0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable_63-32",  &settings.triggerEnable2},
-  {'P',   1,   1, 255,    0, TYPE_U8,           valInt,         "TriggerWidth",         &settings.triggerWidth},
-  {'P',   1,   0,   1,    0, TYPE_BOOL,         valInt,     "TriggerWidthIsMultiplier", &settings.triggerWidthIsMultiplier},
+    Ltr, All, reset, min, max, digits,    type,         validation,     name,                   setting addr */
+  {'P',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "CopyTriggers",         &tempSettings.copyTriggers},
+  {'P',   1,   0,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable_31-0",   &tempSettings.triggerEnable},
+  {'P',   1,   0,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable_63-32",  &tempSettings.triggerEnable2},
+  {'P',   1,   0,    1, 255,    0, TYPE_U8,           valInt,         "TriggerWidth",         &tempSettings.triggerWidth},
+  {'P',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,     "TriggerWidthIsMultiplier", &tempSettings.triggerWidthIsMultiplier},
 
   /*Virtual circuit parameters
-    Ltr, All, min, max, digits,    type,         validation,     name,                   setting addr */
-  {'V',   0,   0, MAX_VC - 1, 0, TYPE_U8,         valInt,         "CmdVC",                &cmdVc},
+    Ltr, All, reset, min, max, digits,    type,         validation,     name,                   setting addr */
+  {'V',   0,   0,    0, MAX_VC - 1, 0, TYPE_U8,         valInt,         "CmdVC",                &cmdVc},
 };
 
 const int commandCount = sizeof(commands) / sizeof(commands[0]);

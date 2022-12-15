@@ -1439,12 +1439,12 @@ void updateRadioState()
         //If we are training with button, in P2P mode, and user has not set server mode
         //Automatically switch to server
         if (trainViaButton
-            && originalSettings.operatingMode == MODE_POINT_TO_POINT
+            && tempSettings.operatingMode == MODE_POINT_TO_POINT
             && originalServer == false)
         {
           //Give up and change to Server automatically
 
-          settings = originalSettings; //Return to original radio settings
+          settings = tempSettings; //Return to original radio settings
 
           generateRandomKeysID(); //Generate random netID and AES key
 
@@ -1546,7 +1546,7 @@ void updateRadioState()
               //If we are training via button, and in point to point mode, and the user has not manually set the server
               //then reboot with current settings after a single client acks
               if (trainViaButton
-                  && originalSettings.operatingMode == MODE_POINT_TO_POINT
+                  && tempSettings.operatingMode == MODE_POINT_TO_POINT
                   && originalServer == false)
               {
                 //Reboot the radio with the newly generated random netID/Key parameters

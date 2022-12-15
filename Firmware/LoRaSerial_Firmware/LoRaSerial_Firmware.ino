@@ -492,7 +492,7 @@ unsigned long retransmitTimeout = 0; //Throttle back re-transmits
 //Global variables
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const Settings defaultSettings;
-Settings originalSettings; //Create a duplicate of settings during training so that we can resort as needed
+Settings tempSettings; //Create a duplicate of settings during training so that we can resort as needed
 uint8_t originalEncryptionKey[AES_KEY_BYTES] = {0}; //Temp store key if we need to exit button training
 uint8_t originalNetID = 0; //Temp store ID if we need to exit button training
 bool originalServer = false; //Temp store server setting if we need to exit button training
@@ -533,7 +533,6 @@ void setup()
   }
 
   arch.uniqueID(myUniqueId); //Get the unique ID
-
 
   beginLoRa(); //Start radio
 

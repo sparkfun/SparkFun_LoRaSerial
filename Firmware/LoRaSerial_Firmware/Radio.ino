@@ -706,7 +706,7 @@ bool xmitDatagramP2pTrainingParams()
   radioCallHistory[RADIO_CALL_xmitDatagramP2pTrainingParams] = millis();
 
   //Initialize the radio parameters
-  memcpy(&params, &originalSettings, sizeof(settings));
+  memcpy(&params, &tempSettings, sizeof(settings));
   params.operatingMode = MODE_POINT_TO_POINT;
 
   //Add the radio parameters
@@ -1128,88 +1128,88 @@ void updateRadioParameters(uint8_t * rxData)
   memcpy(&params, rxData, sizeof(params));
 
   //Update the radio parameters
-  originalSettings.airSpeed = params.airSpeed;
-  originalSettings.autoTuneFrequency = params.autoTuneFrequency;
-  originalSettings.radioBandwidth = params.radioBandwidth;
-  originalSettings.radioCodingRate = params.radioCodingRate;
-  originalSettings.frequencyHop = params.frequencyHop;
-  originalSettings.frequencyMax = params.frequencyMax;
-  originalSettings.frequencyMin = params.frequencyMin;
-  originalSettings.maxDwellTime = params.maxDwellTime;
-  originalSettings.numberOfChannels = params.numberOfChannels;
-  originalSettings.radioPreambleLength = params.radioPreambleLength;
-  originalSettings.radioSpreadFactor = params.radioSpreadFactor;
-  originalSettings.radioSyncWord = params.radioSyncWord;
-  originalSettings.radioBroadcastPower_dbm = params.radioBroadcastPower_dbm;
+  tempSettings.airSpeed = params.airSpeed;
+  tempSettings.autoTuneFrequency = params.autoTuneFrequency;
+  tempSettings.radioBandwidth = params.radioBandwidth;
+  tempSettings.radioCodingRate = params.radioCodingRate;
+  tempSettings.frequencyHop = params.frequencyHop;
+  tempSettings.frequencyMax = params.frequencyMax;
+  tempSettings.frequencyMin = params.frequencyMin;
+  tempSettings.maxDwellTime = params.maxDwellTime;
+  tempSettings.numberOfChannels = params.numberOfChannels;
+  tempSettings.radioPreambleLength = params.radioPreambleLength;
+  tempSettings.radioSpreadFactor = params.radioSpreadFactor;
+  tempSettings.radioSyncWord = params.radioSyncWord;
+  tempSettings.radioBroadcastPower_dbm = params.radioBroadcastPower_dbm;
 
   //Update the radio protocol parameters
-  originalSettings.dataScrambling = params.dataScrambling;
-  originalSettings.enableCRC16 = params.enableCRC16;
-  originalSettings.encryptData = params.encryptData;
-  memcpy(originalSettings.encryptionKey, params.encryptionKey, sizeof(originalSettings.encryptionKey));
-  originalSettings.serialTimeoutBeforeSendingFrame_ms = params.serialTimeoutBeforeSendingFrame_ms;
-  originalSettings.heartbeatTimeout = params.heartbeatTimeout;
-  originalSettings.maxResends = params.maxResends;
-  originalSettings.netID = params.netID;
-  originalSettings.operatingMode = params.operatingMode;
-  originalSettings.overheadTime = params.overheadTime;
-  originalSettings.server = params.server;
-  originalSettings.verifyRxNetID = params.verifyRxNetID;
-  originalSettings.framesToYield = params.framesToYield;
+  tempSettings.dataScrambling = params.dataScrambling;
+  tempSettings.enableCRC16 = params.enableCRC16;
+  tempSettings.encryptData = params.encryptData;
+  memcpy(tempSettings.encryptionKey, params.encryptionKey, sizeof(tempSettings.encryptionKey));
+  tempSettings.serialTimeoutBeforeSendingFrame_ms = params.serialTimeoutBeforeSendingFrame_ms;
+  tempSettings.heartbeatTimeout = params.heartbeatTimeout;
+  tempSettings.maxResends = params.maxResends;
+  tempSettings.netID = params.netID;
+  tempSettings.operatingMode = params.operatingMode;
+  tempSettings.overheadTime = params.overheadTime;
+  tempSettings.server = params.server;
+  tempSettings.verifyRxNetID = params.verifyRxNetID;
+  tempSettings.framesToYield = params.framesToYield;
 
   //Update the debug parameters
   if (params.copyDebug)
   {
-    originalSettings.debug = params.debug;
-    originalSettings.copyDebug = params.copyDebug;
-    originalSettings.debug = params.debug;
-    originalSettings.debugDatagrams = params.debugDatagrams;
-    originalSettings.debugHeartbeat = params.debugHeartbeat;
-    originalSettings.debugNvm = params.debugNvm;
-    originalSettings.debugRadio = params.debugRadio;
-    originalSettings.debugReceive = params.debugReceive;
-    originalSettings.debugStates = params.debugStates;
-    originalSettings.debugSync = params.debugSync;
-    originalSettings.debugTraining = params.debugTraining;
-    originalSettings.debugTransmit = params.debugTransmit;
-    originalSettings.debugSerial = params.debugSerial;
-    originalSettings.printPacketQuality = params.printPacketQuality;
-    originalSettings.displayRealMillis = params.displayRealMillis;
-    originalSettings.printAckNumbers = params.printAckNumbers;
-    originalSettings.printFrequency = params.printFrequency;
-    originalSettings.printLinkUpDown = params.printLinkUpDown;
-    originalSettings.printPktData = params.printPktData;
-    originalSettings.printRfData = params.printRfData;
-    originalSettings.printTimestamp = params.printTimestamp;
-    originalSettings.printTxErrors = params.printTxErrors;
-    originalSettings.selectLedUse = params.selectLedUse;
+    tempSettings.debug = params.debug;
+    tempSettings.copyDebug = params.copyDebug;
+    tempSettings.debug = params.debug;
+    tempSettings.debugDatagrams = params.debugDatagrams;
+    tempSettings.debugHeartbeat = params.debugHeartbeat;
+    tempSettings.debugNvm = params.debugNvm;
+    tempSettings.debugRadio = params.debugRadio;
+    tempSettings.debugReceive = params.debugReceive;
+    tempSettings.debugStates = params.debugStates;
+    tempSettings.debugSync = params.debugSync;
+    tempSettings.debugTraining = params.debugTraining;
+    tempSettings.debugTransmit = params.debugTransmit;
+    tempSettings.debugSerial = params.debugSerial;
+    tempSettings.printPacketQuality = params.printPacketQuality;
+    tempSettings.displayRealMillis = params.displayRealMillis;
+    tempSettings.printAckNumbers = params.printAckNumbers;
+    tempSettings.printFrequency = params.printFrequency;
+    tempSettings.printLinkUpDown = params.printLinkUpDown;
+    tempSettings.printPktData = params.printPktData;
+    tempSettings.printRfData = params.printRfData;
+    tempSettings.printTimestamp = params.printTimestamp;
+    tempSettings.printTxErrors = params.printTxErrors;
+    tempSettings.selectLedUse = params.selectLedUse;
   }
 
   //Update the serial parameters
   if (params.copySerial)
   {
-    originalSettings.copySerial = params.copySerial;
-    originalSettings.echo = params.echo;
-    originalSettings.flowControl = params.flowControl;
-    originalSettings.invertCts = params.invertCts;
-    originalSettings.invertRts = params.invertRts;
-    originalSettings.serialSpeed = params.serialSpeed;
-    originalSettings.usbSerialWait = params.usbSerialWait;
+    tempSettings.copySerial = params.copySerial;
+    tempSettings.echo = params.echo;
+    tempSettings.flowControl = params.flowControl;
+    tempSettings.invertCts = params.invertCts;
+    tempSettings.invertRts = params.invertRts;
+    tempSettings.serialSpeed = params.serialSpeed;
+    tempSettings.usbSerialWait = params.usbSerialWait;
   }
 
   //Update the training values
-  originalSettings.clientPingRetryInterval = params.clientPingRetryInterval;
+  tempSettings.clientPingRetryInterval = params.clientPingRetryInterval;
   //The trainingKey is already the same
-  originalSettings.trainingTimeout = params.trainingTimeout;
+  tempSettings.trainingTimeout = params.trainingTimeout;
 
   //Update the trigger parameters
   if (params.copyTriggers)
   {
-    originalSettings.copyTriggers = params.copyTriggers;
-    originalSettings.triggerEnable = params.triggerEnable;
-    originalSettings.triggerEnable2 = params.triggerEnable2;
-    originalSettings.triggerWidth = params.triggerWidth;
-    originalSettings.triggerWidthIsMultiplier = params.triggerWidthIsMultiplier;
+    tempSettings.copyTriggers = params.copyTriggers;
+    tempSettings.triggerEnable = params.triggerEnable;
+    tempSettings.triggerEnable2 = params.triggerEnable2;
+    tempSettings.triggerWidth = params.triggerWidth;
+    tempSettings.triggerWidthIsMultiplier = params.triggerWidthIsMultiplier;
   }
 }
 
@@ -1225,7 +1225,7 @@ bool xmitDatagramTrainRadioParameters(const uint8_t * clientID)
   radioCallHistory[RADIO_CALL_xmitDatagramTrainRadioParameters] = millis();
 
   //Initialize the radio parameters
-  memcpy(&params, &originalSettings, sizeof(settings));
+  memcpy(&params, &tempSettings, sizeof(settings));
   params.server = false;
 
   //Add the destination (client) ID

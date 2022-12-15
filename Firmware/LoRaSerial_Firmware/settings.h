@@ -321,6 +321,7 @@ typedef struct _COMMAND_ENTRY
 {
   char letter;
   char requireAll;
+  bool forceRadioReset;
   uint32_t minValue;
   uint32_t maxValue;
   uint8_t digits;

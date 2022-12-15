@@ -268,7 +268,7 @@ void updateButton()
     }
     else if (trainState == TRAIN_IN_PROCESS && trainBtn->wasReleased())
     {
-      settings = originalSettings; //Return to original radio settings
+      settings = tempSettings; //Return to original radio settings
 
       //Return to original keys, ID, and server state
       memcpy(&settings.encryptionKey, &originalEncryptionKey, AES_KEY_BYTES);

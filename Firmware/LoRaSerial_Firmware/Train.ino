@@ -94,9 +94,9 @@ void beginTrainingServer()
 
   systemPrintln("Server radio protocol parameters");
   systemPrint("  netID: ");
-  systemPrintln(originalSettings.netID);
+  systemPrintln(tempSettings.netID);
   systemPrint("  Encryption key: ");
-  displayEncryptionKey(originalSettings.encryptionKey);
+  displayEncryptionKey(tempSettings.encryptionKey);
   systemPrintln();
   outputSerialData(true);
 
@@ -111,7 +111,7 @@ void beginTrainingServer()
 void commonTrainingInitialization()
 {
   //Save the current settings
-  originalSettings = settings;
+  tempSettings = settings;
 
   //Use common radio settings between the client and server for training
   settings = defaultSettings;
@@ -124,40 +124,40 @@ void commonTrainingInitialization()
   settings.radioBroadcastPower_dbm = 14;    //Minimum, assume radios are near each other
   settings.selectLedUse = LEDS_CYLON;       //Display the CYLON pattern on the LEDs
   settings.verifyRxNetID = true;            //Disable netID checking
-  memcpy(&settings.trainingKey, &originalSettings.trainingKey, AES_KEY_BYTES); //56: Common training key
+  memcpy(&settings.trainingKey, &tempSettings.trainingKey, AES_KEY_BYTES); //56: Common training key
 
   //Determine the components of the frame header and trailer
   selectHeaderAndTrailerBytes();
 
   //Debug training if requested
-  if (originalSettings.debugTraining)
+  if (tempSettings.debugTraining)
   {
-    settings.selectLedUse = originalSettings.selectLedUse;
+    settings.selectLedUse = tempSettings.selectLedUse;
     //Ignore copyDebug
-    settings.debug = originalSettings.debug;
-    settings.debugDatagrams = originalSettings.debugDatagrams;
-    settings.debugNvm = originalSettings.debugNvm;
-    settings.debugRadio = originalSettings.debugRadio;
-    settings.debugReceive = originalSettings.debugReceive;
-    settings.debugSerial = originalSettings.debugSerial;
-    settings.debugStates = originalSettings.debugStates;
-    settings.debugTraining = originalSettings.debugTraining;
-    settings.debugTransmit = originalSettings.debugTransmit;
-    settings.printPacketQuality = originalSettings.printPacketQuality;
-    settings.displayRealMillis = originalSettings.displayRealMillis;
-    settings.printAckNumbers = originalSettings.printAckNumbers;
-    settings.printFrequency = originalSettings.printFrequency;
-    settings.printLinkUpDown = originalSettings.printLinkUpDown;
-    settings.printPktData = originalSettings.printPktData;
-    settings.printRfData = originalSettings.printRfData;
-    settings.printTimestamp = originalSettings.printTimestamp;
-    settings.printTxErrors = originalSettings.printTxErrors;
+    settings.debug = tempSettings.debug;
+    settings.debugDatagrams = tempSettings.debugDatagrams;
+    settings.debugNvm = tempSettings.debugNvm;
+    settings.debugRadio = tempSettings.debugRadio;
+    settings.debugReceive = tempSettings.debugReceive;
+    settings.debugSerial = tempSettings.debugSerial;
+    settings.debugStates = tempSettings.debugStates;
+    settings.debugTraining = tempSettings.debugTraining;
+    settings.debugTransmit = tempSettings.debugTransmit;
+    settings.printPacketQuality = tempSettings.printPacketQuality;
+    settings.displayRealMillis = tempSettings.displayRealMillis;
+    settings.printAckNumbers = tempSettings.printAckNumbers;
+    settings.printFrequency = tempSettings.printFrequency;
+    settings.printLinkUpDown = tempSettings.printLinkUpDown;
+    settings.printPktData = tempSettings.printPktData;
+    settings.printRfData = tempSettings.printRfData;
+    settings.printTimestamp = tempSettings.printTimestamp;
+    settings.printTxErrors = tempSettings.printTxErrors;
 
     //Ignore copyTriggers
-    settings.triggerEnable = originalSettings.triggerEnable;
-    settings.triggerEnable2 = originalSettings.triggerEnable2;
-    settings.triggerWidth = originalSettings.triggerWidth;
-    settings.triggerWidthIsMultiplier = originalSettings.triggerWidthIsMultiplier;
+    settings.triggerEnable = tempSettings.triggerEnable;
+    settings.triggerEnable2 = tempSettings.triggerEnable2;
+    settings.triggerWidth = tempSettings.triggerWidth;
+    settings.triggerWidthIsMultiplier = tempSettings.triggerWidthIsMultiplier;
   }
 
   //Reset cylon variables
@@ -184,7 +184,7 @@ void commonTrainingInitialization()
 void endClientServerTraining(uint8_t event)
 {
   triggerEvent(event);
-  settings = originalSettings; //Return to original radio settings
+  settings = tempSettings; //Return to original radio settings
 
   if (settings.debugTraining)
   {
