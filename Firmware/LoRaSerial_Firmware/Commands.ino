@@ -981,7 +981,7 @@ const COMMAND_ENTRY commands[] =
   {'R',   0,   1,    0, 255,    0, TYPE_U8,           valInt,         "NetID",                &tempSettings.netID},
   {'R',   0,   1,    0,   2,    0, TYPE_U8,           valInt,         "OperatingMode",        &tempSettings.operatingMode},
   {'R',   0,   1,    0, 1000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &tempSettings.overheadTime},
-  {'R',   0,   1,    0,   1,    0, TYPE_BOOL,         valInt,         "Server",               &tempSettings.server},
+  {'R',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "Server",               &tempSettings.server},
   {'R',   0,   1,    0,   1,    0, TYPE_BOOL,         valInt,         "VerifyRxNetID",        &tempSettings.verifyRxNetID},
 
   /*Serial parameters
