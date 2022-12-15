@@ -77,7 +77,7 @@ const RADIO_STATE_ENTRY radioStateTable[] =
 
   //Multi-Point data exchange
   //    State                           RX      Name                              Description
-  {RADIO_MP_BEGIN_SCAN,                  0, "MP_BEGIN_SCAN",                  "MP: Setup for CAD Scanning"},      //15
+  {RADIO_MP_BEGIN_SCAN,                  0, "MP_BEGIN_SCAN",                  "MP: Setup for Scanning"},      //15
   {RADIO_MP_SCANNING,                    0, "MP_SCANNING",                    "MP: Scanning for activity"},       //16
   {RADIO_MP_WAIT_TX_PING_DONE,           0, "MP_WAIT_TX_PING_DONE",           "MP: Wait for ping to xmit"},       //17
   {RADIO_MP_WAIT_TX_ACK_DONE,            0, "MP_WAIT_TX_ACK_DONE",            "MP: Wait for ACK to xmit"},        //18

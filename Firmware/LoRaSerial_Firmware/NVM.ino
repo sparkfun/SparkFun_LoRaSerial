@@ -19,7 +19,7 @@ void loadSettings()
   //Misalignment happens when we add a new feature or setting
   uint16_t tempSize = 0;
   EEPROM.get(0, tempSize); //Load the sizeOfSettings
-  if (tempSize != sizeof(settings))
+  if (tempSize != sizeof(Settings))
   {
     if (settings.debugNvm)
     {
@@ -94,7 +94,7 @@ void recordSystemSettings()
     systemPrintln("Writing settings to EEPROM");
     outputSerialData(true);
   }
-  settings.sizeOfSettings = sizeof(settings);
+  settings.sizeOfSettings = sizeof(Settings);
   EEPROM.put(0, settings);
 
   arch.eepromCommit();

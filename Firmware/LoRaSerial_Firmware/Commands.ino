@@ -126,8 +126,13 @@ bool commandAT(const char * commandString)
         return true;
 
       case ('F'): //ATF - Restore default parameters
-        settings = defaultSettings; //Overwrite all current settings with defaults
+        settings = defaultSettings; //Overwrite all system settings with defaults
+
         validateSettings(); //Modify defaults for each radio type (915, 868, 433, etc)
+
+        tempSettings = settings; //Overwrite all temp settings with defaults
+        forceRadioReset = true;
+
         recordSystemSettings();
         return true;
 
@@ -153,11 +158,13 @@ bool commandAT(const char * commandString)
         inCommandMode = false; //Return to printing normal RF serial data
 
         settings = tempSettings; //Apply user's modifications
-        
+
+        if (writeOnCommandExit) recordSystemSettings();
+
         //If a setting was applied that requires radio reset, do so
-        if(forceRadioReset)
+        if (forceRadioReset)
           changeState(RADIO_RESET);
-          
+
         return true;
 
       case ('T'): //ATT - Enter training mode
@@ -165,10 +172,16 @@ bool commandAT(const char * commandString)
         return true;
 
       case ('W'): //ATW - Write parameters to the flash memory
-        recordSystemSettings();
+        writeOnCommandExit = true;
         return true;
 
       case ('Z'): //ATZ - Reboots the system
+        if (writeOnCommandExit)
+        {
+          settings = tempSettings; //Apply user's modifications
+          recordSystemSettings();
+        }
+
         reportOK();
         outputSerialData(true);
         systemFlush();
@@ -1158,9 +1171,9 @@ bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer
     }
     if (valid == false)
       break;
-  
+
     //See if this command requires a radio reset to be apply
-    if(valid && command->forceRadioReset)
+    if (valid && command->forceRadioReset)
       forceRadioReset = true;
 
     //The parameter was successfully set

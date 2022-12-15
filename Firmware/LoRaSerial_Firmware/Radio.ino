@@ -500,7 +500,7 @@ const char * const sx1276RegisterNames[] =
   "FifoRxCurrentAddr", "RegIrqFlagsMask", "RegIrqFlags",  "RegRxNbBytes",       //10 - 13
   "RegRxHeaderCntValueMsb", "RegRxHeaderCntValueLsb", "RegRxPacketCntValueMsb", "RegRxPacketCntValueLsb", //14 - 17
   "RegModemStat", "RegPktSnrValue", "RegPktRssiValue",    "RegRssiValue",       //18 - 1b
-  "RegHopChannel","RegModemConfig1", "RegModemConfig2",   "RegSymbTimeoutLsb",  //1c - 1f
+  "RegHopChannel", "RegModemConfig1", "RegModemConfig2",   "RegSymbTimeoutLsb", //1c - 1f
 
   "RegPreambleMsb", "RegPreambleLsb", "RegPayloadLength", "RegMaxPayloadLength",//20 - 23
   "RegHopPeriod", "RegFifoRxByteAddr", "RegModemConfig3", NULL,                 //24 - 27

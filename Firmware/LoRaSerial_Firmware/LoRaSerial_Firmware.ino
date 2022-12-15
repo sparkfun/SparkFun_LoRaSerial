@@ -200,6 +200,7 @@ bool remoteCommandResponse;
 
 bool rtsAsserted; //When RTS is asserted, host says it's ok to send data
 bool forceRadioReset = false; //Goes true when a setting requires a link/radio reset to work
+bool writeOnCommandExit = false; //Goes true if user specifies ATW command
 
 /* Data Flow - Point-to-Point and Multi-Point
 
