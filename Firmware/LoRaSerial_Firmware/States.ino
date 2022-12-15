@@ -94,15 +94,22 @@ void updateRadioState()
       else if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
       {
         if (settings.server)
+        {
           //Reserve the server's address (0)
           myVc = vcIdToAddressByte(VC_SERVER, myUniqueId);
+
+          startChannelTimer(); //Start hopping
+
+          //Start sending heartbeats
+          xmitVcHeartbeat(myVc, myUniqueId);
+          changeState(RADIO_VC_WAIT_TX_DONE);
+        }
         else
+        {
           //Unknown client address
           myVc = VC_UNASSIGNED;
-
-        //Start sending heartbeats
-        xmitVcHeartbeat(myVc, myUniqueId);
-        changeState(RADIO_VC_WAIT_TX_DONE);
+          changeState(RADIO_MP_BEGIN_SCAN);
+        }
       }
       else
       {
@@ -112,7 +119,9 @@ void updateRadioState()
           changeState(RADIO_MP_STANDBY);
         }
         else
+        {
           changeState(RADIO_MP_BEGIN_SCAN);
+        }
       }
       break;
 
