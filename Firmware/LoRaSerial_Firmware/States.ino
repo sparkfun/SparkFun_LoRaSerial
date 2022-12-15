@@ -1694,38 +1694,6 @@ void updateRadioState()
     */
 
     //====================
-    //Wait for a HEARTBEAT from the server
-    //====================
-    case RADIO_VC_WAIT_SERVER:
-      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-        hopChannel();
-
-      if (myVc == VC_SERVER)
-      {
-        changeState(RADIO_VC_WAIT_RECEIVE);
-        break;
-      }
-
-      //If dio0ISR has fired, a packet has arrived
-      currentMillis = millis();
-      if (transactionComplete == true)
-      {
-        //Decode the received datagram
-        PacketType packetType = rcvDatagram();
-
-        //Process the received datagram
-        if ((packetType == DATAGRAM_VC_HEARTBEAT) && (rxSrcVc == VC_SERVER))
-        {
-          vcReceiveHeartbeat(millis() - currentMillis);
-          changeState(RADIO_VC_WAIT_RECEIVE);
-        }
-        else
-          //Ignore this datagram
-          triggerEvent(TRIGGER_BAD_PACKET);
-      }
-      break;
-
-    //====================
     //Wait for the transmission to complete
     //====================
     case RADIO_VC_WAIT_TX_DONE:
@@ -2237,7 +2205,7 @@ void updateRadioState()
             //and the radios loose communications because they are hopping at different
             //times.
             serverLinkBroken = true;
-            changeState(RADIO_VC_WAIT_SERVER);
+            changeState(RADIO_MP_BEGIN_SCAN);
           }
 
           //Break the link

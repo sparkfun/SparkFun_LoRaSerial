@@ -35,7 +35,6 @@ typedef enum
   RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,
 
   //Virtual-Circuit states
-  RADIO_VC_WAIT_SERVER,
   RADIO_VC_WAIT_TX_DONE,
   RADIO_VC_WAIT_RECEIVE,
 
@@ -97,7 +96,6 @@ const RADIO_STATE_ENTRY radioStateTable[] =
 
   //Virtual circuit states
   //    State                           RX      Name                              Description
-  {RADIO_VC_WAIT_SERVER,                 1, "VC_WAIT_SERVER",                 "VC: Wait for the server"},         //26
   {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "VC: Wait for TX done"},            //27
   {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "VC: Wait for receive"},            //28
 };
