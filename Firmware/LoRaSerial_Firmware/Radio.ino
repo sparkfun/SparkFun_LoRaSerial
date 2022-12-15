@@ -2695,7 +2695,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
       (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
       && (txDestVc != VC_BROADCAST)
       && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].vcState == VC_STATE_LINK_DOWN)
-      && (radioState != RADIO_SERVER_SCANNING)
+      && (radioState != RADIO_DISCOVER_SCANNING)
     )
   )
   {
