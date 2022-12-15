@@ -1697,6 +1697,9 @@ void updateRadioState()
     //Wait for a HEARTBEAT from the server
     //====================
     case RADIO_VC_WAIT_SERVER:
+      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+        hopChannel();
+
       if (myVc == VC_SERVER)
       {
         changeState(RADIO_VC_WAIT_RECEIVE);
