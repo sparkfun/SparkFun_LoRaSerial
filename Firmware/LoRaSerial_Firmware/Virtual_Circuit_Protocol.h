@@ -145,6 +145,7 @@ typedef enum
   VC_STATE_WAIT_FOR_ACK1 ,//3: PING sent, waiting for ACK1
   VC_STATE_WAIT_FOR_ACK2 ,//4: ACK1 sent, waiting for ACK2
   VC_STATE_CONNECTED,     //5: ACK2 received, ACKs cleared, ready to send data
+  VC_STATE_NEW_CLIENT,    //6: A server received a PING from a previously unknown client
 
   //Insert new states before this line
   VC_STATE_MAX
@@ -172,8 +173,8 @@ typedef struct _VC_DATA_ACK_NACK_MESSAGE
 const char * const vcStateNames[] =
 { //   0            1
   "LINK-DOWN", "LINK-ALIVE",
-  //   2            3            4            5
-  "SEND-PING", "WAIT-ACK1", "WAIT-ACK2", "CONNECTED",
+  //   2            3            4            5            6
+  "SEND-PING", "WAIT-ACK1", "WAIT-ACK2", "CONNECTED", "NEW-CLIENT",
 };
 #endif  //ADD_VC_STATE_NAMES_TABLE
 

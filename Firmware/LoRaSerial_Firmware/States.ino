@@ -2677,12 +2677,18 @@ void vcChangeState(int8_t vcIndex, uint8_t state)
         systemPrint(vcIndex);
         systemPrintln(" ALIVE =--=--=-");
       }
+      else if (state == VC_STATE_NEW_CLIENT)
+      {
+        systemPrint("-=--=--=- VC ");
+        systemPrint(vcIndex);
+        systemPrintln(" NEW CLIENT =--=--=-");
+      }
       outputSerialData(true);
     }
 
     //Determine if the VC is connecting
     vcBit = 1 << vcIndex;
-    if ((state > VC_STATE_LINK_ALIVE) && (state < VC_STATE_CONNECTED))
+    if (state == VC_STATE_NEW_CLIENT)
       vcConnecting |= vcBit;
     else
       vcConnecting &= ~vcBit;
