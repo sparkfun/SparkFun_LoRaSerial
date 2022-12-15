@@ -1115,8 +1115,6 @@ void updateRadioState()
               {
                 sf6ExpectedSize = MAX_PACKET_SIZE; //Tell SF6 to return to max packet length
                 changeState(RADIO_VC_WAIT_TX_DONE);
-                vcZeroAcks(VC_SERVER);
-                vcChangeState(VC_SERVER, VC_STATE_CONNECTED);
               }
             }
             else
@@ -1706,7 +1704,7 @@ void updateRadioState()
       {
         transactionComplete = false;
 
-        //Indicate that the receive is complete
+        //Indicate that the transmission is complete
         triggerEvent(TRIGGER_VC_TX_DONE);
 
         //Start the receive operation
@@ -1801,10 +1799,29 @@ void updateRadioState()
 
           //Second step in the 3-way handshake, received PING, respond with ACK1
           case DATAGRAM_PING:
-            if (xmitVcAck1(rxSrcVc))
-              changeState(RADIO_VC_WAIT_TX_DONE);
-            vcChangeState(rxSrcVc, VC_STATE_WAIT_FOR_ACK2);
-            virtualCircuitList[rxSrcVc].lastPingMillis = datagramTimer;
+            //Only respond to pings if we are server
+            if (settings.server == true)
+            {
+              if (rxSrcVc == VC_UNASSIGNED)
+              {
+                //We received a ping from a previously unknown client
+                if (xmitVcAck1(rxSrcVc))
+                {
+                  triggerEvent(TRIGGER_MP_SEND_ACK_FOR_PING);
+                  changeState(RADIO_VC_WAIT_TX_DONE);
+                }
+              }
+              else
+              {
+                //Known client
+                if (xmitVcAck1(rxSrcVc))
+                  changeState(RADIO_VC_WAIT_TX_DONE);
+
+                vcChangeState(rxSrcVc, VC_STATE_WAIT_FOR_ACK2);
+                virtualCircuitList[rxSrcVc].lastPingMillis = datagramTimer;
+              }
+            }
+
             break;
 
           //Third step in the 3-way handshake, received ACK1, respond with ACK2
