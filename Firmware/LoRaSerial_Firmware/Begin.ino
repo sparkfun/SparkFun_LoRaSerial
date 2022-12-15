@@ -34,6 +34,7 @@ void beginLoRa()
   {
     systemPrint("Radio init failed with code: ");
     systemPrintln(state);
+    outputSerialData(true);
     while (1)
     {
       petWDT();
