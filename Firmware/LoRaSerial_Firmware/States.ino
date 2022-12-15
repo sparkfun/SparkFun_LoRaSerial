@@ -1038,7 +1038,7 @@ void updateRadioState()
       break;
 
     //====================
-    //Walk through channel table transmitting a Ping and looking for an Ack
+    //Walk through channel table backwards, transmitting a Ping and looking for an ACK1
     //====================
     case RADIO_MP_SCANNING:
       if (transactionComplete)
@@ -1080,16 +1080,21 @@ void updateRadioState()
           case DATAGRAM_REMOTE_COMMAND:
           case DATAGRAM_REMOTE_COMMAND_RESPONSE:
             //We should not be receiving these datagrams, but if we do, just ignore
-            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
             triggerEvent(TRIGGER_BAD_PACKET);
             break;
 
           case DATAGRAM_ACK_1:
-            //Server has responded with ack
+            triggerEvent(TRIGGER_LINK_ACK_RECEIVED);
+
+            //Server has responded with ACK
             syncChannelTimer(); //Start and adjust freq hop ISR based on remote's remaining clock
 
-            channelNumber = rxData[0]; //Change to the server's channel number
-            if (settings.debugReceive)
+            if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+              channelNumber = rxVcData[0];
+            else
+              channelNumber = rxData[0]; //Change to the server's channel number
+
+            if (settings.debugSync)
             {
               systemPrint("    Channel Number: ");
               systemPrintln(channelNumber);
@@ -1102,8 +1107,21 @@ void updateRadioState()
 
             lastPacketReceived = millis(); //Reset
 
-            triggerEvent(TRIGGER_LINK_ACK_RECEIVED);
-            changeState(RADIO_MP_STANDBY);
+            if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+            {
+              //Acknowledge the ACK1
+              triggerEvent(TRIGGER_SEND_ACK2);
+              if (xmitVcAck2(VC_SERVER))
+              {
+                sf6ExpectedSize = MAX_PACKET_SIZE; //Tell SF6 to return to max packet length
+                changeState(RADIO_VC_WAIT_TX_DONE);
+                vcZeroAcks(VC_SERVER);
+                vcChangeState(VC_SERVER, VC_STATE_CONNECTED);
+              }
+            }
+            else
+              changeState(RADIO_MP_STANDBY);
+
             break;
         }
       }
@@ -1141,8 +1159,19 @@ void updateRadioState()
           }
 
           //Send ping
-          if (xmitDatagramMpPing() == true)
-            changeState(RADIO_MP_WAIT_TX_PING_DONE);
+          if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+          {
+            //Send the PING datagram, first part of the 3-way handshake
+            if (xmitVcPing(VC_SERVER))
+            {
+              changeState(RADIO_MP_WAIT_TX_PING_DONE);
+            }
+          }
+          else
+          {
+            if (xmitDatagramMpPing() == true)
+              changeState(RADIO_MP_WAIT_TX_PING_DONE);
+          }
         }
       }
 
