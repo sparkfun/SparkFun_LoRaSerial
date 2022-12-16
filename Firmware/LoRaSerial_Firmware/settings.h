@@ -108,33 +108,28 @@ const RADIO_STATE_ENTRY radioStateTable[] =
 //Possible types of packets received
 typedef enum
 {
-  //Packet types must start at zero
-  //Point-to-Point training
-  DATAGRAM_P2P_TRAINING_PING = 0,   // 0
-  DATAGRAM_P2P_TRAINING_PARAMS,     // 1
-
   //Link establishment handshake
-  DATAGRAM_PING,                    // 2
-  DATAGRAM_ACK_1,                   // 3
-  DATAGRAM_ACK_2,                   // 4
+  DATAGRAM_PING = 0,                // 0
+  DATAGRAM_ACK_1,                   // 1
+  DATAGRAM_ACK_2,                   // 2
 
   //Point-to-Point data exchange
-  DATAGRAM_DATA,                    // 5
-  DATAGRAM_DATA_ACK,                // 6
-  DATAGRAM_HEARTBEAT,               // 7
-  DATAGRAM_REMOTE_COMMAND,          // 8
-  DATAGRAM_REMOTE_COMMAND_RESPONSE, // 9
+  DATAGRAM_DATA,                    // 3
+  DATAGRAM_DATA_ACK,                // 4
+  DATAGRAM_HEARTBEAT,               // 5
+  DATAGRAM_REMOTE_COMMAND,          // 6
+  DATAGRAM_REMOTE_COMMAND_RESPONSE, // 7
 
   //Multi-Point data exchange
-  DATAGRAM_DATAGRAM,                //10
+  DATAGRAM_DATAGRAM,                // 8
 
   //Multi-Point training exchange
-  DATAGRAM_TRAINING_PING,           //11
-  DATAGRAM_TRAINING_PARAMS,         //12
-  DATAGRAM_TRAINING_ACK,            //13
+  DATAGRAM_TRAINING_PING,           // 9
+  DATAGRAM_TRAINING_PARAMS,         //10
+  DATAGRAM_TRAINING_ACK,            //11
 
   //Virtual-Circuit (VC) exchange
-  DATAGRAM_VC_HEARTBEAT,            //14
+  DATAGRAM_VC_HEARTBEAT,            //12
 
   //Add new datagram types before this line
   MAX_DATAGRAM_TYPE,
@@ -150,17 +145,15 @@ typedef enum
 } PacketType;
 
 const char * const radioDatagramType[] =
-{ //       0                    1
-  "P2P_TRAINING_PING", "P2P_TRAINING_PARAMS",
-  // 2       3        4
+{ // 0       1        2
   "PING", "ACK-1", "ACK-2",
-  // 5        6           7            8           9
+  // 3        4           5            6           7
   "DATA", "DATA-ACK", "HEARTBEAT", "RMT-CMD", "RMT_RESP",
-  //  10
+  //  8
   "DATAGRAM",
-  //     11                12               13
+  //     9                 10               11
   "TRAINING_PING", "TRAINING_PARAMS", "TRAINING_ACK",
-  //    14
+  //    12
   "VC_HEARTBEAT",
 };
 
