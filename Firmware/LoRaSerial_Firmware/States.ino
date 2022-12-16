@@ -1917,179 +1917,157 @@ void updateRadioState()
       //----------
       //Priority 1: Transmit a HEARTBEAT if necessary
       //----------
-      else if (((currentMillis - heartbeatTimer) >= heartbeatRandomTime)
-               && (receiveInProcess() == false))
+      else if (!receiveInProcess())
       {
-        //Send another heartbeat
-        if (xmitVcHeartbeat(myVc, myUniqueId))
+        if (((currentMillis - heartbeatTimer) >= heartbeatRandomTime))
         {
-          if (((uint8_t)myVc) < MAX_VC)
-            virtualCircuitList[myVc].lastTrafficMillis = currentMillis;
-          changeState(RADIO_VC_WAIT_TX_DONE);
-        }
-      }
-
-      //----------
-      //Priority 2: Wait for an outstanding ACK until it is received, don't
-      //transmit any other data
-      //----------
-      else if (ackTimer)
-      {
-        //Verify that the link is still up
-        txDestVc = rexmtTxDestVc;
-        if ((txDestVc != VC_BROADCAST)
-            && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].vcState == VC_STATE_LINK_DOWN))
-        {
-          //Stop the retransmits
-          STOP_ACK_TIMER();
-        }
-
-        //Check for retransmit needed
-        else if ((currentMillis - ackTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
-        {
-          //Determine if another retransmit is allowed
-          if ((!settings.maxResends) || (rexmtFrameSentCount < settings.maxResends))
+          //Send another heartbeat
+          if (xmitVcHeartbeat(myVc, myUniqueId))
           {
-            rexmtFrameSentCount++;
+            if (((uint8_t)myVc) < MAX_VC)
+              virtualCircuitList[myVc].lastTrafficMillis = currentMillis;
+            changeState(RADIO_VC_WAIT_TX_DONE);
+          }
+        }
 
-            //Restore the message for retransmission
-            RESTORE_TX_BUFFER();
-            if (settings.debugDatagrams)
+        //----------
+        //Priority 2: Wait for an outstanding ACK until it is received, don't
+        //transmit any other data
+        //----------
+        else if (ackTimer)
+        {
+          //Verify that the link is still up
+          txDestVc = rexmtTxDestVc;
+          if ((txDestVc != VC_BROADCAST)
+              && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].vcState == VC_STATE_LINK_DOWN))
+          {
+            //Stop the retransmits
+            STOP_ACK_TIMER();
+          }
+
+          //Check for retransmit needed
+          else if ((currentMillis - ackTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+          {
+            //Determine if another retransmit is allowed
+            if ((!settings.maxResends) || (rexmtFrameSentCount < settings.maxResends))
             {
-              systemPrintTimestamp();
-              systemPrint("TX: Retransmit ");
-              systemPrint(frameSentCount);
-              systemPrint(", ");
-              systemPrint(radioDatagramType[txControl.datagramType]);
-              switch (txControl.datagramType)
+              rexmtFrameSentCount++;
+
+              //Restore the message for retransmission
+              RESTORE_TX_BUFFER();
+              if (settings.debugDatagrams)
               {
-                default:
-                  systemPrintln();
-                  break;
+                systemPrintTimestamp();
+                systemPrint("TX: Retransmit ");
+                systemPrint(frameSentCount);
+                systemPrint(", ");
+                systemPrint(radioDatagramType[txControl.datagramType]);
+                switch (txControl.datagramType)
+                {
+                  default:
+                    systemPrintln();
+                    break;
 
-                case DATAGRAM_DATA:
-                case DATAGRAM_DATA_ACK:
-                case DATAGRAM_REMOTE_COMMAND:
-                case DATAGRAM_REMOTE_COMMAND_RESPONSE:
-                case DATAGRAM_HEARTBEAT:
-                  systemPrint(" (ACK #");
-                  systemPrint(txControl.ackNumber);
-                  systemPrint(")");
-                  systemPrintln();
-                  break;
+                  case DATAGRAM_DATA:
+                  case DATAGRAM_DATA_ACK:
+                  case DATAGRAM_REMOTE_COMMAND:
+                  case DATAGRAM_REMOTE_COMMAND_RESPONSE:
+                  case DATAGRAM_HEARTBEAT:
+                    systemPrint(" (ACK #");
+                    systemPrint(txControl.ackNumber);
+                    systemPrint(")");
+                    systemPrintln();
+                    break;
+                }
+                outputSerialData(true);
               }
-              outputSerialData(true);
+
+              //Retransmit the packet
+              if (retransmitDatagram(((uint8_t)txDestVc <= MAX_VC) ? &virtualCircuitList[txDestVc] : NULL))
+                changeState(RADIO_VC_WAIT_TX_DONE);
+
+              START_ACK_TIMER();
+              lostFrames++;
             }
-
-            //Retransmit the packet
-            if (retransmitDatagram(((uint8_t)txDestVc <= MAX_VC) ? &virtualCircuitList[txDestVc] : NULL))
-              changeState(RADIO_VC_WAIT_TX_DONE);
-
-            START_ACK_TIMER();
-            lostFrames++;
-          }
-          else
-          {
-            //Failed to reach the other system, break the link
-            vcBreakLink(txDestVc);
+            else
+            {
+              //Failed to reach the other system, break the link
+              vcBreakLink(txDestVc);
+            }
           }
         }
-      }
 
-      //----------
-      //Priority 3: Send the entire command response, toggle between waiting for
-      //ACK above and transmitting the command response
-      //----------
-      else if (availableTXCommandBytes())
-      {
-        //Send the next portion of the command response
-        vcHeader = (VC_RADIO_MESSAGE_HEADER *)&outgoingPacket[headerBytes];
-        endOfTxData += VC_RADIO_HEADER_BYTES;
-        vcHeader->destVc = rmtCmdVc;
-        vcHeader->srcVc = myVc;
-        vcHeader->length = readyOutgoingCommandPacket(VC_RADIO_HEADER_BYTES)
-                           + VC_RADIO_HEADER_BYTES;
-        if (xmitDatagramP2PCommandResponse())
-          changeState(RADIO_VC_WAIT_TX_DONE);
+/*
+        //----------
+        //Priority 4: Walk through the 3-way handshake
+        //----------
+        else if (vcConnecting)
+        {
+          for (index = 0; index < MAX_VC; index++)
+          {
+            if (receiveInProcess())
+              break;
 
-        START_ACK_TIMER();
+            //Determine the first VC that is walking through connections
+            if (vcConnecting & (1 << index))
+            {
+              //Determine if PING needs to be sent
+              if (virtualCircuitList[index].vcState == VC_STATE_SEND_PING)
+              {
+                //Send the PING datagram, first part of the 3-way handshake
+                if (xmitVcPing(index))
+                {
+                  vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
+                  virtualCircuitList[index].lastPingMillis = datagramTimer;
+                  changeState(RADIO_VC_WAIT_TX_DONE);
+                }
+              }
 
-        //Save the message for retransmission
-        SAVE_TX_BUFFER();
-        rexmtTxDestVc = txDestVc;
-      }
+              //The ACK1 is handled with the receive code
+              //Check for a timeout waiting for the ACK1
+              else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK1)
+              {
+                if ((currentMillis - virtualCircuitList[index].lastPingMillis)
+                    >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+                {
+                  //Retransmit the PING
+                  if (xmitVcPing(index))
+                  {
+                    vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
+                    virtualCircuitList[index].lastPingMillis = datagramTimer;
+                    changeState(RADIO_VC_WAIT_TX_DONE);
+                  }
+                }
+              }
 
-      //----------
-      //Priority 4: Walk through the 3-way handshake
-      //----------
-      //      else if (vcConnecting)
-      //      {
-      //        for (index = 0; index < MAX_VC; index++)
-      //        {
-      //          if (receiveInProcess())
-      //            break;
-      //
-      //          //Determine the first VC that is walking through connections
-      //          if (vcConnecting & (1 << index))
-      //          {
-      //            //Determine if PING needs to be sent
-      //            if (virtualCircuitList[index].vcState == VC_STATE_SEND_PING)
-      //            {
-      //              //Send the PING datagram, first part of the 3-way handshake
-      //              if (xmitVcPing(index))
-      //              {
-      //                vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
-      //                virtualCircuitList[index].lastPingMillis = datagramTimer;
-      //                changeState(RADIO_VC_WAIT_TX_DONE);
-      //              }
-      //            }
-      //
-      //            //The ACK1 is handled with the receive code
-      //            //Check for a timeout waiting for the ACK1
-      //            else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK1)
-      //            {
-      //              if ((currentMillis - virtualCircuitList[index].lastPingMillis)
-      //                  >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
-      //              {
-      //                //Retransmit the PING
-      //                if (xmitVcPing(index))
-      //                {
-      //                  vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
-      //                  virtualCircuitList[index].lastPingMillis = datagramTimer;
-      //                  changeState(RADIO_VC_WAIT_TX_DONE);
-      //                }
-      //              }
-      //            }
-      //
-      //            //The ACK2 is handled with the receive code
-      //            //Check for a timeout waiting for the ACK2
-      //            else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK2)
-      //            {
-      //              if ((currentMillis - virtualCircuitList[index].lastPingMillis)
-      //                  >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
-      //              {
-      //                //Retransmit the ACK1
-      //                if (xmitVcAck1(index))
-      //                {
-      //                  vcChangeState(index, VC_STATE_WAIT_FOR_ACK2);
-      //                  virtualCircuitList[index].lastPingMillis = datagramTimer;
-      //                  changeState(RADIO_VC_WAIT_TX_DONE);
-      //                }
-      //              }
-      //            }
-      //
-      //            //Work on only one connection at a time
-      //            break;
-      //          }
-      //        }
-      //      }
+              //The ACK2 is handled with the receive code
+              //Check for a timeout waiting for the ACK2
+              else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK2)
+              {
+                if ((currentMillis - virtualCircuitList[index].lastPingMillis)
+                    >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+                {
+                  //Retransmit the ACK1
+                  if (xmitVcAck1(index))
+                  {
+                    vcChangeState(index, VC_STATE_WAIT_FOR_ACK2);
+                    virtualCircuitList[index].lastPingMillis = datagramTimer;
+                    changeState(RADIO_VC_WAIT_TX_DONE);
+                  }
+                }
+              }
 
-      //----------
-      //Lowest Priority: Check for data to send
-      //----------
-      else if (vcSerialMessageReceived())
-      {
-        if (receiveInProcess() == false)
+              //Work on only one connection at a time
+              break;
+            }
+          }
+        }
+*/
+
+        //----------
+        //Lowest Priority: Check for data to send
+        //----------
+        else if (vcSerialMessageReceived())
         {
           //No need to add the VC header since the header is in the radioTxBuffer
           //Get the VC header
