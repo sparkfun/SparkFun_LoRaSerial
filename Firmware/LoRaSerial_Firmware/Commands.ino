@@ -332,9 +332,9 @@ bool commandAT(const char * commandString)
           systemPrintln(vc->rmtTxAckNumber);
           systemPrint("        Last TX ACK number: ");
           systemPrintln(vc->txAckNumber);
-          systemPrint("        transmitTimer: ");
-          if (transmitTimer)
-            systemPrintTimestamp(transmitTimer);
+          systemPrint("        ackTimer: ");
+          if (ackTimer)
+            systemPrintTimestamp(ackTimer);
           else
             systemPrint("Not Running");
           systemPrintln();
@@ -342,13 +342,13 @@ bool commandAT(const char * commandString)
         else if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
         {
           systemPrintln("    ACK Management");
-          systemPrint("        vcAackTimer: ");
-          if (vcAckTimer)
+          systemPrint("        ackTimer: ");
+          if (ackTimer)
           {
             systemPrint("VC ");
             systemPrint(txDestVc);
             systemPrint(", ");
-            systemPrintTimestamp(vcAckTimer);
+            systemPrintTimestamp(ackTimer);
             systemPrintln();
           }
           else
@@ -610,9 +610,9 @@ bool commandAT(const char * commandString)
           systemPrintln(vc->txAckNumber);
           if (txDestVc == cmdVc)
           {
-            systemPrint("        vcAackTimer: ");
-            if (vcAckTimer)
-              systemPrintTimestamp(vcAckTimer);
+            systemPrint("        ackTimer: ");
+            if (ackTimer)
+              systemPrintTimestamp(ackTimer);
             else
               systemPrint("Not Running");
             systemPrintln();

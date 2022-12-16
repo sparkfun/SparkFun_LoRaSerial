@@ -85,8 +85,8 @@ void updateRadioState()
 
       returnToReceiving(); //Start receiving
 
-      //Stop the transmit timer
-      transmitTimer = 0;
+      //Stop the ACK timer
+      ackTimer = 0;
 
       //Start the link between the radios
       if (settings.operatingMode == MODE_POINT_TO_POINT)
@@ -694,7 +694,7 @@ void updateRadioState()
               if (xmitDatagramP2PData() == true)
               {
                 setHeartbeatLong(); //We're sending data, so don't be the first to send next heartbeat
-                transmitTimer = datagramTimer;
+                ackTimer = datagramTimer;
 
                 //Save the previous transmit in case the previous ACK was lost or a
                 //HEARTBEAT must be transmitted.  Restore the buffer when a retransmission
@@ -740,7 +740,7 @@ void updateRadioState()
           {
             setHeartbeatLong(); //We're sending a heartbeat, so don't be the first to send next heartbeat
 
-            transmitTimer = datagramTimer;
+            ackTimer = datagramTimer;
 
             //Wait for heartbeat to transmit
             changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
@@ -834,8 +834,8 @@ void updateRadioState()
             //The datagram we are expecting
             syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
 
-            //Stop the transmit timer
-            transmitTimer = 0;
+            //Stop the ACK timer
+            ackTimer = 0;
 
             setHeartbeatLong(); //Those who send an ACK have short time to next heartbeat. Those who send a heartbeat or data have long time to next heartbeat.
 
@@ -953,7 +953,7 @@ void updateRadioState()
         breakLink();
 
       //Retransmits are not getting through in a rational time
-      else if (transmitTimer && ((millis() - transmitTimer) >= (P2P_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout)))
+      else if (ackTimer && ((millis() - ackTimer) >= (P2P_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout)))
         //Break the link
         breakLink();
       break;
@@ -1786,7 +1786,7 @@ void updateRadioState()
 
           case DATAGRAM_DATA_ACK:
             vcSendPcAckNack(rexmtTxDestVc, true);
-            vcAckTimer = 0;
+            ackTimer = 0;
             break;
 
           case DATAGRAM_DUPLICATE:
@@ -1926,7 +1926,7 @@ void updateRadioState()
       //Priority 2: Wait for an outstanding ACK until it is received, don't
       //transmit any other data
       //----------
-      else if (vcAckTimer)
+      else if (ackTimer)
       {
         //Verify that the link is still up
         txDestVc = rexmtTxDestVc;
@@ -1934,11 +1934,11 @@ void updateRadioState()
             && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].vcState == VC_STATE_LINK_DOWN))
         {
           //Stop the retransmits
-          vcAckTimer = 0;
+          ackTimer = 0;
         }
 
         //Check for retransmit needed
-        else if ((currentMillis - vcAckTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+        else if ((currentMillis - ackTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
         {
           //Determine if another retransmit is allowed
           if ((!settings.maxResends) || (rexmtFrameSentCount < settings.maxResends))
@@ -1978,10 +1978,10 @@ void updateRadioState()
             if (retransmitDatagram(((uint8_t)txDestVc <= MAX_VC) ? &virtualCircuitList[txDestVc] : NULL))
               changeState(RADIO_VC_WAIT_TX_DONE);
 
-            //Since vcAckTimer is off when equal to zero, force it to a non-zero value
-            vcAckTimer = datagramTimer;
-            if (!vcAckTimer)
-              vcAckTimer = 1;
+            //Since ackTimer is off when equal to zero, force it to a non-zero value
+            ackTimer = datagramTimer;
+            if (!ackTimer)
+              ackTimer = 1;
             lostFrames++;
           }
           else
@@ -2008,10 +2008,10 @@ void updateRadioState()
         if (xmitDatagramP2PCommandResponse())
           changeState(RADIO_VC_WAIT_TX_DONE);
 
-        //Since vcAckTimer is off when equal to zero, force it to a non-zero value
-        vcAckTimer = datagramTimer;
-        if (!vcAckTimer)
-          vcAckTimer = 1;
+        //Since ackTimer is off when equal to zero, force it to a non-zero value
+        ackTimer = datagramTimer;
+        if (!ackTimer)
+          ackTimer = 1;
 
         //Save the message for retransmission
         SAVE_TX_BUFFER();
@@ -2114,10 +2114,10 @@ void updateRadioState()
               if (xmitDatagramP2PData() == true)
                 changeState(RADIO_VC_WAIT_TX_DONE);
 
-              //Since vcAckTimer is off when equal to zero, force it to a non-zero value
-              vcAckTimer = datagramTimer;
-              if (!vcAckTimer)
-                vcAckTimer = 1;
+              //Since ackTimer is off when equal to zero, force it to a non-zero value
+              ackTimer = datagramTimer;
+              if (!ackTimer)
+                ackTimer = 1;
 
               //Save the message for retransmission
               SAVE_TX_BUFFER();
@@ -2186,10 +2186,10 @@ void updateRadioState()
               if (xmitDatagramP2PCommand() == true)
                 changeState(RADIO_VC_WAIT_TX_DONE);
 
-              //Since vcAckTimer is off when equal to zero, force it to a non-zero value
-              vcAckTimer = datagramTimer;
-              if (!vcAckTimer)
-                vcAckTimer = 1;
+              //Since ackTimer is off when equal to zero, force it to a non-zero value
+              ackTimer = datagramTimer;
+              if (!ackTimer)
+                ackTimer = 1;
 
               //Save the message for retransmission
               SAVE_TX_BUFFER();
@@ -2575,8 +2575,8 @@ void breakLink()
   }
   triggerEvent(TRIGGER_RADIO_RESET);
 
-  //Stop the transmit timer
-  transmitTimer = 0;
+  //Stop the ACK timer
+  ackTimer = 0;
 
   //Flush the buffers
   resetSerial();
@@ -2601,8 +2601,8 @@ void enterLinkUp()
   //Discard any previous data
   discardPreviousData();
 
-  //Stop the transmit timer
-  transmitTimer = 0;
+  //Stop the ACK timer
+  ackTimer = 0;
 
   //Mark start time for uptime calculation
   lastLinkUpTime = millis();
@@ -2712,9 +2712,9 @@ void vcBreakLink(int8_t vcIndex)
 
   //If waiting for an ACK and the link breaks, stop the retransmissions
   //by stopping the ACK timer.
-  if (vcAckTimer && (txDestVc == vcIndex))
+  if (ackTimer && (txDestVc == vcIndex))
   {
-    vcAckTimer = 0;
+    ackTimer = 0;
     vcSendPcAckNack(vcIndex, false);
   }
 
