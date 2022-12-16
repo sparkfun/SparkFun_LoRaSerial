@@ -18,7 +18,7 @@
   {                                                                             \
     /*Compute the frequency correction*/                                        \
     frequencyCorrection += radio.getFrequencyError() / 1000000.0;               \
-                                                                                \
+    \
     /*Send the ACK to the remote system*/                                       \
     triggerEvent(trigger);                                                      \
     if (xmitDatagramP2PAck() == true)                                           \
@@ -33,7 +33,7 @@
   {                                                                             \
     /*Start the ACK timer*/                                                     \
     ackTimer = datagramTimer;                                                   \
-                                                                                \
+    \
     /*Since ackTimer is off when equal to zero, force it to a non-zero value*/  \
     if (!ackTimer)                                                              \
       ackTimer = 1;                                                             \
@@ -1282,8 +1282,11 @@ void updateRadioState()
             break;
 
           case DATAGRAM_HEARTBEAT:
-            //Received data or heartbeat. Sync clock, do not ack.
-            syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
+            //Received heartbeat - do not ack.
+
+            //Sync clock if server sent the heartbeat
+            if (settings.server == false)
+              syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
 
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
@@ -1293,8 +1296,11 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DATA:
-            //Received data or heartbeat. Sync clock, do not ack.
-            syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
+            //Received data - do not ack.
+
+            //Sync clock if server sent the datagram
+            if (settings.server == false)
+              syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
 
             setHeartbeatMultipoint(); //We're sync'd so reset heartbeat timer
 
@@ -1316,20 +1322,10 @@ void updateRadioState()
       {
         heartbeatTimeout = ((millis() - heartbeatTimer) > heartbeatRandomTime);
 
-        //Check for time to send serial data
-        if (availableRadioTXBytes() && (processWaitingSerial(heartbeatTimeout) == true))
-        {
-          triggerEvent(TRIGGER_MP_DATA_PACKET);
-          if (xmitDatagramMpData() == true)
-          {
-            setHeartbeatMultipoint(); //We're sending something with clock data so reset heartbeat timer
-            changeState(RADIO_MP_WAIT_TX_DONE);
-          }
-        }
-
         //Only the server transmits heartbeats
-        else if (settings.server == true)
+        if (settings.server == true)
         {
+
           if (heartbeatTimeout)
           {
             triggerEvent(TRIGGER_HEARTBEAT);
@@ -1338,6 +1334,17 @@ void updateRadioState()
               setHeartbeatMultipoint(); //We're sending something with clock data so reset heartbeat timer
               changeState(RADIO_MP_WAIT_TX_DONE); //Wait for heartbeat to transmit
             }
+          }
+        }
+
+        //Check for time to send serial data
+        else if (availableRadioTXBytes() && (processWaitingSerial(heartbeatTimeout) == true))
+        {
+          triggerEvent(TRIGGER_MP_DATA_PACKET);
+          if (xmitDatagramMpData() == true)
+          {
+            setHeartbeatMultipoint(); //We're sending something with clock data so reset heartbeat timer
+            changeState(RADIO_MP_WAIT_TX_DONE);
           }
         }
 
@@ -1997,72 +2004,72 @@ void updateRadioState()
           }
         }
 
-/*
-        //----------
-        //Priority 4: Walk through the 3-way handshake
-        //----------
-        else if (vcConnecting)
-        {
-          for (index = 0; index < MAX_VC; index++)
-          {
-            if (receiveInProcess())
-              break;
-
-            //Determine the first VC that is walking through connections
-            if (vcConnecting & (1 << index))
-            {
-              //Determine if PING needs to be sent
-              if (virtualCircuitList[index].vcState == VC_STATE_SEND_PING)
-              {
-                //Send the PING datagram, first part of the 3-way handshake
-                if (xmitVcPing(index))
+        /*
+                //----------
+                //Priority 4: Walk through the 3-way handshake
+                //----------
+                else if (vcConnecting)
                 {
-                  vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
-                  virtualCircuitList[index].lastPingMillis = datagramTimer;
-                  changeState(RADIO_VC_WAIT_TX_DONE);
-                }
-              }
-
-              //The ACK1 is handled with the receive code
-              //Check for a timeout waiting for the ACK1
-              else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK1)
-              {
-                if ((currentMillis - virtualCircuitList[index].lastPingMillis)
-                    >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
-                {
-                  //Retransmit the PING
-                  if (xmitVcPing(index))
+                  for (index = 0; index < MAX_VC; index++)
                   {
-                    vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
-                    virtualCircuitList[index].lastPingMillis = datagramTimer;
-                    changeState(RADIO_VC_WAIT_TX_DONE);
+                    if (receiveInProcess())
+                      break;
+
+                    //Determine the first VC that is walking through connections
+                    if (vcConnecting & (1 << index))
+                    {
+                      //Determine if PING needs to be sent
+                      if (virtualCircuitList[index].vcState == VC_STATE_SEND_PING)
+                      {
+                        //Send the PING datagram, first part of the 3-way handshake
+                        if (xmitVcPing(index))
+                        {
+                          vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
+                          virtualCircuitList[index].lastPingMillis = datagramTimer;
+                          changeState(RADIO_VC_WAIT_TX_DONE);
+                        }
+                      }
+
+                      //The ACK1 is handled with the receive code
+                      //Check for a timeout waiting for the ACK1
+                      else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK1)
+                      {
+                        if ((currentMillis - virtualCircuitList[index].lastPingMillis)
+                            >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+                        {
+                          //Retransmit the PING
+                          if (xmitVcPing(index))
+                          {
+                            vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
+                            virtualCircuitList[index].lastPingMillis = datagramTimer;
+                            changeState(RADIO_VC_WAIT_TX_DONE);
+                          }
+                        }
+                      }
+
+                      //The ACK2 is handled with the receive code
+                      //Check for a timeout waiting for the ACK2
+                      else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK2)
+                      {
+                        if ((currentMillis - virtualCircuitList[index].lastPingMillis)
+                            >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+                        {
+                          //Retransmit the ACK1
+                          if (xmitVcAck1(index))
+                          {
+                            vcChangeState(index, VC_STATE_WAIT_FOR_ACK2);
+                            virtualCircuitList[index].lastPingMillis = datagramTimer;
+                            changeState(RADIO_VC_WAIT_TX_DONE);
+                          }
+                        }
+                      }
+
+                      //Work on only one connection at a time
+                      break;
+                    }
                   }
                 }
-              }
-
-              //The ACK2 is handled with the receive code
-              //Check for a timeout waiting for the ACK2
-              else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK2)
-              {
-                if ((currentMillis - virtualCircuitList[index].lastPingMillis)
-                    >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
-                {
-                  //Retransmit the ACK1
-                  if (xmitVcAck1(index))
-                  {
-                    vcChangeState(index, VC_STATE_WAIT_FOR_ACK2);
-                    virtualCircuitList[index].lastPingMillis = datagramTimer;
-                    changeState(RADIO_VC_WAIT_TX_DONE);
-                  }
-                }
-              }
-
-              //Work on only one connection at a time
-              break;
-            }
-          }
-        }
-*/
+        */
 
         //----------
         //Lowest Priority: Check for data to send
