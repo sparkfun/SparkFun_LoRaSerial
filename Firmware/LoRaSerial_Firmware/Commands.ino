@@ -1118,7 +1118,7 @@ bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer
 
   do {
     //Is this a display request
-    if (strcmp(buffer, "?") == 0)
+    if ((*buffer == 0) || (strcmp(buffer, "?") == 0))
     {
       commandDisplay(command);
       return true;
