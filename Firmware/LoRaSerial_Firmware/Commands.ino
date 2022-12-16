@@ -1111,6 +1111,7 @@ bool commandSetByName(const char * commandString)
 //Set or display the command
 bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer)
 {
+  const char * digit;
   double doubleSettingValue;
   uint32_t settingValue;
   bool valid;
@@ -1125,6 +1126,23 @@ bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer
 
     //Make sure the command has the proper syntax
     if (*buffer++ != '=')
+      break;
+
+    //Verify the input value
+    for (digit = buffer; *digit != 0; digit++)
+      if ((*digit < '0') || (*digit > '9'))
+      {
+        //Floating point values may contain a decimal point
+        if ((command->type == TYPE_FLOAT) && (*digit == '.'))
+          continue;
+
+        //Hexadecimal values may contain A through F
+        if ((toupper(*digit) >= 'A') && (toupper(*digit) <= 'F')
+            && (command->type == TYPE_KEY))
+          continue;
+        break;
+      }
+    if (*digit)
       break;
 
     //Get the value
