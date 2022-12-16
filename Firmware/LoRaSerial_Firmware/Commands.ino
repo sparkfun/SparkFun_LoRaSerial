@@ -318,6 +318,8 @@ bool commandAT(const char * commandString)
         systemPrintln(insufficientSpace);
         systemPrint("        Net ID Mismatch: ");
         systemPrintln(netIdMismatch);
+        systemPrint("        Link failures: ");
+        systemPrintln(linkFailures);
         outputSerialData(true);
         petWDT();
 
