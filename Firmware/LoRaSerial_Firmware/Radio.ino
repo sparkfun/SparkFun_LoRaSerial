@@ -1282,7 +1282,7 @@ bool xmitVcAckFrame(int8_t destVc)
   radioCallHistory[RADIO_CALL_xmitVcAckFrame] = millis();
 
   vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
-  vcHeader->length = VC_RADIO_HEADER_BYTES + CHANNEL_TIMER_BYTES;
+  vcHeader->length = VC_RADIO_HEADER_BYTES;
   vcHeader->destVc = destVc;
   vcHeader->srcVc = myVc;
   endOfTxData += VC_RADIO_HEADER_BYTES;
@@ -1299,14 +1299,16 @@ bool xmitVcAckFrame(int8_t destVc)
   */
 
   //Finish building the ACK frame
-  return xmitDatagramP2PAck();
+  txControl.datagramType = DATAGRAM_DATA_ACK;
+  return (transmitDatagram());
 }
 
-bool xmitVcPing(int8_t destVc)
+//Build and transmit the UNKNOWN_ACKS frame, first frame in 3-way ACKs handshake
+bool xmitVcUnknownAcks(int8_t destVc)
 {
   VC_RADIO_MESSAGE_HEADER * vcHeader;
 
-  radioCallHistory[RADIO_CALL_xmitVcPing] = millis();
+  radioCallHistory[RADIO_CALL_xmitVcUnknownAcks] = millis();
 
   vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
   vcHeader->length = VC_RADIO_HEADER_BYTES;
@@ -1325,28 +1327,22 @@ bool xmitVcPing(int8_t destVc)
       +----------+---------+----------+------------+----------+---------+----------+
   */
 
-  txControl.datagramType = DATAGRAM_PING;
+  txControl.datagramType = DATAGRAM_VC_UNKNOWN_ACKS;
   return (transmitDatagram());
 }
 
-//ACK packet sent by server in response the client ping, includes channel number
-//During discovery scanning, it's possible for the client to get an ACK but be on an adjacent channel
-//The channel number ensures that the client gets the next hop correct
-bool xmitVcAck1(int8_t destVc)
+//Build and transmit the SYNC_ACKS frame, second frame in 3-way ACKs handshake
+bool xmitVcSyncAcks(int8_t destVc)
 {
   VC_RADIO_MESSAGE_HEADER * vcHeader;
 
-  radioCallHistory[RADIO_CALL_xmitVcAck1] = millis();
+  radioCallHistory[RADIO_CALL_xmitVcSyncAcks] = millis();
 
   vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
   vcHeader->length = VC_RADIO_HEADER_BYTES;
   vcHeader->destVc = destVc;
   vcHeader->srcVc = myVc;
   endOfTxData += VC_RADIO_HEADER_BYTES;
-
-  memcpy(endOfTxData, &channelNumber, sizeof(channelNumber));
-  endOfTxData += sizeof(channelNumber);
-  vcHeader->length++;
 
   if(settings.debugSync)
   {
@@ -1356,25 +1352,26 @@ bool xmitVcAck1(int8_t destVc)
   }
 
   /*
-                                                                   endOfTxData ---.
-                                                                                  |
-                                                                                  V
-      +----------+---------+----------+------------+----------+---------+---------+----------+
-      | Optional |         | Optional | Optional   |          |         | Channel | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | DestAddr | SrcAddr | Number  | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | 1 byte  | n Bytes  |
-      +----------+---------+----------+------------+----------+---------+---------+----------+
+                                                         endOfTxData ---.
+                                                                        |
+                                                                        V
+      +----------+---------+----------+------------+----------+---------+----------+
+      | Optional |         | Optional | Optional   |          |         | Optional |
+      | NET ID   | Control | C-Timer  | SF6 Length | DestAddr | SrcAddr | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | n Bytes  |
+      +----------+---------+----------+------------+----------+---------+----------+
   */
 
-  txControl.datagramType = DATAGRAM_ACK_1;
+  txControl.datagramType = DATAGRAM_VC_SYNC_ACKS;
   return (transmitDatagram());
 }
 
-bool xmitVcAck2(int8_t destVc)
+//Build and transmit the ZERO_ACKS frame, last frame in 3-way ACKs handshake
+bool xmitVcZeroAcks(int8_t destVc)
 {
   VC_RADIO_MESSAGE_HEADER * vcHeader;
 
-  radioCallHistory[RADIO_CALL_xmitVcAck2] = millis();
+  radioCallHistory[RADIO_CALL_xmitVcZeroAcks] = millis();
 
   vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
   vcHeader->length = VC_RADIO_HEADER_BYTES;
@@ -1393,7 +1390,7 @@ bool xmitVcAck2(int8_t destVc)
       +----------+---------+----------+------------+----------+---------+----------+
   */
 
-  txControl.datagramType = DATAGRAM_ACK_2;
+  txControl.datagramType = DATAGRAM_VC_ZERO_ACKS;
   return (transmitDatagram());
 }
 
@@ -2634,7 +2631,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
     (receiveInProcess() == true)
     || (transactionComplete == true)
     || (
-      //If we are in VC mode, and destination is not broadcast, 
+      //If we are in VC mode, and destination is not broadcast,
       //and the destination circuit is offline
       //and we are not scanning for servers
       //then don't transmit
@@ -3074,9 +3071,9 @@ const I16_TO_STRING radioCallName[] =
   {RADIO_CALL_xmitVcDatagram, "xmitVcDatagram"},
   {RADIO_CALL_xmitVcHeartbeat, "xmitVcHeartbeat"},
   {RADIO_CALL_xmitVcAckFrame, "xmitVcAckFrame"},
-  {RADIO_CALL_xmitVcPing, "xmitVcPing"},
-  {RADIO_CALL_xmitVcAck1, "xmitVcAck1"},
-  {RADIO_CALL_xmitVcAck2, "xmitVcAck2"},
+  {RADIO_CALL_xmitVcUnknownAcks, "xmitVcUpdateAcks"},
+  {RADIO_CALL_xmitVcSyncAcks, "xmitVcSyncAcks"},
+  {RADIO_CALL_xmitVcZeroAcks, "xmitVcZeroAcks"},
   {RADIO_CALL_rcvDatagram, "rcvDatagram"},
   {RADIO_CALL_transmitDatagram, "transmitDatagram"},
   {RADIO_CALL_retransmitDatagram, "retransmitDatagram"},

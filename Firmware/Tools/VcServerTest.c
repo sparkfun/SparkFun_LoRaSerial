@@ -14,7 +14,7 @@
 
 #define DEBUG_LOCAL_COMMANDS      0
 #define DEBUG_PC_TO_RADIO         0
-#define DEBUG_RADIO_TO_PC         0
+#define DEBUG_RADIO_TO_PC         1
 #define DISPLAY_DATA_ACK          1
 #define DISPLAY_DATA_NACK         1
 #define DISPLAY_VC_STATE          0
@@ -305,19 +305,19 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t length)
       printf("-=--=--=- VC %d ALIVE =--=--=-\n", srcVc);
     break;
 
-  case VC_STATE_SEND_PING:
+  case VC_STATE_SEND_UNKNOWN_ACKS:
     if (DISPLAY_VC_STATE)
-      printf("-=--=-- VC %d ALIVE P1 --=--=-\n", srcVc);
+      printf("-=--=-- VC %d ALIVE UA --=--=-\n", srcVc);
     break;
 
-  case VC_STATE_WAIT_FOR_ACK1:
+  case VC_STATE_WAIT_SYNC_ACKS:
     if (DISPLAY_VC_STATE)
-      printf("-=--=-- VC %d ALIVE WA1 -=--=-\n", srcVc);
+      printf("-=--=-- VC %d ALIVE SA --=--=-\n", srcVc);
     break;
 
-  case VC_STATE_WAIT_FOR_ACK2:
+  case VC_STATE_WAIT_ZERO_ACKS:
     if (DISPLAY_VC_STATE)
-      printf("-=--=-- VC %d ALIVE WA2 -=--=-\n", srcVc);
+      printf("-=--=-- VC %d ALIVE ZA --=--=-\n", srcVc);
     break;
 
   case VC_STATE_CONNECTED:
@@ -356,7 +356,7 @@ int radioToHost()
   static uint8_t * dataEnd = outputBuffer;
   int8_t destAddr;
   static VC_SERIAL_MESSAGE_HEADER * header = (VC_SERIAL_MESSAGE_HEADER *)outputBuffer;
-  uint8_t length;
+  int length;
   int maxfds;
   int status;
   int8_t srcAddr;
@@ -413,7 +413,7 @@ int radioToHost()
     data = dataStart;
 
     //Determine if the VC header is in the buffer
-    if (length < VC_SERIAL_HEADER_BYTES)
+    if (length < (int)VC_SERIAL_HEADER_BYTES)
       //Need more data
       break;
 

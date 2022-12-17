@@ -386,7 +386,7 @@ void processSerialInput()
 
             inCommandMode = true; //Allow AT parsing. Prevent received RF data from being printed.
             forceRadioReset = false; //Don't reset the radio link unless a setting requires it
-            writeOnCommandExit = false; //Don't record settings changes unless user commands it 
+            writeOnCommandExit = false; //Don't record settings changes unless user commands it
 
             tempSettings = settings;
 
@@ -565,14 +565,14 @@ bool vcSerialMessageReceived()
       break;
     }
 
-    //Verify that the destination link is up
+    //Verify that the destination link is connected
     if ((vcDest != VC_BROADCAST)
-      && (virtualCircuitList[vcIndex].vcState == VC_STATE_LINK_DOWN))
+      && (virtualCircuitList[vcIndex].vcState < VC_STATE_CONNECTED))
     {
       if (settings.debugSerial || settings.debugTransmit)
       {
-        systemPrint("Link down ");
-        systemPrint((vcDest == VC_BROADCAST) ? vcDest : vcIndex);
+        systemPrint("Link not connected ");
+        systemPrint(vcIndex);
         systemPrintln(", discarding message!");
         outputSerialData(true);
       }

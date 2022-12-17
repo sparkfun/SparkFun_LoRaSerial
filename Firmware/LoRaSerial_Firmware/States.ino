@@ -127,22 +127,15 @@ void updateRadioState()
       else if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
       {
         if (settings.server)
-        {
           //Reserve the server's address (0)
           myVc = vcIdToAddressByte(VC_SERVER, myUniqueId);
-
-          startChannelTimer(); //Start hopping
-
-          //Start sending heartbeats
-          xmitVcHeartbeat(myVc, myUniqueId);
-          changeState(RADIO_VC_WAIT_TX_DONE);
-        }
         else
-        {
           //Unknown client address
           myVc = VC_UNASSIGNED;
-          changeState(RADIO_DISCOVER_BEGIN);
-        }
+
+        //Start sending heartbeats
+        xmitVcHeartbeat(myVc, myUniqueId);
+        changeState(RADIO_VC_WAIT_TX_DONE);
       }
       else
       {
@@ -956,10 +949,7 @@ void updateRadioState()
             //Server has responded with ACK
             syncChannelTimer(); //Start and adjust freq hop ISR based on remote's remaining clock
 
-            if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
-              channelNumber = rxVcData[0];
-            else
-              channelNumber = rxData[0]; //Change to the server's channel number
+            channelNumber = rxData[0]; //Change to the server's channel number
 
             if (settings.debugSync)
             {
@@ -974,19 +964,7 @@ void updateRadioState()
 
             lastPacketReceived = millis(); //Reset
 
-            if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
-            {
-              //Acknowledge the ACK1
-              triggerEvent(TRIGGER_SEND_ACK2);
-              if (xmitVcAck2(VC_SERVER))
-              {
-                sf6ExpectedSize = MAX_PACKET_SIZE; //Tell SF6 to return to max packet length
-                changeState(RADIO_VC_WAIT_TX_DONE);
-              }
-            }
-            else
-              changeState(RADIO_MP_STANDBY);
-
+            changeState(RADIO_MP_STANDBY);
             break;
         }
       }
@@ -1024,19 +1002,8 @@ void updateRadioState()
           }
 
           //Send ping
-          if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
-          {
-            //Send the PING datagram, first part of the 3-way handshake
-            if (xmitVcPing(VC_SERVER))
-            {
-              changeState(RADIO_DISCOVER_WAIT_TX_PING_DONE);
-            }
-          }
-          else
-          {
-            if (xmitDatagramMpPing() == true)
-              changeState(RADIO_DISCOVER_WAIT_TX_PING_DONE);
-          }
+          if (xmitDatagramMpPing() == true)
+            changeState(RADIO_DISCOVER_WAIT_TX_PING_DONE);
         }
       }
 
@@ -1185,7 +1152,6 @@ void updateRadioState()
         //Only the server transmits heartbeats
         if (settings.server == true)
         {
-
           if (heartbeatTimeout)
           {
             triggerEvent(TRIGGER_HEARTBEAT);
@@ -1531,11 +1497,18 @@ void updateRadioState()
       |                 |
       '-----------------'
 
+      The ACK synchronization handshake occurs between VCs that want to
+      communicate.  Normally this occurs between the client and the server, but
+      may also occur between two clients that want to communicate with each
+      other.  One of the systems initiates the three way handshake by sending
+      UNKNOWN_ACKS.  The second system responses with SYNC_ACKSZERO_ACKS causing the
+      first system to respond with ZERO_ACKS.
+
       3-way Handshake to zero ACKs:
 
-        TX PING --> RX ACK1 --> TX ACK2
-           or
-        RX PING --> TX ACK1 --> RX ACK2
+          TX UNKNOWN_ACKS --> RX SYNC_ACKS --> TX ZERO_ACKS
+             or
+          RX UNKNOWN_ACKS --> TX SYNC_ACKS --> RX ZERO_ACKS
 
       VC States:
 
@@ -1544,26 +1517,55 @@ void updateRadioState()
       |                       | HEARTBEAT received                             |
       | HB Timeout            v                                                |
       +<----------- VC_STATE_LINK_ALIVE ------------------------.              |
-      ^                       |                       RX PING   |              |
+      ^                       |               RX UNKNOWN_ACKS   |              |
       |                       | ATC command                     |              |
       | HB Timeout            V                                 |              |
-      +<------------- VC_STATE_SEND_PING <---------.            |              |
-      ^                       |            ACK1 RX |            |              |
-      |                       | TX PING    Timeout |            |              |
-      |                       | TX Complete        |   RX       |              |
-      | HB Timeout            V                    |  PING      V              |
-      +<------------- VC_STATE_WAIT_ACK1 --------->+------->+-->+              |
-      ^                       |                    ^        ^   |              |
-      |                       | RX ACK1            |   ACK2 |   | TX ACK1      |
-      |                       | TX ACK2            |     RX |   | TX Complete  |
-      |                       | TX Complete        |    TMO |   V              |
-      |       Zero ACK values |                    |    VC_STATE_WAIT_ACK2 ----'
-      |                       |      .-------------'            |
-      |                       |      | RX PING                  | RX ACK2
+      +<--------- VC_STATE_SEND_UNKNOWN_ACKS <-.                |              |
+      ^                       |                |                |              |
+      |       TX UNKNOWN_ACKS |   ZERO_ACKS RX |                |              |
+      |           TX Complete |        Timeout |        RX      |              |
+      | HB Timeout            V                |   UNKNOWN_ACKS V              |
+      +<---------- VC_STATE_WAIT_SYNC_ACKS --->+----------->+-->+              |
+      ^                       |                ^            ^   | TX           |
+      |                       | RX SYNC_ACKS   |  ZERO_ACKS |   | SYNC_ACKS    |
+      |                       | TX ZERO_ACKS   |         RX |   | TX Complete  |
+      |                       | TX Complete    |        TMO |   V              |
+      |       Zero ACK values |                |     VC_STATE_WAIT_ZERO_ACKS --'
+      |                       |      .---------'                |
+      |                       |      | RX UNKNOWN_ACKS          | RX ZERO_ACKS
       | HB Timeout            V      |                          | Zero ACK values
       '-------------- VC_STATE_CONNECTED <----------------------'
 
     */
+
+    //====================
+    //Wait for a HEARTBEAT from the server
+    //====================
+    case RADIO_VC_WAIT_SERVER:
+      if (myVc == VC_SERVER)
+      {
+        changeState(RADIO_VC_WAIT_RECEIVE);
+        break;
+      }
+
+      //If dio0ISR has fired, a packet has arrived
+      currentMillis = millis();
+      if (transactionComplete == true)
+      {
+        //Decode the received datagram
+        PacketType packetType = rcvDatagram();
+
+        //Process the received datagram
+        if ((packetType == DATAGRAM_VC_HEARTBEAT) && (rxSrcVc == VC_SERVER))
+        {
+          vcReceiveHeartbeat(millis() - currentMillis);
+          changeState(RADIO_VC_WAIT_RECEIVE);
+        }
+        else
+          //Ignore this datagram
+          triggerEvent(TRIGGER_BAD_PACKET);
+      }
+      break;
 
     //====================
     //Wait for the transmission to complete
@@ -1671,36 +1673,18 @@ void updateRadioState()
               changeState(RADIO_VC_WAIT_TX_DONE);
             break;
 
-          //Second step in the 3-way handshake, received PING, respond with ACK1
-          case DATAGRAM_PING:
-            //Only respond to pings if we are server
-            if (settings.server == true)
-            {
-              if (rxSrcVc == VC_UNASSIGNED)
-              {
-                //We received a ping from a previously unknown client
-                if (xmitVcAck1(rxSrcVc))
-                {
-                  triggerEvent(TRIGGER_MP_SEND_ACK_FOR_PING);
-                  changeState(RADIO_VC_WAIT_TX_DONE);
-                }
-              }
-              else
-              {
-                //Known client
-                if (xmitVcAck1(rxSrcVc))
-                  changeState(RADIO_VC_WAIT_TX_DONE);
-
-                vcChangeState(rxSrcVc, VC_STATE_WAIT_FOR_ACK2);
-                virtualCircuitList[rxSrcVc].lastPingMillis = datagramTimer;
-              }
-            }
-
+          //Second step in the 3-way handshake, received UNKNOWN_ACKS, respond
+          //with SYNC_ACKS
+          case DATAGRAM_VC_UNKNOWN_ACKS:
+            if (xmitVcSyncAcks(rxSrcVc))
+              changeState(RADIO_VC_WAIT_TX_DONE);
+            vcChangeState(rxSrcVc, VC_STATE_WAIT_ZERO_ACKS);
+            virtualCircuitList[rxSrcVc].timerMillis = datagramTimer;
             break;
 
-          //Third step in the 3-way handshake, received ACK1, respond with ACK2
-          case DATAGRAM_ACK_1:
-            if (xmitVcAck2(rxSrcVc))
+          //Third step in the 3-way handshake, received SYNC_ACKS, respond with ZERO_ACKS
+          case DATAGRAM_VC_SYNC_ACKS:
+            if (xmitVcZeroAcks(rxSrcVc))
             {
               changeState(RADIO_VC_WAIT_TX_DONE);
               vcZeroAcks(rxSrcVc);
@@ -1708,8 +1692,8 @@ void updateRadioState()
             }
             break;
 
-          //Last step in the 3-way handshake, received ACK2, done
-          case DATAGRAM_ACK_2:
+          //Last step in the 3-way handshake, received ZERO_ACKS, done
+          case DATAGRAM_VC_ZERO_ACKS:
             vcZeroAcks(rxSrcVc);
             vcChangeState(rxSrcVc, VC_STATE_CONNECTED);
             break;
@@ -1781,11 +1765,12 @@ void updateRadioState()
         }
       }
 
-      //----------
-      //Priority 1: Transmit a HEARTBEAT if necessary
-      //----------
+      //when not receiving process the pending transmit requests
       else if (!receiveInProcess())
       {
+        //----------
+        //Priority 1: Transmit a HEARTBEAT if necessary
+        //----------
         if (((currentMillis - heartbeatTimer) >= heartbeatRandomTime))
         {
           //Send another heartbeat
@@ -1864,72 +1849,91 @@ void updateRadioState()
           }
         }
 
-        /*
-                //----------
-                //Priority 4: Walk through the 3-way handshake
-                //----------
-                else if (vcConnecting)
+        //----------
+        //Priority 3: Send the entire command response, toggle between waiting for
+        //ACK above and transmitting the command response
+        //----------
+        else if (availableTXCommandBytes())
+        {
+          //Send the next portion of the command response
+          vcHeader = (VC_RADIO_MESSAGE_HEADER *)&outgoingPacket[headerBytes];
+          endOfTxData += VC_RADIO_HEADER_BYTES;
+          vcHeader->destVc = rmtCmdVc;
+          vcHeader->srcVc = myVc;
+          vcHeader->length = readyOutgoingCommandPacket(VC_RADIO_HEADER_BYTES)
+                             + VC_RADIO_HEADER_BYTES;
+          if (xmitDatagramP2PCommandResponse())
+            changeState(RADIO_VC_WAIT_TX_DONE);
+
+          START_ACK_TIMER();
+
+          //Save the message for retransmission
+          SAVE_TX_BUFFER();
+          rexmtTxDestVc = txDestVc;
+        }
+
+        //----------
+        //Priority 4: Walk through the 3-way handshake
+        //----------
+        else if (vcConnecting)
+        {
+          for (index = 0; index < MAX_VC; index++)
+          {
+            if (receiveInProcess())
+              break;
+
+            //Determine the first VC that is walking through connections
+            if (vcConnecting & (1 << index))
+            {
+              //Determine if UNKNOWN_ACKS needs to be sent
+              if (virtualCircuitList[index].vcState == VC_STATE_SEND_UNKNOWN_ACKS)
+              {
+                //Send the UNKNOWN_ACKS datagram, first part of the 3-way handshake
+                if (xmitVcUnknownAcks(index))
                 {
-                  for (index = 0; index < MAX_VC; index++)
+                  vcChangeState(index, VC_STATE_WAIT_SYNC_ACKS);
+                  virtualCircuitList[index].timerMillis = datagramTimer;
+                  changeState(RADIO_VC_WAIT_TX_DONE);
+                }
+              }
+
+              //The SYNC_ACKS is handled with the receive code
+              //Check for a timeout waiting for the SYNC_ACKS
+              else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_SYNC_ACKS)
+              {
+                if ((currentMillis - virtualCircuitList[index].timerMillis)
+                    >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+                {
+                  //Retransmit the UNKNOWN_ACKS
+                  if (xmitVcUnknownAcks(index))
                   {
-                    if (receiveInProcess())
-                      break;
-
-                    //Determine the first VC that is walking through connections
-                    if (vcConnecting & (1 << index))
-                    {
-                      //Determine if PING needs to be sent
-                      if (virtualCircuitList[index].vcState == VC_STATE_SEND_PING)
-                      {
-                        //Send the PING datagram, first part of the 3-way handshake
-                        if (xmitVcPing(index))
-                        {
-                          vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
-                          virtualCircuitList[index].lastPingMillis = datagramTimer;
-                          changeState(RADIO_VC_WAIT_TX_DONE);
-                        }
-                      }
-
-                      //The ACK1 is handled with the receive code
-                      //Check for a timeout waiting for the ACK1
-                      else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK1)
-                      {
-                        if ((currentMillis - virtualCircuitList[index].lastPingMillis)
-                            >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
-                        {
-                          //Retransmit the PING
-                          if (xmitVcPing(index))
-                          {
-                            vcChangeState(index, VC_STATE_WAIT_FOR_ACK1);
-                            virtualCircuitList[index].lastPingMillis = datagramTimer;
-                            changeState(RADIO_VC_WAIT_TX_DONE);
-                          }
-                        }
-                      }
-
-                      //The ACK2 is handled with the receive code
-                      //Check for a timeout waiting for the ACK2
-                      else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_FOR_ACK2)
-                      {
-                        if ((currentMillis - virtualCircuitList[index].lastPingMillis)
-                            >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
-                        {
-                          //Retransmit the ACK1
-                          if (xmitVcAck1(index))
-                          {
-                            vcChangeState(index, VC_STATE_WAIT_FOR_ACK2);
-                            virtualCircuitList[index].lastPingMillis = datagramTimer;
-                            changeState(RADIO_VC_WAIT_TX_DONE);
-                          }
-                        }
-                      }
-
-                      //Work on only one connection at a time
-                      break;
-                    }
+                    virtualCircuitList[index].timerMillis = datagramTimer;
+                    changeState(RADIO_VC_WAIT_TX_DONE);
                   }
                 }
-        */
+              }
+
+              //The ZERO_ACKS is handled with the receive code
+              //Check for a timeout waiting for the ZERO_ACKS
+              else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_ZERO_ACKS)
+              {
+                if ((currentMillis - virtualCircuitList[index].timerMillis)
+                    >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+                {
+                  //Retransmit the ACK1
+                  if (xmitVcSyncAcks(index))
+                  {
+                    virtualCircuitList[index].timerMillis = datagramTimer;
+                    changeState(RADIO_VC_WAIT_TX_DONE);
+                  }
+                }
+              }
+
+              //Work on only one connection at a time
+              break;
+            }
+          }
+        }
 
         //----------
         //Lowest Priority: Check for data to send
@@ -2062,7 +2066,7 @@ void updateRadioState()
             //and the radios loose communications because they are hopping at different
             //times.
             serverLinkBroken = true;
-            changeState(RADIO_DISCOVER_BEGIN);
+            changeState(RADIO_VC_WAIT_SERVER);
           }
 
           //Break the link
@@ -2502,18 +2506,12 @@ void vcChangeState(int8_t vcIndex, uint8_t state)
         systemPrint(vcIndex);
         systemPrintln(" ALIVE =--=--=-");
       }
-      else if (state == VC_STATE_NEW_CLIENT)
-      {
-        systemPrint("-=--=--=- VC ");
-        systemPrint(vcIndex);
-        systemPrintln(" NEW CLIENT =--=--=-");
-      }
       outputSerialData(true);
     }
 
     //Determine if the VC is connecting
     vcBit = 1 << vcIndex;
-    if (state == VC_STATE_NEW_CLIENT)
+    if ((state > VC_STATE_LINK_ALIVE) && (state < VC_STATE_CONNECTED))
       vcConnecting |= vcBit;
     else
       vcConnecting &= ~vcBit;

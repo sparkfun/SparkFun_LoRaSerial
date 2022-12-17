@@ -34,6 +34,7 @@ typedef enum
   RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,
 
   //Virtual-Circuit states
+  RADIO_VC_WAIT_SERVER,
   RADIO_VC_WAIT_TX_DONE,
   RADIO_VC_WAIT_RECEIVE,
 
@@ -58,51 +59,54 @@ const RADIO_STATE_ENTRY radioStateTable[] =
 
   //Point-to-Point link handshake
   //    State                           RX      Name                              Description
-  {RADIO_P2P_LINK_DOWN,                  1, "P2P_LINK_DOWN",                  "P2P: [No Link] Waiting for Ping"}, // 4
-  {RADIO_P2P_WAIT_TX_PING_DONE,          0, "P2P_WAIT_TX_PING_DONE",          "P2P: [No Link] Wait Ping TX Done"},// 5
-  {RADIO_P2P_WAIT_ACK_1,                 1, "P2P_WAIT_ACK_1",                 "P2P: [No Link] Waiting for ACK1"}, // 6
-  {RADIO_P2P_WAIT_TX_ACK_1_DONE,         0, "P2P_WAIT_TX_ACK_1_DONE",         "P2P: [No Link] Wait ACK1 TX Done"},// 7
-  {RADIO_P2P_WAIT_ACK_2,                 1, "P2P_WAIT_ACK_2",                 "P2P: [No Link] Waiting for ACK2"}, // 8
-  {RADIO_P2P_WAIT_TX_ACK_2_DONE,         0, "P2P_WAIT_TX_ACK_2_DONE",         "P2P: [No Link] Wait ACK2 TX Done"},// 9
+  {RADIO_P2P_LINK_DOWN,                  1, "P2P_LINK_DOWN",                  "P2P: [No Link] Waiting for Ping"}, // 1
+  {RADIO_P2P_WAIT_TX_PING_DONE,          0, "P2P_WAIT_TX_PING_DONE",          "P2P: [No Link] Wait Ping TX Done"},// 2
+  {RADIO_P2P_WAIT_ACK_1,                 1, "P2P_WAIT_ACK_1",                 "P2P: [No Link] Waiting for ACK1"}, // 3
+  {RADIO_P2P_WAIT_TX_ACK_1_DONE,         0, "P2P_WAIT_TX_ACK_1_DONE",         "P2P: [No Link] Wait ACK1 TX Done"},// 4
+  {RADIO_P2P_WAIT_ACK_2,                 1, "P2P_WAIT_ACK_2",                 "P2P: [No Link] Waiting for ACK2"}, // 5
+  {RADIO_P2P_WAIT_TX_ACK_2_DONE,         0, "P2P_WAIT_TX_ACK_2_DONE",         "P2P: [No Link] Wait ACK2 TX Done"},// 6
 
   //Point-to-Point, link up, data exchange
   //    State                           RX      Name                              Description
-  {RADIO_P2P_LINK_UP,                    1, "P2P_LINK_UP",                    "P2P: Receiving Standby"},          //10
-  {RADIO_P2P_LINK_UP_WAIT_TX_DONE,       0, "P2P_LINK_UP_WAIT_TX_DONE",       "P2P: Waiting TX done"},            //11
+  {RADIO_P2P_LINK_UP,                    1, "P2P_LINK_UP",                    "P2P: Receiving Standby"},          // 7
+  {RADIO_P2P_LINK_UP_WAIT_TX_DONE,       0, "P2P_LINK_UP_WAIT_TX_DONE",       "P2P: Waiting TX done"},            // 8
 
   //Server-client discovery
   //    State                           RX      Name                              Description
-  {RADIO_DISCOVER_BEGIN,                 0, "DISCOVER_BEGIN",                 "Disc: Setup for scanning"},        //12
-  {RADIO_DISCOVER_SCANNING,              0, "DISCOVER_SCANNING",              "Disc: Scanning for servers"},      //13
-  {RADIO_DISCOVER_WAIT_TX_PING_DONE,     0, "DISCOVER_WAIT_TX_PING_DONE",     "Disc: Wait for ping to xmit"},     //14
+  {RADIO_DISCOVER_BEGIN,                 0, "DISCOVER_BEGIN",                 "Disc: Setup for scanning"},        // 9
+  {RADIO_DISCOVER_SCANNING,              0, "DISCOVER_SCANNING",              "Disc: Scanning for servers"},      //10
+  {RADIO_DISCOVER_WAIT_TX_PING_DONE,     0, "DISCOVER_WAIT_TX_PING_DONE",     "Disc: Wait for ping to xmit"},     //11
 
   //Multi-Point data exchange
   //    State                           RX      Name                              Description
-  {RADIO_MP_WAIT_TX_ACK_DONE,            0, "MP_WAIT_TX_ACK_DONE",            "MP: Wait for ACK to xmit"},        //15
-  {RADIO_MP_STANDBY,                     1, "MP_STANDBY",                     "MP: Wait for TX or RX"},           //16
-  {RADIO_MP_WAIT_TX_DONE,                0, "MP_WAIT_TX_DONE",                "MP: Waiting for TX done"},         //17
+  {RADIO_MP_WAIT_TX_ACK_DONE,            0, "MP_WAIT_TX_ACK_DONE",            "MP: Wait for ACK to xmit"},        //12
+  {RADIO_MP_STANDBY,                     1, "MP_STANDBY",                     "MP: Wait for TX or RX"},           //13
+  {RADIO_MP_WAIT_TX_DONE,                0, "MP_WAIT_TX_DONE",                "MP: Waiting for TX done"},         //14
 
   //Training client states
   //    State                           RX      Name                              Description
-  {RADIO_TRAIN_WAIT_TX_PING_DONE,        0, "TRAIN_WAIT_TX_PING_DONE",        "Train: Wait TX training PING done"},  //18
-  {RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS, 1, "TRAIN_WAIT_RX_RADIO_PARAMETERS", "Train: Wait for radio parameters"},   //19
-  {RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE,   0, "TRAIN_WAIT_TX_PARAM_ACK_DONE",   "Train: Wait for TX param ACK done"},  //20
+  {RADIO_TRAIN_WAIT_TX_PING_DONE,        0, "TRAIN_WAIT_TX_PING_DONE",        "Train: Wait TX training PING done"},  //15
+  {RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS, 1, "TRAIN_WAIT_RX_RADIO_PARAMETERS", "Train: Wait for radio parameters"},   //16
+  {RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE,   0, "TRAIN_WAIT_TX_PARAM_ACK_DONE",   "Train: Wait for TX param ACK done"},  //17
 
   //Training server states
   //    State                           RX      Name                              Description
-  {RADIO_TRAIN_WAIT_FOR_PING,            1, "TRAIN_WAIT_FOR_PING",            "Train: Wait for training PING"},      //21
-  {RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,0, "TRAIN_WAIT_TX_RADIO_PARAMS_DONE","Train: Wait for TX params done"},     //22
+  {RADIO_TRAIN_WAIT_FOR_PING,            1, "TRAIN_WAIT_FOR_PING",            "Train: Wait for training PING"},      //18
+  {RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,0, "TRAIN_WAIT_TX_RADIO_PARAMS_DONE","Train: Wait for TX params done"},     //19
 
   //Virtual circuit states
   //    State                           RX      Name                              Description
-  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "VC: Wait for TX done"},            //23
-  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "VC: Wait for receive"},            //24
+  {RADIO_VC_WAIT_SERVER,                 1, "VC_WAIT_SERVER",                 "VC: Wait for the server"},         //20
+  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "VC: Wait for TX done"},            //21
+  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "VC: Wait for receive"},            //22
 };
 
 //Possible types of packets received
 typedef enum
 {
-  //Link establishment handshake
+  //Sync frequencies, HEARTBEAT timing and zero ACKs
+  //P2P: Between the two LoRaSerial radios
+  //VC:  Between the server radio and a client radio
   DATAGRAM_PING = 0,                // 0
   DATAGRAM_ACK_1,                   // 1
   DATAGRAM_ACK_2,                   // 2
@@ -124,6 +128,9 @@ typedef enum
 
   //Virtual-Circuit (VC) exchange
   DATAGRAM_VC_HEARTBEAT,            //12
+  DATAGRAM_VC_UNKNOWN_ACKS,         //13 Synchronize ACKs client VC to client VC
+  DATAGRAM_VC_SYNC_ACKS,            //14
+  DATAGRAM_VC_ZERO_ACKS,            //15
 
   //Add new datagram types before this line
   MAX_DATAGRAM_TYPE,
@@ -149,6 +156,8 @@ const char * const radioDatagramType[] =
   "TRAINING_PING", "TRAINING_PARAMS", "TRAINING_ACK",
   //    12
   "VC_HEARTBEAT",
+  //      13               14              15
+  "VC_UNKNOWN_ACKS", "VC_SYNC_ACKS", "VC_ZERO_ACKS",
 };
 
 typedef struct _VIRTUAL_CIRCUIT
@@ -156,7 +165,7 @@ typedef struct _VIRTUAL_CIRCUIT
   uint8_t uniqueId[UNIQUE_ID_BYTES];
   unsigned long firstHeartbeatMillis; //Time VC link came up
   unsigned long lastTrafficMillis; //Last time a frame was received
-  unsigned long lastPingMillis; //Last time a ping was sent or ACK received
+  unsigned long timerMillis; //Last time the timer was started, after handshake or ACK
 
   //Link quality metrics
   uint32_t framesSent;        //myVc --> VC, Total number of frames sent
@@ -501,9 +510,9 @@ typedef enum
   RADIO_CALL_xmitVcDatagram,
   RADIO_CALL_xmitVcHeartbeat,
   RADIO_CALL_xmitVcAckFrame,
-  RADIO_CALL_xmitVcPing,
-  RADIO_CALL_xmitVcAck1,
-  RADIO_CALL_xmitVcAck2,
+  RADIO_CALL_xmitVcUnknownAcks,
+  RADIO_CALL_xmitVcSyncAcks,
+  RADIO_CALL_xmitVcZeroAcks,
   RADIO_CALL_rcvDatagram,
   RADIO_CALL_transmitDatagram,
   RADIO_CALL_retransmitDatagram,

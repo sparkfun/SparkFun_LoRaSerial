@@ -122,7 +122,7 @@ bool commandAT(const char * commandString)
         if (cmdVc == myVc)
           vcChangeState(cmdVc, VC_STATE_CONNECTED);
         else
-          vcChangeState(cmdVc, VC_STATE_SEND_PING);
+          vcChangeState(cmdVc, VC_STATE_SEND_UNKNOWN_ACKS);
         return true;
 
       case ('F'): //ATF - Restore default parameters
