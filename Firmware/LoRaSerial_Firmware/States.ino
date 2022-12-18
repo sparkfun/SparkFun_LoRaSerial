@@ -108,11 +108,11 @@ void updateRadioState()
 
       configureRadio(); //Setup radio, set freq to channel 0, calculate air times
 
-      //Start the TX timer: time to delay before transmitting the PING
+      //Start the TX timer: time to delay before transmitting the FIND_PARTNER
       setHeartbeatShort(); //Both radios start with short heartbeat period
-      pingRandomTime = random(ackAirTime, ackAirTime * 2); //Fast ping
+      pingRandomTime = random(ackAirTime, ackAirTime * 2); //Fast FIND_PARTNER
 
-      sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive PING packet
+      sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive FIND_PARTNER packet
 
       petWDT();
 
@@ -219,7 +219,7 @@ void updateRadioState()
         setRadioFrequency(false);
       }
 
-      //Determine if a PING was received
+      //Determine if a FIND_PARTNER was received
       if (transactionComplete)
       {
         //Decode the received packet
@@ -247,8 +247,8 @@ void updateRadioState()
             triggerEvent(TRIGGER_CRC_ERROR);
             break;
 
-          case DATAGRAM_PING:
-            //Received PING
+          case DATAGRAM_FIND_PARTNER:
+            //Received FIND_PARTNER
             //Compute the common clock
             currentMillis = millis();
             memcpy(&clockOffset, rxData, sizeof(currentMillis));
@@ -258,7 +258,7 @@ void updateRadioState()
             clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
             timestampOffset = clockOffset;
 
-            //Acknowledge the PING
+            //Acknowledge the FIND_PARTNER
             triggerEvent(TRIGGER_SEND_ACK1);
             if (xmitDatagramP2PAck1() == true)
             {
@@ -269,24 +269,24 @@ void updateRadioState()
         }
       }
 
-      //Is it time to send the PING to the remote system
+      //Is it time to send the FIND_PARTNER to the remote system
       else if ((receiveInProcess() == false) && ((millis() - heartbeatTimer) >= pingRandomTime))
       {
-        //Transmit the PING
-        triggerEvent(TRIGGER_HANDSHAKE_SEND_PING);
-        if (xmitDatagramP2PPing() == true)
+        //Transmit the FIND_PARTNER
+        triggerEvent(TRIGGER_HANDSHAKE_SEND_FIND_PARTNER);
+        if (xmitDatagramP2PFindPartner() == true)
         {
           sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect ACK1 to contain millis info
-          changeState(RADIO_P2P_WAIT_TX_PING_DONE);
+          changeState(RADIO_P2P_WAIT_TX_FIND_PARTNER_DONE);
         }
       }
       break;
 
-    case RADIO_P2P_WAIT_TX_PING_DONE:
-      //Determine if a PING has completed transmission
+    case RADIO_P2P_WAIT_TX_FIND_PARTNER_DONE:
+      //Determine if a FIND_PARTNER has completed transmission
       if (transactionComplete)
       {
-        triggerEvent(TRIGGER_HANDSHAKE_SEND_PING_COMPLETE);
+        triggerEvent(TRIGGER_HANDSHAKE_SEND_FIND_PARTNER_COMPLETE);
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
         changeState(RADIO_P2P_WAIT_ACK_1);
@@ -321,8 +321,8 @@ void updateRadioState()
             triggerEvent(TRIGGER_CRC_ERROR);
             break;
 
-          case DATAGRAM_PING:
-            //Received PING
+          case DATAGRAM_FIND_PARTNER:
+            //Received FIND_PARTNER
             //Compute the common clock
             currentMillis = millis();
             memcpy(&clockOffset, rxData, sizeof(currentMillis));
@@ -332,7 +332,7 @@ void updateRadioState()
             clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
             timestampOffset = clockOffset;
 
-            //Acknowledge the PING
+            //Acknowledge the FIND_PARTNER
             triggerEvent(TRIGGER_SEND_ACK1);
             if (xmitDatagramP2PAck1() == true)
             {
@@ -374,17 +374,17 @@ void updateRadioState()
             outputSerialData(true);
           }
 
-          //Start the TX timer: time to delay before transmitting the PING
+          //Start the TX timer: time to delay before transmitting the FIND_PARTNER
           triggerEvent(TRIGGER_HANDSHAKE_ACK1_TIMEOUT);
           setHeartbeatShort();
 
-          //Slow down pings
+          //Slow down FIND_PARTNERs
           if (ackAirTime < settings.maxDwellTime)
             pingRandomTime = random(settings.maxDwellTime * 2, settings.maxDwellTime * 4);
           else
             pingRandomTime = random(ackAirTime * 4, ackAirTime * 8);
 
-          sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive PING packet
+          sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive FIND_PARTNER packet
           returnToReceiving();
 
           changeState(RADIO_P2P_LINK_DOWN);
@@ -463,17 +463,17 @@ void updateRadioState()
             outputSerialData(true);
           }
 
-          //Start the TX timer: time to delay before transmitting the PING
+          //Start the TX timer: time to delay before transmitting the FIND_PARTNER
           triggerEvent(TRIGGER_HANDSHAKE_ACK2_TIMEOUT);
           setHeartbeatShort();
 
-          //Slow down pings
+          //Slow down FIND_PARTNERs
           if (ackAirTime < settings.maxDwellTime)
             pingRandomTime = random(settings.maxDwellTime * 2, settings.maxDwellTime * 4);
           else
             pingRandomTime = random(ackAirTime * 4, ackAirTime * 8);
 
-          sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive PING packet
+          sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive FIND_PARTNER packet
           returnToReceiving();
 
           changeState(RADIO_P2P_LINK_DOWN);
@@ -542,7 +542,7 @@ void updateRadioState()
 
                       System A       System B
 
-                          PING ----> Update timestampOffset
+                  FIND_PARTNER ----> Update timestampOffset
 
         Update timestampOffset <---- ACK 1
 
@@ -632,7 +632,7 @@ void updateRadioState()
             triggerEvent(TRIGGER_NETID_MISMATCH);
             break;
 
-          case DATAGRAM_PING:
+          case DATAGRAM_FIND_PARTNER:
             breakLink();
             break;
 
@@ -937,7 +937,7 @@ void updateRadioState()
           case DATAGRAM_ACK_2:
           case DATAGRAM_DATA:
           case DATAGRAM_DATA_ACK:
-          case DATAGRAM_PING: //Clients do not respond to pings, only the server
+          case DATAGRAM_FIND_PARTNER: //Clients do not respond to FIND_PARTNER, only the server
           case DATAGRAM_REMOTE_COMMAND:
           case DATAGRAM_REMOTE_COMMAND_RESPONSE:
             //We should not be receiving these datagrams, but if we do, just ignore
@@ -1092,11 +1092,11 @@ void updateRadioState()
             triggerEvent(TRIGGER_BAD_PACKET);
             break;
 
-          case DATAGRAM_PING:
+          case DATAGRAM_FIND_PARTNER:
             //A new radio is saying hello
             if (settings.server == true)
             {
-              //Ack their ping with sync data
+              //Ack their FIND_PARTNER with sync data
               if (xmitDatagramMpAck() == true)
               {
                 triggerEvent(TRIGGER_MP_SEND_ACK_FOR_PING);
