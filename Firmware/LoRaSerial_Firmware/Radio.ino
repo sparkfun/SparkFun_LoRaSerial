@@ -678,55 +678,56 @@ const uint16_t crc16Table[256] =
 //Point-To-Point: Bring up the link
 //
 //A three way handshake is used to get both systems to agree that data can flow in both
-//directions.  This handshake is also used to synchronize the HOP timer.
+//directions. This handshake is also used to synchronize the HOP timer and zero the ACKs.
 /*
-                    System A                 System B
+                System A                 System B
 
-                     RESET                     RESET
-                       |                         |
-             Channel 0 |                         | Channel 0
-                       V                         V
-           .----> P2P_NO_LINK               P2P_NO_LINK
-           |           | Tx PING                 |
-           | Timeout   |                         |
-           |           V                         |
-           | P2P_WAIT_TX_PING_DONE               |
-           |           |                         |
-           |           | Tx Complete - - - - - > | Rx PING
-           |           |   Start Rx              |
-           |           |   MAX_PACKET_SIZE       |
-           |           V                         V
-           `---- P2P_WAIT_ACK_1                  +<----------------------.
-                       |                         | Tx PING ACK1          |
-                       |                         V                       |
-                       |              P2P_WAIT_TX_ACK_1_DONE             |
-                       |                         |                       |
-          Rx PING ACK1 | < - - - - - - - - - - - | Tx Complete           |
-                       |                         |   Start Rx            |
-                       |                         |   MAX_PACKET_SIZE     |
-                       |                         |                       |
-                       V                         V         Timeout       |
-           .---------->+                   P2P_WAIT_ACK_2 -------------->+
-           |   TX PING |                         |                       ^
-           |      ACK2 |                         |                       |
-           |           V                         |                       |
-           | P2P_WAIT_TX_ACK_2_DONE              |                       |
-           |           | Tx Complete - - - - - > | Rx PING ACK2          |
-           | Stop      |   Start HOP timer       |   Start HOP Timer     | Stop
-           | HOP       |   Start Rx              |   Start Rx            | HOP
-           | Timer     |   MAX_PACKET_SIZE       |   MAX_PACKET_SIZE     | Timer
-           |           |                         |                       |
-           | Rx        |                         |                       |
-           | PING ACK  V                         V         Rx PING       |
-           `----- P2P_LINK_UP               P2P_LINK_UP -----------------’
-                       |                         |
-                       | Rx Data                 | Rx Data
-                       |                         |
-                       V                         V
+                 RESET                     RESET
+                   |                         |
+         Channel 0 |                         | Channel 0
+                   V                         V
+       .----> P2P_NO_LINK               P2P_NO_LINK
+       |           | Tx FIND_PARTNER         |
+       | Timeout   |                         |
+       |           V                         |
+       | P2P_WAIT_TX_FIND_PARTNER_DONE       |
+       |           |                         |
+       |           | Tx Complete - - - - - > | Rx FIND_PARTNER
+       |           |   Start Rx              |
+       |           |   MAX_PACKET_SIZE       |
+       |           V                         V
+       `---- P2P_WAIT_SYNC_CLOCKS            +<----------------------------.
+                   |                         | Tx SYNC_CLOCKS              |
+                   |                         V                             |
+                   |              P2P_WAIT_TX_SYNC_CLOCKS_DONE             |
+                   |                         |                             |
+    Rx SYNC_CLOCKS | < - - - - - - - - - - - | Tx Complete                 |
+                   |                         |   Start Rx                  |
+                   |                         |   MAX_PACKET_SIZE           |
+                   |                         |                             |
+                   V                         V         Timeout             |
+  .--------------->+                P2P_WAIT_ZERO_ACKS ------------------->+
+  |                |                         |                             ^
+  |                | TX ZERO_ACKS            |                             |
+  |                |                         |                             |
+  |                V                         |                             |
+  |    P2P_WAIT_TX_ZERO_ACKS_DONE            |                             |
+  |                | Tx Complete - - - - - > | Rx ZERO_ACKS                |
+  | Stop           |   Start HOP timer       |   Start HOP Timer           | Stop
+  | HOP            |   Start Rx              |   Start Rx                  | HOP
+  | Timer          |   MAX_PACKET_SIZE       |   MAX_PACKET_SIZE           | Timer
+  |                |   Zero ACKs             |   Zero ACKs                 |
+  |       Rx       |                         |                             |
+  |    SYNC_CLOCKS V                         V         Rx FIND_PARTNER     |
+  `---------- P2P_LINK_UP               P2P_LINK_UP -----------------------’
+                   |                         |
+                   | Rx Data                 | Rx Data
+                   |                         |
+                   V                         V
 
   Two timers are in use:
     datagramTimer:  Set at end of transmit, measures ACK timeout
-    heartbeatTimer: Set upon entry to P2P_NO_LINK, measures time to send next PING
+    heartbeatTimer: Set upon entry to P2P_NO_LINK, measures time to send next FIND_PARTNER
 */
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
