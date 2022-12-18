@@ -1037,7 +1037,7 @@ const COMMAND_ENTRY commands[] =
 
   /*Training parameters
     Ltr, All, reset, min, max, digits,    type,         validation,     name,                   setting addr */
-  {'R',   0,   1,    1, 255,    0, TYPE_U8,           valInt,      "ClientPingRetryInterval", &tempSettings.clientPingRetryInterval},
+  {'R',   0,   1,    1, 255,    0, TYPE_U8,           valInt,"ClientFindPartnerRetryInterval",&tempSettings.clientFindPartnerRetryInterval},
   {'R',   0,   0,    0,   0,    0, TYPE_KEY,          valKey,         "TrainingKey",          &tempSettings.trainingKey},
   {'R',   0,   0,    1, 255,    0, TYPE_U8,           valInt,         "TrainingTimeout",      &tempSettings.trainingTimeout},
 
