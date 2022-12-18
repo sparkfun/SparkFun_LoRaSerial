@@ -168,6 +168,7 @@ bool commandAT(const char * commandString)
         return true;
 
       case ('T'): //ATT - Enter training mode
+        settings = tempSettings; //Apply user's modifications
         selectTraining();
         return true;
 
