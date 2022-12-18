@@ -25,12 +25,12 @@ typedef enum
   RADIO_MP_WAIT_TX_DONE,
 
   //Training client states
-  RADIO_TRAIN_WAIT_TX_PING_DONE,
+  RADIO_TRAIN_WAIT_TX_FIND_PARTNER_DONE,
   RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS,
   RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE,
 
   //Training server states
-  RADIO_TRAIN_WAIT_FOR_PING,
+  RADIO_TRAIN_WAIT_FOR_FIND_PARTNER,
   RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,
 
   //Virtual-Circuit states
@@ -85,14 +85,14 @@ const RADIO_STATE_ENTRY radioStateTable[] =
 
   //Training client states
   //    State                           RX      Name                              Description
-  {RADIO_TRAIN_WAIT_TX_PING_DONE,        0, "TRAIN_WAIT_TX_PING_DONE",        "Train: Wait TX training PING done"},  //15
-  {RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS, 1, "TRAIN_WAIT_RX_RADIO_PARAMETERS", "Train: Wait for radio parameters"},   //16
-  {RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE,   0, "TRAIN_WAIT_TX_PARAM_ACK_DONE",   "Train: Wait for TX param ACK done"},  //17
+  {RADIO_TRAIN_WAIT_TX_FIND_PARTNER_DONE,0, "TRAIN_WAIT_TX_FIND_PARTNER_DONE","Train: Wait TX training FIND_PARTNER done"}, //15
+  {RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS, 1, "TRAIN_WAIT_RX_RADIO_PARAMETERS", "Train: Wait for radio parameters"},          //16
+  {RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE,   0, "TRAIN_WAIT_TX_PARAM_ACK_DONE",   "Train: Wait for TX param ACK done"},         //17
 
   //Training server states
   //    State                           RX      Name                              Description
-  {RADIO_TRAIN_WAIT_FOR_PING,            1, "TRAIN_WAIT_FOR_PING",            "Train: Wait for training PING"},      //18
-  {RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,0, "TRAIN_WAIT_TX_RADIO_PARAMS_DONE","Train: Wait for TX params done"},     //19
+  {RADIO_TRAIN_WAIT_FOR_FIND_PARTNER,    1, "TRAIN_WAIT_FOR_FIND_PARTNER",    "Train: Wait for training FIND_PARTNER"}, //18
+  {RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,0, "TRAIN_WAIT_TX_RADIO_PARAMS_DONE","Train: Wait for TX params done"},        //19
 
   //Virtual circuit states
   //    State                           RX      Name                              Description
@@ -122,7 +122,7 @@ typedef enum
   DATAGRAM_DATAGRAM,                // 8
 
   //Multi-Point training exchange
-  DATAGRAM_TRAINING_PING,           // 9
+  DATAGRAM_TRAINING_FIND_PARTNER,   // 9
   DATAGRAM_TRAINING_PARAMS,         //10
   DATAGRAM_TRAINING_ACK,            //11
 
@@ -152,8 +152,8 @@ const char * const radioDatagramType[] =
   "DATA", "DATA-ACK", "HEARTBEAT", "RMT-CMD", "RMT_RESP",
   //  8
   "DATAGRAM",
-  //     9                 10               11
-  "TRAINING_PING", "TRAINING_PARAMS", "TRAINING_ACK",
+  //         9                    10                11
+  "TRAINING_FIND_PARTNER", "TRAINING_PARAMS", "TRAINING_ACK",
   //    12
   "VC_HEARTBEAT",
   //      13               14              15
@@ -286,7 +286,7 @@ enum
   TRIGGER_TRAINING_CONTROL_PACKET,
   TRIGGER_TRAINING_DATA_PACKET,
   TRIGGER_TRAINING_NO_ACK,
-  TRIGGER_TRAINING_CLIENT_TX_PING_DONE,
+  TRIGGER_TRAINING_CLIENT_TX_FIND_PARTNER_DONE,
   TRIGGER_TRAINING_CLIENT_RX_PARAMS,
   TRIGGER_TRAINING_CLIENT_TX_ACK_DONE,
   TRIGGER_TRAINING_SERVER_RX,
@@ -497,8 +497,6 @@ typedef enum
   RADIO_CALL_setRadioFrequency,
   RADIO_CALL_returnToReceiving,
   RADIO_CALL_calcAirTime,
-  RADIO_CALL_xmitDatagramP2PTrainingPing,
-  RADIO_CALL_xmitDatagramP2pTrainingParams,
   RADIO_CALL_xmitDatagramP2PFindPartner,
   RADIO_CALL_xmitDatagramP2PAck1,
   RADIO_CALL_xmitDatagramP2PAck2,
@@ -511,7 +509,7 @@ typedef enum
   RADIO_CALL_xmitDatagramMpHeartbeat,
   RADIO_CALL_xmitDatagramMpAck,
   RADIO_CALL_xmitDatagramMpPing,
-  RADIO_CALL_xmitDatagramTrainingPing,
+  RADIO_CALL_xmitDatagramTrainingFindPartner,
   RADIO_CALL_xmitDatagramTrainingAck,
   RADIO_CALL_xmitDatagramTrainRadioParameters,
   RADIO_CALL_xmitVcDatagram,
