@@ -1215,24 +1215,24 @@ void updateRadioState()
                 V
                 +<--------------------------------.
                 |                                 |
-                | Send client ping                |
+                | Send FIND_PARTNER               |
                 |                                 |
                 V                                 |
-        RADIO_TRAIN_WAIT_TX_PING_DONE             |
+        RADIO_TRAIN_WAIT_TX_FIND_PARTNER_DONE     |
                 |                                 |
                 V                                 | Timeout
         RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS -----'
                 |
-                | Update settings
-                | Send client ACK
+                | Save settings
+                | Send ACK
                 |
                 V
-        RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE
+        RADIO_TRAIN_WAIT_TX_ACK_DONE
                 |
                 V
       endTrainingClientServer
                 |
-                | Restore settings
+                | Reboot
                 |
                 V
     */
@@ -1360,21 +1360,18 @@ void updateRadioState()
                         +<--------------------------------.
                         |                                 |
                         V                                 |
-        .------ RADIO_TRAIN_WAIT_FOR_PING                 |
+        .------ RADIO_TRAIN_WAIT_FOR_FIND_PARTNER         |
         |               |                                 |
-        |               | Send client ping                |
+        |               | Send RADIO_PARAMS               |
         |               |                                 |
         |               V                                 |
         |      RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE -----'
         |
         |
         `---------------.
-                        | Stop training command
+                        | ATZ command
                         |
-                        V
-             endTrainingClientServer
-                        |
-                        | Restore settings
+                        | Reboot
                         |
                         V
     */
