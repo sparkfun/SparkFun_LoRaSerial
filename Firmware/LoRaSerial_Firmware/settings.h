@@ -160,6 +160,11 @@ const char * const radioDatagramType[] =
   "VC_UNKNOWN_ACKS", "VC_SYNC_ACKS", "VC_ZERO_ACKS",
 };
 
+typedef struct _VC_FLAGS
+{
+  bool valid : 1;           //Unique ID is valid
+} VC_FLAGS;
+
 typedef struct _VIRTUAL_CIRCUIT
 {
   uint8_t uniqueId[UNIQUE_ID_BYTES];
@@ -176,7 +181,8 @@ typedef struct _VIRTUAL_CIRCUIT
   uint32_t linkFailures;      //myVc <-> VC, Total number of link failures
 
   //Link management
-  bool valid;                 //Unique ID is valid
+
+  VC_FLAGS flags;
   uint8_t vcState;            //State of VC
 
   /* ACK number management
