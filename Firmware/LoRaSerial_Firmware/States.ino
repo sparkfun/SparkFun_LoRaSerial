@@ -110,7 +110,7 @@ void updateRadioState()
 
       //Start the TX timer: time to delay before transmitting the FIND_PARTNER
       setHeartbeatShort(); //Both radios start with short heartbeat period
-      pingRandomTime = random(ackAirTime, ackAirTime * 2); //Fast FIND_PARTNER
+      randomTime = random(ackAirTime, ackAirTime * 2); //Fast FIND_PARTNER
 
       sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive FIND_PARTNER packet
 
@@ -270,7 +270,7 @@ void updateRadioState()
       }
 
       //Is it time to send the FIND_PARTNER to the remote system
-      else if ((receiveInProcess() == false) && ((millis() - heartbeatTimer) >= pingRandomTime))
+      else if ((receiveInProcess() == false) && ((millis() - heartbeatTimer) >= randomTime))
       {
         //Transmit the FIND_PARTNER
         triggerEvent(TRIGGER_HANDSHAKE_SEND_FIND_PARTNER);
@@ -380,9 +380,9 @@ void updateRadioState()
 
           //Slow down FIND_PARTNERs
           if (ackAirTime < settings.maxDwellTime)
-            pingRandomTime = random(settings.maxDwellTime * 2, settings.maxDwellTime * 4);
+            randomTime = random(settings.maxDwellTime * 2, settings.maxDwellTime * 4);
           else
-            pingRandomTime = random(ackAirTime * 4, ackAirTime * 8);
+            randomTime = random(ackAirTime * 4, ackAirTime * 8);
 
           sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive FIND_PARTNER packet
           returnToReceiving();
@@ -469,9 +469,9 @@ void updateRadioState()
 
           //Slow down FIND_PARTNERs
           if (ackAirTime < settings.maxDwellTime)
-            pingRandomTime = random(settings.maxDwellTime * 2, settings.maxDwellTime * 4);
+            randomTime = random(settings.maxDwellTime * 2, settings.maxDwellTime * 4);
           else
-            pingRandomTime = random(ackAirTime * 4, ackAirTime * 8);
+            randomTime = random(ackAirTime * 4, ackAirTime * 8);
 
           sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive FIND_PARTNER packet
           returnToReceiving();
