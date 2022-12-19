@@ -1843,6 +1843,9 @@ void updateRadioState()
             }
             else
             {
+              //HEARTBEATs have not timed out, request to reestablish the connection
+              vc->flags.wasConnected = true;
+
               //Failed to reach the other system, break the link
               vcBreakLink(txDestVc);
             }
@@ -1886,7 +1889,7 @@ void updateRadioState()
             if (vcConnecting & (1 << index))
             {
               //Determine if UNKNOWN_ACKS needs to be sent
-              if (virtualCircuitList[index].vcState == VC_STATE_SEND_UNKNOWN_ACKS)
+              if (virtualCircuitList[index].vcState <= VC_STATE_SEND_UNKNOWN_ACKS)
               {
                 //Send the UNKNOWN_ACKS datagram, first part of the 3-way handshake
                 if (xmitVcUnknownAcks(index))
@@ -2517,10 +2520,15 @@ void vcChangeState(int8_t vcIndex, uint8_t state)
 
     //Determine if the VC is connecting
     vcBit = 1 << vcIndex;
-    if ((state > VC_STATE_LINK_ALIVE) && (state < VC_STATE_CONNECTED))
+    if (((state > VC_STATE_LINK_ALIVE) && (state < VC_STATE_CONNECTED))
+      || (vc->flags.wasConnected && (vc->vcState == VC_STATE_LINK_ALIVE)))
       vcConnecting |= vcBit;
     else
       vcConnecting &= ~vcBit;
+
+    //Clear the connection request when connected
+    if (state == VC_STATE_CONNECTED)
+      vc->flags.wasConnected = false;
   }
   vcSendPcStateMessage(vcIndex, state);
 }
