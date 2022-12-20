@@ -263,7 +263,7 @@ void updateRadioState()
             triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
             if (xmitDatagramP2PSyncClocks() == true)
             {
-              sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect ACK2 to contain millis info
+              sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
               changeState(RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE);
             }
             break;
@@ -337,7 +337,7 @@ void updateRadioState()
             triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
             if (xmitDatagramP2PSyncClocks() == true)
             {
-              sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect ACK2 to contain millis info
+              sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
               changeState(RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE);
             }
             break;
@@ -354,11 +354,11 @@ void updateRadioState()
             timestampOffset = clockOffset;
 
             //Acknowledge the SYNC_CLOCKS
-            triggerEvent(TRIGGER_SEND_ACK2);
-            if (xmitDatagramP2PAck2() == true)
+            triggerEvent(TRIGGER_SEND_ZERO_ACKS);
+            if (xmitDatagramP2PZeroAcks() == true)
             {
               sf6ExpectedSize = MAX_PACKET_SIZE; //Tell SF6 to return to max packet length
-              changeState(RADIO_P2P_WAIT_TX_ACK_2_DONE);
+              changeState(RADIO_P2P_WAIT_TX_ZERO_ACKS_DONE);
             }
             break;
         }
@@ -400,11 +400,11 @@ void updateRadioState()
         triggerEvent(TRIGGER_HANDSHAKE_SEND_SYNC_CLOCKS_COMPLETE);
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
-        changeState(RADIO_P2P_WAIT_ACK_2);
+        changeState(RADIO_P2P_WAIT_ZERO_ACKS);
       }
       break;
 
-    case RADIO_P2P_WAIT_ACK_2:
+    case RADIO_P2P_WAIT_ZERO_ACKS:
       if (transactionComplete == true)
       {
         //Decode the received packet
@@ -432,7 +432,7 @@ void updateRadioState()
             triggerEvent(TRIGGER_CRC_ERROR);
             break;
 
-          case DATAGRAM_ACK_2:
+          case DATAGRAM_ZERO_ACKS:
             //Received ACK 2
             //Compute the common clock
             currentMillis = millis();
@@ -445,7 +445,7 @@ void updateRadioState()
 
             startChannelTimer(getLinkupOffset()); //We are exiting the link last so adjust our starting Timer
 
-            setHeartbeatLong(); //We sent SYNC_CLOCKS and they sent ACK2, so don't be the first to send heartbeat
+            setHeartbeatLong(); //We sent SYNC_CLOCKS and they sent ZERO_ACKS, so don't be the first to send heartbeat
 
             //Bring up the link
             enterLinkUp();
@@ -460,12 +460,12 @@ void updateRadioState()
           if (settings.debugDatagrams)
           {
             systemPrintTimestamp();
-            systemPrintln("RX: ACK2 Timeout");
+            systemPrintln("RX: ZERO_ACKS Timeout");
             outputSerialData(true);
           }
 
           //Start the TX timer: time to delay before transmitting the FIND_PARTNER
-          triggerEvent(TRIGGER_HANDSHAKE_ACK2_TIMEOUT);
+          triggerEvent(TRIGGER_HANDSHAKE_ZERO_ACKS_TIMEOUT);
           setHeartbeatShort();
 
           //Slow down FIND_PARTNERs
@@ -482,7 +482,7 @@ void updateRadioState()
       }
       break;
 
-    case RADIO_P2P_WAIT_TX_ACK_2_DONE:
+    case RADIO_P2P_WAIT_TX_ZERO_ACKS_DONE:
       //Determine if a ACK 2 has completed transmission
       if (transactionComplete)
       {
@@ -935,7 +935,7 @@ void updateRadioState()
             triggerEvent(TRIGGER_NETID_MISMATCH);
             break;
 
-          case DATAGRAM_ACK_2:
+          case DATAGRAM_ZERO_ACKS:
           case DATAGRAM_DATA:
           case DATAGRAM_DATA_ACK:
           case DATAGRAM_FIND_PARTNER: //Clients do not respond to FIND_PARTNER, only the server
@@ -1083,7 +1083,7 @@ void updateRadioState()
             break;
 
           case DATAGRAM_SYNC_CLOCKS:
-          case DATAGRAM_ACK_2:
+          case DATAGRAM_ZERO_ACKS:
           case DATAGRAM_DATAGRAM:
           case DATAGRAM_DATA_ACK:
           case DATAGRAM_REMOTE_COMMAND:

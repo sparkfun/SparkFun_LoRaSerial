@@ -7,8 +7,8 @@ typedef enum
   RADIO_P2P_WAIT_TX_FIND_PARTNER_DONE,
   RADIO_P2P_WAIT_SYNC_CLOCKS,
   RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE,
-  RADIO_P2P_WAIT_ACK_2,
-  RADIO_P2P_WAIT_TX_ACK_2_DONE,
+  RADIO_P2P_WAIT_ZERO_ACKS,
+  RADIO_P2P_WAIT_TX_ZERO_ACKS_DONE,
 
   //Point-to-Point: Link up, data exchange
   RADIO_P2P_LINK_UP,
@@ -63,8 +63,8 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   {RADIO_P2P_WAIT_TX_FIND_PARTNER_DONE,  0, "P2P_WAIT_TX_FIND_PARTNER_DONE",  "P2P: [No Link] Wait FIND_PARTNER TX Done"},// 2
   {RADIO_P2P_WAIT_SYNC_CLOCKS,           1, "P2P_WAIT_SYNC_CLOCKS",           "P2P: [No Link] Waiting for SYNC_CLOCKS"},  // 3
   {RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE,   0, "P2P_WAIT_TX_SYNC_CLOCKS_DONE",   "P2P: [No Link] Wait SYNC_CLOCKS TX Done"}, // 4
-  {RADIO_P2P_WAIT_ACK_2,                 1, "P2P_WAIT_ACK_2",                 "P2P: [No Link] Waiting for ACK2"}, // 5
-  {RADIO_P2P_WAIT_TX_ACK_2_DONE,         0, "P2P_WAIT_TX_ACK_2_DONE",         "P2P: [No Link] Wait ACK2 TX Done"},// 6
+  {RADIO_P2P_WAIT_ZERO_ACKS,             1, "P2P_WAIT_ZERO_ACKS",             "P2P: [No Link] Waiting for ZERO_ACKS"},    // 5
+  {RADIO_P2P_WAIT_TX_ZERO_ACKS_DONE,     0, "P2P_WAIT_TX_ZERO_ACKS_DONE",     "P2P: [No Link] Wait ZERO_ACKS TX Done"},   // 6
 
   //Point-to-Point, link up, data exchange
   //    State                           RX      Name                              Description
@@ -109,7 +109,7 @@ typedef enum
   //VC:  Between the server radio and a client radio
   DATAGRAM_FIND_PARTNER = 0,        // 0
   DATAGRAM_SYNC_CLOCKS,             // 1
-  DATAGRAM_ACK_2,                   // 2
+  DATAGRAM_ZERO_ACKS,               // 2
 
   //Point-to-Point data exchange
   DATAGRAM_DATA,                    // 3
@@ -267,11 +267,11 @@ enum
   TRIGGER_HANDSHAKE_SEND_FIND_PARTNER_COMPLETE,
   TRIGGER_HANDSHAKE_SEND_SYNC_CLOCKS_COMPLETE,
   TRIGGER_SEND_SYNC_CLOCKS,
-  TRIGGER_SEND_ACK2,
+  TRIGGER_SEND_ZERO_ACKS,
   TRIGGER_HANDSHAKE_COMPLETE,
   TRIGGER_LINK_ACK_SENT,
   TRIGGER_LINK_ACK_RECEIVED,
-  TRIGGER_HANDSHAKE_ACK2_TIMEOUT,
+  TRIGGER_HANDSHAKE_ZERO_ACKS_TIMEOUT,
   TRIGGER_RECEIVE_IN_PROCESS_START,
   TRIGGER_RECEIVE_IN_PROCESS_END,
   TRIGGER_LINK_HB_ACK_REXMIT,
@@ -499,7 +499,7 @@ typedef enum
   RADIO_CALL_calcAirTime,
   RADIO_CALL_xmitDatagramP2PFindPartner,
   RADIO_CALL_xmitDatagramP2PSyncClocks,
-  RADIO_CALL_xmitDatagramP2PAck2,
+  RADIO_CALL_xmitDatagramP2PZeroAcks,
   RADIO_CALL_xmitDatagramP2PCommand,
   RADIO_CALL_xmitDatagramP2PCommandResponse,
   RADIO_CALL_xmitDatagramP2PData,
