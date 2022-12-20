@@ -955,7 +955,7 @@ bool xmitDatagramMpHeartbeat()
   return (transmitDatagram());
 }
 
-//ACK packet sent by server in response the client ping, includes channel number
+//ACK packet sent by server in response the FIND_PARTNER, includes channel number
 //During discovery scanning, it's possible for the client to get an ACK but be on an adjacent channel
 //The channel number ensures that the client gets the next hop correct
 bool xmitDatagramMpAck()
@@ -989,10 +989,10 @@ bool xmitDatagramMpAck()
   return (transmitDatagram());
 }
 
-//Ping packet sent during scanning
-bool xmitDatagramMpPing()
+//FIND_PARTNER packet sent during scanning
+bool xmitDatagramMpFindPartner()
 {
-  radioCallHistory[RADIO_CALL_xmitDatagramMpPing] = millis();
+  radioCallHistory[RADIO_CALL_xmitDatagramMpFindPartner] = millis();
 
   /*
                                     endOfTxData ---.
@@ -3063,7 +3063,7 @@ const I16_TO_STRING radioCallName[] =
   {RADIO_CALL_xmitDatagramMpData, "xmitDatagramMpData"},
   {RADIO_CALL_xmitDatagramMpHeartbeat, "xmitDatagramMpHeartbeat"},
   {RADIO_CALL_xmitDatagramMpAck, "xmitDatagramMpAck"},
-  {RADIO_CALL_xmitDatagramMpPing, "xmitDatagramMpPing"},
+  {RADIO_CALL_xmitDatagramMpFindPartner, "xmitDatagramMpFindPartner"},
   {RADIO_CALL_xmitDatagramTrainingFindPartner, "xmitDatagramTrainingFindPartner"},
   {RADIO_CALL_xmitDatagramTrainingAck, "xmitDatagramTrainingAck"},
   {RADIO_CALL_xmitDatagramTrainRadioParameters, "xmitDatagramTrainRadioParameters"},

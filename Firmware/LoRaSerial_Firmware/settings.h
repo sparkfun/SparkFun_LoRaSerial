@@ -17,7 +17,7 @@ typedef enum
   //Server-client discovery
   RADIO_DISCOVER_BEGIN,
   RADIO_DISCOVER_SCANNING,
-  RADIO_DISCOVER_WAIT_TX_PING_DONE,
+  RADIO_DISCOVER_WAIT_TX_FIND_PARTNER_DONE,
 
   //Multi-Point: Datagrams
   RADIO_MP_WAIT_TX_ACK_DONE,
@@ -73,9 +73,9 @@ const RADIO_STATE_ENTRY radioStateTable[] =
 
   //Server-client discovery
   //    State                           RX      Name                              Description
-  {RADIO_DISCOVER_BEGIN,                 0, "DISCOVER_BEGIN",                 "Disc: Setup for scanning"},        // 9
-  {RADIO_DISCOVER_SCANNING,              0, "DISCOVER_SCANNING",              "Disc: Scanning for servers"},      //10
-  {RADIO_DISCOVER_WAIT_TX_PING_DONE,     0, "DISCOVER_WAIT_TX_PING_DONE",     "Disc: Wait for ping to xmit"},     //11
+  {RADIO_DISCOVER_BEGIN,                 0, "DISCOVER_BEGIN",                 "Disc: Setup for scanning"},                  // 9
+  {RADIO_DISCOVER_SCANNING,              0, "DISCOVER_SCANNING",              "Disc: Scanning for servers"},                //10
+  {RADIO_DISCOVER_WAIT_TX_FIND_PARTNER_DONE,0,"DISCOVER_WAIT_TX_FIND_PARTNER_DONE","Disc: Wait for FIND_PARTNER to xmit"},  //11
 
   //Multi-Point data exchange
   //    State                           RX      Name                              Description
@@ -260,7 +260,7 @@ enum
   TRIGGER_MP_SCAN,
   TRIGGER_MP_DATA_PACKET,
   TRIGGER_MP_PACKET_RECEIVED,
-  TRIGGER_MP_SEND_ACK_FOR_PING,
+  TRIGGER_MP_SEND_ACK_FOR_FIND_PARTNER,
   TRIGGER_TRANSMIT_CANCELED,
   TRIGGER_HANDSHAKE_ACK1_TIMEOUT,
   TRIGGER_HANDSHAKE_SEND_FIND_PARTNER,
@@ -385,7 +385,7 @@ typedef struct struct_settings {
   uint16_t serialTimeoutBeforeSendingFrame_ms = 50; //Send partial buffer if time expires
   bool debug = false; //Print basic events: ie, radio state changes
   bool echo = false; //Print locally inputted serial
-  uint16_t heartbeatTimeout = 5000; //ms before sending ping to see if link is active
+  uint16_t heartbeatTimeout = 5000; //ms before sending HEARTBEAT to see if link is active
   bool flowControl = false; //Enable the use of CTS/RTS flow control signals
   bool autoTuneFrequency = false; //Based on the last packets frequency error, adjust our next transaction frequency
   bool printPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
@@ -508,7 +508,7 @@ typedef enum
   RADIO_CALL_xmitDatagramMpData,
   RADIO_CALL_xmitDatagramMpHeartbeat,
   RADIO_CALL_xmitDatagramMpAck,
-  RADIO_CALL_xmitDatagramMpPing,
+  RADIO_CALL_xmitDatagramMpFindPartner,
   RADIO_CALL_xmitDatagramTrainingFindPartner,
   RADIO_CALL_xmitDatagramTrainingAck,
   RADIO_CALL_xmitDatagramTrainRadioParameters,

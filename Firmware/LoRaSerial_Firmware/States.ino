@@ -899,7 +899,7 @@ void updateRadioState()
       break;
 
     //====================
-    //Walk through channel table backwards, transmitting a Ping and looking for an ACK1
+    //Walk through channel table backwards, transmitting a FIND_PARTNER and looking for an ACK1
     //====================
     case RADIO_DISCOVER_SCANNING:
       if (transactionComplete)
@@ -1002,18 +1002,18 @@ void updateRadioState()
             }
           }
 
-          //Send ping
-          if (xmitDatagramMpPing() == true)
-            changeState(RADIO_DISCOVER_WAIT_TX_PING_DONE);
+          //Send FIND_PARTNER
+          if (xmitDatagramMpFindPartner() == true)
+            changeState(RADIO_DISCOVER_WAIT_TX_FIND_PARTNER_DONE);
         }
       }
 
       break;
 
     //====================
-    //Wait for the PING to complete transmission
+    //Wait for the FIND_PARTNER to complete transmission
     //====================
-    case RADIO_DISCOVER_WAIT_TX_PING_DONE:
+    case RADIO_DISCOVER_WAIT_TX_FIND_PARTNER_DONE:
       if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
@@ -1099,7 +1099,7 @@ void updateRadioState()
               //Ack their FIND_PARTNER with sync data
               if (xmitDatagramMpAck() == true)
               {
-                triggerEvent(TRIGGER_MP_SEND_ACK_FOR_PING);
+                triggerEvent(TRIGGER_MP_SEND_ACK_FOR_FIND_PARTNER);
                 changeState(RADIO_MP_WAIT_TX_ACK_DONE);
               }
             }
