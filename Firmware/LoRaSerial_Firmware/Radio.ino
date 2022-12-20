@@ -1013,10 +1013,10 @@ bool xmitDatagramMpPing()
 //Multi-Point Client Training
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-//Build the client ping packet used for training
-bool xmitDatagramTrainingPing()
+//Build the FIND_PARTNER packet used for training
+bool xmitDatagramTrainingFindPartner()
 {
-  radioCallHistory[RADIO_CALL_xmitDatagramTrainingPing] = millis();
+  radioCallHistory[RADIO_CALL_xmitDatagramTrainingFindPartner] = millis();
 
   //Add the source (server) ID
   memcpy(endOfTxData, myUniqueId, UNIQUE_ID_BYTES);
@@ -1033,7 +1033,7 @@ bool xmitDatagramTrainingPing()
       +----------+---------+----------+------------+-----------+----------+
   */
 
-  txControl.datagramType = DATAGRAM_TRAINING_PING;
+  txControl.datagramType = DATAGRAM_TRAINING_FIND_PARTNER;
   return (transmitDatagram());
 }
 
@@ -3052,8 +3052,6 @@ const I16_TO_STRING radioCallName[] =
   {RADIO_CALL_setRadioFrequency, "setRadioFrequency"},
   {RADIO_CALL_returnToReceiving, "returnToReceiving"},
   {RADIO_CALL_calcAirTime, "calcAirTime"},
-  {RADIO_CALL_xmitDatagramP2PTrainingPing, "xmitDatagramP2PTrainingPing"},
-  {RADIO_CALL_xmitDatagramP2pTrainingParams, "xmitDatagramP2pTrainingParams"},
   {RADIO_CALL_xmitDatagramP2PFindPartner, "xmitDatagramP2PFindPartner"},
   {RADIO_CALL_xmitDatagramP2PAck1, "xmitDatagramP2PAck1"},
   {RADIO_CALL_xmitDatagramP2PAck2, "xmitDatagramP2PAck2"},
@@ -3066,7 +3064,7 @@ const I16_TO_STRING radioCallName[] =
   {RADIO_CALL_xmitDatagramMpHeartbeat, "xmitDatagramMpHeartbeat"},
   {RADIO_CALL_xmitDatagramMpAck, "xmitDatagramMpAck"},
   {RADIO_CALL_xmitDatagramMpPing, "xmitDatagramMpPing"},
-  {RADIO_CALL_xmitDatagramTrainingPing, "xmitDatagramTrainingPing"},
+  {RADIO_CALL_xmitDatagramTrainingFindPartner, "xmitDatagramTrainingFindPartner"},
   {RADIO_CALL_xmitDatagramTrainingAck, "xmitDatagramTrainingAck"},
   {RADIO_CALL_xmitDatagramTrainRadioParameters, "xmitDatagramTrainRadioParameters"},
   {RADIO_CALL_xmitVcDatagram, "xmitVcDatagram"},

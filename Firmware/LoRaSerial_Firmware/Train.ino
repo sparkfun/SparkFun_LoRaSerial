@@ -62,10 +62,10 @@ void beginTrainingClient()
   //Common initialization
   commonTrainingInitialization();
 
-  //Transmit client ping to the training server
-  if (xmitDatagramTrainingPing() == true)
+  //Transmit FIND_PARTNER to the training server
+  if (xmitDatagramTrainingFindPartner() == true)
     //Set the next state
-    changeState(RADIO_TRAIN_WAIT_TX_PING_DONE);
+    changeState(RADIO_TRAIN_WAIT_TX_FIND_PARTNER_DONE);
   else
     changeState(RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS);
   trainingTimer = millis();
@@ -104,7 +104,7 @@ void beginTrainingServer()
   returnToReceiving();
 
   //Set the next state
-  changeState(RADIO_TRAIN_WAIT_FOR_PING);
+  changeState(RADIO_TRAIN_WAIT_FOR_FIND_PARTNER);
 }
 
 //Perform the common training initialization

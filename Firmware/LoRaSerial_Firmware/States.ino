@@ -1238,9 +1238,9 @@ void updateRadioState()
     */
 
     //====================
-    //Wait for the PING to complete transmission
+    //Wait for the FIND_PARTNER to complete transmission
     //====================
-    case RADIO_TRAIN_WAIT_TX_PING_DONE:
+    case RADIO_TRAIN_WAIT_TX_FIND_PARTNER_DONE:
 
       //If dio0ISR has fired, we are done transmitting
       if (transactionComplete == true)
@@ -1248,7 +1248,7 @@ void updateRadioState()
         transactionComplete = false;
 
         //Indicate that the receive is complete
-        triggerEvent(TRIGGER_TRAINING_CLIENT_TX_PING_DONE);
+        triggerEvent(TRIGGER_TRAINING_CLIENT_TX_FIND_PARTNER_DONE);
 
         //Start the receive operation
         returnToReceiving();
@@ -1329,7 +1329,7 @@ void updateRadioState()
         }
         else
         {
-          xmitDatagramTrainingPing(); //Continue retrying as client
+          xmitDatagramTrainingFindPartner(); //Continue retrying as client
         }
       }
       break;
@@ -1377,9 +1377,9 @@ void updateRadioState()
     */
 
     //====================
-    //Wait for a PING frame from a client
+    //Wait for a FIND_PARTNER frame from a client
     //====================
-    case RADIO_TRAIN_WAIT_FOR_PING:
+    case RADIO_TRAIN_WAIT_FOR_FIND_PARTNER:
 
       //If dio0ISR has fired, a packet has arrived
       if (transactionComplete == true)
@@ -1396,7 +1396,7 @@ void updateRadioState()
             triggerEvent(TRIGGER_BAD_PACKET);
             break;
 
-          case DATAGRAM_TRAINING_PING:
+          case DATAGRAM_TRAINING_FIND_PARTNER:
             //Save the client ID
             memcpy(trainingPartnerID, rxData, UNIQUE_ID_BYTES);
 
@@ -1459,7 +1459,7 @@ void updateRadioState()
         returnToReceiving();
 
         //Set the next state
-        changeState(RADIO_TRAIN_WAIT_FOR_PING);
+        changeState(RADIO_TRAIN_WAIT_FOR_FIND_PARTNER);
       }
       break;
 
