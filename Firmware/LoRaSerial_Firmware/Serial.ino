@@ -197,6 +197,14 @@ uint8_t readyOutgoingCommandPacket(uint16_t offset)
   if (bytesToSend > maxLength)
     bytesToSend = maxLength;
 
+  if (settings.debugSerial)
+  {
+    systemPrint("Moving ");
+    systemPrint(bytesToSend);
+    systemPrintln(" bytes from commandTXBuffer into outgoingPacket");
+    outputSerialData(true);
+  }
+
   //Determine the number of bytes to send
   length = 0;
   if ((commandTXTail + bytesToSend) > sizeof(commandTXBuffer))
