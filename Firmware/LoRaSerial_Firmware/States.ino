@@ -259,11 +259,11 @@ void updateRadioState()
             clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
             timestampOffset = clockOffset;
 
-            //Acknowledge the FIND_PARTNER
+            //Acknowledge the FIND_PARTNER with SYNC_CLOCKS
             triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
             if (xmitDatagramP2PSyncClocks() == true)
             {
-              sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
+              sf6ExpectedSize = headerBytes + ZERO_ACKS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
               changeState(RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE);
             }
             break;
@@ -337,16 +337,16 @@ void updateRadioState()
             triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
             if (xmitDatagramP2PSyncClocks() == true)
             {
-              sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
+              sf6ExpectedSize = headerBytes + ZERO_ACKS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
               changeState(RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE);
             }
             break;
 
           case DATAGRAM_SYNC_CLOCKS:
-            //Received ACK 1
+            //Received SYNC_CLOCKS
             //Compute the common clock
             currentMillis = millis();
-            memcpy(&clockOffset, rxData, sizeof(currentMillis));
+            memcpy(&clockOffset, rxData + 1, sizeof(currentMillis));
             roundTripMillis = rcvTimeMillis - xmitTimeMillis;
             clockOffset += currentMillis + roundTripMillis;
             clockOffset >>= 1;
@@ -394,7 +394,7 @@ void updateRadioState()
       break;
 
     case RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE:
-      //Determine if a ACK 1 has completed transmission
+      //Determine if a SYNC_CLOCKS has completed transmission
       if (transactionComplete)
       {
         triggerEvent(TRIGGER_HANDSHAKE_SEND_SYNC_CLOCKS_COMPLETE);
@@ -545,7 +545,7 @@ void updateRadioState()
 
                   FIND_PARTNER ----> Update timestampOffset
 
-        Update timestampOffset <---- ACK 1
+        Update timestampOffset <---- SYNC_CLOCKS
 
                          ACK 2 ----> Update timestampOffset
 
@@ -886,6 +886,53 @@ void updateRadioState()
     //Multi-Point Data Exchange
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+    /*
+                         Server                                  Client
+
+                          Reset                                   Reset
+                            |                                       |
+                            |                                       |
+                            V                                       V
+    .--------------> RADIO_MP_STANDBY                      RADIO_DISCOVER_BEGIN
+    |                       |                                       |
+    |  No TX                |                                       |
+    |  Do ???      RX other V                                       |
+    +<--------+<------------+                                       V
+    ^         |             |                 .--------> RADIO_DISCOVER_SCANNING
+    |         | TX Resp     |                 | TX done             |
+    |         |             |                 |                     |
+    |         |             |     WAIT_TX_FIND_PARTNER_DONE         |
+    |     .---'             |                 ^                     |
+    |     |              RX |                 |                     |
+    |     |    FIND_PARTNER |  < - - - - - -  | TX FIND_PARTNER     |
+    |     |                 |                 |                     |
+    |     |                 |                 |       Delay         |
+    |     |                 |                 |       10 Sec        |
+    |     |                 |                 +<----------.         |
+    |     |                 |                 ^           |         |
+    |     |                 |                 |  Yes      | No      |
+    |     |                 |                 + <---- Loops < 10    |
+    |     |                 |                 ^           ^         |
+    |     |                 |              No |      Yes  |         |
+    |     |                 |             Channel 0 ------'         |
+    |     |                 |                 ^                     |
+    |     |                 |                 | Hop reverse         |
+    |     |                 |                 | RX timeout          V
+    |     |                 |                 '---------------------+
+    |     |                 |                                       |
+    |     |                 |                                       |
+    |     |              TX |                                       |
+    |     |     SYNC_CLOCKS |  - - - - - - - - - - - - - - - - - >  | RX SYNC_CLOCKS
+    |     |                 |                                       |
+    |     |                 |                                       | Sync clocks
+    |     |                 v                                       | Update channel #
+    |     '-----> RADIO_MP_WAIT_TX_DONE                             |
+    |                       |                                       |
+    |                       v                                       |
+    `-----------------------+<--------------------------------------'
+
+    */
+
     //====================
     //Start searching for other radios
     //====================
@@ -951,7 +998,17 @@ void updateRadioState()
             //Server has responded with ACK
             syncChannelTimer(); //Start and adjust freq hop ISR based on remote's remaining clock
 
-            channelNumber = rxData[0]; //Change to the server's channel number
+            //Change to the server's channel number
+            channelNumber = rxVcData[0];
+
+            //Compute the common clock
+            currentMillis = millis();
+            memcpy(&clockOffset, rxData + 1, sizeof(currentMillis));
+            roundTripMillis = rcvTimeMillis - xmitTimeMillis;
+            clockOffset += currentMillis + roundTripMillis;
+            clockOffset >>= 1;
+            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
+            timestampOffset = clockOffset;
 
             if (settings.debugSync)
             {
@@ -1024,18 +1081,6 @@ void updateRadioState()
       break;
 
     //====================
-    //Wait for the ACK to complete transmission
-    //====================
-    case RADIO_MP_WAIT_TX_ACK_DONE:
-      if (transactionComplete)
-      {
-        transactionComplete = false; //Reset ISR flag
-        returnToReceiving();
-        changeState(RADIO_MP_STANDBY);
-      }
-      break;
-
-    //====================
     //Wait for the next operation (listed in priority order):
     // * Frame received
     // * Data to send
@@ -1097,11 +1142,11 @@ void updateRadioState()
             //A new radio is saying hello
             if (settings.server == true)
             {
-              //Ack their FIND_PARTNER with sync data
-              if (xmitDatagramMpAck() == true)
+              //Ack their FIND_PARTNER with SYNC_CLOCK
+              if (xmitDatagramP2PSyncClocks() == true)
               {
                 triggerEvent(TRIGGER_MP_SEND_ACK_FOR_FIND_PARTNER);
-                changeState(RADIO_MP_WAIT_TX_ACK_DONE);
+                changeState(RADIO_MP_WAIT_TX_DONE);
               }
             }
             else

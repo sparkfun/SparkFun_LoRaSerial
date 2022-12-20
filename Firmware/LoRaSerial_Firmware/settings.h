@@ -20,7 +20,6 @@ typedef enum
   RADIO_DISCOVER_WAIT_TX_FIND_PARTNER_DONE,
 
   //Multi-Point: Datagrams
-  RADIO_MP_WAIT_TX_ACK_DONE,
   RADIO_MP_STANDBY,
   RADIO_MP_WAIT_TX_DONE,
 
@@ -79,26 +78,25 @@ const RADIO_STATE_ENTRY radioStateTable[] =
 
   //Multi-Point data exchange
   //    State                           RX      Name                              Description
-  {RADIO_MP_WAIT_TX_ACK_DONE,            0, "MP_WAIT_TX_ACK_DONE",            "MP: Wait for ACK to xmit"},        //12
-  {RADIO_MP_STANDBY,                     1, "MP_STANDBY",                     "MP: Wait for TX or RX"},           //13
-  {RADIO_MP_WAIT_TX_DONE,                0, "MP_WAIT_TX_DONE",                "MP: Waiting for TX done"},         //14
+  {RADIO_MP_STANDBY,                     1, "MP_STANDBY",                     "MP: Wait for TX or RX"},           //12
+  {RADIO_MP_WAIT_TX_DONE,                0, "MP_WAIT_TX_DONE",                "MP: Waiting for TX done"},         //13
 
   //Training client states
   //    State                           RX      Name                              Description
-  {RADIO_TRAIN_WAIT_TX_FIND_PARTNER_DONE,0, "TRAIN_WAIT_TX_FIND_PARTNER_DONE","Train: Wait TX training FIND_PARTNER done"}, //15
-  {RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS, 1, "TRAIN_WAIT_RX_RADIO_PARAMETERS", "Train: Wait for radio parameters"},          //16
-  {RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE,   0, "TRAIN_WAIT_TX_PARAM_ACK_DONE",   "Train: Wait for TX param ACK done"},         //17
+  {RADIO_TRAIN_WAIT_TX_FIND_PARTNER_DONE,0, "TRAIN_WAIT_TX_FIND_PARTNER_DONE","Train: Wait TX training FIND_PARTNER done"}, //14
+  {RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS, 1, "TRAIN_WAIT_RX_RADIO_PARAMETERS", "Train: Wait for radio parameters"},          //15
+  {RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE,   0, "TRAIN_WAIT_TX_PARAM_ACK_DONE",   "Train: Wait for TX param ACK done"},         //16
 
   //Training server states
   //    State                           RX      Name                              Description
-  {RADIO_TRAIN_WAIT_FOR_FIND_PARTNER,    1, "TRAIN_WAIT_FOR_FIND_PARTNER",    "Train: Wait for training FIND_PARTNER"}, //18
-  {RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,0, "TRAIN_WAIT_TX_RADIO_PARAMS_DONE","Train: Wait for TX params done"},        //19
+  {RADIO_TRAIN_WAIT_FOR_FIND_PARTNER,    1, "TRAIN_WAIT_FOR_FIND_PARTNER",    "Train: Wait for training FIND_PARTNER"}, //17
+  {RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,0, "TRAIN_WAIT_TX_RADIO_PARAMS_DONE","Train: Wait for TX params done"},        //18
 
   //Virtual circuit states
   //    State                           RX      Name                              Description
-  {RADIO_VC_WAIT_SERVER,                 1, "VC_WAIT_SERVER",                 "VC: Wait for the server"},         //20
-  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "VC: Wait for TX done"},            //21
-  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "VC: Wait for receive"},            //22
+  {RADIO_VC_WAIT_SERVER,                 1, "VC_WAIT_SERVER",                 "VC: Wait for the server"},         //19
+  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "VC: Wait for TX done"},            //20
+  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "VC: Wait for receive"},            //21
 };
 
 //Possible types of packets received
@@ -507,7 +505,6 @@ typedef enum
   RADIO_CALL_xmitDatagramP2PAck,
   RADIO_CALL_xmitDatagramMpData,
   RADIO_CALL_xmitDatagramMpHeartbeat,
-  RADIO_CALL_xmitDatagramMpAck,
   RADIO_CALL_xmitDatagramTrainingFindPartner,
   RADIO_CALL_xmitDatagramTrainingAck,
   RADIO_CALL_xmitDatagramTrainRadioParameters,

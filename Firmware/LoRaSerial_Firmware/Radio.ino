@@ -756,24 +756,42 @@ bool xmitDatagramP2PFindPartner()
 }
 
 //Second packet in the three way handshake to bring up the link
+//SYNC_CLOCKS packet sent by server in response the FIND_PARTNER, includes the
+//channel number.  During discovery scanning, it's possible for the client to
+//get the SYNC_CLOCKS but be on an adjacent channel.  The channel number
+//ensures that the client gets the next hop correct.
 bool xmitDatagramP2PSyncClocks()
 {
-  radioCallHistory[RADIO_CALL_xmitDatagramP2PSyncClocks] = millis();
+  uint8_t * startOfData;
 
   unsigned long currentMillis = millis();
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PSyncClocks] = currentMillis;
+
+  startOfData = endOfTxData;
+  memcpy(endOfTxData, &channelNumber, sizeof(channelNumber));
+  endOfTxData += sizeof(channelNumber);
+
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   endOfTxData += sizeof(unsigned long);
 
   /*
-                                              endOfTxData ---.
-                                                             |
-                                                             V
-      +----------+---------+----------+------------+---------+----------+
-      | Optional |         | Optional | Optional   |         |          |
-      | NET ID   | Control | C-Timer  | SF6 Length | Millis  | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 4 bytes | n Bytes  |
-      +----------+---------+----------+------------+---------+----------+
+                                                        endOfTxData ---.
+                                                                       |
+                                                                       V
+      +----------+---------+----------+------------+---------+---------+----------+
+      | Optional |         | Optional | Optional   | Channel |         |          |
+      | NET ID   | Control | C-Timer  | SF6 Length | Number  | Millis  | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 1 byte  | 4 bytes | n Bytes  |
+      +----------+---------+----------+------------+---------+---------+----------+
   */
+
+  //Verify the data length
+  if ((endOfTxData - startOfData) != SYNC_CLOCKS_BYTES)
+  {
+    systemPrintln("ERROR - Fix the SYNC_CLOCKS_BYTES value!");
+    outputSerialData(true);
+    waitForever();
+  }
 
   txControl.datagramType = DATAGRAM_SYNC_CLOCKS;
   return (transmitDatagram());
@@ -782,9 +800,12 @@ bool xmitDatagramP2PSyncClocks()
 //Last packet in the three way handshake to bring up the link
 bool xmitDatagramP2PZeroAcks()
 {
-  radioCallHistory[RADIO_CALL_xmitDatagramP2PZeroAcks] = millis();
+  uint8_t * startOfData;
 
   unsigned long currentMillis = millis();
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PZeroAcks] = currentMillis;
+
+  startOfData = endOfTxData;
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   endOfTxData += sizeof(unsigned long);
 
@@ -798,6 +819,14 @@ bool xmitDatagramP2PZeroAcks()
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 4 bytes | n Bytes  |
       +----------+---------+----------+------------+---------+----------+
   */
+
+  //Verify the data length
+  if ((endOfTxData - startOfData) != ZERO_ACKS_BYTES)
+  {
+    systemPrintln("ERROR - Fix the ZERO_ACKS_BYTES value!");
+    outputSerialData(true);
+    waitForever();
+  }
 
   txControl.datagramType = DATAGRAM_ZERO_ACKS;
   return (transmitDatagram());
@@ -952,40 +981,6 @@ bool xmitDatagramMpHeartbeat()
   */
 
   txControl.datagramType = DATAGRAM_HEARTBEAT;
-  return (transmitDatagram());
-}
-
-//ACK packet sent by server in response the FIND_PARTNER, includes channel number
-//During discovery scanning, it's possible for the client to get an ACK but be on an adjacent channel
-//The channel number ensures that the client gets the next hop correct
-bool xmitDatagramMpAck()
-{
-  radioCallHistory[RADIO_CALL_xmitDatagramMpAck] = millis();
-
-  memcpy(endOfTxData, &channelNumber, sizeof(channelNumber));
-  endOfTxData += sizeof(channelNumber);
-
-  if (settings.debugTransmit)
-  {
-    systemPrint("    Channel Number: ");
-    systemPrintln(channelNumber);
-    outputSerialData(true);
-    if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-      hopChannel();
-  }
-
-  /*
-                                              endOfTxData ---.
-                                                             |
-                                                             V
-      +----------+---------+----------+------------+---------+----------+
-      | Optional |         | Optional | Optional   | Channel | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | Number  | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 1 byte  | n Bytes  |
-      +----------+---------+----------+------------+---------+----------+
-  */
-
-  txControl.datagramType = DATAGRAM_SYNC_CLOCKS;
   return (transmitDatagram());
 }
 
@@ -3042,7 +3037,6 @@ const I16_TO_STRING radioCallName[] =
   {RADIO_CALL_xmitDatagramP2PAck, "xmitDatagramP2PAck"},
   {RADIO_CALL_xmitDatagramMpData, "xmitDatagramMpData"},
   {RADIO_CALL_xmitDatagramMpHeartbeat, "xmitDatagramMpHeartbeat"},
-  {RADIO_CALL_xmitDatagramMpAck, "xmitDatagramMpAck"},
   {RADIO_CALL_xmitDatagramTrainingFindPartner, "xmitDatagramTrainingFindPartner"},
   {RADIO_CALL_xmitDatagramTrainingAck, "xmitDatagramTrainingAck"},
   {RADIO_CALL_xmitDatagramTrainRadioParameters, "xmitDatagramTrainRadioParameters"},
