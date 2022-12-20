@@ -159,16 +159,24 @@ bool commandAT(const char * commandString)
 
         settings = tempSettings; //Apply user's modifications
 
-        if (writeOnCommandExit) recordSystemSettings();
+        if (writeOnCommandExit)
+        {
+          writeOnCommandExit = false;
+          recordSystemSettings();
+        }
 
         //If a setting was applied that requires radio reset, do so
         if (forceRadioReset)
+        {
+          forceRadioReset = false;
           changeState(RADIO_RESET);
+        }
 
         return true;
 
       case ('T'): //ATT - Enter training mode
-        settings = tempSettings; //Apply user's modifications
+        if (inCommandMode)
+          settings = tempSettings; //Apply user's modifications
         selectTraining();
         return true;
 
@@ -179,7 +187,8 @@ bool commandAT(const char * commandString)
       case ('Z'): //ATZ - Reboots the system
         if (writeOnCommandExit)
         {
-          settings = tempSettings; //Apply user's modifications
+          if (inCommandMode)
+            settings = tempSettings; //Apply user's modifications
           recordSystemSettings();
         }
 

@@ -822,7 +822,9 @@ void vcProcessSerialInput()
         }
 
         //Process this command
+        tempSettings = settings;
         checkCommand();
+        settings = tempSettings;
         break;
     }
 
