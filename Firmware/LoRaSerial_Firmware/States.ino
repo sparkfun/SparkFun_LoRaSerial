@@ -37,8 +37,9 @@
     ackTimer = datagramTimer;                                                   \
     \
     /*Since ackTimer is off when equal to zero, force it to a non-zero value*/  \
+    /*Subtract one so that the comparisons result in a small number*/           \
     if (!ackTimer)                                                              \
-      ackTimer = 1;                                                             \
+      ackTimer -= 1;                                                            \
   }
 
 #define STOP_ACK_TIMER()      \
