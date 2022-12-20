@@ -563,7 +563,7 @@ void loop()
 
   updateSerial(); //Store incoming and print outgoing
 
-  updateRadioState(); //Ping/ack/send packets as needed
+  updateRadioState(); //Send packets as needed for handshake, data, remote commands
 
   updateLeds(); //Update the LEDs on the board
 

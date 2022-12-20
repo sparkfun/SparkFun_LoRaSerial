@@ -732,9 +732,9 @@ const uint16_t crc16Table[256] =
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //First packet in the three way handshake to bring up the link
-bool xmitDatagramP2PPing()
+bool xmitDatagramP2PFindPartner()
 {
-  radioCallHistory[RADIO_CALL_xmitDatagramP2PPing] = millis();
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PFindPartner] = millis();
 
   unsigned long currentMillis = millis();
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
@@ -751,7 +751,7 @@ bool xmitDatagramP2PPing()
       +----------+---------+----------+------------+---------+----------+
   */
 
-  txControl.datagramType = DATAGRAM_PING;
+  txControl.datagramType = DATAGRAM_FIND_PARTNER;
   return (transmitDatagram());
 }
 
@@ -1005,7 +1005,7 @@ bool xmitDatagramMpPing()
       +----------+---------+----------+------------+----------+
   */
 
-  txControl.datagramType = DATAGRAM_PING;
+  txControl.datagramType = DATAGRAM_FIND_PARTNER;
   return (transmitDatagram());
 }
 
@@ -2347,7 +2347,7 @@ bool transmitDatagram()
         txDatagramSize = MAX_PACKET_SIZE - trailerBytes; //We're now going to transmit a full size datagram
         break;
 
-      case DATAGRAM_PING:
+      case DATAGRAM_FIND_PARTNER:
       case DATAGRAM_ACK_1:
       case DATAGRAM_ACK_2:
         txDatagramSize = headerBytes + CLOCK_MILLIS_BYTES; //Short packet is 5 + 4
@@ -3054,7 +3054,7 @@ const I16_TO_STRING radioCallName[] =
   {RADIO_CALL_calcAirTime, "calcAirTime"},
   {RADIO_CALL_xmitDatagramP2PTrainingPing, "xmitDatagramP2PTrainingPing"},
   {RADIO_CALL_xmitDatagramP2pTrainingParams, "xmitDatagramP2pTrainingParams"},
-  {RADIO_CALL_xmitDatagramP2PPing, "xmitDatagramP2PPing"},
+  {RADIO_CALL_xmitDatagramP2PFindPartner, "xmitDatagramP2PFindPartner"},
   {RADIO_CALL_xmitDatagramP2PAck1, "xmitDatagramP2PAck1"},
   {RADIO_CALL_xmitDatagramP2PAck2, "xmitDatagramP2PAck2"},
   {RADIO_CALL_xmitDatagramP2PCommand, "xmitDatagramP2PCommand"},
