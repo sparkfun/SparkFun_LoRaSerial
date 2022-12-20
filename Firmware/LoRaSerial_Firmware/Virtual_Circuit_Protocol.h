@@ -139,13 +139,12 @@ typedef struct _VC_STATE_MESSAGE
 
 typedef enum
 {
-  VC_STATE_LINK_DOWN = 0, //0: HEARTBEATs not received
-  VC_STATE_LINK_ALIVE,    //1: Receiving HEARTBEATs, waiting for PING
-  VC_STATE_SEND_PING,     //2: ATC command received, sending PING
-  VC_STATE_WAIT_FOR_ACK1 ,//3: PING sent, waiting for ACK1
-  VC_STATE_WAIT_FOR_ACK2 ,//4: ACK1 sent, waiting for ACK2
-  VC_STATE_CONNECTED,     //5: ACK2 received, ACKs cleared, ready to send data
-  VC_STATE_NEW_CLIENT,    //6: A server received a PING from a previously unknown client
+  VC_STATE_LINK_DOWN = 0,     //0: HEARTBEATs not received
+  VC_STATE_LINK_ALIVE,        //1: Receiving HEARTBEATs, waiting for UNKNOWN_ACKS
+  VC_STATE_SEND_UNKNOWN_ACKS, //2: ATC command received, sending UNKNOWN_ACKS
+  VC_STATE_WAIT_SYNC_ACKS,    //3: UNKNOWN_ACKS sent, waiting for SYNC_ACKS
+  VC_STATE_WAIT_ZERO_ACKS,    //4: SYNC_ACKS sent, waiting for ZERO_ACKS
+  VC_STATE_CONNECTED,         //5: ZERO_ACKS received, ACKs cleared, ready to send data
 
   //Insert new states before this line
   VC_STATE_MAX
@@ -173,8 +172,8 @@ typedef struct _VC_DATA_ACK_NACK_MESSAGE
 const char * const vcStateNames[] =
 { //   0            1
   "LINK-DOWN", "LINK-ALIVE",
-  //   2            3            4            5            6
-  "SEND-PING", "WAIT-ACK1", "WAIT-ACK2", "CONNECTED", "NEW-CLIENT",
+  //     2             3            4            5
+  "UNKNOWN-ACKS", "SYNC-ACKS", "ZERO-ACKS", "CONNECTED",
 };
 #endif  //ADD_VC_STATE_NAMES_TABLE
 
