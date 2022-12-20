@@ -1401,6 +1401,15 @@ void updateRadioState()
             //Save the client ID
             memcpy(trainingPartnerID, rxData, UNIQUE_ID_BYTES);
 
+            //Find a slot in the NVM unique ID table
+            for (index = 0; index < MAX_VC; index++)
+              if (!nvmIsVcUniqueIdSet(index))
+              {
+                //Save the client unique ID
+                nvmSaveUniqueId(index, trainingPartnerID);
+                break;
+              }
+
             //Wait for the transmit to complete
             if (xmitDatagramTrainRadioParameters(trainingPartnerID) == true)
               changeState(RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE);
@@ -2682,9 +2691,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
   }
 
   //Save the unique ID to VC assignment in NVM
-  memcpy(&vc->uniqueId, id, UNIQUE_ID_BYTES);
-  if (settings.server)
-    nvmSaveVcUniqueId(vcIndex);
+  nvmSaveUniqueId(vcIndex, id);
 
   //Mark this link as up
   vc->flags.valid = true;
