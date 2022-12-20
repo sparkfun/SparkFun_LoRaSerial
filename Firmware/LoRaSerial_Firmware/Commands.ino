@@ -193,6 +193,14 @@ bool commandAT(const char * commandString)
         }
 
         reportOK();
+        if (serialOperatingMode == MODE_VIRTUAL_CIRCUIT)
+        {
+          //Notify the PC of the serial port failure
+          serialOutputByte(START_OF_VC_SERIAL);
+          serialOutputByte(3);
+          serialOutputByte(PC_SERIAL_RECONNECT);
+          serialOutputByte(myVc);
+        }
         outputSerialData(true);
         systemFlush();
         systemReset();
