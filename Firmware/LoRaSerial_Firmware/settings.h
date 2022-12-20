@@ -508,7 +508,6 @@ typedef enum
   RADIO_CALL_xmitDatagramMpData,
   RADIO_CALL_xmitDatagramMpHeartbeat,
   RADIO_CALL_xmitDatagramMpAck,
-  RADIO_CALL_xmitDatagramMpFindPartner,
   RADIO_CALL_xmitDatagramTrainingFindPartner,
   RADIO_CALL_xmitDatagramTrainingAck,
   RADIO_CALL_xmitDatagramTrainRadioParameters,

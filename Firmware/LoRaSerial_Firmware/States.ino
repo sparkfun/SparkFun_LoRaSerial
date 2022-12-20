@@ -1004,7 +1004,7 @@ void updateRadioState()
           }
 
           //Send FIND_PARTNER
-          if (xmitDatagramMpFindPartner() == true)
+          if (xmitDatagramP2PFindPartner() == true)
             changeState(RADIO_DISCOVER_WAIT_TX_FIND_PARTNER_DONE);
         }
       }

@@ -989,26 +989,6 @@ bool xmitDatagramMpAck()
   return (transmitDatagram());
 }
 
-//FIND_PARTNER packet sent during scanning
-bool xmitDatagramMpFindPartner()
-{
-  radioCallHistory[RADIO_CALL_xmitDatagramMpFindPartner] = millis();
-
-  /*
-                                    endOfTxData ---.
-                                                   |
-                                                   V
-      +----------+---------+----------+------------+----------+
-      | Optional |         | Optional | Optional   | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | n Bytes  |
-      +----------+---------+----------+------------+----------+
-  */
-
-  txControl.datagramType = DATAGRAM_FIND_PARTNER;
-  return (transmitDatagram());
-}
-
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Multi-Point Client Training
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -3063,7 +3043,6 @@ const I16_TO_STRING radioCallName[] =
   {RADIO_CALL_xmitDatagramMpData, "xmitDatagramMpData"},
   {RADIO_CALL_xmitDatagramMpHeartbeat, "xmitDatagramMpHeartbeat"},
   {RADIO_CALL_xmitDatagramMpAck, "xmitDatagramMpAck"},
-  {RADIO_CALL_xmitDatagramMpFindPartner, "xmitDatagramMpFindPartner"},
   {RADIO_CALL_xmitDatagramTrainingFindPartner, "xmitDatagramTrainingFindPartner"},
   {RADIO_CALL_xmitDatagramTrainingAck, "xmitDatagramTrainingAck"},
   {RADIO_CALL_xmitDatagramTrainRadioParameters, "xmitDatagramTrainRadioParameters"},
