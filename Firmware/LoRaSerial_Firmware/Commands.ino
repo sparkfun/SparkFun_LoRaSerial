@@ -168,6 +168,7 @@ bool commandAT(const char * commandString)
         return true;
 
       case ('T'): //ATT - Enter training mode
+        settings = tempSettings; //Apply user's modifications
         selectTraining();
         return true;
 
@@ -686,18 +687,11 @@ void checkCommand()
 
   //Verify the command length
   success = false;
-  commandString = trimCommand(); //Remove any leading whitespace
-
-  //Remove trailing CR and LF
-  while ((commandLength > 0) && ((commandString[commandLength - 1] == '\r')
-                                 || (commandString[commandLength - 1] == '\n')))
-    commandLength -= 1;
+  commandString = trimCommand(); //Remove any leading or trailing whitespace
 
   //Upper case the command
   for (index = 0; index < commandLength; index++)
-    commandBuffer[index] = toupper(commandBuffer[index]);
-
-  commandString[commandLength] = '\0'; //Terminate buffer
+    commandString[index] = toupper(commandString[index]);
 
   //Verify the command length
   if (commandLength >= 2)
@@ -739,11 +733,21 @@ char * trimCommand()
 {
   char * commandString = commandBuffer;
 
+  //Remove the leading white space
   while (isspace(*commandString))
   {
     commandString++;
-    commandLength--;
+    --commandLength;
   }
+
+  //Zero terminate the string
+  commandString[commandLength] = 0;
+
+  //Remove the trailing white space
+  while (commandLength && isspace(commandString[commandLength -1]))
+    commandString[--commandLength] = 0;
+
+  //Return the remainder as the command
   return commandString;
 }
 

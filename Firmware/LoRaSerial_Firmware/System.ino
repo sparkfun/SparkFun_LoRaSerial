@@ -681,22 +681,7 @@ void radioLeds()
   }
 
   //Update the link LED
-  switch (radioState)
-  {
-    //Turn off the LED
-    default:
-      digitalWrite(RADIO_USE_LINK_LED, LED_OFF);
-      break;
-
-    //Turn on the LED
-    case RADIO_P2P_LINK_UP:
-    case RADIO_P2P_LINK_UP_WAIT_ACK_DONE:
-    case RADIO_P2P_LINK_UP_WAIT_TX_DONE:
-    case RADIO_P2P_LINK_UP_WAIT_ACK:
-    case RADIO_P2P_LINK_UP_HB_ACK_REXMT:
-      digitalWrite(RADIO_USE_LINK_LED, LED_ON);
-      break;
-  }
+  digitalWrite(RADIO_USE_LINK_LED, isLinked() ? LED_ON : LED_OFF);
 
   //Update the RSSI LED
   if (currentMillis != previousMillis)
