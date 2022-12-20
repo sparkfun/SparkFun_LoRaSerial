@@ -36,6 +36,7 @@ bool commandAT(const char * commandString)
 {
   uint32_t delayMillis;
   long deltaMillis;
+  uint8_t id[UNIQUE_ID_BYTES];
   const char * string;
   unsigned long timer;
   VIRTUAL_CIRCUIT * vc = &virtualCircuitList[cmdVc];
@@ -238,6 +239,7 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI12 - Display the VC details");
         systemPrintln("  ATI13 - Display the SX1276 registers");
         systemPrintln("  ATI14 - Dump the radioTxBuffer");
+        systemPrintln("  ATI15 - Dump the NVM unique ID table");
         return true;
 
       case ('0'): //ATI0 - Show user settable parameters
@@ -653,6 +655,26 @@ bool commandAT(const char * commandString)
       case ('4'): //ATI14 - Dump the radioTxBuffer
         systemPrintln("radioTxBuffer:");
         dumpCircularBuffer(radioTxBuffer, radioTxTail, sizeof(radioTxBuffer), availableRadioTXBytes());
+        return true;
+
+      case ('5'): //ATI15 - Dump the NVM unique ID table
+        systemPrintln("NVM Unique ID Table");
+        for (vcIndex = 0; vcIndex < MAX_VC; vcIndex++)
+        {
+          systemPrint("    ");
+          if (vcIndex < 10)
+            systemWrite(' ');
+          systemPrint(vcIndex);
+          systemPrint(": ");
+          if (nvmIsVcUniqueIdSet(vcIndex))
+          {
+            nvmGetUniqueId(vcIndex, id);
+            systemPrintUniqueID(id);
+            systemPrintln();
+          }
+          else
+            systemPrintln("Empty");
+        }
         return true;
     }
   }
