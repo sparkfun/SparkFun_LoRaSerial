@@ -34,6 +34,7 @@
 #define PC_LINK_STATUS      (PC_COMMAND + 1)    //Asynchronous link status output
 #define PC_DATA_ACK         (PC_LINK_STATUS + 1)//Indicate data delivery success
 #define PC_DATA_NACK        (PC_DATA_ACK + 1)   //Indicate data delivery failure
+#define PC_SERIAL_RECONNECT (PC_DATA_NACK + 1)  //Disconnect/reconnect the serial port over LoRaSerial CPU reset
 
 //Address space 1 and 2 are reserved for the host PC interface to support remote
 //command processing.  The radio removes these bits and converts them to the
