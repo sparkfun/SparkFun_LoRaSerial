@@ -23,6 +23,7 @@ typedef bool (* COMMAND_ROUTINE)(const char * commandString);
 typedef struct
 {
   const char * prefix;
+  bool supportedInVcMode;
   COMMAND_ROUTINE processCommand;
 } COMMAND_PREFIX;
 
@@ -677,15 +678,15 @@ bool sendRemoteCommand(const char * commandString)
 //----------------------------------------
 
 const COMMAND_PREFIX prefixTable[] = {
-  {"ATD", commandDisplayDebug},
-  {"ATP", commandDisplayProbe},
-  {"ATR", commandDisplayRadio},
-  {"ATS", commandDisplaySerial},
-  {"ATV", commandDisplayVirtualCircuit},
-  {"AT-?", commandDisplayAll},
-  {"AT-", commandSetByName},
-  {"AT", commandAT},
-  {"RT", sendRemoteCommand},
+  {"ATD",  1, commandDisplayDebug},
+  {"ATP",  1, commandDisplayProbe},
+  {"ATR",  1, commandDisplayRadio},
+  {"ATS",  1, commandDisplaySerial},
+  {"ATV",  1, commandDisplayVirtualCircuit},
+  {"AT-?", 1, commandDisplayAll},
+  {"AT-",  1, commandSetByName},
+  {"AT",   1, commandAT},
+  {"RT",   0, sendRemoteCommand},
 };
 
 const int prefixCount = sizeof(prefixTable) / sizeof(prefixTable[0]);
@@ -716,6 +717,10 @@ void checkCommand()
     //Locate the correct processing routine for the command prefix
     for (index = 0; index < prefixCount; index++)
     {
+      //Skip command types not supported in virtual circuit mode
+      if ((!prefixTable[index].supportedInVcMode) && (settings.operatingMode == MODE_VIRTUAL_CIRCUIT))
+        continue;
+
       //Locate the prefix
       prefixLength = strlen(prefixTable[index].prefix);
       if (strncmp(commandString, prefixTable[index].prefix, prefixLength) != 0)
@@ -1262,7 +1267,7 @@ void displayParameters(char letter, bool displayAll)
     {
       petWDT(); //Printing may take longer than WDT at 9600, so pet the WDT.
 
-      if (printerEndpoint == PRINT_TO_RF)
+      if (inCommandMode && (printerEndpoint == PRINT_TO_RF))
         systemPrint("R"); //If someone is asking for our settings over RF, respond with 'R' style settings
       else
         systemPrint("A");
