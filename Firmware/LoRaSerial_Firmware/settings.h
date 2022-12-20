@@ -163,6 +163,7 @@ const char * const radioDatagramType[] =
 typedef struct _VC_FLAGS
 {
   bool valid : 1;           //Unique ID is valid
+  bool wasConnected : 1;    //The VC was previously connected
 } VC_FLAGS;
 
 typedef struct _VIRTUAL_CIRCUIT
