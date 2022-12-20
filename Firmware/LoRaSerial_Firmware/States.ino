@@ -2609,7 +2609,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
   {
     //Verify that an address is present
     vc = &virtualCircuitList[vcIndex];
-    if (!vc->valid)
+    if (!vc->flags.valid)
       continue;
 
     //Compare the unique ID values
@@ -2635,7 +2635,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
     for (vcIndex = 0; vcIndex < MAX_VC; vcIndex++)
     {
       vc = &virtualCircuitList[vcIndex];
-      if (!virtualCircuitList[vcIndex].valid)
+      if (!virtualCircuitList[vcIndex].flags.valid)
         break;
     }
     if (vcIndex >= MAX_VC)
@@ -2648,7 +2648,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
   }
 
   //Check for an address conflict
-  if (vc->valid)
+  if (vc->flags.valid)
   {
     systemPrint("ERROR: Unknown ID with pre-assigned conflicting address: ");
     systemPrintln(srcAddr);
@@ -2670,7 +2670,7 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
     nvmSaveVcUniqueId(vcIndex);
 
   //Mark this link as up
-  vc->valid = true;
+  vc->flags.valid = true;
   return vcLinkAlive(vcIndex);
 }
 

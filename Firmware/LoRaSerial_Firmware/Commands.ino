@@ -542,7 +542,7 @@ bool commandAT(const char * commandString)
         systemPrint("VC ");
         systemPrint(cmdVc);
         systemPrint(": ");
-        if (!vc->valid)
+        if (!vc->flags.valid)
         {
           systemPrint("Down, Not valid @ ");
           systemPrintTimestamp(millis());
@@ -556,7 +556,7 @@ bool commandAT(const char * commandString)
           systemPrintln();
           systemPrint("    ID: ");
           systemPrintUniqueID(vc->uniqueId);
-          systemPrintln(vc->valid ? " (Valid)" : " (Invalid)");
+          systemPrintln(vc->flags.valid ? " (Valid)" : " (Invalid)");
 
           //Heartbeat metrics
           systemPrintln("    Heartbeats");

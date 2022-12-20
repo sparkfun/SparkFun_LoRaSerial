@@ -137,7 +137,7 @@ void nvmLoadVcUniqueId(int8_t vc)
     {
       //The unique ID was set, copy it into the VC structure
       memcpy(virtualCircuitList[vc].uniqueId, id, sizeof(id));
-      virtualCircuitList[vc].valid = true;
+      virtualCircuitList[vc].flags.valid = true;
       break;
     }
   }
