@@ -1311,7 +1311,7 @@ void updateRadioState()
       }
 
       //Check for a receive timeout
-      else if ((millis() - datagramTimer) > (settings.clientPingRetryInterval * 1000))
+      else if ((millis() - datagramTimer) > (settings.clientFindPartnerRetryInterval * 1000))
       {
         //If we are training with button, in P2P mode, and user has not set server mode
         //Automatically switch to server

@@ -416,7 +416,7 @@ typedef struct struct_settings {
   bool enableCRC16 = false; //Append CRC-16 to packet, check CRC-16 upon receive
   bool displayRealMillis = false; //true = Display the millis value without offset, false = use offset
   bool server = false; //Default to being a client, enable server for multipoint, VC and training
-  uint8_t clientPingRetryInterval = 3; //Number of seconds before retransmiting the client PING
+  uint8_t clientFindPartnerRetryInterval = 3; //Number of seconds before retransmiting the client FIND_PARTNER
   bool copyDebug = false; //Copy the debug parameters to the training client
   bool copySerial = false; //Copy the serial parameters to the training client
   bool copyTriggers = false; //Copy the trigger parameters to the training client

@@ -314,7 +314,7 @@ void generateHopTable()
                + settings.verifyRxNetID
                + settings.overheadTime
                + settings.enableCRC16
-               + settings.clientPingRetryInterval;
+               + settings.clientFindPartnerRetryInterval;
 
   if (settings.encryptData == true)
   {
@@ -1145,7 +1145,7 @@ void updateRadioParameters(uint8_t * rxData)
   }
 
   //Update the training values
-  tempSettings.clientPingRetryInterval = params.clientPingRetryInterval;
+  tempSettings.clientFindPartnerRetryInterval = params.clientFindPartnerRetryInterval;
   //The trainingKey is already the same
   tempSettings.trainingTimeout = params.trainingTimeout;
 
