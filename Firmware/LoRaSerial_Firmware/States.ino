@@ -1724,7 +1724,9 @@ void updateRadioState()
             //Process the command
             petWDT();
             printerEndpoint = PRINT_TO_RF; //Send prints to RF link
+            tempSettings = settings;
             checkCommand(); //Parse the command buffer
+            settings = tempSettings;
             petWDT();
             printerEndpoint = PRINT_TO_SERIAL;
             length = availableTXCommandBytes();
@@ -2011,7 +2013,9 @@ void updateRadioState()
                 //Process the command
                 petWDT();
                 printerEndpoint = PRINT_TO_RF; //Send prints to RF link
+                tempSettings = settings;
                 checkCommand(); //Parse the command buffer
+                settings = tempSettings;
                 petWDT();
                 printerEndpoint = PRINT_TO_SERIAL;
                 length = availableTXCommandBytes();
