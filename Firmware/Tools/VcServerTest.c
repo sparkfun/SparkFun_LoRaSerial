@@ -317,7 +317,11 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t length)
 
   case VC_STATE_WAIT_ZERO_ACKS:
     if (DISPLAY_VC_STATE)
+    {
+      if (previousState == VC_STATE_CONNECTED)
+        printf("-=-=- VC %d DISCONNECTED -=-=-", srcVc);
       printf("-=--=-- VC %d ALIVE ZA --=--=-\n", srcVc);
+    }
     break;
 
   case VC_STATE_CONNECTED:

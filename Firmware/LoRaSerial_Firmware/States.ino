@@ -2482,12 +2482,15 @@ void vcChangeState(int8_t vcIndex, uint8_t state)
   vc = &virtualCircuitList[vcIndex];
   if (state != vc->vcState)
   {
-    //Set the new state
-    vc->vcState = state;
-
     //Display the state change
     if (settings.printLinkUpDown)
     {
+      if ((state == VC_STATE_WAIT_ZERO_ACKS) && (vc->vcState == VC_STATE_CONNECTED))
+      {
+        systemPrint("-=-=- VC ");
+        systemPrint(vcIndex);
+        systemPrintln(" DISCONNECTED -=-=-");
+      }
       if (state == VC_STATE_CONNECTED)
       {
         systemPrint("======= VC ");
@@ -2508,6 +2511,9 @@ void vcChangeState(int8_t vcIndex, uint8_t state)
       }
       outputSerialData(true);
     }
+
+    //Set the new state
+    vc->vcState = state;
 
     //Determine if the VC is connecting
     vcBit = 1 << vcIndex;
