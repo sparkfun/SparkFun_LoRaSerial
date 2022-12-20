@@ -5,8 +5,8 @@ typedef enum
   //Point-To-Point: Bring up the link
   RADIO_P2P_LINK_DOWN,
   RADIO_P2P_WAIT_TX_FIND_PARTNER_DONE,
-  RADIO_P2P_WAIT_ACK_1,
-  RADIO_P2P_WAIT_TX_ACK_1_DONE,
+  RADIO_P2P_WAIT_SYNC_CLOCKS,
+  RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE,
   RADIO_P2P_WAIT_ACK_2,
   RADIO_P2P_WAIT_TX_ACK_2_DONE,
 
@@ -61,8 +61,8 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   //    State                           RX      Name                              Description
   {RADIO_P2P_LINK_DOWN,                  1, "P2P_LINK_DOWN",                  "P2P: [No Link] Waiting for FIND_PARTNER"}, // 1
   {RADIO_P2P_WAIT_TX_FIND_PARTNER_DONE,  0, "P2P_WAIT_TX_FIND_PARTNER_DONE",  "P2P: [No Link] Wait FIND_PARTNER TX Done"},// 2
-  {RADIO_P2P_WAIT_ACK_1,                 1, "P2P_WAIT_ACK_1",                 "P2P: [No Link] Waiting for ACK1"}, // 3
-  {RADIO_P2P_WAIT_TX_ACK_1_DONE,         0, "P2P_WAIT_TX_ACK_1_DONE",         "P2P: [No Link] Wait ACK1 TX Done"},// 4
+  {RADIO_P2P_WAIT_SYNC_CLOCKS,           1, "P2P_WAIT_SYNC_CLOCKS",           "P2P: [No Link] Waiting for SYNC_CLOCKS"},  // 3
+  {RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE,   0, "P2P_WAIT_TX_SYNC_CLOCKS_DONE",   "P2P: [No Link] Wait SYNC_CLOCKS TX Done"}, // 4
   {RADIO_P2P_WAIT_ACK_2,                 1, "P2P_WAIT_ACK_2",                 "P2P: [No Link] Waiting for ACK2"}, // 5
   {RADIO_P2P_WAIT_TX_ACK_2_DONE,         0, "P2P_WAIT_TX_ACK_2_DONE",         "P2P: [No Link] Wait ACK2 TX Done"},// 6
 
@@ -108,7 +108,7 @@ typedef enum
   //P2P: Between the two LoRaSerial radios
   //VC:  Between the server radio and a client radio
   DATAGRAM_FIND_PARTNER = 0,        // 0
-  DATAGRAM_ACK_1,                   // 1
+  DATAGRAM_SYNC_CLOCKS,             // 1
   DATAGRAM_ACK_2,                   // 2
 
   //Point-to-Point data exchange
@@ -262,11 +262,11 @@ enum
   TRIGGER_MP_PACKET_RECEIVED,
   TRIGGER_MP_SEND_ACK_FOR_FIND_PARTNER,
   TRIGGER_TRANSMIT_CANCELED,
-  TRIGGER_HANDSHAKE_ACK1_TIMEOUT,
+  TRIGGER_HANDSHAKE_SYNC_CLOCKS_TIMEOUT,
   TRIGGER_HANDSHAKE_SEND_FIND_PARTNER,
   TRIGGER_HANDSHAKE_SEND_FIND_PARTNER_COMPLETE,
-  TRIGGER_HANDSHAKE_SEND_ACK1_COMPLETE,
-  TRIGGER_SEND_ACK1,
+  TRIGGER_HANDSHAKE_SEND_SYNC_CLOCKS_COMPLETE,
+  TRIGGER_SEND_SYNC_CLOCKS,
   TRIGGER_SEND_ACK2,
   TRIGGER_HANDSHAKE_COMPLETE,
   TRIGGER_LINK_ACK_SENT,
@@ -498,7 +498,7 @@ typedef enum
   RADIO_CALL_returnToReceiving,
   RADIO_CALL_calcAirTime,
   RADIO_CALL_xmitDatagramP2PFindPartner,
-  RADIO_CALL_xmitDatagramP2PAck1,
+  RADIO_CALL_xmitDatagramP2PSyncClocks,
   RADIO_CALL_xmitDatagramP2PAck2,
   RADIO_CALL_xmitDatagramP2PCommand,
   RADIO_CALL_xmitDatagramP2PCommandResponse,

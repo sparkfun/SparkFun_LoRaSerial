@@ -756,9 +756,9 @@ bool xmitDatagramP2PFindPartner()
 }
 
 //Second packet in the three way handshake to bring up the link
-bool xmitDatagramP2PAck1()
+bool xmitDatagramP2PSyncClocks()
 {
-  radioCallHistory[RADIO_CALL_xmitDatagramP2PAck1] = millis();
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PSyncClocks] = millis();
 
   unsigned long currentMillis = millis();
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
@@ -775,7 +775,7 @@ bool xmitDatagramP2PAck1()
       +----------+---------+----------+------------+---------+----------+
   */
 
-  txControl.datagramType = DATAGRAM_ACK_1;
+  txControl.datagramType = DATAGRAM_SYNC_CLOCKS;
   return (transmitDatagram());
 }
 
@@ -985,7 +985,7 @@ bool xmitDatagramMpAck()
       +----------+---------+----------+------------+---------+----------+
   */
 
-  txControl.datagramType = DATAGRAM_ACK_1;
+  txControl.datagramType = DATAGRAM_SYNC_CLOCKS;
   return (transmitDatagram());
 }
 
@@ -2348,7 +2348,7 @@ bool transmitDatagram()
         break;
 
       case DATAGRAM_FIND_PARTNER:
-      case DATAGRAM_ACK_1:
+      case DATAGRAM_SYNC_CLOCKS:
       case DATAGRAM_ACK_2:
         txDatagramSize = headerBytes + CLOCK_MILLIS_BYTES; //Short packet is 5 + 4
         break;
@@ -3053,7 +3053,7 @@ const I16_TO_STRING radioCallName[] =
   {RADIO_CALL_returnToReceiving, "returnToReceiving"},
   {RADIO_CALL_calcAirTime, "calcAirTime"},
   {RADIO_CALL_xmitDatagramP2PFindPartner, "xmitDatagramP2PFindPartner"},
-  {RADIO_CALL_xmitDatagramP2PAck1, "xmitDatagramP2PAck1"},
+  {RADIO_CALL_xmitDatagramP2PSyncClocks, "xmitDatagramP2PSyncClocks"},
   {RADIO_CALL_xmitDatagramP2PAck2, "xmitDatagramP2PAck2"},
   {RADIO_CALL_xmitDatagramP2PCommand, "xmitDatagramP2PCommand"},
   {RADIO_CALL_xmitDatagramP2PCommandResponse, "xmitDatagramP2PCommandResponse"},

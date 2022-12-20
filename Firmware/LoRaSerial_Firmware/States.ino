@@ -260,11 +260,11 @@ void updateRadioState()
             timestampOffset = clockOffset;
 
             //Acknowledge the FIND_PARTNER
-            triggerEvent(TRIGGER_SEND_ACK1);
-            if (xmitDatagramP2PAck1() == true)
+            triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
+            if (xmitDatagramP2PSyncClocks() == true)
             {
               sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect ACK2 to contain millis info
-              changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
+              changeState(RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE);
             }
             break;
         }
@@ -277,7 +277,7 @@ void updateRadioState()
         triggerEvent(TRIGGER_HANDSHAKE_SEND_FIND_PARTNER);
         if (xmitDatagramP2PFindPartner() == true)
         {
-          sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect ACK1 to contain millis info
+          sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect SYNC_CLOCKS to contain millis info
           changeState(RADIO_P2P_WAIT_TX_FIND_PARTNER_DONE);
         }
       }
@@ -290,11 +290,11 @@ void updateRadioState()
         triggerEvent(TRIGGER_HANDSHAKE_SEND_FIND_PARTNER_COMPLETE);
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
-        changeState(RADIO_P2P_WAIT_ACK_1);
+        changeState(RADIO_P2P_WAIT_SYNC_CLOCKS);
       }
       break;
 
-    case RADIO_P2P_WAIT_ACK_1:
+    case RADIO_P2P_WAIT_SYNC_CLOCKS:
       if (transactionComplete)
       {
         //Decode the received packet
@@ -334,15 +334,15 @@ void updateRadioState()
             timestampOffset = clockOffset;
 
             //Acknowledge the FIND_PARTNER
-            triggerEvent(TRIGGER_SEND_ACK1);
-            if (xmitDatagramP2PAck1() == true)
+            triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
+            if (xmitDatagramP2PSyncClocks() == true)
             {
               sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect ACK2 to contain millis info
-              changeState(RADIO_P2P_WAIT_TX_ACK_1_DONE);
+              changeState(RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE);
             }
             break;
 
-          case DATAGRAM_ACK_1:
+          case DATAGRAM_SYNC_CLOCKS:
             //Received ACK 1
             //Compute the common clock
             currentMillis = millis();
@@ -353,7 +353,7 @@ void updateRadioState()
             clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
             timestampOffset = clockOffset;
 
-            //Acknowledge the ACK1
+            //Acknowledge the SYNC_CLOCKS
             triggerEvent(TRIGGER_SEND_ACK2);
             if (xmitDatagramP2PAck2() == true)
             {
@@ -371,12 +371,12 @@ void updateRadioState()
           if (settings.debugDatagrams)
           {
             systemPrintTimestamp();
-            systemPrintln("RX: ACK1 Timeout");
+            systemPrintln("RX: SYNC_CLOCKS Timeout");
             outputSerialData(true);
           }
 
           //Start the TX timer: time to delay before transmitting the FIND_PARTNER
-          triggerEvent(TRIGGER_HANDSHAKE_ACK1_TIMEOUT);
+          triggerEvent(TRIGGER_HANDSHAKE_SYNC_CLOCKS_TIMEOUT);
           setHeartbeatShort();
 
           //Slow down FIND_PARTNERs
@@ -393,11 +393,11 @@ void updateRadioState()
       }
       break;
 
-    case RADIO_P2P_WAIT_TX_ACK_1_DONE:
+    case RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE:
       //Determine if a ACK 1 has completed transmission
       if (transactionComplete)
       {
-        triggerEvent(TRIGGER_HANDSHAKE_SEND_ACK1_COMPLETE);
+        triggerEvent(TRIGGER_HANDSHAKE_SEND_SYNC_CLOCKS_COMPLETE);
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
         changeState(RADIO_P2P_WAIT_ACK_2);
@@ -445,7 +445,7 @@ void updateRadioState()
 
             startChannelTimer(getLinkupOffset()); //We are exiting the link last so adjust our starting Timer
 
-            setHeartbeatLong(); //We sent ACK1 and they sent ACK2, so don't be the first to send heartbeat
+            setHeartbeatLong(); //We sent SYNC_CLOCKS and they sent ACK2, so don't be the first to send heartbeat
 
             //Bring up the link
             enterLinkUp();
@@ -900,7 +900,7 @@ void updateRadioState()
       break;
 
     //====================
-    //Walk through channel table backwards, transmitting a FIND_PARTNER and looking for an ACK1
+    //Walk through channel table backwards, transmitting a FIND_PARTNER and looking for an SYNC_CLOCKS
     //====================
     case RADIO_DISCOVER_SCANNING:
       if (transactionComplete)
@@ -945,7 +945,7 @@ void updateRadioState()
             triggerEvent(TRIGGER_BAD_PACKET);
             break;
 
-          case DATAGRAM_ACK_1:
+          case DATAGRAM_SYNC_CLOCKS:
             triggerEvent(TRIGGER_LINK_ACK_RECEIVED);
 
             //Server has responded with ACK
@@ -980,7 +980,7 @@ void updateRadioState()
           if (settings.debugDatagrams)
           {
             systemPrintTimestamp();
-            systemPrintln("MP: ACK1 Timeout");
+            systemPrintln("MP: SYNC_CLOCKS Timeout");
             outputSerialData(true);
           }
 
@@ -1082,7 +1082,7 @@ void updateRadioState()
             triggerEvent(TRIGGER_NETID_MISMATCH);
             break;
 
-          case DATAGRAM_ACK_1:
+          case DATAGRAM_SYNC_CLOCKS:
           case DATAGRAM_ACK_2:
           case DATAGRAM_DATAGRAM:
           case DATAGRAM_DATA_ACK:
@@ -1933,7 +1933,7 @@ void updateRadioState()
                 if ((currentMillis - virtualCircuitList[index].timerMillis)
                     >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
                 {
-                  //Retransmit the ACK1
+                  //Retransmit the SYNC_CLOCKS
                   if (xmitVcSyncAcks(index))
                   {
                     virtualCircuitList[index].timerMillis = datagramTimer;
