@@ -431,7 +431,7 @@ uint8_t txDatagramSize;
 
 //Point-to-Point
 unsigned long datagramTimer;
-uint16_t pingRandomTime;
+uint16_t randomTime;
 uint16_t heartbeatRandomTime;
 
 //Receive control
