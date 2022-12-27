@@ -503,6 +503,71 @@ bool originalServer = false; //Temp store server setting if we need to exit butt
 char platformPrefix[25]; //Used for printing platform specific device name, ie "SAMD21 1W 915MHz"
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+/*
+          Server                                Client
+
+                  HEARTBEAT send needed
+          call xmitDatagramP2PHeartbeat
+    .--------------------  Get millis()
+    |     Add millis to HEARTBEAT frame
+    |  *                  USB Interrupt
+    |  *        hopChannel if necessary
+    |                      Software CRC
+    | txTimeUsec        Data encryption
+    |                    Data whitening
+    |        Move data to radio via SPI
+    |         xmitTimeMillis = millis()
+    |  *          Radio arbitrary delay
+    |                      TX HEARTBEAT  - - >  Detect RX in process
+    |                               ...         ...
+    |                           TX done         RX HEARTBEAT
+    |  *          Radio arbitrary delay         Radio arbitrary delay           *
+    '---  Transaction complete detected         USB Interrupt                   *
+                                      .-------  DIO0 Interrupt
+                                      |         Delay - finish previous loop
+                           rxTimeUsec |         Transaction complete detected
+                                      |         call receiveDatagram
+                                      |         USB Interrupt
+                                      +-------  Get millis()
+                                                Move data from radio using SPI
+                                                Data whitening
+                                                Data decryption
+                                                Software CRC
+                                                Start processing HEARTBEAT datagram
+                                                Get millis();
+
+                                                CPU Clock drift
+
+      timeStampOffset = TX millis + txTimeUsec + rxTimeUsec
+
+                                    RX uSec   RX Var   TX uSec   Hop uSec
+      None                            1379      216      1970       22
+      Encryption                      1957      155      2540       13
+      CRC                             1387      178      1986        5
+      CRC + Encryption                1960      223      2557       15
+      Whitening                       1393      231      1993       28
+      Whitening + Encryption          1963      263      2562       22
+      Whitening + CRC                 1415      249      2014       13
+      Whitening + CRC + Encryption    1987      220      2584       27
+
+      Options         RX      TX
+      CRC:             8      16   uSec
+      Encryption:    578     570   uSec
+      CRC + Encr:    581     587   uSec
+      Whitening       14      15   uSec
+      White + Enc:   584     592   uSec
+      White + CRC:    36      44   uSec
+      Wh + CRC + En: 608     614   uSec
+
+*/
+
+//Clock synchronization
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+uint16_t maxFrameAirTime; //Air time of the maximum sized message
+
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 //Architecture variables
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 void updateRTS(bool assertRTS);

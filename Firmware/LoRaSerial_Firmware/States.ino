@@ -109,6 +109,9 @@ void updateRadioState()
 
       configureRadio(); //Setup radio, set freq to channel 0, calculate air times
 
+      //Determine the maximum frame air time
+      maxFrameAirTime = calcAirTimeMsec(MAX_PACKET_SIZE);
+
       //Start the TX timer: time to delay before transmitting the FIND_PARTNER
       setHeartbeatShort(); //Both radios start with short heartbeat period
       randomTime = random(ackAirTime, ackAirTime * 2); //Fast FIND_PARTNER
