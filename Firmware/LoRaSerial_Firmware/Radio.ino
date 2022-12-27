@@ -56,7 +56,7 @@ bool configureRadio()
   // HoppingPeriod = Tsym * FreqHoppingPeriod
   // Given defaults of spreadfactor = 9, bandwidth = 125, it follows Tsym = 4.10ms
   // HoppingPeriod = 4.10 * x = Yms. Can be as high as 400ms to be within regulatory limits
-  uint16_t hoppingPeriod = settings.maxDwellTime / calcSymbolTime(); //Limit FHSS dwell time to 400ms max. / automatically floors number
+  uint16_t hoppingPeriod = settings.maxDwellTime / calcSymbolTimeMsec(); //Limit FHSS dwell time to 400ms max. / automatically floors number
   if (hoppingPeriod > 255) hoppingPeriod = 255; //Limit to 8 bits.
   if (settings.frequencyHop == false) hoppingPeriod = 0; //Disable
   if (radio.setFHSSHoppingPeriod(hoppingPeriod) != RADIOLIB_ERR_NONE)
@@ -80,8 +80,9 @@ bool configureRadio()
     systemPrintln(settings.radioSyncWord);
     systemPrint("radioPreambleLength: ");
     systemPrintln(settings.radioPreambleLength);
-    systemPrint("calcSymbolTime: ");
-    systemPrintln(calcSymbolTime());
+    systemPrint("calcSymbolTimeMsec: ");
+    systemPrint(calcSymbolTimeMsec(), 3);
+    systemPrintln(" mSec");
     systemPrint("HoppingPeriod: ");
     systemPrintln(hoppingPeriod);
     systemPrint("ackAirTime: ");
@@ -250,7 +251,7 @@ uint16_t calcAirTime(uint8_t bytesToSend)
 {
   radioCallHistory[RADIO_CALL_calcAirTime] = millis();
 
-  float tSym = calcSymbolTime();
+  float tSym = calcSymbolTimeMsec();
   float tPreamble = (settings.radioPreambleLength + 4.25) * tSym;
   float p1 = (8 * bytesToSend - 4 * settings.radioSpreadFactor + 28 + 16 * 1 - 20 * 0) / (4.0 * (settings.radioSpreadFactor - 2 * 0));
   p1 = ceil(p1) * settings.radioCodingRate;
@@ -263,7 +264,7 @@ uint16_t calcAirTime(uint8_t bytesToSend)
 }
 
 //Given spread factor and bandwidth, return symbol time
-float calcSymbolTime()
+float calcSymbolTimeMsec()
 {
   float tSym = pow(2, settings.radioSpreadFactor) / settings.radioBandwidth;
   return (tSym);
