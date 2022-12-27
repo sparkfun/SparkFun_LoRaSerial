@@ -494,7 +494,7 @@ typedef enum
   RADIO_CALL_configureRadio = 0,
   RADIO_CALL_setRadioFrequency,
   RADIO_CALL_returnToReceiving,
-  RADIO_CALL_calcAirTimeMsec,
+  RADIO_CALL_calcAirTimeUsec,
   RADIO_CALL_xmitDatagramP2PFindPartner,
   RADIO_CALL_xmitDatagramP2PSyncClocks,
   RADIO_CALL_xmitDatagramP2PZeroAcks,

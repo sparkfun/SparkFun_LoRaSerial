@@ -247,20 +247,30 @@ void returnToReceiving()
 }
 
 //Given spread factor, bandwidth, coding rate and number of bytes, return total Air Time in ms for packet
-uint16_t calcAirTimeMsec(uint8_t bytesToSend)
+float calcAirTimeUsec(uint8_t bytesToSend)
 {
-  radioCallHistory[RADIO_CALL_calcAirTimeMsec] = millis();
+  radioCallHistory[RADIO_CALL_calcAirTimeUsec] = millis();
 
-  float tSym = calcSymbolTimeMsec();
-  float tPreamble = (settings.radioPreambleLength + 4.25) * tSym;
+  float tSymUsec = calcSymbolTimeUsec();
+
+  //See Synchronization section
+  float tPreambleUsec = (settings.radioPreambleLength + 2 + 2.25) * tSymUsec;
+
+  // Rb = SF * (1 / ((2^SF) / B) = (SF * B) / 2^SF bit rate
+  //
   float p1 = (8 * bytesToSend - 4 * settings.radioSpreadFactor + 28 + 16 * 1 - 20 * 0) / (4.0 * (settings.radioSpreadFactor - 2 * 0));
   p1 = ceil(p1) * settings.radioCodingRate;
   if (p1 < 0) p1 = 0;
   uint16_t payloadBytes = 8 + p1;
-  float tPayload = payloadBytes * tSym;
-  float tPacket = tPreamble + tPayload;
+  float tPayloadUsec = payloadBytes * tSymUsec;
+  float tPacketUsec = tPreambleUsec + tPayloadUsec;
+  return tPacketUsec;
+}
 
-  return ((uint16_t)ceil(tPacket));
+//Return the frame air time in milliseconds
+uint16_t calcAirTimeMsec(uint8_t bytesToSend)
+{
+  return ((uint16_t)ceil(calcAirTimeUsec(bytesToSend) / 1000.));
 }
 
 //Given spread factor and bandwidth, return symbol time
@@ -3133,7 +3143,7 @@ const I16_TO_STRING radioCallName[] =
   {RADIO_CALL_configureRadio, "configureRadio"},
   {RADIO_CALL_setRadioFrequency, "setRadioFrequency"},
   {RADIO_CALL_returnToReceiving, "returnToReceiving"},
-  {RADIO_CALL_calcAirTimeMsec, "calcAirTimeMsec"},
+  {RADIO_CALL_calcAirTimeUsec, "calcAirTimeUsec"},
   {RADIO_CALL_xmitDatagramP2PFindPartner, "xmitDatagramP2PFindPartner"},
   {RADIO_CALL_xmitDatagramP2PSyncClocks, "xmitDatagramP2PSyncClocks"},
   {RADIO_CALL_xmitDatagramP2PZeroAcks, "xmitDatagramP2PZeroAcks"},
