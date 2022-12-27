@@ -178,7 +178,16 @@ void updateRadioState()
 
       //Start the link between the radios
       if (settings.operatingMode == MODE_POINT_TO_POINT)
-        changeState(RADIO_P2P_LINK_DOWN);
+      {
+        if (xmitDatagramP2PFindPartner() == true)
+        {
+          START_ACK_TIMER();
+          sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect SYNC_CLOCKS to contain millis info
+          changeState(RADIO_P2P_LINK_DOWN_TX_DONE);
+        }
+        else
+          changeState(RADIO_P2P_LINK_DOWN);
+      }
       else if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
       {
         if (settings.server)
@@ -221,6 +230,7 @@ void updateRadioState()
              Channel 0 |                         | Channel 0
                        V                         V
            .----> P2P_NO_LINK               P2P_NO_LINK
+           |           |                         |
            |           | Tx FIND_PARTNER         |
            | Timeout   |                         |
            |           V                         |
@@ -265,6 +275,27 @@ void updateRadioState()
     */
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+    case RADIO_P2P_LINK_DOWN_TX_DONE:
+      if (transactionComplete)
+      {
+        transactionComplete = false; //Reset ISR flag
+        COMPUTE_TX_TIME();
+        returnToReceiving();
+        if (txControl.datagramType == DATAGRAM_ZERO_ACKS)
+        {
+          //Compute the receive time
+          COMPUTE_RX_TIME(rxData, 1);
+
+          setHeartbeatLong(); //We sent SYNC_CLOCKS and they sent ZERO_ACKS, so don't be the first to send heartbeat
+
+          //Bring up the link
+          enterLinkUp();
+        }
+        else
+          changeState(RADIO_P2P_LINK_DOWN);
+      }
+      break;
+
     case RADIO_P2P_LINK_DOWN:
       //If we are on the wrong channel, go home
       if (channelNumber != 0)
@@ -273,6 +304,10 @@ void updateRadioState()
         channelNumber = 0;
         setRadioFrequency(false);
       }
+
+      //Start the ACK timer if it is not running
+      if (!ackTimer)
+        START_ACK_TIMER();
 
       //Update the transmit and receive times until the first ACK TX and RX
       rxFirstAck = false;
@@ -320,77 +355,11 @@ void updateRadioState()
             if (xmitDatagramP2PSyncClocks() == true)
             {
               sf6ExpectedSize = headerBytes + P2P_ZERO_ACKS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
-              changeState(RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE);
+              changeState(RADIO_P2P_LINK_DOWN_TX_DONE);
             }
-            break;
-        }
-      }
 
-      //Is it time to send the FIND_PARTNER to the remote system
-      else if ((receiveInProcess() == false) && ((millis() - heartbeatTimer) >= randomTime))
-      {
-        //Transmit the FIND_PARTNER
-        triggerEvent(TRIGGER_HANDSHAKE_SEND_FIND_PARTNER);
-        if (xmitDatagramP2PFindPartner() == true)
-        {
-          sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect SYNC_CLOCKS to contain millis info
-          changeState(RADIO_P2P_WAIT_TX_FIND_PARTNER_DONE);
-        }
-      }
-      break;
-
-    case RADIO_P2P_WAIT_TX_FIND_PARTNER_DONE:
-      //Determine if a FIND_PARTNER has completed transmission
-      if (transactionComplete)
-      {
-        COMPUTE_TX_TIME();
-        triggerEvent(TRIGGER_HANDSHAKE_SEND_FIND_PARTNER_COMPLETE);
-        transactionComplete = false; //Reset ISR flag
-        returnToReceiving();
-        changeState(RADIO_P2P_WAIT_SYNC_CLOCKS);
-      }
-      break;
-
-    case RADIO_P2P_WAIT_SYNC_CLOCKS:
-      if (transactionComplete)
-      {
-        //Decode the received packet
-        PacketType packetType = rcvDatagram();
-
-        //Process the received datagram
-        switch (packetType)
-        {
-          default:
-            triggerEvent(TRIGGER_UNKNOWN_PACKET);
-            if (settings.debugDatagrams)
-            {
-              systemPrintTimestamp();
-              systemPrint("Scan: Unhandled packet type ");
-              systemPrint(radioDatagramType[packetType]);
-              systemPrintln();
-            }
-            break;
-
-          case DATAGRAM_BAD:
-            triggerEvent(TRIGGER_BAD_PACKET);
-            break;
-
-          case DATAGRAM_CRC_ERROR:
-            triggerEvent(TRIGGER_CRC_ERROR);
-            break;
-
-          case DATAGRAM_FIND_PARTNER:
-            //Received FIND_PARTNER
-            //Compute the receive time
-            COMPUTE_RX_TIME(rxData + 1, 1);
-
-            //Acknowledge the FIND_PARTNER
-            triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
-            if (xmitDatagramP2PSyncClocks() == true)
-            {
-              sf6ExpectedSize = headerBytes + P2P_ZERO_ACKS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
-              changeState(RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE);
-            }
+            //Start the ACK timer
+            START_ACK_TIMER();
             break;
 
           case DATAGRAM_SYNC_CLOCKS:
@@ -398,92 +367,23 @@ void updateRadioState()
             //Compute the receive time
             COMPUTE_RX_TIME(rxData + 1, 1);
 
+            //Synchronize the the channel timer
+            syncChannelTimer();
 
             //Acknowledge the SYNC_CLOCKS
             triggerEvent(TRIGGER_SEND_ZERO_ACKS);
             if (xmitDatagramP2PZeroAcks() == true)
             {
               sf6ExpectedSize = MAX_PACKET_SIZE; //Tell SF6 to return to max packet length
-              changeState(RADIO_P2P_WAIT_TX_ZERO_ACKS_DONE);
+              changeState(RADIO_P2P_LINK_DOWN_TX_DONE);
             }
-            break;
-        }
-      }
-      else
-      {
-        //If we timeout during handshake, return to link down
-        if ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
-        {
-          if (settings.debugDatagrams)
-          {
-            systemPrintTimestamp();
-            systemPrintln("RX: SYNC_CLOCKS Timeout");
-            outputSerialData(true);
-          }
 
-          //Stop the channel timer
-          stopChannelTimer();
-
-          //Start the TX timer: time to delay before transmitting the FIND_PARTNER
-          triggerEvent(TRIGGER_HANDSHAKE_SYNC_CLOCKS_TIMEOUT);
-          setHeartbeatShort();
-
-          //Slow down FIND_PARTNERs
-          if (ackAirTime < settings.maxDwellTime)
-            randomTime = random(settings.maxDwellTime * 2, settings.maxDwellTime * 4);
-          else
-            randomTime = random(ackAirTime * 4, ackAirTime * 8);
-
-          sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive FIND_PARTNER packet
-          returnToReceiving();
-
-          changeState(RADIO_P2P_LINK_DOWN);
-        }
-      }
-      break;
-
-    case RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE:
-      //Determine if a SYNC_CLOCKS has completed transmission
-      if (transactionComplete)
-      {
-        COMPUTE_TX_TIME();
-        triggerEvent(TRIGGER_HANDSHAKE_SEND_SYNC_CLOCKS_COMPLETE);
-        transactionComplete = false; //Reset ISR flag
-        returnToReceiving();
-        changeState(RADIO_P2P_WAIT_ZERO_ACKS);
-      }
-      break;
-
-    case RADIO_P2P_WAIT_ZERO_ACKS:
-      if (transactionComplete == true)
-      {
-        //Decode the received packet
-        PacketType packetType = rcvDatagram();
-
-        //Process the received datagram
-        switch (packetType)
-        {
-          default:
-            triggerEvent(TRIGGER_UNKNOWN_PACKET);
-            if (settings.debugDatagrams)
-            {
-              systemPrintTimestamp();
-              systemPrint("Scan: Unhandled packet type ");
-              systemPrint(radioDatagramType[packetType]);
-              systemPrintln();
-            }
-            break;
-
-          case DATAGRAM_BAD:
-            triggerEvent(TRIGGER_BAD_PACKET);
-            break;
-
-          case DATAGRAM_CRC_ERROR:
-            triggerEvent(TRIGGER_CRC_ERROR);
+            //Start the ACK timer
+            START_ACK_TIMER();
             break;
 
           case DATAGRAM_ZERO_ACKS:
-            //Received ACK 2
+            //Received ZERO_ACKS
             //Compute the receive time
             COMPUTE_RX_TIME(rxData, 1);
 
@@ -494,52 +394,23 @@ void updateRadioState()
             break;
         }
       }
-      else
+      else if (receiveInProcess() == false)
       {
-        //If we timeout during handshake, return to link down
-        if ((millis() - datagramTimer) >= (frameAirTime +  ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+        //When a timeout occurs transmit a FIND_PARTNER frame
+        if ((millis() - ackTimer) >= randomTime)
         {
-          if (settings.debugDatagrams)
-          {
-            systemPrintTimestamp();
-            systemPrintln("RX: ZERO_ACKS Timeout");
-            outputSerialData(true);
-          }
-
           //Stop the channel timer
           stopChannelTimer();
 
-          //Start the TX timer: time to delay before transmitting the FIND_PARTNER
-          triggerEvent(TRIGGER_HANDSHAKE_ZERO_ACKS_TIMEOUT);
-          setHeartbeatShort();
-
-          //Slow down FIND_PARTNERs
-          if (ackAirTime < settings.maxDwellTime)
-            randomTime = random(settings.maxDwellTime * 2, settings.maxDwellTime * 4);
-          else
-            randomTime = random(ackAirTime * 4, ackAirTime * 8);
-
-          sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive FIND_PARTNER packet
-          returnToReceiving();
-
-          changeState(RADIO_P2P_LINK_DOWN);
+          //Transmit the FIND_PARTNER
+          triggerEvent(TRIGGER_HANDSHAKE_SEND_FIND_PARTNER);
+          if (xmitDatagramP2PFindPartner() == true)
+          {
+            START_ACK_TIMER();
+            sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect SYNC_CLOCKS to contain millis info
+            changeState(RADIO_P2P_LINK_DOWN_TX_DONE);
+          }
         }
-      }
-      break;
-
-    case RADIO_P2P_WAIT_TX_ZERO_ACKS_DONE:
-      //Determine if a ACK 2 has completed transmission
-      if (transactionComplete)
-      {
-        transactionComplete = false; //Reset ISR flag
-        COMPUTE_TX_TIME();
-
-        startChannelTimer(); //We are exiting the link first so do not adjust our starting Timer
-
-        setHeartbeatShort(); //We sent the last ack so be responsible for sending the next heartbeat
-
-        //Bring up the link
-        enterLinkUp();
       }
       break;
 

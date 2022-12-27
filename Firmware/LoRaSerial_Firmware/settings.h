@@ -4,11 +4,7 @@ typedef enum
 
   //Point-To-Point: Bring up the link
   RADIO_P2P_LINK_DOWN,
-  RADIO_P2P_WAIT_TX_FIND_PARTNER_DONE,
-  RADIO_P2P_WAIT_SYNC_CLOCKS,
-  RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE,
-  RADIO_P2P_WAIT_ZERO_ACKS,
-  RADIO_P2P_WAIT_TX_ZERO_ACKS_DONE,
+  RADIO_P2P_LINK_DOWN_TX_DONE,
 
   //Point-to-Point: Link up, data exchange
   RADIO_P2P_LINK_UP,
@@ -59,44 +55,40 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   //Point-to-Point link handshake
   //    State                           RX      Name                              Description
   {RADIO_P2P_LINK_DOWN,                  1, "P2P_LINK_DOWN",                  "P2P: [No Link] Waiting for FIND_PARTNER"}, // 1
-  {RADIO_P2P_WAIT_TX_FIND_PARTNER_DONE,  0, "P2P_WAIT_TX_FIND_PARTNER_DONE",  "P2P: [No Link] Wait FIND_PARTNER TX Done"},// 2
-  {RADIO_P2P_WAIT_SYNC_CLOCKS,           1, "P2P_WAIT_SYNC_CLOCKS",           "P2P: [No Link] Waiting for SYNC_CLOCKS"},  // 3
-  {RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE,   0, "P2P_WAIT_TX_SYNC_CLOCKS_DONE",   "P2P: [No Link] Wait SYNC_CLOCKS TX Done"}, // 4
-  {RADIO_P2P_WAIT_ZERO_ACKS,             1, "P2P_WAIT_ZERO_ACKS",             "P2P: [No Link] Waiting for ZERO_ACKS"},    // 5
-  {RADIO_P2P_WAIT_TX_ZERO_ACKS_DONE,     0, "P2P_WAIT_TX_ZERO_ACKS_DONE",     "P2P: [No Link] Wait ZERO_ACKS TX Done"},   // 6
+  {RADIO_P2P_LINK_DOWN_TX_DONE,          0, "P2P_LINK_DOWN_TX_DONE",          "P2P: [No Link] Wait for TX Done"},         // 2
 
   //Point-to-Point, link up, data exchange
   //    State                           RX      Name                              Description
-  {RADIO_P2P_LINK_UP,                    1, "P2P_LINK_UP",                    "P2P: Receiving Standby"},          // 7
-  {RADIO_P2P_LINK_UP_WAIT_TX_DONE,       0, "P2P_LINK_UP_WAIT_TX_DONE",       "P2P: Waiting TX done"},            // 8
+  {RADIO_P2P_LINK_UP,                    1, "P2P_LINK_UP",                    "P2P: Receiving Standby"},          // 3
+  {RADIO_P2P_LINK_UP_WAIT_TX_DONE,       0, "P2P_LINK_UP_WAIT_TX_DONE",       "P2P: Waiting TX done"},            // 4
 
   //Server-client discovery
   //    State                           RX      Name                              Description
-  {RADIO_DISCOVER_BEGIN,                 0, "DISCOVER_BEGIN",                 "Disc: Setup for scanning"},                  // 9
-  {RADIO_DISCOVER_SCANNING,              0, "DISCOVER_SCANNING",              "Disc: Scanning for servers"},                //10
-  {RADIO_DISCOVER_WAIT_TX_FIND_PARTNER_DONE,0,"DISCOVER_WAIT_TX_FIND_PARTNER_DONE","Disc: Wait for FIND_PARTNER to xmit"},  //11
+  {RADIO_DISCOVER_BEGIN,                 0, "DISCOVER_BEGIN",                 "Disc: Setup for scanning"},                  // 5
+  {RADIO_DISCOVER_SCANNING,              0, "DISCOVER_SCANNING",              "Disc: Scanning for servers"},                // 6
+  {RADIO_DISCOVER_WAIT_TX_FIND_PARTNER_DONE,0,"DISCOVER_WAIT_TX_FIND_PARTNER_DONE","Disc: Wait for FIND_PARTNER to xmit"},  // 7
 
   //Multi-Point data exchange
   //    State                           RX      Name                              Description
-  {RADIO_MP_STANDBY,                     1, "MP_STANDBY",                     "MP: Wait for TX or RX"},           //12
-  {RADIO_MP_WAIT_TX_DONE,                0, "MP_WAIT_TX_DONE",                "MP: Waiting for TX done"},         //13
+  {RADIO_MP_STANDBY,                     1, "MP_STANDBY",                     "MP: Wait for TX or RX"},           // 8
+  {RADIO_MP_WAIT_TX_DONE,                0, "MP_WAIT_TX_DONE",                "MP: Waiting for TX done"},         // 9
 
   //Training client states
   //    State                           RX      Name                              Description
-  {RADIO_TRAIN_WAIT_TX_FIND_PARTNER_DONE,0, "TRAIN_WAIT_TX_FIND_PARTNER_DONE","Train: Wait TX training FIND_PARTNER done"}, //14
-  {RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS, 1, "TRAIN_WAIT_RX_RADIO_PARAMETERS", "Train: Wait for radio parameters"},          //15
-  {RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE,   0, "TRAIN_WAIT_TX_PARAM_ACK_DONE",   "Train: Wait for TX param ACK done"},         //16
+  {RADIO_TRAIN_WAIT_TX_FIND_PARTNER_DONE,0, "TRAIN_WAIT_TX_FIND_PARTNER_DONE","Train: Wait TX training FIND_PARTNER done"}, //10
+  {RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS, 1, "TRAIN_WAIT_RX_RADIO_PARAMETERS", "Train: Wait for radio parameters"},          //11
+  {RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE,   0, "TRAIN_WAIT_TX_PARAM_ACK_DONE",   "Train: Wait for TX param ACK done"},         //12
 
   //Training server states
   //    State                           RX      Name                              Description
-  {RADIO_TRAIN_WAIT_FOR_FIND_PARTNER,    1, "TRAIN_WAIT_FOR_FIND_PARTNER",    "Train: Wait for training FIND_PARTNER"}, //17
-  {RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,0, "TRAIN_WAIT_TX_RADIO_PARAMS_DONE","Train: Wait for TX params done"},        //18
+  {RADIO_TRAIN_WAIT_FOR_FIND_PARTNER,    1, "TRAIN_WAIT_FOR_FIND_PARTNER",    "Train: Wait for training FIND_PARTNER"}, //13
+  {RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,0, "TRAIN_WAIT_TX_RADIO_PARAMS_DONE","Train: Wait for TX params done"},        //14
 
   //Virtual circuit states
   //    State                           RX      Name                              Description
-  {RADIO_VC_WAIT_SERVER,                 1, "VC_WAIT_SERVER",                 "VC: Wait for the server"},         //19
-  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "VC: Wait for TX done"},            //20
-  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "VC: Wait for receive"},            //21
+  {RADIO_VC_WAIT_SERVER,                 1, "VC_WAIT_SERVER",                 "VC: Wait for the server"},         //15
+  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "VC: Wait for TX done"},            //16
+  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "VC: Wait for receive"},            //17
 };
 
 //Possible types of packets received
@@ -144,8 +136,8 @@ typedef enum
 } PacketType;
 
 const char * const radioDatagramType[] =
-{ //    0            1        2
-  "FIND_PARTNER", "ACK-1", "ACK-2",
+{ //    0               1            2
+  "FIND_PARTNER", "SYNC_CLOCKS", "ZERO_ACKS",
   // 3        4           5            6           7
   "DATA", "DATA-ACK", "HEARTBEAT", "RMT-CMD", "RMT_RESP",
   //  8
