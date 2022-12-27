@@ -63,8 +63,8 @@ bool configureRadio()
     success = false;
 
   //Precalculate the packet times
-  ackAirTime = calcAirTime(headerBytes + CHANNEL_TIMER_BYTES + trailerBytes); //Used for response timeout during ACK
-  maxPacketAirTime = calcAirTime(MAX_PACKET_SIZE);
+  ackAirTime = calcAirTimeMsec(headerBytes + CHANNEL_TIMER_BYTES + trailerBytes); //Used for response timeout during ACK
+  maxPacketAirTime = calcAirTimeMsec(MAX_PACKET_SIZE);
 
   if ((settings.debug == true) || (settings.debugRadio == true))
   {
@@ -247,9 +247,9 @@ void returnToReceiving()
 }
 
 //Given spread factor, bandwidth, coding rate and number of bytes, return total Air Time in ms for packet
-uint16_t calcAirTime(uint8_t bytesToSend)
+uint16_t calcAirTimeMsec(uint8_t bytesToSend)
 {
-  radioCallHistory[RADIO_CALL_calcAirTime] = millis();
+  radioCallHistory[RADIO_CALL_calcAirTimeMsec] = millis();
 
   float tSym = calcSymbolTimeMsec();
   float tPreamble = (settings.radioPreambleLength + 4.25) * tSym;
@@ -2612,7 +2612,7 @@ bool transmitDatagram()
   endOfTxData = &outgoingPacket[headerBytes];
 
   //Compute the time needed for this frame. Part of ACK timeout.
-  frameAirTime = calcAirTime(txDatagramSize);
+  frameAirTime = calcAirTimeMsec(txDatagramSize);
 
   //Transmit this datagram
   frameSentCount = 0; //This is the first time this frame is being sent
@@ -2706,7 +2706,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   if (timeToHop == true) //If the channelTimer has expired, move to next frequency
     hopChannel();
 
-  frameAirTime = calcAirTime(txDatagramSize); //Calculate frame air size while we're transmitting in the background
+  frameAirTime = calcAirTimeMsec(txDatagramSize); //Calculate frame air size while we're transmitting in the background
   uint16_t responseDelay = frameAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
 
   //Drop this datagram if the receiver is active
@@ -2837,7 +2837,7 @@ void syncChannelTimer()
 
   //If the sync arrived in an ACK, we know how long that packet took to transmit
   //Calculate the packet airTime based on the size of data received
-  msToNextHopRemote -= calcAirTime(packetLength);
+  msToNextHopRemote -= calcAirTimeMsec(packetLength);
 
   //  if (settings.debugReceive == true)
   //    msToNextHopRemote -= 91; //Must adjust for the blob of text being printed
@@ -3133,7 +3133,7 @@ const I16_TO_STRING radioCallName[] =
   {RADIO_CALL_configureRadio, "configureRadio"},
   {RADIO_CALL_setRadioFrequency, "setRadioFrequency"},
   {RADIO_CALL_returnToReceiving, "returnToReceiving"},
-  {RADIO_CALL_calcAirTime, "calcAirTime"},
+  {RADIO_CALL_calcAirTimeMsec, "calcAirTimeMsec"},
   {RADIO_CALL_xmitDatagramP2PFindPartner, "xmitDatagramP2PFindPartner"},
   {RADIO_CALL_xmitDatagramP2PSyncClocks, "xmitDatagramP2PSyncClocks"},
   {RADIO_CALL_xmitDatagramP2PZeroAcks, "xmitDatagramP2PZeroAcks"},
