@@ -2926,11 +2926,69 @@ void stopChannelTimer()
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
 void syncChannelTimer()
 {
+  long adjustment;
+  unsigned long currentMillis;
+  int8_t deltaHops;
+  long deltaMillis;
+  long millisToNextHop;
   int16_t msToNextHopRmt;
+  bool syncError;
+  long txRxTimeUsec;
 
-  radioCallHistory[RADIO_CALL_syncChannelTimer] = millis();
+  currentMillis = millis();
+  radioCallHistory[RADIO_CALL_syncChannelTimer] = currentMillis;
 
   if (settings.frequencyHop == false) return;
+
+  //msToNextHopRemote is in the range of 0 - settings.maxDwellTime
+  //Validate this range
+  if ((msToNextHopRemote < 0) || (msToNextHopRemote > settings.maxDwellTime))
+  {
+    int16_t channelTimer;
+    uint8_t * data;
+
+    systemPrintln("RX Frame");
+    dumpBuffer(incomingBuffer, headerBytes + rxDataBytes + trailerBytes);
+
+    data = incomingBuffer;
+    if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
+    {
+      systemPrint("    Net Id: ");
+      systemPrint(*data);
+      systemPrint(" (0x");
+      systemPrint(*data++, HEX);
+      systemPrintln(")");
+    }
+    printControl(*data++);
+    memcpy(&channelTimer, data, sizeof(channelTimer));
+    data += sizeof(channelTimer);
+    systemPrint("    Channel Timer(ms): ");
+    systemPrintln(channelTimer);
+
+    systemPrint("ERROR: Invalid msToNextHopRemote value, ");
+    systemPrintln(msToNextHopRemote);
+    waitForever();
+  }
+
+  //Determine if the remote system has hopped and the local system has not
+  deltaHops = 0;
+  deltaMillis = msToNextHopRemote - txRxTimeMsec;
+  if ((deltaMillis <= 0) && ((currentMillis - timerStart) > (settings.maxDwellTime - txRxTimeMsec)))
+  {
+    //Hop one channel to catch up with the remote system
+    if (allowAdjustments)
+      hopChannel();
+    deltaHops -= 1;
+  }
+
+  //Compute the time to next hop
+  adjustment = 0;
+  millisToNextHop = msToNextHopRemote - txRxTimeMsec;
+  if (millisToNextHop <= 0)
+  {
+    adjustment = settings.maxDwellTime;
+    millisToNextHop += adjustment;
+  }
 
   //msToNextHopRemote is obtained during rcvDatagram()
 
@@ -2996,6 +3054,7 @@ void syncChannelTimer()
   if (msToNextHopLocal < smallAmount && (msToNextHopRmt <= 0 && msToNextHopRmt >= (smallAmount * -1)))
   {
     hopChannel();
+    deltaHops += 1;
     msToNextHop = msToNextHopRmt + settings.maxDwellTime;
     resetHop = true; //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
   }
@@ -3014,6 +3073,7 @@ void syncChannelTimer()
   else if (msToNextHopLocal < smallAmount && msToNextHopRmt > largeAmount)
   {
     hopChannel();
+    deltaHops += 1;
     msToNextHop = msToNextHopRmt;
     resetHop = true; //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
   }
@@ -3047,6 +3107,7 @@ void syncChannelTimer()
     if (msToNextHop < (settings.maxDwellTime * -1)) //-402 < -400
     {
       hopChannel();
+      deltaHops += 1;
       msToNextHop += settings.maxDwellTime;
       resetHop = true; //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
     }
@@ -3066,16 +3127,68 @@ void syncChannelTimer()
   channelTimer.enableTimer();
   triggerEvent(TRIGGER_SYNC_CHANNEL); //Trigger after adjustments to timer to avoid skew during debug
 
+  //Check for a sync error
+  deltaMillis = (millisToNextHop - msToNextHop + settings.maxDwellTime) % settings.maxDwellTime;
+  syncError = deltaHops || ((deltaMillis > 3) && (deltaMillis < (settings.maxDwellTime - 2)));
+
   //Display the channel sync timer calculations
-  if (settings.debugSync)
+  if (settings.debugSync || syncError)
   {
+    systemPrint(msToNextHopRemote);
+    systemPrint(" Nxt Hop - ");
+    systemPrint((txTimeUsec + rxTimeUsec) / 1000);
+    systemPrint(" (TX + RX)");
+    if (adjustment)
+    {
+      systemPrint(" + ");
+      systemPrint(adjustment);
+      systemPrint(" Adj");
+    }
+    systemPrint(" = ");
+    systemPrint(millisToNextHop);
+    systemPrintln(" mSec");
+
     systemPrint("msToNextHopRmt: ");
     systemPrint(msToNextHopRmt);
     systemPrint(" msToNextHopLocal: ");
     systemPrint(msToNextHopLocal);
     systemPrint(" msToNextHop: ");
     systemPrint(msToNextHop);
+    systemPrint(" delta: ");
+    systemPrint(deltaMillis);
+    systemPrint(" deltaHops: ");
+    systemPrint(deltaHops);
     systemPrintln();
+    if (syncError)
+    {
+      int16_t channelTimer;
+      uint8_t * data;
+
+      systemPrint("rxTimeUsec: ");
+      systemPrintln(rxTimeUsec);
+      systemPrint("txTimeUsec: ");
+      systemPrintln(txTimeUsec);
+      systemPrintln("RX Frame");
+      dumpBuffer(incomingBuffer, headerBytes + rxDataBytes + trailerBytes);
+
+      data = incomingBuffer;
+      if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
+      {
+        systemPrint("    Net Id: ");
+        systemPrint(*data);
+        systemPrint(" (0x");
+        systemPrint(*data++, HEX);
+        systemPrintln(")");
+      }
+      printControl(*data++);
+      memcpy(&channelTimer, data, sizeof(channelTimer));
+      data += sizeof(channelTimer);
+      systemPrint("    Channel Timer(ms): ");
+      systemPrintln(channelTimer);
+
+      systemPrintln("ERROR: Must fix channel timer synchronization math");
+      waitForever();
+    }
   }
 }
 

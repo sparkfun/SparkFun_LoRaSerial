@@ -20,7 +20,7 @@
   {                                                                             \
     /*Compute the frequency correction*/                                        \
     frequencyCorrection += radio.getFrequencyError() / 1000000.0;               \
-    \
+                                                                                \
     /*Send the ACK to the remote system*/                                       \
     triggerEvent(trigger);                                                      \
     if (xmitDatagramP2PAck() == true)                                           \
@@ -35,7 +35,7 @@
   {                                                                             \
     /*Start the ACK timer*/                                                     \
     ackTimer = datagramTimer;                                                   \
-    \
+                                                                                \
     /*Since ackTimer is off when equal to zero, force it to a non-zero value*/  \
     /*Subtract one so that the comparisons result in a small number*/           \
     if (!ackTimer)                                                              \
@@ -48,19 +48,21 @@
     ackTimer = 0;             \
   }
 
-#define COMPUTE_TIMESTAMP_OFFSET(millisBuffer)                                              \
+#define COMPUTE_TIMESTAMP_OFFSET(millisBuffer, rShift)                          \
   {                                                                             \
     unsigned long deltaUsec = txTimeUsec + rxTimeUsec;                          \
     memcpy(&remoteSystemMillis, millisBuffer, sizeof(currentMillis));           \
     timestampOffset = (remoteSystemMillis + (deltaUsec / 1000) - currentMillis);\
+    timestampOffset >>= rShift;                                                  \
   }
 
-#define COMPUTE_RX_TIME(millisBuffer)                                           \
+#define COMPUTE_RX_TIME(millisBuffer, rShift)                                   \
   {                                                                             \
     currentMillis = millis();                                                   \
-    if (!rxTimeUsec)                                                            \
+    if (!rxFirstAck)                                                            \
     {                                                                           \
       rxTimeUsec = micros() - transactionCompleteMicros;                        \
+      txRxTimeMsec = (txTimeUsec + rxTimeUsec) / 1000;                          \
                                                                                 \
       /*Display the results*/                                                   \
       if (settings.debugSync)                                                   \
@@ -69,17 +71,20 @@
         systemPrint(" RX Time: ");                                              \
         systemPrint(rxTimeUsec);                                                \
         systemPrintln(" uSec");                                                 \
+        systemPrint(" TX + RX Time: ");                                         \
+        systemPrint(txRxTimeMsec);                                              \
+        systemPrintln(" mSec");                                                 \
       }                                                                         \
     }                                                                           \
                                                                                 \
     /*Adjust the timestamp offset*/                                             \
-    COMPUTE_TIMESTAMP_OFFSET(millisBuffer);                                                 \
+    COMPUTE_TIMESTAMP_OFFSET(millisBuffer, rShift);                             \
   }
 
 #define COMPUTE_TX_TIME()                                                       \
   {                                                                             \
     currentMillis = millis();                                                   \
-    if (!txTimeUsec)                                                            \
+    if (!txFirstAck)                                                            \
     {                                                                           \
       txTimeUsec = transactionCompleteMicros - txDatagramMicros;                \
                                                                                 \
@@ -269,6 +274,10 @@ void updateRadioState()
         setRadioFrequency(false);
       }
 
+      //Update the transmit and receive times until the first ACK TX and RX
+      rxFirstAck = false;
+      txFirstAck = false;
+
       //Determine if a FIND_PARTNER was received
       if (transactionComplete)
       {
@@ -300,9 +309,11 @@ void updateRadioState()
           case DATAGRAM_FIND_PARTNER:
             //Received FIND_PARTNER
             //Compute the receive time
-            COMPUTE_RX_TIME(rxData);
-            timestampOffset >>= 1;
+            COMPUTE_RX_TIME(rxData, 1);
 
+            //In the case of a retransmission, stop the channel timer
+            stopChannelTimer();
+            startChannelTimer();
 
             //Acknowledge the FIND_PARTNER with SYNC_CLOCKS
             triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
@@ -371,8 +382,7 @@ void updateRadioState()
           case DATAGRAM_FIND_PARTNER:
             //Received FIND_PARTNER
             //Compute the receive time
-            COMPUTE_RX_TIME(rxData + 1);
-            timestampOffset >>= 1;
+            COMPUTE_RX_TIME(rxData + 1, 1);
 
             //Acknowledge the FIND_PARTNER
             triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
@@ -386,8 +396,7 @@ void updateRadioState()
           case DATAGRAM_SYNC_CLOCKS:
             //Received SYNC_CLOCKS
             //Compute the receive time
-            COMPUTE_RX_TIME(rxData + 1);
-            timestampOffset >>= 1;
+            COMPUTE_RX_TIME(rxData + 1, 1);
 
 
             //Acknowledge the SYNC_CLOCKS
@@ -411,6 +420,9 @@ void updateRadioState()
             systemPrintln("RX: SYNC_CLOCKS Timeout");
             outputSerialData(true);
           }
+
+          //Stop the channel timer
+          stopChannelTimer();
 
           //Start the TX timer: time to delay before transmitting the FIND_PARTNER
           triggerEvent(TRIGGER_HANDSHAKE_SYNC_CLOCKS_TIMEOUT);
@@ -473,8 +485,7 @@ void updateRadioState()
           case DATAGRAM_ZERO_ACKS:
             //Received ACK 2
             //Compute the receive time
-            COMPUTE_RX_TIME(rxData);
-            timestampOffset >>= 1;
+            COMPUTE_RX_TIME(rxData, 1);
 
             setHeartbeatLong(); //We sent SYNC_CLOCKS and they sent ZERO_ACKS, so don't be the first to send heartbeat
 
@@ -494,6 +505,9 @@ void updateRadioState()
             systemPrintln("RX: ZERO_ACKS Timeout");
             outputSerialData(true);
           }
+
+          //Stop the channel timer
+          stopChannelTimer();
 
           //Start the TX timer: time to delay before transmitting the FIND_PARTNER
           triggerEvent(TRIGGER_HANDSHAKE_ZERO_ACKS_TIMEOUT);
@@ -603,6 +617,13 @@ void updateRadioState()
       {
         transactionComplete = false; //Reset ISR flag
 
+        //Determine if an ACK was transmitted
+        if (txControl.datagramType = DATAGRAM_DATA_ACK)
+        {
+          COMPUTE_TX_TIME();
+          txFirstAck = true;
+        }
+
         //Determine the next packet size for SF6
         if (ackTimer)
         {
@@ -672,9 +693,7 @@ void updateRadioState()
           case DATAGRAM_HEARTBEAT:
             //Received heartbeat while link was idle. Send ack to sync clocks.
             //Adjust the timestamp offset
-            currentMillis = millis();
-            COMPUTE_TIMESTAMP_OFFSET(rxData);
-            timestampOffset >>= 1;
+            COMPUTE_TIMESTAMP_OFFSET(rxData, 1);
 
             //Transmit ACK
             P2P_SEND_ACK(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
@@ -689,19 +708,16 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DUPLICATE:
-            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-
-            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DUP);
-            if (xmitDatagramP2PAck() == true) //Transmit ACK
-              changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
-            setHeartbeatShort(); //We ack'd the packet (again) so be responsible for sending the next heartbeat
+            P2P_SEND_ACK(TRIGGER_LINK_SEND_ACK_FOR_DUP);
             break;
 
           case DATAGRAM_DATA_ACK:
             //Adjust the timestamp offset
-            currentMillis = millis();
-            COMPUTE_TIMESTAMP_OFFSET(rxData);
-            timestampOffset >>= 1;
+            COMPUTE_RX_TIME(rxData, 1);
+
+            //Stop updating the rxTimeUsec and txTimeUsec after TX and RX of ACKs
+            if (txFirstAck)
+              rxFirstAck = true;
 
             //The datagram we are expecting
             syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
@@ -1045,7 +1061,7 @@ void updateRadioState()
 
             //Compute the common clock
             currentMillis = millis();
-            COMPUTE_TIMESTAMP_OFFSET(rxData + 1);
+            COMPUTE_TIMESTAMP_OFFSET(rxData + 1, 0);
 
             //Server has responded with ACK
             syncChannelTimer(); //Start and adjust freq hop ISR based on remote's remaining clock

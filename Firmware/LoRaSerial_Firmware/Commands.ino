@@ -409,6 +409,36 @@ bool commandAT(const char * commandString)
         outputSerialData(true);
         petWDT();
 
+        //Clock synchronization
+        systemPrintln("    Clock Synchronization");
+        systemPrint("        TX Time: ");
+        systemPrint(txTimeUsec / 1000., 4);
+        systemPrintln(" mSec");
+        systemPrint("        RX Time: ");
+        systemPrint(rxTimeUsec / 1000., 4);
+        systemPrintln(" mSec");
+        systemPrint("        Total Time: ");
+        systemPrint((txTimeUsec + rxTimeUsec) / 1000., 5);
+        systemPrintln(" mSec");
+        systemPrint("        Uptime: ");
+        deltaMillis = millis();
+        systemPrintTimestamp(deltaMillis);
+        systemPrintln();
+        systemPrint("        TimeStampOffset: ");
+        if (timestampOffset < 0)
+        {
+          systemPrint("-");
+          systemPrintTimestamp(-timestampOffset);
+        }
+        else
+          systemPrintTimestamp(timestampOffset);
+        systemPrintln();
+        systemPrint("        Adjusted Time: ");
+        systemPrintTimestamp(deltaMillis + timestampOffset);
+        systemPrintln();
+        outputSerialData(true);
+        petWDT();
+
         //Circular buffer metrics
         systemPrintln("    Circular Buffers");
         systemPrint("        serialReceiveBuffer: rxHead: ");
@@ -748,8 +778,8 @@ void checkCommand()
     //Locate the correct processing routine for the command prefix
     for (index = 0; index < prefixCount; index++)
     {
-      //Skip command types not supported in virtual circuit mode
-      if ((!prefixTable[index].supportedInVcMode) && (settings.operatingMode == MODE_VIRTUAL_CIRCUIT))
+      //Skip command types not supported in current mode
+      if ((!prefixTable[index].supportedInVcMode) && (settings.operatingMode != MODE_POINT_TO_POINT))
         continue;
 
       //Locate the prefix

@@ -582,11 +582,15 @@ char platformPrefix[25]; //Used for printing platform specific device name, ie "
 //RX and TX time measurements
 uint32_t rxTimeUsec;
 uint32_t txTimeUsec;
+uint16_t txRxTimeMsec;
 
 uint32_t transactionCompleteMicros; //Timestamp at the beginning of the transactionCompleteIsr routine
 uint32_t txDatagramMicros; //Timestamp at the beginning of the transmitDatagram routine
 uint16_t maxFrameAirTime; //Air time of the maximum sized message
 unsigned long remoteSystemMillis; //Millis value contained in the received message
+
+bool rxFirstAck; //Set true when first ACK is received
+bool txFirstAck; //Set true when first ACK is transmitted
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
