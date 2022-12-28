@@ -2419,6 +2419,9 @@ bool transmitDatagram()
   //Add the clock sync information
   if (settings.frequencyHop == true)
   {
+    //Hake sure that the transmitted msToNextHop is in the range 0 - maxDwellTime
+    if (timeToHop)
+      hopChannel();
     uint16_t msToNextHop = settings.maxDwellTime - (millis() - timerStart);
     memcpy(header, &msToNextHop, sizeof(msToNextHop));
     header += sizeof(msToNextHop); //aka CHANNEL_TIMER_BYTES
