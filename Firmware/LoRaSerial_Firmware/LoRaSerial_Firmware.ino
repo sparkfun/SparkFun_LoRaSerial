@@ -564,6 +564,10 @@ char platformPrefix[25]; //Used for printing platform specific device name, ie "
 //Clock synchronization
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+uint32_t txTimeUsec;
+
+uint32_t transactionCompleteMicros; //Timestamp at the beginning of the transactionCompleteIsr routine
+uint32_t txDatagramMicros; //Timestamp at the beginning of the transmitDatagram routine
 uint16_t maxFrameAirTime; //Air time of the maximum sized message
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

@@ -678,6 +678,7 @@ void printSX1276Registers()
 //Called when transmission is complete or when RX is received
 void transactionCompleteISR(void)
 {
+  transactionCompleteMicros = micros();
   radioCallHistory[RADIO_CALL_transactionCompleteISR] = millis();
 
   transactionComplete = true;
@@ -2247,10 +2248,12 @@ bool transmitDatagram()
   VIRTUAL_CIRCUIT * vc;
   VC_RADIO_MESSAGE_HEADER * vcHeader;
 
-  radioCallHistory[RADIO_CALL_transmitDatagram] = millis();
-
   if (timeToHop == true) //If the channelTimer has expired, move to next frequency
     hopChannel();
+
+  //Remove some jitter by getting this time after the hopChannel
+  txDatagramMicros = micros();
+  radioCallHistory[RADIO_CALL_transmitDatagram] = millis();
 
   //Parse the virtual circuit header
   vc = &virtualCircuitList[0];

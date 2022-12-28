@@ -48,6 +48,21 @@
     ackTimer = 0;             \
   }
 
+#define COMPUTE_TX_TIME()                                                       \
+  {                                                                             \
+    currentMillis = millis();                                                   \
+    if (!txTimeUsec)                                                            \
+    {                                                                           \
+      txTimeUsec = transactionCompleteMicros - txDatagramMicros;                \
+                                                                                \
+      /*Display the results*/                                                   \
+      systemPrintTimestamp(currentMillis + timestampOffset);                    \
+      systemPrint(" TX Time: ");                                                \
+      systemPrint(txTimeUsec);                                                  \
+      systemPrintln(" uSec");                                                   \
+    }                                                                           \
+  }
+
 //Process the radio states
 void updateRadioState()
 {
@@ -290,6 +305,7 @@ void updateRadioState()
       //Determine if a FIND_PARTNER has completed transmission
       if (transactionComplete)
       {
+        COMPUTE_TX_TIME();
         triggerEvent(TRIGGER_HANDSHAKE_SEND_FIND_PARTNER_COMPLETE);
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
@@ -400,6 +416,7 @@ void updateRadioState()
       //Determine if a SYNC_CLOCKS has completed transmission
       if (transactionComplete)
       {
+        COMPUTE_TX_TIME();
         triggerEvent(TRIGGER_HANDSHAKE_SEND_SYNC_CLOCKS_COMPLETE);
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
@@ -490,6 +507,7 @@ void updateRadioState()
       if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
+        COMPUTE_TX_TIME();
 
         startChannelTimer(); //We are exiting the link first so do not adjust our starting Timer
 
