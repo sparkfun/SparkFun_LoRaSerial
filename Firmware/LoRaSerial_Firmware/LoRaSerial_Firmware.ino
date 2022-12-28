@@ -448,8 +448,7 @@ unsigned long linkDownTimer;
 //Clock synchronization
 unsigned long rcvTimeMillis;
 unsigned long xmitTimeMillis;
-unsigned long timestampOffset;
-unsigned long roundTripMillis;
+long timestampOffset;
 unsigned long vcTxHeartbeatMillis;
 unsigned long nextChannelZeroTimeInMillis;
 
@@ -571,6 +570,7 @@ uint32_t txTimeUsec;
 uint32_t transactionCompleteMicros; //Timestamp at the beginning of the transactionCompleteIsr routine
 uint32_t txDatagramMicros; //Timestamp at the beginning of the transmitDatagram routine
 uint16_t maxFrameAirTime; //Air time of the maximum sized message
+unsigned long remoteSystemMillis; //Millis value contained in the received message
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

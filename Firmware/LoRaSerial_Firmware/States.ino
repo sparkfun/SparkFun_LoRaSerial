@@ -48,6 +48,13 @@
     ackTimer = 0;             \
   }
 
+#define COMPUTE_TIMESTAMP_OFFSET(millisBuffer)                                              \
+  {                                                                             \
+    unsigned long deltaUsec = txTimeUsec + rxTimeUsec;                          \
+    memcpy(&remoteSystemMillis, millisBuffer, sizeof(currentMillis));           \
+    timestampOffset = (remoteSystemMillis + (deltaUsec / 1000) - currentMillis);\
+  }
+
 #define COMPUTE_RX_TIME(millisBuffer)                                           \
   {                                                                             \
     currentMillis = millis();                                                   \
@@ -61,6 +68,9 @@
       systemPrint(rxTimeUsec);                                                  \
       systemPrintln(" uSec");                                                   \
     }                                                                           \
+                                                                                \
+    /*Adjust the timestamp offset*/                                             \
+    COMPUTE_TIMESTAMP_OFFSET(millisBuffer);                                                 \
   }
 
 #define COMPUTE_TX_TIME()                                                       \
@@ -285,15 +295,8 @@ void updateRadioState()
             //Received FIND_PARTNER
             //Compute the receive time
             COMPUTE_RX_TIME(rxData);
+            timestampOffset >>= 1;
 
-            //Compute the common clock
-            currentMillis = millis();
-            memcpy(&clockOffset, rxData, sizeof(currentMillis));
-            roundTripMillis = rcvTimeMillis - xmitTimeMillis;
-            clockOffset += currentMillis + roundTripMillis;
-            clockOffset >>= 1;
-            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
-            timestampOffset = clockOffset;
 
             //Acknowledge the FIND_PARTNER with SYNC_CLOCKS
             triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
@@ -361,14 +364,9 @@ void updateRadioState()
 
           case DATAGRAM_FIND_PARTNER:
             //Received FIND_PARTNER
-            //Compute the common clock
-            currentMillis = millis();
-            memcpy(&clockOffset, rxData, sizeof(currentMillis));
-            roundTripMillis = rcvTimeMillis - xmitTimeMillis;
-            clockOffset += currentMillis + roundTripMillis;
-            clockOffset >>= 1;
-            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
-            timestampOffset = clockOffset;
+            //Compute the receive time
+            COMPUTE_RX_TIME(rxData + 1);
+            timestampOffset >>= 1;
 
             //Acknowledge the FIND_PARTNER
             triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
@@ -383,15 +381,8 @@ void updateRadioState()
             //Received SYNC_CLOCKS
             //Compute the receive time
             COMPUTE_RX_TIME(rxData + 1);
+            timestampOffset >>= 1;
 
-            //Compute the common clock
-            currentMillis = millis();
-            memcpy(&clockOffset, rxData + 1, sizeof(currentMillis));
-            roundTripMillis = rcvTimeMillis - xmitTimeMillis;
-            clockOffset += currentMillis + roundTripMillis;
-            clockOffset >>= 1;
-            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
-            timestampOffset = clockOffset;
 
             //Acknowledge the SYNC_CLOCKS
             triggerEvent(TRIGGER_SEND_ZERO_ACKS);
@@ -477,17 +468,7 @@ void updateRadioState()
             //Received ACK 2
             //Compute the receive time
             COMPUTE_RX_TIME(rxData);
-
-            //Compute the common clock
-            currentMillis = millis();
-            memcpy(&clockOffset, rxData, sizeof(currentMillis));
-            roundTripMillis = rcvTimeMillis - xmitTimeMillis;
-            clockOffset += currentMillis + roundTripMillis;
-            clockOffset >>= 1;
-            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
-            timestampOffset = clockOffset;
-
-            startChannelTimer(getLinkupOffset()); //We are exiting the link last so adjust our starting Timer
+            timestampOffset >>= 1;
 
             setHeartbeatLong(); //We sent SYNC_CLOCKS and they sent ZERO_ACKS, so don't be the first to send heartbeat
 
@@ -686,11 +667,8 @@ void updateRadioState()
             //Received heartbeat while link was idle. Send ack to sync clocks.
             //Adjust the timestamp offset
             currentMillis = millis();
-            memcpy(&clockOffset, rxData, sizeof(currentMillis));
-            clockOffset += currentMillis + roundTripMillis;
-            clockOffset >>= 1;
-            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
-            timestampOffset = clockOffset;
+            COMPUTE_TIMESTAMP_OFFSET(rxData);
+            timestampOffset >>= 1;
 
             //Transmit ACK
             P2P_SEND_ACK(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
@@ -1040,20 +1018,15 @@ void updateRadioState()
           case DATAGRAM_SYNC_CLOCKS:
             triggerEvent(TRIGGER_LINK_ACK_RECEIVED);
 
+            //Compute the common clock
+            currentMillis = millis();
+            COMPUTE_TIMESTAMP_OFFSET(rxData + 1);
+
             //Server has responded with ACK
             syncChannelTimer(); //Start and adjust freq hop ISR based on remote's remaining clock
 
             //Change to the server's channel number
             channelNumber = rxVcData[0];
-
-            //Compute the common clock
-            currentMillis = millis();
-            memcpy(&clockOffset, rxData + 1, sizeof(currentMillis));
-            roundTripMillis = rcvTimeMillis - xmitTimeMillis;
-            clockOffset += currentMillis + roundTripMillis;
-            clockOffset >>= 1;
-            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
-            timestampOffset = clockOffset;
 
             if (settings.debugSync)
             {
