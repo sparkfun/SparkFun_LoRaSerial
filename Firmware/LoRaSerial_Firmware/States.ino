@@ -63,10 +63,13 @@
       rxTimeUsec = micros() - transactionCompleteMicros;                        \
                                                                                 \
       /*Display the results*/                                                   \
-      systemPrintTimestamp(radioCallHistory[RADIO_CALL_transactionCompleteISR] + timestampOffset);  \
-      systemPrint(" RX Time: ");                                                \
-      systemPrint(rxTimeUsec);                                                  \
-      systemPrintln(" uSec");                                                   \
+      if (settings.debugSync)                                                   \
+      {                                                                         \
+        systemPrintTimestamp(radioCallHistory[RADIO_CALL_transactionCompleteISR] + timestampOffset);  \
+        systemPrint(" RX Time: ");                                              \
+        systemPrint(rxTimeUsec);                                                \
+        systemPrintln(" uSec");                                                 \
+      }                                                                         \
     }                                                                           \
                                                                                 \
     /*Adjust the timestamp offset*/                                             \
@@ -81,10 +84,13 @@
       txTimeUsec = transactionCompleteMicros - txDatagramMicros;                \
                                                                                 \
       /*Display the results*/                                                   \
-      systemPrintTimestamp(currentMillis + timestampOffset);                    \
-      systemPrint(" TX Time: ");                                                \
-      systemPrint(txTimeUsec);                                                  \
-      systemPrintln(" uSec");                                                   \
+      if (settings.debugSync)                                                   \
+      {                                                                         \
+        systemPrintTimestamp(currentMillis + timestampOffset);                  \
+        systemPrint(" TX Time: ");                                              \
+        systemPrint(txTimeUsec);                                                \
+        systemPrintln(" uSec");                                                 \
+      }                                                                         \
     }                                                                           \
   }
 
@@ -967,6 +973,12 @@ void updateRadioState()
     case RADIO_DISCOVER_BEGIN:
       stopChannelTimer(); //Stop hopping
 
+      if (settings.debugSync)
+      {
+        systemPrintln("Start scanning");
+        outputSerialData(true);
+      }
+
       multipointChannelLoops = 0;
       multipointAttempts = 0;
 
@@ -1249,6 +1261,11 @@ void updateRadioState()
         {
           if ((millis() - lastPacketReceived) > (settings.heartbeatTimeout * 3))
           {
+            if (settings.debugSync)
+            {
+              systemPrintln("HEARTBEAT Timeout");
+              outputSerialData(true);
+            }
             changeState(RADIO_DISCOVER_BEGIN);
           }
         }

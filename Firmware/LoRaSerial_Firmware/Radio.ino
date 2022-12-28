@@ -2974,6 +2974,17 @@ void syncChannelTimer()
   while (msToNextHop < 0)
     msToNextHop += settings.maxDwellTime;
 
+  partialTimer = true;
+  channelTimer.disableTimer();
+  channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
+
+  if (resetHop) //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
+    timeToHop = false;
+
+  channelTimer.enableTimer();
+  triggerEvent(TRIGGER_SYNC_CHANNEL); //Trigger after adjustments to timer to avoid skew during debug
+
+  //Display the channel sync timer calculations
   if (settings.debugSync)
   {
     systemPrint("msToNextHopRemote: ");
@@ -2984,19 +2995,6 @@ void syncChannelTimer()
     systemPrint(msToNextHop);
     systemPrintln();
   }
-
-  partialTimer = true;
-  channelTimer.disableTimer();
-  channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
-
-  if (resetHop) //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
-    timeToHop = false;
-
-  channelTimer.enableTimer();
-
-  triggerEvent(TRIGGER_SYNC_CHANNEL); //Trigger after adjustments to timer to avoid skew during debug
-  if (settings.debugSync)
-    outputSerialData(true);
 }
 
 //This function resets the heartbeat time and re-rolls the random time
