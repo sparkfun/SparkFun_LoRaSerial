@@ -564,6 +564,8 @@ char platformPrefix[25]; //Used for printing platform specific device name, ie "
 //Clock synchronization
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+//RX and TX time measurements
+uint32_t rxTimeUsec;
 uint32_t txTimeUsec;
 
 uint32_t transactionCompleteMicros; //Timestamp at the beginning of the transactionCompleteIsr routine

@@ -48,6 +48,21 @@
     ackTimer = 0;             \
   }
 
+#define COMPUTE_RX_TIME(millisBuffer)                                           \
+  {                                                                             \
+    currentMillis = millis();                                                   \
+    if (!rxTimeUsec)                                                            \
+    {                                                                           \
+      rxTimeUsec = micros() - transactionCompleteMicros;                        \
+                                                                                \
+      /*Display the results*/                                                   \
+      systemPrintTimestamp(radioCallHistory[RADIO_CALL_transactionCompleteISR] + timestampOffset);  \
+      systemPrint(" RX Time: ");                                                \
+      systemPrint(rxTimeUsec);                                                  \
+      systemPrintln(" uSec");                                                   \
+    }                                                                           \
+  }
+
 #define COMPUTE_TX_TIME()                                                       \
   {                                                                             \
     currentMillis = millis();                                                   \
@@ -268,6 +283,9 @@ void updateRadioState()
 
           case DATAGRAM_FIND_PARTNER:
             //Received FIND_PARTNER
+            //Compute the receive time
+            COMPUTE_RX_TIME(rxData);
+
             //Compute the common clock
             currentMillis = millis();
             memcpy(&clockOffset, rxData, sizeof(currentMillis));
@@ -363,6 +381,9 @@ void updateRadioState()
 
           case DATAGRAM_SYNC_CLOCKS:
             //Received SYNC_CLOCKS
+            //Compute the receive time
+            COMPUTE_RX_TIME(rxData + 1);
+
             //Compute the common clock
             currentMillis = millis();
             memcpy(&clockOffset, rxData + 1, sizeof(currentMillis));
@@ -454,6 +475,9 @@ void updateRadioState()
 
           case DATAGRAM_ZERO_ACKS:
             //Received ACK 2
+            //Compute the receive time
+            COMPUTE_RX_TIME(rxData);
+
             //Compute the common clock
             currentMillis = millis();
             memcpy(&clockOffset, rxData, sizeof(currentMillis));
