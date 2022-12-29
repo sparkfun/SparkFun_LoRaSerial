@@ -2926,6 +2926,8 @@ void stopChannelTimer()
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
 void syncChannelTimer()
 {
+  int16_t msToNextHopRmt;
+
   radioCallHistory[RADIO_CALL_syncChannelTimer] = millis();
 
   if (settings.frequencyHop == false) return;
@@ -2934,10 +2936,10 @@ void syncChannelTimer()
 
   //If the sync arrived in an ACK, we know how long that packet took to transmit
   //Calculate the packet airTime based on the size of data received
-  msToNextHopRemote -= calcAirTimeMsec(packetLength);
+  msToNextHopRmt = msToNextHopRemote - calcAirTimeMsec(packetLength);
 
   //  if (settings.debugReceive == true)
-  //    msToNextHopRemote -= 91; //Must adjust for the blob of text being printed
+  //    msToNextHopRmt -= 91; //Must adjust for the blob of text being printed
 
   //Different airspeeds complete the transmitComplete ISR at different rates
   //We adjust the clock setup as needed
@@ -2946,33 +2948,33 @@ void syncChannelTimer()
     default:
       break;
     case (40):
-      msToNextHopRemote -= getReceiveCompletionOffset();
+      msToNextHopRmt -= getReceiveCompletionOffset();
       break;
     case (150):
-      msToNextHopRemote -= 145;
+      msToNextHopRmt -= 145;
       break;
     case (400):
-      msToNextHopRemote -= getReceiveCompletionOffset();
+      msToNextHopRmt -= getReceiveCompletionOffset();
       break;
     case (1200):
-      msToNextHopRemote -= getReceiveCompletionOffset();
+      msToNextHopRmt -= getReceiveCompletionOffset();
       break;
     case (2400):
-      msToNextHopRemote -= getReceiveCompletionOffset();
+      msToNextHopRmt -= getReceiveCompletionOffset();
       break;
     case (4800):
-      msToNextHopRemote -= 5;
+      msToNextHopRmt -= 5;
       break;
     case (9600):
       break;
     case (19200):
-      msToNextHopRemote -= 4;
+      msToNextHopRmt -= 4;
       break;
     case (28800):
-      msToNextHopRemote -= 2;
+      msToNextHopRmt -= 2;
       break;
     case (38400):
-      msToNextHopRemote -= 3;
+      msToNextHopRmt -= 3;
       break;
   }
 
@@ -2982,66 +2984,66 @@ void syncChannelTimer()
   uint16_t smallAmount = settings.maxDwellTime / 8;
   uint16_t largeAmount = settings.maxDwellTime - smallAmount;
 
-  int16_t msToNextHop = msToNextHopRemote; //By default, we will adjust our clock to match our mate's
+  int16_t msToNextHop = msToNextHopRmt; //By default, we will adjust our clock to match our mate's
 
   bool resetHop = false; //The hop ISR may occur while we are forcing a hop (case A and C). Reset timeToHop as needed.
 
   //Below are the edge cases that occur when a hop occurs near ACK reception
 
-  //msToNextHopLocal is small and msToNextHopRemote is negative (and small)
-  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRemote comes in negative (and small) then the remote has hopped
-  //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRemote + dwellTime)
-  if (msToNextHopLocal < smallAmount && (msToNextHopRemote <= 0 && msToNextHopRemote >= (smallAmount * -1)))
+  //msToNextHopLocal is small and msToNextHopRmt is negative (and small)
+  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRmt comes in negative (and small) then the remote has hopped
+  //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRmt + dwellTime)
+  if (msToNextHopLocal < smallAmount && (msToNextHopRmt <= 0 && msToNextHopRmt >= (smallAmount * -1)))
   {
     hopChannel();
-    msToNextHop = msToNextHopRemote + settings.maxDwellTime;
+    msToNextHop = msToNextHopRmt + settings.maxDwellTime;
     resetHop = true; //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
   }
 
-  //msToNextHopLocal is large and msToNextHopRemote is negative
-  //If we just hopped (msToNextHopLocal is large), and msToNextHopRemote comes in negative then the remote has hopped
-  //No need to hop. Adjust our clock to the remote's next hop (msToNextHopRemote + dwellTime)
-  else if (msToNextHopLocal > largeAmount && msToNextHopRemote <= 0)
+  //msToNextHopLocal is large and msToNextHopRmt is negative
+  //If we just hopped (msToNextHopLocal is large), and msToNextHopRmt comes in negative then the remote has hopped
+  //No need to hop. Adjust our clock to the remote's next hop (msToNextHopRmt + dwellTime)
+  else if (msToNextHopLocal > largeAmount && msToNextHopRmt <= 0)
   {
-    msToNextHop = msToNextHopRemote + settings.maxDwellTime;
+    msToNextHop = msToNextHopRmt + settings.maxDwellTime;
   }
 
-  //msToNextHopLocal is small and msToNextHopRemote is large
-  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRemote comes in large then the remote has hopped recently
-  //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRemote)
-  else if (msToNextHopLocal < smallAmount && msToNextHopRemote > largeAmount)
+  //msToNextHopLocal is small and msToNextHopRmt is large
+  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRmt comes in large then the remote has hopped recently
+  //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRmt)
+  else if (msToNextHopLocal < smallAmount && msToNextHopRmt > largeAmount)
   {
     hopChannel();
-    msToNextHop = msToNextHopRemote;
+    msToNextHop = msToNextHopRmt;
     resetHop = true; //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
   }
 
-  //msToNextHopLocal is large and msToNextHopRemote is large
-  //If we just hopped (msToNextHopLocal is large), and a msToNextHopRemote comes in large then the remote has hopped
-  //Then adjust our clock to the remote's next hop (msToNextHopRemote)
-  else if (msToNextHopLocal > largeAmount && msToNextHopRemote > largeAmount)
+  //msToNextHopLocal is large and msToNextHopRmt is large
+  //If we just hopped (msToNextHopLocal is large), and a msToNextHopRmt comes in large then the remote has hopped
+  //Then adjust our clock to the remote's next hop (msToNextHopRmt)
+  else if (msToNextHopLocal > largeAmount && msToNextHopRmt > largeAmount)
   {
-    msToNextHop = msToNextHopRemote;
+    msToNextHop = msToNextHopRmt;
   }
 
-  //msToNextHopLocal is large and msToNextHopRemote is small
-  //If we just hopped (msToNextHopLocal is large), and a msToNextHopRemote comes in small then the remote is about to hop
-  //Then adjust our clock to the remote's next hop (msToNextHopRemote + dwellTime)
-  else if (msToNextHopLocal > largeAmount && msToNextHopRemote < smallAmount)
+  //msToNextHopLocal is large and msToNextHopRmt is small
+  //If we just hopped (msToNextHopLocal is large), and a msToNextHopRmt comes in small then the remote is about to hop
+  //Then adjust our clock to the remote's next hop (msToNextHopRmt + dwellTime)
+  else if (msToNextHopLocal > largeAmount && msToNextHopRmt < smallAmount)
   {
-    msToNextHop = msToNextHopRemote + settings.maxDwellTime;
+    msToNextHop = msToNextHopRmt + settings.maxDwellTime;
   }
 
-  //msToNextHopLocal is small and msToNextHopRemote is small
-  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRemote comes in small then the remote is about to hop
-  //Then adjust our clock to the remote's next hop (msToNextHopRemote)
-  else if (msToNextHopLocal < smallAmount && msToNextHopRemote < smallAmount)
+  //msToNextHopLocal is small and msToNextHopRmt is small
+  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRmt comes in small then the remote is about to hop
+  //Then adjust our clock to the remote's next hop (msToNextHopRmt)
+  else if (msToNextHopLocal < smallAmount && msToNextHopRmt < smallAmount)
   {
-    msToNextHop = msToNextHopRemote;
+    msToNextHop = msToNextHopRmt;
 
     //If we have a negative remote hop time that is larger than a dwell time then the remote has hopped again
     //This is seen at lower air speeds
-    //Hop now, and adjust our clock to the remote's next hop (msToNextHopRemote + dwellTime)
+    //Hop now, and adjust our clock to the remote's next hop (msToNextHopRmt + dwellTime)
     if (msToNextHop < (settings.maxDwellTime * -1)) //-402 < -400
     {
       hopChannel();
@@ -3067,8 +3069,8 @@ void syncChannelTimer()
   //Display the channel sync timer calculations
   if (settings.debugSync)
   {
-    systemPrint("msToNextHopRemote: ");
-    systemPrint(msToNextHopRemote);
+    systemPrint("msToNextHopRmt: ");
+    systemPrint(msToNextHopRmt);
     systemPrint(" msToNextHopLocal: ");
     systemPrint(msToNextHopLocal);
     systemPrint(" msToNextHop: ");
