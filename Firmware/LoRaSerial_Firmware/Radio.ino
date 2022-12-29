@@ -3240,7 +3240,7 @@ void displayRadioCallHistory()
     if (radioCallHistory[sortOrder[index]])
     {
       systemPrint("        ");
-      systemPrintTimestamp(radioCallHistory[sortOrder[index]]);
+      systemPrintTimestamp(radioCallHistory[sortOrder[index]] + timestampOffset);
       string = getRadioCall(sortOrder[index]);
       if (string)
       {

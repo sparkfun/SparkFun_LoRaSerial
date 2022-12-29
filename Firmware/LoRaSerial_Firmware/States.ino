@@ -2499,7 +2499,7 @@ void displayRadioStateHistory()
     if (radioStateHistory[sortOrder[index]])
     {
       systemPrint("        ");
-      systemPrintTimestamp(radioStateHistory[sortOrder[index]]);
+      systemPrintTimestamp(radioStateHistory[sortOrder[index]] + timestampOffset);
       systemPrint(": ");
       systemPrint(radioStateTable[sortOrder[index]].name);
       systemPrintln();
