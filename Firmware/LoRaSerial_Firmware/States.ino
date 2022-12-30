@@ -824,10 +824,18 @@ void updateRadioState()
 
                 //Attempt the retransmission
                 RESTORE_TX_BUFFER();
-                if (retransmitDatagram(NULL) == true)
+                if (rexmtControl.datagramType == DATAGRAM_HEARTBEAT)
+                {
+                  //Never retransmit the heartbeat, always send a new version to
+                  //send the updated time value
+                  if (xmitDatagramP2PHeartbeat() == true)
+                    changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+                }
+                else if (retransmitDatagram(NULL) == true)
                   changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
-                setHeartbeatLong(); //We're re-sending data, so don't be the first to send next heartbeat
 
+                //We're re-sending data, so don't be the first to send next heartbeat
+                setHeartbeatLong();
                 START_ACK_TIMER();
               }
             }
