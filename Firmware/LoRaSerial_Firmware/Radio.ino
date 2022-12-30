@@ -1079,9 +1079,12 @@ bool xmitDatagramP2PHeartbeat()
 //Create short packet - do not expect ack
 bool xmitDatagramP2PAck()
 {
+  uint8_t * startOfData;
+
   unsigned long currentMillis = millis();
   radioCallHistory[RADIO_CALL_xmitDatagramP2PAck] = currentMillis;
 
+  startOfData = endOfTxData;
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   endOfTxData += sizeof(currentMillis);
 
@@ -1095,6 +1098,14 @@ bool xmitDatagramP2PAck()
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 4 bytes | n Bytes  |
       +----------+---------+----------+------------+---------+----------+
   */
+
+  //Verify the data length
+  if ((endOfTxData - startOfData) != P2P_ACK_BYTES)
+  {
+    systemPrintln("ERROR - Fix the P2P_ACK_BYTES value!");
+    outputSerialData(true);
+    waitForever();
+  }
 
   txControl.datagramType = DATAGRAM_DATA_ACK;
   return (transmitDatagram());
