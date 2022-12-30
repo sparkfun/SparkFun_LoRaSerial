@@ -1389,9 +1389,12 @@ bool xmitVcDatagram()
 bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
 {
   uint32_t currentMillis = millis();
+  uint8_t * startOfData;
   uint8_t * txData;
 
   radioCallHistory[RADIO_CALL_xmitVcHeartbeat] = currentMillis;
+
+  startOfData = endOfTxData;
 
   //Build the VC header
   txData = endOfTxData;
@@ -1420,6 +1423,14 @@ bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | 16 Bytes | 4 Bytes | n Bytes  |
       +----------+---------+----------+------------+----------+---------+----------+---------+----------+
   */
+
+  //Verify the data length
+  if ((endOfTxData - startOfData) != VC_HEARTBEAT_BYTES)
+  {
+    systemPrintln("ERROR - Fix the VC_HEARTBEAT_BYTES value!");
+    outputSerialData(true);
+    waitForever();
+  }
 
   txControl.datagramType = DATAGRAM_VC_HEARTBEAT;
   txControl.ackNumber = 0;
