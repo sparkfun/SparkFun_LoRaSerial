@@ -946,6 +946,30 @@ bool valOverride (void * value, uint32_t valMin, uint32_t valMax)
   return ((settingValue >= valMin) && (settingValue <= valMax));
 }
 
+//Validate the server value
+bool valServer (void * value, uint32_t valMin, uint32_t valMax)
+{
+  uint32_t settingValue = *(uint32_t *)value;
+  bool valid;
+  int8_t vcIndex;
+
+  //Validate the value
+  valid = valInt(value, valMin, valMax);
+
+  //Check for a change from client to server
+  if (valid && (!settings.server) && settingValue)
+  {
+    //Clear the unique ID table in NVM
+    for (vcIndex = 1; vcIndex < MAX_VC; vcIndex++)
+      if (nvmIsVcUniqueIdSet(vcIndex))
+        nvmEraseUniqueId(vcIndex);
+
+    //Set our address as the server address
+    nvmSaveUniqueId(VC_SERVER, myUniqueId);
+  }
+  return valid;
+}
+
 //Validate the AirSpeed value
 bool valSpeedAir (void * value, uint32_t valMin, uint32_t valMax)
 {
@@ -1049,7 +1073,7 @@ const COMMAND_ENTRY commands[] =
   {'R',   0,   1,    0, 255,    0, TYPE_U8,           valInt,         "NetID",                &tempSettings.netID},
   {'R',   0,   1,    0,   2,    0, TYPE_U8,           valInt,         "OperatingMode",        &tempSettings.operatingMode},
   {'R',   0,   1,    0, 1000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &tempSettings.overheadTime},
-  {'R',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "Server",               &tempSettings.server},
+  {'R',   0,   0,    0,   1,    0, TYPE_BOOL,         valServer,      "Server",               &tempSettings.server},
   {'R',   0,   1,    0,   1,    0, TYPE_BOOL,         valInt,         "VerifyRxNetID",        &tempSettings.verifyRxNetID},
 
   /*Serial parameters
