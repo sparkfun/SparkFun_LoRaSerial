@@ -1138,7 +1138,11 @@ bool xmitDatagramMpData()
 //Heartbeat packet to sync other units in multipoint mode
 bool xmitDatagramMpHeartbeat()
 {
+  uint8_t * startOfData;
+
   radioCallHistory[RADIO_CALL_xmitDatagramMpHeartbeat] = millis();
+
+  startOfData = endOfTxData;
 
   /*
                                     endOfTxData ---.
@@ -1150,6 +1154,14 @@ bool xmitDatagramMpHeartbeat()
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | n Bytes  |
       +----------+---------+----------+------------+----------+
   */
+
+  //Verify the data length
+  if ((endOfTxData - startOfData) != MP_HEARTBEAT_BYTES)
+  {
+    systemPrintln("ERROR - Fix the MP_HEARTBEAT_BYTES value!");
+    outputSerialData(true);
+    waitForever();
+  }
 
   txControl.datagramType = DATAGRAM_HEARTBEAT;
   return (transmitDatagram());
