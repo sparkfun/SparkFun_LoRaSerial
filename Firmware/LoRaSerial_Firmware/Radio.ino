@@ -2918,6 +2918,8 @@ void stopChannelTimer()
 
   channelTimer.disableTimer();
   triggerEvent(TRIGGER_HOP_TIMER_STOP);
+  timeToHop = false;
+  partialTimer = false;
 }
 
 //Given the remote unit's number of ms before its next hop,
