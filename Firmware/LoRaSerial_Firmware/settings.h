@@ -433,6 +433,7 @@ typedef struct struct_settings {
   bool printAckNumbers = false; //Print the ACK numbers
   bool debugHeartbeat = false; //Print the HEARTBEAT timing values
   uint8_t framesToYield = 3; //If remote requests it, supress transmission for this number of max packet frames
+  bool printChannel = false; //Print the channel number
 
   //Add new parameters immediately before this line
   //-- Add commands to set the parameters

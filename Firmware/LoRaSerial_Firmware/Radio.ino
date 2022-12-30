@@ -174,9 +174,13 @@ void convertAirSpeedToSettings()
 //Set radio frequency
 bool setRadioFrequency(bool rxAdjust)
 {
+  float previousFrequency;
+  static uint8_t previousChannelNumber;
+
   radioCallHistory[RADIO_CALL_setRadioFrequency] = millis();
 
   //Determine the frequency to use
+  previousFrequency = radioFrequency;
   radioFrequency = channels[channelNumber];
   if (rxAdjust && settings.autoTuneFrequency)
     radioFrequency -= frequencyCorrection;
@@ -187,12 +191,21 @@ bool setRadioFrequency(bool rxAdjust)
 
   if (settings.debugSync)
     triggerFrequency(radioFrequency);
+  else
+    triggerEvent(TRIGGER_FREQ_CHANGE);
 
   //Determine the time in milliseconds when channel zero is reached again
   nextChannelZeroTimeInMillis = millis() + ((settings.numberOfChannels - channelNumber) * settings.maxDwellTime);
 
   //Print the frequency if requested
-  if (settings.printFrequency)
+  if (settings.printChannel && (previousChannelNumber != channelNumber))
+  {
+    systemPrintTimestamp();
+    systemPrint("CH");
+    systemPrintln(channelNumber);
+    outputSerialData(true);
+  }
+  if (settings.printFrequency && (previousFrequency != radioFrequency))
   {
     systemPrintTimestamp();
     systemPrint(channelNumber);
@@ -203,6 +216,7 @@ bool setRadioFrequency(bool rxAdjust)
     systemPrintln(" mSec");
     outputSerialData(true);
   }
+  previousChannelNumber = channelNumber;
   return true;
 }
 
@@ -538,7 +552,6 @@ void hopChannel(bool moveForwardThroughTable)
   radioCallHistory[RADIO_CALL_hopChannel] = millis();
 
   timeToHop = false;
-  triggerEvent(TRIGGER_FREQ_CHANGE);
 
   if (moveForwardThroughTable)
   {
