@@ -694,6 +694,7 @@ void printSX1276Registers()
 void transactionCompleteISR(void)
 {
   transactionCompleteMicros = micros();
+  triggerEvent(TRIGGER_TRANSACTION_COMPLETE);
   radioCallHistory[RADIO_CALL_transactionCompleteISR] = millis();
 
   transactionComplete = true;
