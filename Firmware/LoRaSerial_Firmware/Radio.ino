@@ -1044,9 +1044,12 @@ bool xmitDatagramP2PData()
 //Heartbeat packet to keep the link up
 bool xmitDatagramP2PHeartbeat()
 {
-  radioCallHistory[RADIO_CALL_xmitDatagramP2PHeartbeat] = millis();
+  uint8_t * startOfData;
 
   unsigned long currentMillis = millis();
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PHeartbeat] = currentMillis;
+
+  startOfData = endOfTxData;
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   endOfTxData += sizeof(currentMillis);
 
@@ -1060,6 +1063,14 @@ bool xmitDatagramP2PHeartbeat()
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 4 bytes | n Bytes  |
       +----------+---------+----------+------------+---------+----------+
   */
+
+  //Verify the data length
+  if ((endOfTxData - startOfData) != P2P_HEARTBEAT_BYTES)
+  {
+    systemPrintln("ERROR - Fix the P2P_HEARTBEAT_BYTES value!");
+    outputSerialData(true);
+    waitForever();
+  }
 
   txControl.datagramType = DATAGRAM_HEARTBEAT;
   return (transmitDatagram());
