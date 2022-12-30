@@ -1041,17 +1041,21 @@ bool xmitDatagramP2PHeartbeat()
 //Create short packet - do not expect ack
 bool xmitDatagramP2PAck()
 {
-  radioCallHistory[RADIO_CALL_xmitDatagramP2PAck] = millis();
+  unsigned long currentMillis = millis();
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PAck] = currentMillis;
+
+  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
+  endOfTxData += sizeof(currentMillis);
 
   /*
-                                    endOfTxData ---.
-                                                   |
-                                                   V
-      +----------+---------+----------+------------+----------+
-      | Optional |         | Optional | Optional   | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | n Bytes  |
-      +----------+---------+----------+------------+----------+
+                                              endOfTxData ---.
+                                                             |
+                                                             V
+      +----------+---------+----------+------------+---------+----------+
+      | Optional |         | Optional | Optional   |         | Optional |
+      | NET ID   | Control | C-Timer  | SF6 Length | Millis  | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 4 bytes | n Bytes  |
+      +----------+---------+----------+------------+---------+----------+
   */
 
   txControl.datagramType = DATAGRAM_DATA_ACK;

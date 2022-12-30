@@ -692,6 +692,11 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DATA_ACK:
+            //Adjust the timestamp offset
+            currentMillis = millis();
+            COMPUTE_TIMESTAMP_OFFSET(rxData);
+            timestampOffset >>= 1;
+
             //The datagram we are expecting
             syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
 
