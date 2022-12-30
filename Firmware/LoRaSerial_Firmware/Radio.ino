@@ -966,9 +966,9 @@ bool xmitDatagramP2PZeroAcks()
   */
 
   //Verify the data length
-  if ((endOfTxData - startOfData) != ZERO_ACKS_BYTES)
+  if ((endOfTxData - startOfData) != P2P_ZERO_ACKS_BYTES)
   {
-    systemPrintln("ERROR - Fix the ZERO_ACKS_BYTES value!");
+    systemPrintln("ERROR - Fix the P2P_ZERO_ACKS_BYTES value!");
     outputSerialData(true);
     waitForever();
   }

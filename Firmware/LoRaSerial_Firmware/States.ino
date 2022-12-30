@@ -308,7 +308,7 @@ void updateRadioState()
             triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
             if (xmitDatagramP2PSyncClocks() == true)
             {
-              sf6ExpectedSize = headerBytes + ZERO_ACKS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
+              sf6ExpectedSize = headerBytes + P2P_ZERO_ACKS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
               changeState(RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE);
             }
             break;
@@ -378,7 +378,7 @@ void updateRadioState()
             triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
             if (xmitDatagramP2PSyncClocks() == true)
             {
-              sf6ExpectedSize = headerBytes + ZERO_ACKS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
+              sf6ExpectedSize = headerBytes + P2P_ZERO_ACKS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
               changeState(RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE);
             }
             break;
