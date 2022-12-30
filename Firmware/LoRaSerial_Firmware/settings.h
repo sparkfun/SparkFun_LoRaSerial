@@ -5,10 +5,10 @@ typedef enum
   //Point-To-Point: Bring up the link
   RADIO_P2P_LINK_DOWN,
   RADIO_P2P_WAIT_TX_FIND_PARTNER_DONE,
-  RADIO_P2P_WAIT_ACK_1,
-  RADIO_P2P_WAIT_TX_ACK_1_DONE,
-  RADIO_P2P_WAIT_ACK_2,
-  RADIO_P2P_WAIT_TX_ACK_2_DONE,
+  RADIO_P2P_WAIT_SYNC_CLOCKS,
+  RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE,
+  RADIO_P2P_WAIT_ZERO_ACKS,
+  RADIO_P2P_WAIT_TX_ZERO_ACKS_DONE,
 
   //Point-to-Point: Link up, data exchange
   RADIO_P2P_LINK_UP,
@@ -20,7 +20,6 @@ typedef enum
   RADIO_DISCOVER_WAIT_TX_FIND_PARTNER_DONE,
 
   //Multi-Point: Datagrams
-  RADIO_MP_WAIT_TX_ACK_DONE,
   RADIO_MP_STANDBY,
   RADIO_MP_WAIT_TX_DONE,
 
@@ -61,10 +60,10 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   //    State                           RX      Name                              Description
   {RADIO_P2P_LINK_DOWN,                  1, "P2P_LINK_DOWN",                  "P2P: [No Link] Waiting for FIND_PARTNER"}, // 1
   {RADIO_P2P_WAIT_TX_FIND_PARTNER_DONE,  0, "P2P_WAIT_TX_FIND_PARTNER_DONE",  "P2P: [No Link] Wait FIND_PARTNER TX Done"},// 2
-  {RADIO_P2P_WAIT_ACK_1,                 1, "P2P_WAIT_ACK_1",                 "P2P: [No Link] Waiting for ACK1"}, // 3
-  {RADIO_P2P_WAIT_TX_ACK_1_DONE,         0, "P2P_WAIT_TX_ACK_1_DONE",         "P2P: [No Link] Wait ACK1 TX Done"},// 4
-  {RADIO_P2P_WAIT_ACK_2,                 1, "P2P_WAIT_ACK_2",                 "P2P: [No Link] Waiting for ACK2"}, // 5
-  {RADIO_P2P_WAIT_TX_ACK_2_DONE,         0, "P2P_WAIT_TX_ACK_2_DONE",         "P2P: [No Link] Wait ACK2 TX Done"},// 6
+  {RADIO_P2P_WAIT_SYNC_CLOCKS,           1, "P2P_WAIT_SYNC_CLOCKS",           "P2P: [No Link] Waiting for SYNC_CLOCKS"},  // 3
+  {RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE,   0, "P2P_WAIT_TX_SYNC_CLOCKS_DONE",   "P2P: [No Link] Wait SYNC_CLOCKS TX Done"}, // 4
+  {RADIO_P2P_WAIT_ZERO_ACKS,             1, "P2P_WAIT_ZERO_ACKS",             "P2P: [No Link] Waiting for ZERO_ACKS"},    // 5
+  {RADIO_P2P_WAIT_TX_ZERO_ACKS_DONE,     0, "P2P_WAIT_TX_ZERO_ACKS_DONE",     "P2P: [No Link] Wait ZERO_ACKS TX Done"},   // 6
 
   //Point-to-Point, link up, data exchange
   //    State                           RX      Name                              Description
@@ -79,26 +78,25 @@ const RADIO_STATE_ENTRY radioStateTable[] =
 
   //Multi-Point data exchange
   //    State                           RX      Name                              Description
-  {RADIO_MP_WAIT_TX_ACK_DONE,            0, "MP_WAIT_TX_ACK_DONE",            "MP: Wait for ACK to xmit"},        //12
-  {RADIO_MP_STANDBY,                     1, "MP_STANDBY",                     "MP: Wait for TX or RX"},           //13
-  {RADIO_MP_WAIT_TX_DONE,                0, "MP_WAIT_TX_DONE",                "MP: Waiting for TX done"},         //14
+  {RADIO_MP_STANDBY,                     1, "MP_STANDBY",                     "MP: Wait for TX or RX"},           //12
+  {RADIO_MP_WAIT_TX_DONE,                0, "MP_WAIT_TX_DONE",                "MP: Waiting for TX done"},         //13
 
   //Training client states
   //    State                           RX      Name                              Description
-  {RADIO_TRAIN_WAIT_TX_FIND_PARTNER_DONE,0, "TRAIN_WAIT_TX_FIND_PARTNER_DONE","Train: Wait TX training FIND_PARTNER done"}, //15
-  {RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS, 1, "TRAIN_WAIT_RX_RADIO_PARAMETERS", "Train: Wait for radio parameters"},          //16
-  {RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE,   0, "TRAIN_WAIT_TX_PARAM_ACK_DONE",   "Train: Wait for TX param ACK done"},         //17
+  {RADIO_TRAIN_WAIT_TX_FIND_PARTNER_DONE,0, "TRAIN_WAIT_TX_FIND_PARTNER_DONE","Train: Wait TX training FIND_PARTNER done"}, //14
+  {RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS, 1, "TRAIN_WAIT_RX_RADIO_PARAMETERS", "Train: Wait for radio parameters"},          //15
+  {RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE,   0, "TRAIN_WAIT_TX_PARAM_ACK_DONE",   "Train: Wait for TX param ACK done"},         //16
 
   //Training server states
   //    State                           RX      Name                              Description
-  {RADIO_TRAIN_WAIT_FOR_FIND_PARTNER,    1, "TRAIN_WAIT_FOR_FIND_PARTNER",    "Train: Wait for training FIND_PARTNER"}, //18
-  {RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,0, "TRAIN_WAIT_TX_RADIO_PARAMS_DONE","Train: Wait for TX params done"},        //19
+  {RADIO_TRAIN_WAIT_FOR_FIND_PARTNER,    1, "TRAIN_WAIT_FOR_FIND_PARTNER",    "Train: Wait for training FIND_PARTNER"}, //17
+  {RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,0, "TRAIN_WAIT_TX_RADIO_PARAMS_DONE","Train: Wait for TX params done"},        //18
 
   //Virtual circuit states
   //    State                           RX      Name                              Description
-  {RADIO_VC_WAIT_SERVER,                 1, "VC_WAIT_SERVER",                 "VC: Wait for the server"},         //20
-  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "VC: Wait for TX done"},            //21
-  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "VC: Wait for receive"},            //22
+  {RADIO_VC_WAIT_SERVER,                 1, "VC_WAIT_SERVER",                 "VC: Wait for the server"},         //19
+  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "VC: Wait for TX done"},            //20
+  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "VC: Wait for receive"},            //21
 };
 
 //Possible types of packets received
@@ -108,8 +106,8 @@ typedef enum
   //P2P: Between the two LoRaSerial radios
   //VC:  Between the server radio and a client radio
   DATAGRAM_FIND_PARTNER = 0,        // 0
-  DATAGRAM_ACK_1,                   // 1
-  DATAGRAM_ACK_2,                   // 2
+  DATAGRAM_SYNC_CLOCKS,             // 1
+  DATAGRAM_ZERO_ACKS,               // 2
 
   //Point-to-Point data exchange
   DATAGRAM_DATA,                    // 3
@@ -262,16 +260,16 @@ enum
   TRIGGER_MP_PACKET_RECEIVED,
   TRIGGER_MP_SEND_ACK_FOR_FIND_PARTNER,
   TRIGGER_TRANSMIT_CANCELED,
-  TRIGGER_HANDSHAKE_ACK1_TIMEOUT,
+  TRIGGER_HANDSHAKE_SYNC_CLOCKS_TIMEOUT,
   TRIGGER_HANDSHAKE_SEND_FIND_PARTNER,
   TRIGGER_HANDSHAKE_SEND_FIND_PARTNER_COMPLETE,
-  TRIGGER_HANDSHAKE_SEND_ACK1_COMPLETE,
-  TRIGGER_SEND_ACK1,
-  TRIGGER_SEND_ACK2,
+  TRIGGER_HANDSHAKE_SEND_SYNC_CLOCKS_COMPLETE,
+  TRIGGER_SEND_SYNC_CLOCKS,
+  TRIGGER_SEND_ZERO_ACKS,
   TRIGGER_HANDSHAKE_COMPLETE,
   TRIGGER_LINK_ACK_SENT,
   TRIGGER_LINK_ACK_RECEIVED,
-  TRIGGER_HANDSHAKE_ACK2_TIMEOUT,
+  TRIGGER_HANDSHAKE_ZERO_ACKS_TIMEOUT,
   TRIGGER_RECEIVE_IN_PROCESS_START,
   TRIGGER_RECEIVE_IN_PROCESS_END,
   TRIGGER_LINK_HB_ACK_REXMIT,
@@ -498,8 +496,8 @@ typedef enum
   RADIO_CALL_returnToReceiving,
   RADIO_CALL_calcAirTime,
   RADIO_CALL_xmitDatagramP2PFindPartner,
-  RADIO_CALL_xmitDatagramP2PAck1,
-  RADIO_CALL_xmitDatagramP2PAck2,
+  RADIO_CALL_xmitDatagramP2PSyncClocks,
+  RADIO_CALL_xmitDatagramP2PZeroAcks,
   RADIO_CALL_xmitDatagramP2PCommand,
   RADIO_CALL_xmitDatagramP2PCommandResponse,
   RADIO_CALL_xmitDatagramP2PData,
@@ -507,8 +505,6 @@ typedef enum
   RADIO_CALL_xmitDatagramP2PAck,
   RADIO_CALL_xmitDatagramMpData,
   RADIO_CALL_xmitDatagramMpHeartbeat,
-  RADIO_CALL_xmitDatagramMpAck,
-  RADIO_CALL_xmitDatagramMpFindPartner,
   RADIO_CALL_xmitDatagramTrainingFindPartner,
   RADIO_CALL_xmitDatagramTrainingAck,
   RADIO_CALL_xmitDatagramTrainRadioParameters,
