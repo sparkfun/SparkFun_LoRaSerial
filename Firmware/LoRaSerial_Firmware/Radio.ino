@@ -535,6 +535,8 @@ void hopChannelReverse()
 //Set the next radio frequency given the hop direction and frequency table
 void hopChannel(bool moveForwardThroughTable)
 {
+  radioCallHistory[RADIO_CALL_hopChannel] = millis();
+
   timeToHop = false;
   triggerEvent(TRIGGER_FREQ_CHANGE);
 
@@ -3181,6 +3183,8 @@ const I16_TO_STRING radioCallName[] =
   {RADIO_CALL_setHeartbeatLong, "setHeartbeatLong"},
   {RADIO_CALL_setHeartbeatMultipoint, "setHeartbeatMultipoint"},
   {RADIO_CALL_setVcHeartbeatTimer, "setVcHeartbeatTimer"},
+  {RADIO_CALL_hopChannel, "hopChannel"},
+
   //Insert new values before this line
   {RADIO_CALL_hopISR, "hopISR"},
   {RADIO_CALL_transactionCompleteISR, "transactionCompleteISR"},

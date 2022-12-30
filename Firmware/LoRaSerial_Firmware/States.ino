@@ -1201,6 +1201,7 @@ void updateRadioState()
 
             lastPacketReceived = millis(); //Update timestamp for Link LED
 
+            ledMpHeartbeatOn();
             changeState(RADIO_MP_STANDBY);
             break;
 
@@ -1242,6 +1243,7 @@ void updateRadioState()
               setHeartbeatMultipoint(); //We're sending something with clock data so reset heartbeat timer
               changeState(RADIO_MP_WAIT_TX_DONE); //Wait for heartbeat to transmit
             }
+            ledMpHeartbeatOn();
           }
         }
 
@@ -2220,6 +2222,12 @@ bool isLinked()
     return (true);
 
   return (false);
+}
+
+//Determine if multi-point sync is achieved
+bool isMultiPointSync()
+{
+  return ((radioState >= RADIO_MP_STANDBY) && (radioState <= RADIO_MP_WAIT_TX_DONE));
 }
 
 //Verify the radio state definitions against the radioStateTable

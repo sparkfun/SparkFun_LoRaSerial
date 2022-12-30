@@ -112,6 +112,9 @@ uint8_t pin_trigger = PIN_UNDEFINED;
 #define RADIO_USE_BAD_FRAMES_LED  BLUE_LED    //Blue
 #define RADIO_USE_BAD_CRC_LED     YELLOW_LED  //Yellow
 
+#define LED_MP_HOP_CHANNEL        BLUE_LED
+#define LED_MP_HEARTBEAT          YELLOW_LED
+
 #define CYLON_TX_DATA_LED   BLUE_LED
 #define CYLON_RX_DATA_LED   YELLOW_LED
 
@@ -379,6 +382,12 @@ const int rssiLevelMed = -120;
 const int rssiLevelHigh = -100;
 const int rssiLevelMax = -70;
 int rssi; //Average signal level, measured during reception of a packet
+
+//LED control values
+uint32_t ledPreviousRssiMillis;
+uint32_t ledHeartbeatMillis;
+int8_t ledRssiCount; //Pulse width count for LED display
+int8_t ledRssiValue; //Target pulse width count for LED display
 
 //Link quality metrics
 uint32_t datagramsSent;     //Total number of datagrams sent
