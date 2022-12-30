@@ -2778,11 +2778,13 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   }
   else
   {
+    //Move the data to the radio over SPI
     int state = radio.startTransmit(outgoingPacket, txDatagramSize);
 
     if (state == RADIOLIB_ERR_NONE)
     {
       xmitTimeMillis = millis();
+      triggerEvent(TRIGGER_TX_SPI_DONE);
       txSuccessMillis = xmitTimeMillis;
       frameSentCount++;
       if (vc)
