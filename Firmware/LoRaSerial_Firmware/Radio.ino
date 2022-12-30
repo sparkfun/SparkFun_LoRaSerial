@@ -1539,6 +1539,7 @@ PacketType rcvDatagram()
   if (state == RADIOLIB_ERR_NONE)
   {
     rxSuccessMillis = rcvTimeMillis;
+    triggerEvent(TRIGGER_RX_SPI_DONE);
     rssi = radio.getRSSI();
   }
   else
