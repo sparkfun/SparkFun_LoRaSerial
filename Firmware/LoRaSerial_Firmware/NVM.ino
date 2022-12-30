@@ -100,22 +100,27 @@ void recordSystemSettings()
   arch.eepromCommit();
 }
 
-//Erase the EEPROM
-void eepromErase()
+int nvmVcOffset(int8_t vc)
 {
-  if (settings.debugNvm)
-  {
-    systemPrintln("Erasing the EEPROM");
-    outputSerialData(true);
-  }
-  for (uint16_t i = 0 ; i < EEPROM.length() ; i++)
-  {
-    petWDT();
+  return NVM_UNIQUE_ID_OFFSET + (vc * UNIQUE_ID_BYTES);
+}
 
-    EEPROM.write(i, 0);
+//Erase the specified unique ID
+void nvmEraseUniqueId(int8_t vc)
+{
+  uint8_t id[UNIQUE_ID_BYTES];
+  int index;
 
-    arch.eepromCommit();
-  }
+  //Set the erase value
+  for (index = 0; index < sizeof(id); index++)
+    id[index] = NVM_ERASE_VALUE;
+
+  //Erase this portion of the NVM
+  nvmSaveUniqueId(vc, id);
+
+  //Invalidate the VC structure
+  memcpy(virtualCircuitList[vc].uniqueId, id, sizeof(id));
+  virtualCircuitList[vc].flags.valid = false;
 }
 
 //Copy the unique ID for the VC from NVM into the virtualCircuitList entry
@@ -141,6 +146,24 @@ void nvmLoadVcUniqueId(int8_t vc)
       break;
     }
   }
+}
+
+//Save the unique ID into the NVM
+void nvmSaveUniqueId(int8_t vc, uint8_t * uniqueId)
+{
+  uint8_t id[UNIQUE_ID_BYTES];
+  int index;
+
+  //Get the unique ID value
+  memcpy(id, uniqueId, sizeof(id));
+
+  //Write the ID into the flash
+  EEPROM.put(nvmVcOffset(vc), id);
+  arch.eepromCommit();
+
+  //Place the address in the VC structure
+  memcpy(virtualCircuitList[vc].uniqueId, id, sizeof(id));
+  virtualCircuitList[vc].flags.valid = true;
 }
 
 //Save the unique ID from the virtualCircuitList entry into the NVM

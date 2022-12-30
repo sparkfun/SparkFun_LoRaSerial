@@ -39,6 +39,7 @@ bool commandAT(const char * commandString)
   const char * string;
   unsigned long timer;
   VIRTUAL_CIRCUIT * vc = &virtualCircuitList[cmdVc];
+  uint8_t vcIndex;
 
   //'AT'
   if (commandLength == 2)
@@ -135,6 +136,10 @@ bool commandAT(const char * commandString)
         forceRadioReset = true;
 
         recordSystemSettings();
+
+        //Clear the unique ID table
+        for (vcIndex = 0; vcIndex < MAX_VC; vcIndex++)
+          nvmEraseUniqueId(vcIndex);
         return true;
 
       case ('G'): //ATG - Generate a new netID and encryption key
