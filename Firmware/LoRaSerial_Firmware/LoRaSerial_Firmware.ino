@@ -58,7 +58,6 @@ const int FIRMWARE_VERSION_MINOR = 0;
 
 #define CHANNEL_TIMER_BYTES sizeof(uint16_t) //Number of bytes used within in control header for clock sync (uint16_t msToNextHop)
 #define CLOCK_MILLIS_BYTES sizeof(unsigned long) //Number of bytes used within in various packets for system timestamps sync (unsigned long currentMillis)
-#define SYNC_CLOCKS_BYTES   (sizeof(uint8_t) + sizeof(unsigned long)) //Number of data bytes in the SYNC_CLOCKS frame
 #define ZERO_ACKS_BYTES     sizeof(unsigned long) //Number of data bytes in the ZERO_ACKS frame
 #define MAX_PACKET_SIZE 255 //Limited by SX127x
 #define AES_IV_BYTES    12  //Number of bytes for AESiv
@@ -67,6 +66,7 @@ const int FIRMWARE_VERSION_MINOR = 0;
 
 //Frame lengths
 #define P2P_FIND_PARTNER_BYTES  sizeof(unsigned long) //Number of data bytes in the FIND_PARTNER frame
+#define P2P_SYNC_CLOCKS_BYTES   (sizeof(uint8_t) + sizeof(unsigned long)) //Number of data bytes in the SYNC_CLOCKS frame
 
 //Bit 0: Signal Detected indicates that a valid LoRa preamble has been detected
 //Bit 1: Signal Synchronized indicates that the end of Preamble has been detected, the modem is in lock

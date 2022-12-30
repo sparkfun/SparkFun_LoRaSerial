@@ -931,9 +931,9 @@ bool xmitDatagramP2PSyncClocks()
   */
 
   //Verify the data length
-  if ((endOfTxData - startOfData) != SYNC_CLOCKS_BYTES)
+  if ((endOfTxData - startOfData) != P2P_SYNC_CLOCKS_BYTES)
   {
-    systemPrintln("ERROR - Fix the SYNC_CLOCKS_BYTES value!");
+    systemPrintln("ERROR - Fix the P2P_SYNC_CLOCKS_BYTES value!");
     outputSerialData(true);
     waitForever();
   }
