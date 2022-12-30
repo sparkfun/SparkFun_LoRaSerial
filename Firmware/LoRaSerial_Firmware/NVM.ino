@@ -123,6 +123,32 @@ void nvmEraseUniqueId(int8_t vc)
   virtualCircuitList[vc].flags.valid = false;
 }
 
+//Get the unique ID for the VC from NVM
+void nvmGetUniqueId(int8_t vc, uint8_t * uniqueId)
+{
+  uint8_t id[UNIQUE_ID_BYTES];
+
+  //Read the unique ID from the flash
+  EEPROM.get(nvmVcOffset(vc), id);
+  memcpy(uniqueId, id, UNIQUE_ID_BYTES);
+}
+
+//Determine if the unique ID is set
+bool nvmIsVcUniqueIdSet(int8_t vc)
+{
+  uint8_t id[UNIQUE_ID_BYTES];
+  int index;
+
+  //Read the ID from the flash
+  nvmGetUniqueId(vc, id);
+
+  //Determine if a unique ID is set in the flash
+  for (index = 0; index < sizeof(id); index++)
+    if (id[index] != NVM_ERASE_VALUE)
+      return true;
+  return false;
+}
+
 //Copy the unique ID for the VC from NVM into the virtualCircuitList entry
 void nvmLoadVcUniqueId(int8_t vc)
 {
