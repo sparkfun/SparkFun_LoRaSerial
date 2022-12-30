@@ -720,7 +720,19 @@ void updateRadioState()
               rxFirstAck = true;
 
             //The datagram we are expecting
-            syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
+            syncChannelTimer(true); //Adjust freq hop ISR based on remote's remaining clock
+
+if (rxFirstAck)
+{
+  uint16_t channelTimer;
+  channelTimer = msToNextHopRemote;
+  for (int16_t r = 0; r < settings.maxDwellTime; r++)
+  {
+    msToNextHopRemote = r;
+    syncChannelTimer(false);
+  }
+  msToNextHopRemote = channelTimer;
+}
 
             triggerEvent(TRIGGER_LINK_ACK_RECEIVED);
 
@@ -1064,7 +1076,7 @@ void updateRadioState()
             COMPUTE_TIMESTAMP_OFFSET(rxData + 1, 0);
 
             //Server has responded with ACK
-            syncChannelTimer(); //Start and adjust freq hop ISR based on remote's remaining clock
+            syncChannelTimer(true); //Start and adjust freq hop ISR based on remote's remaining clock
 
             //Change to the server's channel number
             channelNumber = rxVcData[0];
@@ -1219,7 +1231,7 @@ void updateRadioState()
 
             //Sync clock if server sent the heartbeat
             if (settings.server == false)
-              syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
+              syncChannelTimer(true); //Adjust freq hop ISR based on remote's remaining clock
 
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
@@ -1234,7 +1246,7 @@ void updateRadioState()
 
             //Sync clock if server sent the datagram
             if (settings.server == false)
-              syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
+              syncChannelTimer(true); //Adjust freq hop ISR based on remote's remaining clock
 
             setHeartbeatMultipoint(); //We're sync'd so reset heartbeat timer
 
@@ -2822,7 +2834,7 @@ void vcReceiveHeartbeat(uint32_t rxMillis)
   int vcSrc;
 
   if (rxSrcVc == VC_SERVER)
-    syncChannelTimer(); //Adjust freq hop ISR based on server's remaining clock
+    syncChannelTimer(true); //Adjust freq hop ISR based on server's remaining clock
 
   //Update the timestamp offset
   if (rxSrcVc == VC_SERVER)

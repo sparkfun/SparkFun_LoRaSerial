@@ -2924,7 +2924,7 @@ void stopChannelTimer()
 
 //Given the remote unit's number of ms before its next hop,
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
-void syncChannelTimer()
+void syncChannelTimer(bool allowAdjustments)
 {
   long adjustment;
   unsigned long currentMillis;
@@ -3053,7 +3053,8 @@ void syncChannelTimer()
   //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRmt + dwellTime)
   if (msToNextHopLocal < smallAmount && (msToNextHopRmt <= 0 && msToNextHopRmt >= (smallAmount * -1)))
   {
-    hopChannel();
+    if (allowAdjustments)
+      hopChannel();
     deltaHops += 1;
     msToNextHop = msToNextHopRmt + settings.maxDwellTime;
     resetHop = true; //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
@@ -3072,7 +3073,8 @@ void syncChannelTimer()
   //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRmt)
   else if (msToNextHopLocal < smallAmount && msToNextHopRmt > largeAmount)
   {
-    hopChannel();
+    if (allowAdjustments)
+      hopChannel();
     deltaHops += 1;
     msToNextHop = msToNextHopRmt;
     resetHop = true; //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
@@ -3106,7 +3108,8 @@ void syncChannelTimer()
     //Hop now, and adjust our clock to the remote's next hop (msToNextHopRmt + dwellTime)
     if (msToNextHop < (settings.maxDwellTime * -1)) //-402 < -400
     {
-      hopChannel();
+      if (allowAdjustments)
+        hopChannel();
       deltaHops += 1;
       msToNextHop += settings.maxDwellTime;
       resetHop = true; //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
@@ -3117,15 +3120,18 @@ void syncChannelTimer()
   while (msToNextHop < 0)
     msToNextHop += settings.maxDwellTime;
 
-  partialTimer = true;
-  channelTimer.disableTimer();
-  channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
+  if (allowAdjustments)
+  {
+    partialTimer = true;
+    channelTimer.disableTimer();
+    channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
 
-  if (resetHop) //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
-    timeToHop = false;
+    if (resetHop) //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
+      timeToHop = false;
 
-  channelTimer.enableTimer();
-  triggerEvent(TRIGGER_SYNC_CHANNEL); //Trigger after adjustments to timer to avoid skew during debug
+    channelTimer.enableTimer();
+    triggerEvent(TRIGGER_SYNC_CHANNEL); //Trigger after adjustments to timer to avoid skew during debug
+  }
 
   //Check for a sync error
   deltaMillis = (millisToNextHop - msToNextHop + settings.maxDwellTime) % settings.maxDwellTime;
@@ -3168,23 +3174,26 @@ void syncChannelTimer()
       systemPrintln(rxTimeUsec);
       systemPrint("txTimeUsec: ");
       systemPrintln(txTimeUsec);
-      systemPrintln("RX Frame");
-      dumpBuffer(incomingBuffer, headerBytes + rxDataBytes + trailerBytes);
-
-      data = incomingBuffer;
-      if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
+      if (allowAdjustments)
       {
-        systemPrint("    Net Id: ");
-        systemPrint(*data);
-        systemPrint(" (0x");
-        systemPrint(*data++, HEX);
-        systemPrintln(")");
+        systemPrintln("RX Frame");
+        dumpBuffer(incomingBuffer, headerBytes + rxDataBytes + trailerBytes);
+
+        data = incomingBuffer;
+        if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
+        {
+          systemPrint("    Net Id: ");
+          systemPrint(*data);
+          systemPrint(" (0x");
+          systemPrint(*data++, HEX);
+          systemPrintln(")");
+        }
+        printControl(*data++);
+        memcpy(&channelTimer, data, sizeof(channelTimer));
+        data += sizeof(channelTimer);
+        systemPrint("    Channel Timer(ms): ");
+        systemPrintln(channelTimer);
       }
-      printControl(*data++);
-      memcpy(&channelTimer, data, sizeof(channelTimer));
-      data += sizeof(channelTimer);
-      systemPrint("    Channel Timer(ms): ");
-      systemPrintln(channelTimer);
 
       systemPrintln("ERROR: Must fix channel timer synchronization math");
       waitForever();
