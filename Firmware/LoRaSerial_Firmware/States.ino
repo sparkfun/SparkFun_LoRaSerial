@@ -20,7 +20,7 @@
   {                                                                             \
     /*Compute the frequency correction*/                                        \
     frequencyCorrection += radio.getFrequencyError() / 1000000.0;               \
-    \
+                                                                                \
     /*Send the ACK to the remote system*/                                       \
     triggerEvent(trigger);                                                      \
     if (xmitDatagramP2PAck() == true)                                           \
@@ -35,7 +35,7 @@
   {                                                                             \
     /*Start the ACK timer*/                                                     \
     ackTimer = datagramTimer;                                                   \
-    \
+                                                                                \
     /*Since ackTimer is off when equal to zero, force it to a non-zero value*/  \
     /*Subtract one so that the comparisons result in a small number*/           \
     if (!ackTimer)                                                              \
@@ -46,6 +46,57 @@
   {                           \
     /*Stop the ACK timer*/    \
     ackTimer = 0;             \
+  }
+
+#define COMPUTE_TIMESTAMP_OFFSET(millisBuffer, rShift)                          \
+  {                                                                             \
+    unsigned long deltaUsec = txTimeUsec + rxTimeUsec;                          \
+    memcpy(&remoteSystemMillis, millisBuffer, sizeof(currentMillis));           \
+    timestampOffset = (remoteSystemMillis + (deltaUsec / 1000) - currentMillis);\
+    timestampOffset >>= rShift;                                                  \
+  }
+
+#define COMPUTE_RX_TIME(millisBuffer, rShift)                                   \
+  {                                                                             \
+    currentMillis = millis();                                                   \
+    if (!rxFirstAck)                                                            \
+    {                                                                           \
+      rxTimeUsec = micros() - transactionCompleteMicros;                        \
+      txRxTimeMsec = (txTimeUsec + rxTimeUsec) / 1000;                          \
+                                                                                \
+      /*Display the results*/                                                   \
+      if (settings.debugSync)                                                   \
+      {                                                                         \
+        systemPrintTimestamp(radioCallHistory[RADIO_CALL_transactionCompleteISR] + timestampOffset);  \
+        systemPrint(" RX Time: ");                                              \
+        systemPrint(rxTimeUsec);                                                \
+        systemPrintln(" uSec");                                                 \
+        systemPrint(" TX + RX Time: ");                                         \
+        systemPrint(txRxTimeMsec);                                              \
+        systemPrintln(" mSec");                                                 \
+      }                                                                         \
+    }                                                                           \
+                                                                                \
+    /*Adjust the timestamp offset*/                                             \
+    COMPUTE_TIMESTAMP_OFFSET(millisBuffer, rShift);                             \
+  }
+
+#define COMPUTE_TX_TIME()                                                       \
+  {                                                                             \
+    currentMillis = millis();                                                   \
+    if (!txFirstAck)                                                            \
+    {                                                                           \
+      txTimeUsec = transactionCompleteMicros - txDatagramMicros;                \
+                                                                                \
+      /*Display the results*/                                                   \
+      if (settings.debugSync)                                                   \
+      {                                                                         \
+        systemPrintTimestamp(currentMillis + timestampOffset);                  \
+        systemPrint(" TX Time: ");                                              \
+        systemPrint(txTimeUsec);                                                \
+        systemPrintln(" uSec");                                                 \
+      }                                                                         \
+    }                                                                           \
   }
 
 //Process the radio states
@@ -108,6 +159,9 @@ void updateRadioState()
       stopChannelTimer(); //Prevent radio from frequency hopping
 
       configureRadio(); //Setup radio, set freq to channel 0, calculate air times
+
+      //Determine the maximum frame air time
+      maxFrameAirTime = calcAirTimeMsec(MAX_PACKET_SIZE);
 
       //Start the TX timer: time to delay before transmitting the FIND_PARTNER
       setHeartbeatShort(); //Both radios start with short heartbeat period
@@ -220,6 +274,10 @@ void updateRadioState()
         setRadioFrequency(false);
       }
 
+      //Update the transmit and receive times until the first ACK TX and RX
+      rxFirstAck = false;
+      txFirstAck = false;
+
       //Determine if a FIND_PARTNER was received
       if (transactionComplete)
       {
@@ -250,20 +308,18 @@ void updateRadioState()
 
           case DATAGRAM_FIND_PARTNER:
             //Received FIND_PARTNER
-            //Compute the common clock
-            currentMillis = millis();
-            memcpy(&clockOffset, rxData, sizeof(currentMillis));
-            roundTripMillis = rcvTimeMillis - xmitTimeMillis;
-            clockOffset += currentMillis + roundTripMillis;
-            clockOffset >>= 1;
-            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
-            timestampOffset = clockOffset;
+            //Compute the receive time
+            COMPUTE_RX_TIME(rxData, 1);
+
+            //In the case of a retransmission, stop the channel timer
+            stopChannelTimer();
+            startChannelTimer();
 
             //Acknowledge the FIND_PARTNER with SYNC_CLOCKS
             triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
             if (xmitDatagramP2PSyncClocks() == true)
             {
-              sf6ExpectedSize = headerBytes + ZERO_ACKS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
+              sf6ExpectedSize = headerBytes + P2P_ZERO_ACKS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
               changeState(RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE);
             }
             break;
@@ -287,6 +343,7 @@ void updateRadioState()
       //Determine if a FIND_PARTNER has completed transmission
       if (transactionComplete)
       {
+        COMPUTE_TX_TIME();
         triggerEvent(TRIGGER_HANDSHAKE_SEND_FIND_PARTNER_COMPLETE);
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
@@ -324,34 +381,23 @@ void updateRadioState()
 
           case DATAGRAM_FIND_PARTNER:
             //Received FIND_PARTNER
-            //Compute the common clock
-            currentMillis = millis();
-            memcpy(&clockOffset, rxData, sizeof(currentMillis));
-            roundTripMillis = rcvTimeMillis - xmitTimeMillis;
-            clockOffset += currentMillis + roundTripMillis;
-            clockOffset >>= 1;
-            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
-            timestampOffset = clockOffset;
+            //Compute the receive time
+            COMPUTE_RX_TIME(rxData + 1, 1);
 
             //Acknowledge the FIND_PARTNER
             triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
             if (xmitDatagramP2PSyncClocks() == true)
             {
-              sf6ExpectedSize = headerBytes + ZERO_ACKS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
+              sf6ExpectedSize = headerBytes + P2P_ZERO_ACKS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
               changeState(RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE);
             }
             break;
 
           case DATAGRAM_SYNC_CLOCKS:
             //Received SYNC_CLOCKS
-            //Compute the common clock
-            currentMillis = millis();
-            memcpy(&clockOffset, rxData + 1, sizeof(currentMillis));
-            roundTripMillis = rcvTimeMillis - xmitTimeMillis;
-            clockOffset += currentMillis + roundTripMillis;
-            clockOffset >>= 1;
-            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
-            timestampOffset = clockOffset;
+            //Compute the receive time
+            COMPUTE_RX_TIME(rxData + 1, 1);
+
 
             //Acknowledge the SYNC_CLOCKS
             triggerEvent(TRIGGER_SEND_ZERO_ACKS);
@@ -375,6 +421,9 @@ void updateRadioState()
             outputSerialData(true);
           }
 
+          //Stop the channel timer
+          stopChannelTimer();
+
           //Start the TX timer: time to delay before transmitting the FIND_PARTNER
           triggerEvent(TRIGGER_HANDSHAKE_SYNC_CLOCKS_TIMEOUT);
           setHeartbeatShort();
@@ -397,6 +446,7 @@ void updateRadioState()
       //Determine if a SYNC_CLOCKS has completed transmission
       if (transactionComplete)
       {
+        COMPUTE_TX_TIME();
         triggerEvent(TRIGGER_HANDSHAKE_SEND_SYNC_CLOCKS_COMPLETE);
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
@@ -434,16 +484,8 @@ void updateRadioState()
 
           case DATAGRAM_ZERO_ACKS:
             //Received ACK 2
-            //Compute the common clock
-            currentMillis = millis();
-            memcpy(&clockOffset, rxData, sizeof(currentMillis));
-            roundTripMillis = rcvTimeMillis - xmitTimeMillis;
-            clockOffset += currentMillis + roundTripMillis;
-            clockOffset >>= 1;
-            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
-            timestampOffset = clockOffset;
-
-            startChannelTimer(getLinkupOffset()); //We are exiting the link last so adjust our starting Timer
+            //Compute the receive time
+            COMPUTE_RX_TIME(rxData, 1);
 
             setHeartbeatLong(); //We sent SYNC_CLOCKS and they sent ZERO_ACKS, so don't be the first to send heartbeat
 
@@ -463,6 +505,9 @@ void updateRadioState()
             systemPrintln("RX: ZERO_ACKS Timeout");
             outputSerialData(true);
           }
+
+          //Stop the channel timer
+          stopChannelTimer();
 
           //Start the TX timer: time to delay before transmitting the FIND_PARTNER
           triggerEvent(TRIGGER_HANDSHAKE_ZERO_ACKS_TIMEOUT);
@@ -487,6 +532,7 @@ void updateRadioState()
       if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
+        COMPUTE_TX_TIME();
 
         startChannelTimer(); //We are exiting the link first so do not adjust our starting Timer
 
@@ -571,6 +617,13 @@ void updateRadioState()
       {
         transactionComplete = false; //Reset ISR flag
 
+        //Determine if an ACK was transmitted
+        if (txControl.datagramType = DATAGRAM_DATA_ACK)
+        {
+          COMPUTE_TX_TIME();
+          txFirstAck = true;
+        }
+
         //Determine the next packet size for SF6
         if (ackTimer)
         {
@@ -640,12 +693,7 @@ void updateRadioState()
           case DATAGRAM_HEARTBEAT:
             //Received heartbeat while link was idle. Send ack to sync clocks.
             //Adjust the timestamp offset
-            currentMillis = millis();
-            memcpy(&clockOffset, rxData, sizeof(currentMillis));
-            clockOffset += currentMillis + roundTripMillis;
-            clockOffset >>= 1;
-            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
-            timestampOffset = clockOffset;
+            COMPUTE_TIMESTAMP_OFFSET(rxData, 1);
 
             //Transmit ACK
             P2P_SEND_ACK(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
@@ -660,15 +708,17 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DUPLICATE:
-            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-
-            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DUP);
-            if (xmitDatagramP2PAck() == true) //Transmit ACK
-              changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
-            setHeartbeatShort(); //We ack'd the packet (again) so be responsible for sending the next heartbeat
+            P2P_SEND_ACK(TRIGGER_LINK_SEND_ACK_FOR_DUP);
             break;
 
           case DATAGRAM_DATA_ACK:
+            //Adjust the timestamp offset
+            COMPUTE_RX_TIME(rxData, 1);
+
+            //Stop updating the rxTimeUsec and txTimeUsec after TX and RX of ACKs
+            if (txFirstAck)
+              rxFirstAck = true;
+
             //The datagram we are expecting
             syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
 
@@ -790,10 +840,18 @@ void updateRadioState()
 
                 //Attempt the retransmission
                 RESTORE_TX_BUFFER();
-                if (retransmitDatagram(NULL) == true)
+                if (rexmtControl.datagramType == DATAGRAM_HEARTBEAT)
+                {
+                  //Never retransmit the heartbeat, always send a new version to
+                  //send the updated time value
+                  if (xmitDatagramP2PHeartbeat() == true)
+                    changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+                }
+                else if (retransmitDatagram(NULL) == true)
                   changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
-                setHeartbeatLong(); //We're re-sending data, so don't be the first to send next heartbeat
 
+                //We're re-sending data, so don't be the first to send next heartbeat
+                setHeartbeatLong();
                 START_ACK_TIMER();
               }
             }
@@ -939,6 +997,12 @@ void updateRadioState()
     case RADIO_DISCOVER_BEGIN:
       stopChannelTimer(); //Stop hopping
 
+      if (settings.debugSync)
+      {
+        systemPrintln("Start scanning");
+        outputSerialData(true);
+      }
+
       multipointChannelLoops = 0;
       multipointAttempts = 0;
 
@@ -995,20 +1059,15 @@ void updateRadioState()
           case DATAGRAM_SYNC_CLOCKS:
             triggerEvent(TRIGGER_LINK_ACK_RECEIVED);
 
+            //Compute the common clock
+            currentMillis = millis();
+            COMPUTE_TIMESTAMP_OFFSET(rxData + 1, 0);
+
             //Server has responded with ACK
             syncChannelTimer(); //Start and adjust freq hop ISR based on remote's remaining clock
 
             //Change to the server's channel number
             channelNumber = rxVcData[0];
-
-            //Compute the common clock
-            currentMillis = millis();
-            memcpy(&clockOffset, rxData + 1, sizeof(currentMillis));
-            roundTripMillis = rcvTimeMillis - xmitTimeMillis;
-            clockOffset += currentMillis + roundTripMillis;
-            clockOffset >>= 1;
-            clockOffset -= currentMillis;  //The currentMillis is added in systemPrintTimestamp
-            timestampOffset = clockOffset;
 
             if (settings.debugSync)
             {
@@ -1166,6 +1225,7 @@ void updateRadioState()
 
             lastPacketReceived = millis(); //Update timestamp for Link LED
 
+            ledMpHeartbeatOn();
             changeState(RADIO_MP_STANDBY);
             break;
 
@@ -1207,6 +1267,7 @@ void updateRadioState()
               setHeartbeatMultipoint(); //We're sending something with clock data so reset heartbeat timer
               changeState(RADIO_MP_WAIT_TX_DONE); //Wait for heartbeat to transmit
             }
+            ledMpHeartbeatOn();
           }
         }
 
@@ -1226,6 +1287,11 @@ void updateRadioState()
         {
           if ((millis() - lastPacketReceived) > (settings.heartbeatTimeout * 3))
           {
+            if (settings.debugSync)
+            {
+              systemPrintln("HEARTBEAT Timeout");
+              outputSerialData(true);
+            }
             changeState(RADIO_DISCOVER_BEGIN);
           }
         }
@@ -2182,6 +2248,12 @@ bool isLinked()
   return (false);
 }
 
+//Determine if multi-point sync is achieved
+bool isMultiPointSync()
+{
+  return ((radioState >= RADIO_MP_STANDBY) && (radioState <= RADIO_MP_WAIT_TX_DONE));
+}
+
 //Verify the radio state definitions against the radioStateTable
 bool verifyRadioStateTable()
 {
@@ -2459,7 +2531,7 @@ void displayRadioStateHistory()
     if (radioStateHistory[sortOrder[index]])
     {
       systemPrint("        ");
-      systemPrintTimestamp(radioStateHistory[sortOrder[index]]);
+      systemPrintTimestamp(radioStateHistory[sortOrder[index]] + timestampOffset);
       systemPrint(": ");
       systemPrint(radioStateTable[sortOrder[index]].name);
       systemPrintln();

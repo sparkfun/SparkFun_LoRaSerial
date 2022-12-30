@@ -240,16 +240,19 @@ enum
   //        triggerEnable = 0xffffffff
 
   TRIGGER_CHANNEL_TIMER_ISR, //0
+  TRIGGER_TRANSACTION_COMPLETE,
+  TRIGGER_FREQ_CHANGE,
+  TRIGGER_TX_SPI_DONE,
+  TRIGGER_RX_SPI_DONE,
+  TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT,
   TRIGGER_RADIO_RESET,
   TRIGGER_HOP_TIMER_START,
   TRIGGER_HOP_TIMER_STOP,
   TRIGGER_HEARTBEAT,
-  TRIGGER_FREQ_CHANGE,
   TRIGGER_SYNC_CHANNEL,
   TRIGGER_LINK_SEND_ACK_FOR_DATA,
   TRIGGER_LINK_SEND_ACK_FOR_DUP,
   TRIGGER_LINK_RETRANSMIT,
-  TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT,
   TRIGGER_LINK_WAIT_FOR_ACK,
   TRIGGER_LINK_DATA_XMIT,
   TRIGGER_LINK_RETRANSMIT_FAIL,
@@ -340,7 +343,8 @@ typedef enum
   LEDS_RSSI = 0,    //Green: RSSI, Blue: Serial TX, Yellow: Serial RX
   LEDS_RADIO_USE,   //Green1: RX, Green2: Link, Green3: RSSI, Green4: TX
                     //Blue: Bad frames, Yellow: Bad CRC
-  LEDS_CYLON,       //Display the cylon pattern on the green LEDs, others off
+  LEDS_MULTIPOINT,  //Green1: RX, Green2: Sync, Green3: RSSI, Green4: TX
+                    //Blue: Hop, Yellow: HEARTBEAT RX/TX
   LEDS_ALL_OFF,     //All LEDs off
   LEDS_BLUE_ON,     //Blue: ON, other: OFF
   LEDS_YELLOW_ON,   //Yellow: ON, other: OFF
@@ -348,6 +352,8 @@ typedef enum
   LEDS_GREEN_2_ON,  //Green 2: ON, other: OFF
   LEDS_GREEN_3_ON,  //Green 3: ON, other: OFF
   LEDS_GREEN_4_ON,  //Green 4: ON, other: OFF
+
+  LEDS_CYLON,       //Display the cylon pattern on the green LEDs, others off
 
   //Add user LED types from 255 working down
 } LEDS_USE_TYPE;
@@ -430,6 +436,7 @@ typedef struct struct_settings {
   bool printAckNumbers = false; //Print the ACK numbers
   bool debugHeartbeat = false; //Print the HEARTBEAT timing values
   uint8_t framesToYield = 3; //If remote requests it, supress transmission for this number of max packet frames
+  bool printChannel = false; //Print the channel number
 
   //Add new parameters immediately before this line
   //-- Add commands to set the parameters
@@ -494,7 +501,7 @@ typedef enum
   RADIO_CALL_configureRadio = 0,
   RADIO_CALL_setRadioFrequency,
   RADIO_CALL_returnToReceiving,
-  RADIO_CALL_calcAirTime,
+  RADIO_CALL_calcAirTimeUsec,
   RADIO_CALL_xmitDatagramP2PFindPartner,
   RADIO_CALL_xmitDatagramP2PSyncClocks,
   RADIO_CALL_xmitDatagramP2PZeroAcks,
@@ -524,6 +531,8 @@ typedef enum
   RADIO_CALL_setHeartbeatLong,
   RADIO_CALL_setHeartbeatMultipoint,
   RADIO_CALL_setVcHeartbeatTimer,
+  RADIO_CALL_hopChannel,
+
   //Insert new values before this line
   RADIO_CALL_transactionCompleteISR,
   RADIO_CALL_hopISR,

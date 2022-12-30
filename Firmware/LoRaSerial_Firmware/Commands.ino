@@ -298,21 +298,25 @@ bool commandAT(const char * commandString)
 
       case ('0'): //ATI10 - Display radio metrics
         systemPrint("Radio Metrics @ ");
-        systemPrintTimestamp(millis());
+        systemPrintTimestamp(millis() + timestampOffset);
         systemPrintln();
         if (settings.operatingMode == MODE_POINT_TO_POINT)
         {
           systemPrint("    Link Status: ");
           systemPrintln((radioState >= RADIO_P2P_LINK_UP) ? "Up" : "Down");
           systemPrint("        Last RX:  ");
-          systemPrintTimestamp(lastRxDatagram);
+          systemPrintTimestamp(lastRxDatagram + timestampOffset);
           systemPrintln();
           systemPrint("        First RX: ");
-          systemPrintTimestamp(lastLinkUpTime);
+          systemPrintTimestamp(lastLinkUpTime + timestampOffset);
           systemPrintln();
-          systemPrint("        Up Time:  ");
-          systemPrintTimestamp(lastRxDatagram - lastLinkUpTime);
-          systemPrintln();
+          delayMillis = lastRxDatagram - lastLinkUpTime;
+          if (((int)delayMillis) >= 0)
+          {
+            systemPrint("        Up Time:  ");
+            systemPrintTimestamp(delayMillis);
+            systemPrintln();
+          }
           outputSerialData(true);
           petWDT();
         }
@@ -324,11 +328,11 @@ bool commandAT(const char * commandString)
         systemPrint("        Frames: ");
         systemPrintln(framesSent);
         systemPrint("        Lost Frames: ");
+        systemPrintln(lostFrames);
         outputSerialData(true);
         petWDT();
 
         //Receiver metrics
-        systemPrintln(lostFrames);
         systemPrintln("    Received");
         systemPrint("        Frames: ");
         systemPrintln(framesReceived);
@@ -362,7 +366,7 @@ bool commandAT(const char * commandString)
           systemPrintln(vc->txAckNumber);
           systemPrint("        ackTimer: ");
           if (ackTimer)
-            systemPrintTimestamp(ackTimer);
+            systemPrintTimestamp(ackTimer + timestampOffset);
           else
             systemPrint("Not Running");
           systemPrintln();
@@ -376,7 +380,7 @@ bool commandAT(const char * commandString)
             systemPrint("VC ");
             systemPrint(txDestVc);
             systemPrint(", ");
-            systemPrintTimestamp(ackTimer);
+            systemPrintTimestamp(ackTimer + timestampOffset);
             systemPrintln();
           }
           else
@@ -402,6 +406,36 @@ bool commandAT(const char * commandString)
           else
             systemPrintln("None");
         }
+        outputSerialData(true);
+        petWDT();
+
+        //Clock synchronization
+        systemPrintln("    Clock Synchronization");
+        systemPrint("        TX Time: ");
+        systemPrint(txTimeUsec / 1000., 4);
+        systemPrintln(" mSec");
+        systemPrint("        RX Time: ");
+        systemPrint(rxTimeUsec / 1000., 4);
+        systemPrintln(" mSec");
+        systemPrint("        Total Time: ");
+        systemPrint((txTimeUsec + rxTimeUsec) / 1000., 5);
+        systemPrintln(" mSec");
+        systemPrint("        Uptime: ");
+        deltaMillis = millis();
+        systemPrintTimestamp(deltaMillis);
+        systemPrintln();
+        systemPrint("        TimeStampOffset: ");
+        if (timestampOffset < 0)
+        {
+          systemPrint("-");
+          systemPrintTimestamp(-timestampOffset);
+        }
+        else
+          systemPrintTimestamp(timestampOffset);
+        systemPrintln();
+        systemPrint("        Adjusted Time: ");
+        systemPrintTimestamp(deltaMillis + timestampOffset);
+        systemPrintln();
         outputSerialData(true);
         petWDT();
 
@@ -469,7 +503,7 @@ bool commandAT(const char * commandString)
         if (channelNumber)
         {
           systemPrint("        Next Ch 0 time: ");
-          systemPrintTimestamp(nextChannelZeroTimeInMillis);
+          systemPrintTimestamp(nextChannelZeroTimeInMillis + timestampOffset);
           int hopCount = settings.numberOfChannels - channelNumber;
           systemPrint(", in ");
           systemPrint(hopCount);
@@ -478,7 +512,7 @@ bool commandAT(const char * commandString)
         systemPrint("        Last Successful Transmit: ");
         if (txSuccessMillis)
         {
-          systemPrintTimestamp(txSuccessMillis);
+          systemPrintTimestamp(txSuccessMillis + timestampOffset);
           systemPrintln();
         }
         else
@@ -486,7 +520,7 @@ bool commandAT(const char * commandString)
         systemPrint("        Last Transmit Failure: ");
         if (txFailureMillis)
         {
-          systemPrintTimestamp(txFailureMillis);
+          systemPrintTimestamp(txFailureMillis + timestampOffset);
           systemPrint(", Status: ");
           systemPrint(txFailureState);
           string = getRadioStatusCode(txFailureState);
@@ -502,7 +536,7 @@ bool commandAT(const char * commandString)
         systemPrint("        Last Successful Receive: ");
         if (rxSuccessMillis)
         {
-          systemPrintTimestamp(rxSuccessMillis);
+          systemPrintTimestamp(rxSuccessMillis + timestampOffset);
           systemPrintln();
         }
         else
@@ -510,7 +544,7 @@ bool commandAT(const char * commandString)
         systemPrint("        Last Receive Failure: ");
         if (rxFailureMillis)
         {
-          systemPrintTimestamp(rxFailureMillis);
+          systemPrintTimestamp(rxFailureMillis + timestampOffset);
           systemPrint(", Status: ");
           systemPrint(rxFailureState);
           string = getRadioStatusCode(rxFailureState);
@@ -526,7 +560,7 @@ bool commandAT(const char * commandString)
         systemPrint("        radio.startReceive Failure: ");
         if (startReceiveFailureMillis)
         {
-          systemPrintTimestamp(startReceiveFailureMillis);
+          systemPrintTimestamp(startReceiveFailureMillis + timestampOffset);
           systemPrintln();
           systemPrint("        radio.startReceive Status: ");
           systemPrintln(startReceiveFailureState);
@@ -536,7 +570,7 @@ bool commandAT(const char * commandString)
         systemPrint("        transactionComplete: ");
         systemPrintln(transactionComplete ? "True" : "False");
         systemPrint("        lastReceiveInProcessTrue @ ");
-        systemPrintTimestamp(lastReceiveInProcessTrue);
+        systemPrintTimestamp(lastReceiveInProcessTrue + timestampOffset);
         systemPrintln();
         systemPrint("        lastModemStatus: ");
         systemPrint(lastModemStatus, HEX);
@@ -570,14 +604,14 @@ bool commandAT(const char * commandString)
         if (!vc->flags.valid)
         {
           systemPrint("Down, Not valid @ ");
-          systemPrintTimestamp(millis());
+          systemPrintTimestamp(millis() + timestampOffset);
           systemPrintln();
         }
         else
         {
           systemPrint(vcStateNames[vc->vcState]);
           systemPrint(" @ ");
-          systemPrintTimestamp(millis());
+          systemPrintTimestamp(millis() + timestampOffset);
           systemPrintln();
           systemPrint("    ID: ");
           systemPrintUniqueID(vc->uniqueId);
@@ -588,14 +622,14 @@ bool commandAT(const char * commandString)
           if (cmdVc == myVc)
           {
             systemPrint("        Next TX: ");
-            systemPrintTimestamp(heartbeatTimer + heartbeatRandomTime);
+            systemPrintTimestamp(heartbeatTimer + heartbeatRandomTime + timestampOffset);
             systemPrintln();
           }
           systemPrint("        Last:    ");
-          systemPrintTimestamp(vc->lastTrafficMillis);
+          systemPrintTimestamp(vc->lastTrafficMillis + timestampOffset);
           systemPrintln();
           systemPrint("        First:   ");
-          systemPrintTimestamp(vc->firstHeartbeatMillis);
+          systemPrintTimestamp(vc->firstHeartbeatMillis + timestampOffset);
           systemPrintln();
           systemPrint("        Up Time: ");
           deltaMillis = vc->lastTrafficMillis - vc->firstHeartbeatMillis;
@@ -640,7 +674,7 @@ bool commandAT(const char * commandString)
           {
             systemPrint("        ackTimer: ");
             if (ackTimer)
-              systemPrintTimestamp(ackTimer);
+              systemPrintTimestamp(ackTimer + timestampOffset);
             else
               systemPrint("Not Running");
             systemPrintln();
@@ -744,8 +778,8 @@ void checkCommand()
     //Locate the correct processing routine for the command prefix
     for (index = 0; index < prefixCount; index++)
     {
-      //Skip command types not supported in virtual circuit mode
-      if ((!prefixTable[index].supportedInVcMode) && (settings.operatingMode == MODE_VIRTUAL_CIRCUIT))
+      //Skip command types not supported in current mode
+      if ((!prefixTable[index].supportedInVcMode) && (settings.operatingMode != MODE_POINT_TO_POINT))
         continue;
 
       //Locate the prefix
@@ -1035,6 +1069,7 @@ const COMMAND_ENTRY commands[] =
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugSerial",          &tempSettings.debugSerial},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DisplayRealMillis",    &tempSettings.displayRealMillis},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintAckNumbers",      &tempSettings.printAckNumbers},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintChannel",         &tempSettings.printChannel},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintFrequency",       &tempSettings.printFrequency},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintLinkUpDown",      &tempSettings.printLinkUpDown},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintPacketQuality",   &tempSettings.printPacketQuality},

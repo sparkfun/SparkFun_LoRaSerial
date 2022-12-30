@@ -630,13 +630,10 @@ void rxLED(bool illuminate)
 void radioLeds()
 {
   uint32_t currentMillis;
-  static uint32_t previousMillis;
   static uint32_t previousBadFrames;
   static uint32_t badFramesMillis;
   static uint32_t previousBadCrc;
   static uint32_t badCrcMillis;
-  static int8_t rssiCount = 127;
-  static int8_t rssiValue;
 
   //Turn off the RX LED to end the blink
   currentMillis = millis();
@@ -684,23 +681,76 @@ void radioLeds()
   digitalWrite(RADIO_USE_LINK_LED, isLinked() ? LED_ON : LED_OFF);
 
   //Update the RSSI LED
-  if (currentMillis != previousMillis)
+  if (currentMillis != ledPreviousRssiMillis)
   {
-    if (rssiCount >= 16)
+    if (ledRssiCount >= 16)
     {
-      rssiValue = (150 + rssi) / 10;
-      rssiCount = 0;
-      if (rssiValue >= rssiCount)
+      ledRssiValue = (150 + rssi) / 10;
+      ledRssiCount = 0;
+      if (ledRssiValue >= ledRssiCount)
         digitalWrite(RADIO_USE_RSSI_LED, LED_ON);
     }
 
     //Turn off the RSSI LED
-    else if (rssiValue < rssiCount++)
+    else if (ledRssiValue < ledRssiCount++)
       digitalWrite(RADIO_USE_RSSI_LED, LED_OFF);
   }
 
   //Save the last millis value
-  previousMillis = currentMillis;
+  ledPreviousRssiMillis = currentMillis;
+}
+
+//Turn on the heartbeat LED
+void ledMpHeartbeatOn()
+{
+  digitalWrite(LED_MP_HEARTBEAT, LED_OFF);
+  ledHeartbeatMillis = millis();
+}
+
+//Display the multi-point LED pattern
+void multiPointLeds()
+{
+  uint32_t currentMillis;
+
+  //Turn off the RX LED to end the blink
+  currentMillis = millis();
+  if ((currentMillis - linkDownTimer) >= RADIO_USE_BLINK_MILLIS)
+    digitalWrite(RADIO_USE_RX_DATA_LED, LED_OFF);
+
+  //Turn off the TX LED to end the blink
+  currentMillis = millis();
+  if ((currentMillis - datagramTimer) >= RADIO_USE_BLINK_MILLIS)
+    digitalWrite(RADIO_USE_TX_DATA_LED, LED_OFF);
+
+  //Update the sync LED
+  digitalWrite(RADIO_USE_LINK_LED, isMultiPointSync() ? LED_ON : LED_OFF);
+
+  //Update the RSSI LED
+  if (currentMillis != ledPreviousRssiMillis)
+  {
+    if (ledRssiCount >= 16)
+    {
+      ledRssiValue = (150 + rssi) / 10;
+      ledRssiCount = 0;
+      if (ledRssiValue >= ledRssiCount)
+        digitalWrite(RADIO_USE_RSSI_LED, LED_ON);
+    }
+
+    //Turn off the RSSI LED
+    else if (ledRssiValue < ledRssiCount++)
+      digitalWrite(RADIO_USE_RSSI_LED, LED_OFF);
+  }
+
+  //Update the hop LED
+  if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
+    digitalWrite(LED_MP_HOP_CHANNEL, LED_OFF);
+
+  //Update the HEARTBEAT LED
+  if ((millis() - ledHeartbeatMillis) >= RADIO_USE_BLINK_MILLIS)
+    digitalWrite(LED_MP_HEARTBEAT, LED_OFF);
+
+  //Save the last millis value
+  ledPreviousRssiMillis = currentMillis;
 }
 
 //Start the cylon LEDs
@@ -778,6 +828,11 @@ void updateLeds()
 
     case LEDS_RADIO_USE:
       radioLeds();
+      break;
+
+    //Display the multipoint LED pattern
+    case LEDS_MULTIPOINT:
+      multiPointLeds();
       break;
 
     //Display the cylon pattern during training

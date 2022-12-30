@@ -63,8 +63,8 @@ bool configureRadio()
     success = false;
 
   //Precalculate the packet times
-  ackAirTime = calcAirTime(headerBytes + CHANNEL_TIMER_BYTES + trailerBytes); //Used for response timeout during ACK
-  maxPacketAirTime = calcAirTime(MAX_PACKET_SIZE);
+  ackAirTime = calcAirTimeMsec(headerBytes + CHANNEL_TIMER_BYTES + trailerBytes); //Used for response timeout during ACK
+  maxPacketAirTime = calcAirTimeMsec(MAX_PACKET_SIZE);
 
   if ((settings.debug == true) || (settings.debugRadio == true))
   {
@@ -174,9 +174,13 @@ void convertAirSpeedToSettings()
 //Set radio frequency
 bool setRadioFrequency(bool rxAdjust)
 {
+  float previousFrequency;
+  static uint8_t previousChannelNumber;
+
   radioCallHistory[RADIO_CALL_setRadioFrequency] = millis();
 
   //Determine the frequency to use
+  previousFrequency = radioFrequency;
   radioFrequency = channels[channelNumber];
   if (rxAdjust && settings.autoTuneFrequency)
     radioFrequency -= frequencyCorrection;
@@ -187,12 +191,21 @@ bool setRadioFrequency(bool rxAdjust)
 
   if (settings.debugSync)
     triggerFrequency(radioFrequency);
+  else
+    triggerEvent(TRIGGER_FREQ_CHANGE);
 
   //Determine the time in milliseconds when channel zero is reached again
   nextChannelZeroTimeInMillis = millis() + ((settings.numberOfChannels - channelNumber) * settings.maxDwellTime);
 
   //Print the frequency if requested
-  if (settings.printFrequency)
+  if (settings.printChannel && (previousChannelNumber != channelNumber))
+  {
+    systemPrintTimestamp();
+    systemPrint("CH");
+    systemPrintln(channelNumber);
+    outputSerialData(true);
+  }
+  if (settings.printFrequency && (previousFrequency != radioFrequency))
   {
     systemPrintTimestamp();
     systemPrint(channelNumber);
@@ -203,6 +216,7 @@ bool setRadioFrequency(bool rxAdjust)
     systemPrintln(" mSec");
     outputSerialData(true);
   }
+  previousChannelNumber = channelNumber;
   return true;
 }
 
@@ -247,20 +261,30 @@ void returnToReceiving()
 }
 
 //Given spread factor, bandwidth, coding rate and number of bytes, return total Air Time in ms for packet
-uint16_t calcAirTime(uint8_t bytesToSend)
+float calcAirTimeUsec(uint8_t bytesToSend)
 {
-  radioCallHistory[RADIO_CALL_calcAirTime] = millis();
+  radioCallHistory[RADIO_CALL_calcAirTimeUsec] = millis();
 
-  float tSym = calcSymbolTimeMsec();
-  float tPreamble = (settings.radioPreambleLength + 4.25) * tSym;
+  float tSymUsec = calcSymbolTimeUsec();
+
+  //See Synchronization section
+  float tPreambleUsec = (settings.radioPreambleLength + 2 + 2.25) * tSymUsec;
+
+  // Rb = SF * (1 / ((2^SF) / B) = (SF * B) / 2^SF bit rate
+  //
   float p1 = (8 * bytesToSend - 4 * settings.radioSpreadFactor + 28 + 16 * 1 - 20 * 0) / (4.0 * (settings.radioSpreadFactor - 2 * 0));
   p1 = ceil(p1) * settings.radioCodingRate;
   if (p1 < 0) p1 = 0;
   uint16_t payloadBytes = 8 + p1;
-  float tPayload = payloadBytes * tSym;
-  float tPacket = tPreamble + tPayload;
+  float tPayloadUsec = payloadBytes * tSymUsec;
+  float tPacketUsec = tPreambleUsec + tPayloadUsec;
+  return tPacketUsec;
+}
 
-  return ((uint16_t)ceil(tPacket));
+//Return the frame air time in milliseconds
+uint16_t calcAirTimeMsec(uint8_t bytesToSend)
+{
+  return ((uint16_t)ceil(calcAirTimeUsec(bytesToSend) / 1000.));
 }
 
 //Given spread factor and bandwidth, return symbol time
@@ -525,8 +549,9 @@ void hopChannelReverse()
 //Set the next radio frequency given the hop direction and frequency table
 void hopChannel(bool moveForwardThroughTable)
 {
+  radioCallHistory[RADIO_CALL_hopChannel] = millis();
+
   timeToHop = false;
-  triggerEvent(TRIGGER_FREQ_CHANGE);
 
   if (moveForwardThroughTable)
   {
@@ -668,6 +693,8 @@ void printSX1276Registers()
 //Called when transmission is complete or when RX is received
 void transactionCompleteISR(void)
 {
+  transactionCompleteMicros = micros();
+  triggerEvent(TRIGGER_TRANSACTION_COMPLETE);
   radioCallHistory[RADIO_CALL_transactionCompleteISR] = millis();
 
   transactionComplete = true;
@@ -841,9 +868,12 @@ const uint16_t crc16Table[256] =
 //First packet in the three way handshake to bring up the link
 bool xmitDatagramP2PFindPartner()
 {
-  radioCallHistory[RADIO_CALL_xmitDatagramP2PFindPartner] = millis();
+  uint8_t * startOfData;
 
   unsigned long currentMillis = millis();
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PFindPartner] = currentMillis;
+
+  startOfData = endOfTxData;
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   endOfTxData += sizeof(unsigned long);
 
@@ -857,6 +887,14 @@ bool xmitDatagramP2PFindPartner()
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 4 bytes | n Bytes  |
       +----------+---------+----------+------------+---------+----------+
   */
+
+  //Verify the data length
+  if ((endOfTxData - startOfData) != P2P_FIND_PARTNER_BYTES)
+  {
+    systemPrintln("ERROR - Fix the P2P_FIND_PARTNER_BYTES value!");
+    outputSerialData(true);
+    waitForever();
+  }
 
   txControl.datagramType = DATAGRAM_FIND_PARTNER;
   return (transmitDatagram());
@@ -893,9 +931,9 @@ bool xmitDatagramP2PSyncClocks()
   */
 
   //Verify the data length
-  if ((endOfTxData - startOfData) != SYNC_CLOCKS_BYTES)
+  if ((endOfTxData - startOfData) != P2P_SYNC_CLOCKS_BYTES)
   {
-    systemPrintln("ERROR - Fix the SYNC_CLOCKS_BYTES value!");
+    systemPrintln("ERROR - Fix the P2P_SYNC_CLOCKS_BYTES value!");
     outputSerialData(true);
     waitForever();
   }
@@ -928,9 +966,9 @@ bool xmitDatagramP2PZeroAcks()
   */
 
   //Verify the data length
-  if ((endOfTxData - startOfData) != ZERO_ACKS_BYTES)
+  if ((endOfTxData - startOfData) != P2P_ZERO_ACKS_BYTES)
   {
-    systemPrintln("ERROR - Fix the ZERO_ACKS_BYTES value!");
+    systemPrintln("ERROR - Fix the P2P_ZERO_ACKS_BYTES value!");
     outputSerialData(true);
     waitForever();
   }
@@ -1006,9 +1044,12 @@ bool xmitDatagramP2PData()
 //Heartbeat packet to keep the link up
 bool xmitDatagramP2PHeartbeat()
 {
-  radioCallHistory[RADIO_CALL_xmitDatagramP2PHeartbeat] = millis();
+  uint8_t * startOfData;
 
   unsigned long currentMillis = millis();
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PHeartbeat] = currentMillis;
+
+  startOfData = endOfTxData;
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   endOfTxData += sizeof(currentMillis);
 
@@ -1023,6 +1064,14 @@ bool xmitDatagramP2PHeartbeat()
       +----------+---------+----------+------------+---------+----------+
   */
 
+  //Verify the data length
+  if ((endOfTxData - startOfData) != P2P_HEARTBEAT_BYTES)
+  {
+    systemPrintln("ERROR - Fix the P2P_HEARTBEAT_BYTES value!");
+    outputSerialData(true);
+    waitForever();
+  }
+
   txControl.datagramType = DATAGRAM_HEARTBEAT;
   return (transmitDatagram());
 }
@@ -1030,18 +1079,33 @@ bool xmitDatagramP2PHeartbeat()
 //Create short packet - do not expect ack
 bool xmitDatagramP2PAck()
 {
-  radioCallHistory[RADIO_CALL_xmitDatagramP2PAck] = millis();
+  uint8_t * startOfData;
+
+  unsigned long currentMillis = millis();
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PAck] = currentMillis;
+
+  startOfData = endOfTxData;
+  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
+  endOfTxData += sizeof(currentMillis);
 
   /*
-                                    endOfTxData ---.
-                                                   |
-                                                   V
-      +----------+---------+----------+------------+----------+
-      | Optional |         | Optional | Optional   | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | n Bytes  |
-      +----------+---------+----------+------------+----------+
+                                              endOfTxData ---.
+                                                             |
+                                                             V
+      +----------+---------+----------+------------+---------+----------+
+      | Optional |         | Optional | Optional   |         | Optional |
+      | NET ID   | Control | C-Timer  | SF6 Length | Millis  | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 4 bytes | n Bytes  |
+      +----------+---------+----------+------------+---------+----------+
   */
+
+  //Verify the data length
+  if ((endOfTxData - startOfData) != P2P_ACK_BYTES)
+  {
+    systemPrintln("ERROR - Fix the P2P_ACK_BYTES value!");
+    outputSerialData(true);
+    waitForever();
+  }
 
   txControl.datagramType = DATAGRAM_DATA_ACK;
   return (transmitDatagram());
@@ -1074,7 +1138,11 @@ bool xmitDatagramMpData()
 //Heartbeat packet to sync other units in multipoint mode
 bool xmitDatagramMpHeartbeat()
 {
+  uint8_t * startOfData;
+
   radioCallHistory[RADIO_CALL_xmitDatagramMpHeartbeat] = millis();
+
+  startOfData = endOfTxData;
 
   /*
                                     endOfTxData ---.
@@ -1086,6 +1154,14 @@ bool xmitDatagramMpHeartbeat()
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | n Bytes  |
       +----------+---------+----------+------------+----------+
   */
+
+  //Verify the data length
+  if ((endOfTxData - startOfData) != MP_HEARTBEAT_BYTES)
+  {
+    systemPrintln("ERROR - Fix the MP_HEARTBEAT_BYTES value!");
+    outputSerialData(true);
+    waitForever();
+  }
 
   txControl.datagramType = DATAGRAM_HEARTBEAT;
   return (transmitDatagram());
@@ -1313,9 +1389,12 @@ bool xmitVcDatagram()
 bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
 {
   uint32_t currentMillis = millis();
+  uint8_t * startOfData;
   uint8_t * txData;
 
   radioCallHistory[RADIO_CALL_xmitVcHeartbeat] = currentMillis;
+
+  startOfData = endOfTxData;
 
   //Build the VC header
   txData = endOfTxData;
@@ -1344,6 +1423,14 @@ bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | 16 Bytes | 4 Bytes | n Bytes  |
       +----------+---------+----------+------------+----------+---------+----------+---------+----------+
   */
+
+  //Verify the data length
+  if ((endOfTxData - startOfData) != VC_HEARTBEAT_BYTES)
+  {
+    systemPrintln("ERROR - Fix the VC_HEARTBEAT_BYTES value!");
+    outputSerialData(true);
+    waitForever();
+  }
 
   txControl.datagramType = DATAGRAM_VC_HEARTBEAT;
   txControl.ackNumber = 0;
@@ -1508,6 +1595,7 @@ PacketType rcvDatagram()
   if (state == RADIOLIB_ERR_NONE)
   {
     rxSuccessMillis = rcvTimeMillis;
+    triggerEvent(TRIGGER_RX_SPI_DONE);
     rssi = radio.getRSSI();
   }
   else
@@ -2237,10 +2325,12 @@ bool transmitDatagram()
   VIRTUAL_CIRCUIT * vc;
   VC_RADIO_MESSAGE_HEADER * vcHeader;
 
-  radioCallHistory[RADIO_CALL_transmitDatagram] = millis();
-
   if (timeToHop == true) //If the channelTimer has expired, move to next frequency
     hopChannel();
+
+  //Remove some jitter by getting this time after the hopChannel
+  txDatagramMicros = micros();
+  radioCallHistory[RADIO_CALL_transmitDatagram] = millis();
 
   //Parse the virtual circuit header
   vc = &virtualCircuitList[0];
@@ -2402,6 +2492,9 @@ bool transmitDatagram()
   //Add the clock sync information
   if (settings.frequencyHop == true)
   {
+    //Hake sure that the transmitted msToNextHop is in the range 0 - maxDwellTime
+    if (timeToHop)
+      hopChannel();
     uint16_t msToNextHop = settings.maxDwellTime - (millis() - timerStart);
     memcpy(header, &msToNextHop, sizeof(msToNextHop));
     header += sizeof(msToNextHop); //aka CHANNEL_TIMER_BYTES
@@ -2612,7 +2705,7 @@ bool transmitDatagram()
   endOfTxData = &outgoingPacket[headerBytes];
 
   //Compute the time needed for this frame. Part of ACK timeout.
-  frameAirTime = calcAirTime(txDatagramSize);
+  frameAirTime = calcAirTimeMsec(txDatagramSize);
 
   //Transmit this datagram
   frameSentCount = 0; //This is the first time this frame is being sent
@@ -2706,7 +2799,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   if (timeToHop == true) //If the channelTimer has expired, move to next frequency
     hopChannel();
 
-  frameAirTime = calcAirTime(txDatagramSize); //Calculate frame air size while we're transmitting in the background
+  frameAirTime = calcAirTimeMsec(txDatagramSize); //Calculate frame air size while we're transmitting in the background
   uint16_t responseDelay = frameAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
 
   //Drop this datagram if the receiver is active
@@ -2742,11 +2835,13 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   }
   else
   {
+    //Move the data to the radio over SPI
     int state = radio.startTransmit(outgoingPacket, txDatagramSize);
 
     if (state == RADIOLIB_ERR_NONE)
     {
       xmitTimeMillis = millis();
+      triggerEvent(TRIGGER_TX_SPI_DONE);
       txSuccessMillis = xmitTimeMillis;
       frameSentCount++;
       if (vc)
@@ -2823,24 +2918,86 @@ void stopChannelTimer()
 
   channelTimer.disableTimer();
   triggerEvent(TRIGGER_HOP_TIMER_STOP);
+  timeToHop = false;
+  partialTimer = false;
 }
 
 //Given the remote unit's number of ms before its next hop,
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
 void syncChannelTimer()
 {
-  radioCallHistory[RADIO_CALL_syncChannelTimer] = millis();
+  long adjustment;
+  unsigned long currentMillis;
+  int8_t deltaHops;
+  long deltaMillis;
+  long millisToNextHop;
+  int16_t msToNextHopRmt;
+  bool syncError;
+  long txRxTimeUsec;
+
+  currentMillis = millis();
+  radioCallHistory[RADIO_CALL_syncChannelTimer] = currentMillis;
 
   if (settings.frequencyHop == false) return;
+
+  //msToNextHopRemote is in the range of 0 - settings.maxDwellTime
+  //Validate this range
+  if ((msToNextHopRemote < 0) || (msToNextHopRemote > settings.maxDwellTime))
+  {
+    int16_t channelTimer;
+    uint8_t * data;
+
+    systemPrintln("RX Frame");
+    dumpBuffer(incomingBuffer, headerBytes + rxDataBytes + trailerBytes);
+
+    data = incomingBuffer;
+    if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
+    {
+      systemPrint("    Net Id: ");
+      systemPrint(*data);
+      systemPrint(" (0x");
+      systemPrint(*data++, HEX);
+      systemPrintln(")");
+    }
+    printControl(*data++);
+    memcpy(&channelTimer, data, sizeof(channelTimer));
+    data += sizeof(channelTimer);
+    systemPrint("    Channel Timer(ms): ");
+    systemPrintln(channelTimer);
+
+    systemPrint("ERROR: Invalid msToNextHopRemote value, ");
+    systemPrintln(msToNextHopRemote);
+    waitForever();
+  }
+
+  //Determine if the remote system has hopped and the local system has not
+  deltaHops = 0;
+  deltaMillis = msToNextHopRemote - txRxTimeMsec;
+  if ((deltaMillis <= 0) && ((currentMillis - timerStart) > (settings.maxDwellTime - txRxTimeMsec)))
+  {
+    //Hop one channel to catch up with the remote system
+    if (allowAdjustments)
+      hopChannel();
+    deltaHops -= 1;
+  }
+
+  //Compute the time to next hop
+  adjustment = 0;
+  millisToNextHop = msToNextHopRemote - txRxTimeMsec;
+  if (millisToNextHop <= 0)
+  {
+    adjustment = settings.maxDwellTime;
+    millisToNextHop += adjustment;
+  }
 
   //msToNextHopRemote is obtained during rcvDatagram()
 
   //If the sync arrived in an ACK, we know how long that packet took to transmit
   //Calculate the packet airTime based on the size of data received
-  msToNextHopRemote -= calcAirTime(packetLength);
+  msToNextHopRmt = msToNextHopRemote - calcAirTimeMsec(packetLength);
 
   //  if (settings.debugReceive == true)
-  //    msToNextHopRemote -= 91; //Must adjust for the blob of text being printed
+  //    msToNextHopRmt -= 91; //Must adjust for the blob of text being printed
 
   //Different airspeeds complete the transmitComplete ISR at different rates
   //We adjust the clock setup as needed
@@ -2849,33 +3006,33 @@ void syncChannelTimer()
     default:
       break;
     case (40):
-      msToNextHopRemote -= getReceiveCompletionOffset();
+      msToNextHopRmt -= getReceiveCompletionOffset();
       break;
     case (150):
-      msToNextHopRemote -= 145;
+      msToNextHopRmt -= 145;
       break;
     case (400):
-      msToNextHopRemote -= getReceiveCompletionOffset();
+      msToNextHopRmt -= getReceiveCompletionOffset();
       break;
     case (1200):
-      msToNextHopRemote -= getReceiveCompletionOffset();
+      msToNextHopRmt -= getReceiveCompletionOffset();
       break;
     case (2400):
-      msToNextHopRemote -= getReceiveCompletionOffset();
+      msToNextHopRmt -= getReceiveCompletionOffset();
       break;
     case (4800):
-      msToNextHopRemote -= 5;
+      msToNextHopRmt -= 5;
       break;
     case (9600):
       break;
     case (19200):
-      msToNextHopRemote -= 4;
+      msToNextHopRmt -= 4;
       break;
     case (28800):
-      msToNextHopRemote -= 2;
+      msToNextHopRmt -= 2;
       break;
     case (38400):
-      msToNextHopRemote -= 3;
+      msToNextHopRmt -= 3;
       break;
   }
 
@@ -2885,69 +3042,72 @@ void syncChannelTimer()
   uint16_t smallAmount = settings.maxDwellTime / 8;
   uint16_t largeAmount = settings.maxDwellTime - smallAmount;
 
-  int16_t msToNextHop = msToNextHopRemote; //By default, we will adjust our clock to match our mate's
+  int16_t msToNextHop = msToNextHopRmt; //By default, we will adjust our clock to match our mate's
 
   bool resetHop = false; //The hop ISR may occur while we are forcing a hop (case A and C). Reset timeToHop as needed.
 
   //Below are the edge cases that occur when a hop occurs near ACK reception
 
-  //msToNextHopLocal is small and msToNextHopRemote is negative (and small)
-  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRemote comes in negative (and small) then the remote has hopped
-  //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRemote + dwellTime)
-  if (msToNextHopLocal < smallAmount && (msToNextHopRemote <= 0 && msToNextHopRemote >= (smallAmount * -1)))
+  //msToNextHopLocal is small and msToNextHopRmt is negative (and small)
+  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRmt comes in negative (and small) then the remote has hopped
+  //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRmt + dwellTime)
+  if (msToNextHopLocal < smallAmount && (msToNextHopRmt <= 0 && msToNextHopRmt >= (smallAmount * -1)))
   {
     hopChannel();
-    msToNextHop = msToNextHopRemote + settings.maxDwellTime;
+    deltaHops += 1;
+    msToNextHop = msToNextHopRmt + settings.maxDwellTime;
     resetHop = true; //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
   }
 
-  //msToNextHopLocal is large and msToNextHopRemote is negative
-  //If we just hopped (msToNextHopLocal is large), and msToNextHopRemote comes in negative then the remote has hopped
-  //No need to hop. Adjust our clock to the remote's next hop (msToNextHopRemote + dwellTime)
-  else if (msToNextHopLocal > largeAmount && msToNextHopRemote <= 0)
+  //msToNextHopLocal is large and msToNextHopRmt is negative
+  //If we just hopped (msToNextHopLocal is large), and msToNextHopRmt comes in negative then the remote has hopped
+  //No need to hop. Adjust our clock to the remote's next hop (msToNextHopRmt + dwellTime)
+  else if (msToNextHopLocal > largeAmount && msToNextHopRmt <= 0)
   {
-    msToNextHop = msToNextHopRemote + settings.maxDwellTime;
+    msToNextHop = msToNextHopRmt + settings.maxDwellTime;
   }
 
-  //msToNextHopLocal is small and msToNextHopRemote is large
-  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRemote comes in large then the remote has hopped recently
-  //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRemote)
-  else if (msToNextHopLocal < smallAmount && msToNextHopRemote > largeAmount)
+  //msToNextHopLocal is small and msToNextHopRmt is large
+  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRmt comes in large then the remote has hopped recently
+  //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRmt)
+  else if (msToNextHopLocal < smallAmount && msToNextHopRmt > largeAmount)
   {
     hopChannel();
-    msToNextHop = msToNextHopRemote;
+    deltaHops += 1;
+    msToNextHop = msToNextHopRmt;
     resetHop = true; //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
   }
 
-  //msToNextHopLocal is large and msToNextHopRemote is large
-  //If we just hopped (msToNextHopLocal is large), and a msToNextHopRemote comes in large then the remote has hopped
-  //Then adjust our clock to the remote's next hop (msToNextHopRemote)
-  else if (msToNextHopLocal > largeAmount && msToNextHopRemote > largeAmount)
+  //msToNextHopLocal is large and msToNextHopRmt is large
+  //If we just hopped (msToNextHopLocal is large), and a msToNextHopRmt comes in large then the remote has hopped
+  //Then adjust our clock to the remote's next hop (msToNextHopRmt)
+  else if (msToNextHopLocal > largeAmount && msToNextHopRmt > largeAmount)
   {
-    msToNextHop = msToNextHopRemote;
+    msToNextHop = msToNextHopRmt;
   }
 
-  //msToNextHopLocal is large and msToNextHopRemote is small
-  //If we just hopped (msToNextHopLocal is large), and a msToNextHopRemote comes in small then the remote is about to hop
-  //Then adjust our clock to the remote's next hop (msToNextHopRemote + dwellTime)
-  else if (msToNextHopLocal > largeAmount && msToNextHopRemote < smallAmount)
+  //msToNextHopLocal is large and msToNextHopRmt is small
+  //If we just hopped (msToNextHopLocal is large), and a msToNextHopRmt comes in small then the remote is about to hop
+  //Then adjust our clock to the remote's next hop (msToNextHopRmt + dwellTime)
+  else if (msToNextHopLocal > largeAmount && msToNextHopRmt < smallAmount)
   {
-    msToNextHop = msToNextHopRemote + settings.maxDwellTime;
+    msToNextHop = msToNextHopRmt + settings.maxDwellTime;
   }
 
-  //msToNextHopLocal is small and msToNextHopRemote is small
-  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRemote comes in small then the remote is about to hop
-  //Then adjust our clock to the remote's next hop (msToNextHopRemote)
-  else if (msToNextHopLocal < smallAmount && msToNextHopRemote < smallAmount)
+  //msToNextHopLocal is small and msToNextHopRmt is small
+  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRmt comes in small then the remote is about to hop
+  //Then adjust our clock to the remote's next hop (msToNextHopRmt)
+  else if (msToNextHopLocal < smallAmount && msToNextHopRmt < smallAmount)
   {
-    msToNextHop = msToNextHopRemote;
+    msToNextHop = msToNextHopRmt;
 
     //If we have a negative remote hop time that is larger than a dwell time then the remote has hopped again
     //This is seen at lower air speeds
-    //Hop now, and adjust our clock to the remote's next hop (msToNextHopRemote + dwellTime)
+    //Hop now, and adjust our clock to the remote's next hop (msToNextHopRmt + dwellTime)
     if (msToNextHop < (settings.maxDwellTime * -1)) //-402 < -400
     {
       hopChannel();
+      deltaHops += 1;
       msToNextHop += settings.maxDwellTime;
       resetHop = true; //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
     }
@@ -2957,17 +3117,6 @@ void syncChannelTimer()
   while (msToNextHop < 0)
     msToNextHop += settings.maxDwellTime;
 
-  if (settings.debugSync)
-  {
-    systemPrint("msToNextHopRemote: ");
-    systemPrint(msToNextHopRemote);
-    systemPrint(" msToNextHopLocal: ");
-    systemPrint(msToNextHopLocal);
-    systemPrint(" msToNextHop: ");
-    systemPrint(msToNextHop);
-    systemPrintln();
-  }
-
   partialTimer = true;
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
@@ -2976,10 +3125,71 @@ void syncChannelTimer()
     timeToHop = false;
 
   channelTimer.enableTimer();
-
   triggerEvent(TRIGGER_SYNC_CHANNEL); //Trigger after adjustments to timer to avoid skew during debug
-  if (settings.debugSync)
-    outputSerialData(true);
+
+  //Check for a sync error
+  deltaMillis = (millisToNextHop - msToNextHop + settings.maxDwellTime) % settings.maxDwellTime;
+  syncError = deltaHops || ((deltaMillis > 3) && (deltaMillis < (settings.maxDwellTime - 2)));
+
+  //Display the channel sync timer calculations
+  if (settings.debugSync || syncError)
+  {
+    systemPrint(msToNextHopRemote);
+    systemPrint(" Nxt Hop - ");
+    systemPrint((txTimeUsec + rxTimeUsec) / 1000);
+    systemPrint(" (TX + RX)");
+    if (adjustment)
+    {
+      systemPrint(" + ");
+      systemPrint(adjustment);
+      systemPrint(" Adj");
+    }
+    systemPrint(" = ");
+    systemPrint(millisToNextHop);
+    systemPrintln(" mSec");
+
+    systemPrint("msToNextHopRmt: ");
+    systemPrint(msToNextHopRmt);
+    systemPrint(" msToNextHopLocal: ");
+    systemPrint(msToNextHopLocal);
+    systemPrint(" msToNextHop: ");
+    systemPrint(msToNextHop);
+    systemPrint(" delta: ");
+    systemPrint(deltaMillis);
+    systemPrint(" deltaHops: ");
+    systemPrint(deltaHops);
+    systemPrintln();
+    if (syncError)
+    {
+      int16_t channelTimer;
+      uint8_t * data;
+
+      systemPrint("rxTimeUsec: ");
+      systemPrintln(rxTimeUsec);
+      systemPrint("txTimeUsec: ");
+      systemPrintln(txTimeUsec);
+      systemPrintln("RX Frame");
+      dumpBuffer(incomingBuffer, headerBytes + rxDataBytes + trailerBytes);
+
+      data = incomingBuffer;
+      if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
+      {
+        systemPrint("    Net Id: ");
+        systemPrint(*data);
+        systemPrint(" (0x");
+        systemPrint(*data++, HEX);
+        systemPrintln(")");
+      }
+      printControl(*data++);
+      memcpy(&channelTimer, data, sizeof(channelTimer));
+      data += sizeof(channelTimer);
+      systemPrint("    Channel Timer(ms): ");
+      systemPrintln(channelTimer);
+
+      systemPrintln("ERROR: Must fix channel timer synchronization math");
+      waitForever();
+    }
+  }
 }
 
 //This function resets the heartbeat time and re-rolls the random time
@@ -3133,7 +3343,7 @@ const I16_TO_STRING radioCallName[] =
   {RADIO_CALL_configureRadio, "configureRadio"},
   {RADIO_CALL_setRadioFrequency, "setRadioFrequency"},
   {RADIO_CALL_returnToReceiving, "returnToReceiving"},
-  {RADIO_CALL_calcAirTime, "calcAirTime"},
+  {RADIO_CALL_calcAirTimeUsec, "calcAirTimeUsec"},
   {RADIO_CALL_xmitDatagramP2PFindPartner, "xmitDatagramP2PFindPartner"},
   {RADIO_CALL_xmitDatagramP2PSyncClocks, "xmitDatagramP2PSyncClocks"},
   {RADIO_CALL_xmitDatagramP2PZeroAcks, "xmitDatagramP2PZeroAcks"},
@@ -3163,6 +3373,8 @@ const I16_TO_STRING radioCallName[] =
   {RADIO_CALL_setHeartbeatLong, "setHeartbeatLong"},
   {RADIO_CALL_setHeartbeatMultipoint, "setHeartbeatMultipoint"},
   {RADIO_CALL_setVcHeartbeatTimer, "setVcHeartbeatTimer"},
+  {RADIO_CALL_hopChannel, "hopChannel"},
+
   //Insert new values before this line
   {RADIO_CALL_hopISR, "hopISR"},
   {RADIO_CALL_transactionCompleteISR, "transactionCompleteISR"},
@@ -3222,7 +3434,7 @@ void displayRadioCallHistory()
     if (radioCallHistory[sortOrder[index]])
     {
       systemPrint("        ");
-      systemPrintTimestamp(radioCallHistory[sortOrder[index]]);
+      systemPrintTimestamp(radioCallHistory[sortOrder[index]] + timestampOffset);
       string = getRadioCall(sortOrder[index]);
       if (string)
       {

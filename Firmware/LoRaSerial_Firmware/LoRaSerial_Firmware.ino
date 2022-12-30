@@ -58,12 +58,19 @@ const int FIRMWARE_VERSION_MINOR = 0;
 
 #define CHANNEL_TIMER_BYTES sizeof(uint16_t) //Number of bytes used within in control header for clock sync (uint16_t msToNextHop)
 #define CLOCK_MILLIS_BYTES sizeof(unsigned long) //Number of bytes used within in various packets for system timestamps sync (unsigned long currentMillis)
-#define SYNC_CLOCKS_BYTES   (sizeof(uint8_t) + sizeof(unsigned long)) //Number of data bytes in the SYNC_CLOCKS frame
-#define ZERO_ACKS_BYTES     sizeof(unsigned long) //Number of data bytes in the ZERO_ACKS frame
 #define MAX_PACKET_SIZE 255 //Limited by SX127x
 #define AES_IV_BYTES    12  //Number of bytes for AESiv
 #define AES_KEY_BYTES   16  //Number of bytes in the encryption key
 #define UNIQUE_ID_BYTES 16  //Number of bytes in the unique ID
+
+//Frame lengths
+#define MP_HEARTBEAT_BYTES      0 //Number of data bytes in the MP_HEARTBEAT frame
+#define P2P_FIND_PARTNER_BYTES  sizeof(unsigned long) //Number of data bytes in the FIND_PARTNER frame
+#define P2P_SYNC_CLOCKS_BYTES   (sizeof(uint8_t) + sizeof(unsigned long)) //Number of data bytes in the SYNC_CLOCKS frame
+#define P2P_ZERO_ACKS_BYTES     sizeof(unsigned long) //Number of data bytes in the ZERO_ACKS frame
+#define P2P_HEARTBEAT_BYTES     sizeof(unsigned long) //Number of data bytes in the HEARTBEAT frame
+#define P2P_ACK_BYTES           sizeof(unsigned long) //Number of data bytes in the ACK frame
+#define VC_HEARTBEAT_BYTES      0 //Number of data bytes in the VC_HEARTBEAT frame
 
 //Bit 0: Signal Detected indicates that a valid LoRa preamble has been detected
 //Bit 1: Signal Synchronized indicates that the end of Preamble has been detected, the modem is in lock
@@ -111,6 +118,9 @@ uint8_t pin_trigger = PIN_UNDEFINED;
 #define RADIO_USE_TX_DATA_LED     GREEN_LED_4 //Green
 #define RADIO_USE_BAD_FRAMES_LED  BLUE_LED    //Blue
 #define RADIO_USE_BAD_CRC_LED     YELLOW_LED  //Yellow
+
+#define LED_MP_HOP_CHANNEL        BLUE_LED
+#define LED_MP_HEARTBEAT          YELLOW_LED
 
 #define CYLON_TX_DATA_LED   BLUE_LED
 #define CYLON_RX_DATA_LED   YELLOW_LED
@@ -380,6 +390,12 @@ const int rssiLevelHigh = -100;
 const int rssiLevelMax = -70;
 int rssi; //Average signal level, measured during reception of a packet
 
+//LED control values
+uint32_t ledPreviousRssiMillis;
+uint32_t ledHeartbeatMillis;
+int8_t ledRssiCount; //Pulse width count for LED display
+int8_t ledRssiValue; //Target pulse width count for LED display
+
 //Link quality metrics
 uint32_t datagramsSent;     //Total number of datagrams sent
 uint32_t datagramsReceived; //Total number of datagrams received
@@ -448,8 +464,7 @@ unsigned long linkDownTimer;
 //Clock synchronization
 unsigned long rcvTimeMillis;
 unsigned long xmitTimeMillis;
-unsigned long timestampOffset;
-unsigned long roundTripMillis;
+long timestampOffset;
 unsigned long vcTxHeartbeatMillis;
 unsigned long nextChannelZeroTimeInMillis;
 
@@ -501,6 +516,82 @@ uint8_t originalNetID = 0; //Temp store ID if we need to exit button training
 bool originalServer = false; //Temp store server setting if we need to exit button training
 
 char platformPrefix[25]; //Used for printing platform specific device name, ie "SAMD21 1W 915MHz"
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+/*
+          Server                                Client
+
+                  HEARTBEAT send needed
+          call xmitDatagramP2PHeartbeat
+    .--------------------  Get millis()
+    |     Add millis to HEARTBEAT frame
+    |  *                  USB Interrupt
+    |  *        hopChannel if necessary
+    |                      Software CRC
+    | txTimeUsec        Data encryption
+    |                    Data whitening
+    |        Move data to radio via SPI
+    |         xmitTimeMillis = millis()
+    |  *          Radio arbitrary delay
+    |                      TX HEARTBEAT  - - >  Detect RX in process
+    |                               ...         ...
+    |                           TX done         RX HEARTBEAT
+    |  *          Radio arbitrary delay         Radio arbitrary delay           *
+    '---  Transaction complete detected         USB Interrupt                   *
+                                      .-------  DIO0 Interrupt
+                                      |         Delay - finish previous loop
+                           rxTimeUsec |         Transaction complete detected
+                                      |         call receiveDatagram
+                                      |         USB Interrupt
+                                      +-------  Get millis()
+                                                Move data from radio using SPI
+                                                Data whitening
+                                                Data decryption
+                                                Software CRC
+                                                Start processing HEARTBEAT datagram
+                                                Get millis();
+
+                                                CPU Clock drift
+
+      timeStampOffset = TX millis + txTimeUsec + rxTimeUsec
+
+                                    RX uSec   RX Var   TX uSec   Hop uSec
+      None                            1379      216      1970       22
+      Encryption                      1957      155      2540       13
+      CRC                             1387      178      1986        5
+      CRC + Encryption                1960      223      2557       15
+      Whitening                       1393      231      1993       28
+      Whitening + Encryption          1963      263      2562       22
+      Whitening + CRC                 1415      249      2014       13
+      Whitening + CRC + Encryption    1987      220      2584       27
+
+      Options         RX      TX
+      CRC:             8      16   uSec
+      Encryption:    578     570   uSec
+      CRC + Encr:    581     587   uSec
+      Whitening       14      15   uSec
+      White + Enc:   584     592   uSec
+      White + CRC:    36      44   uSec
+      Wh + CRC + En: 608     614   uSec
+
+*/
+
+//Clock synchronization
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+//RX and TX time measurements
+uint32_t rxTimeUsec;
+uint32_t txTimeUsec;
+uint16_t txRxTimeMsec;
+
+uint32_t transactionCompleteMicros; //Timestamp at the beginning of the transactionCompleteIsr routine
+uint32_t txDatagramMicros; //Timestamp at the beginning of the transmitDatagram routine
+uint16_t maxFrameAirTime; //Air time of the maximum sized message
+unsigned long remoteSystemMillis; //Millis value contained in the received message
+
+bool rxFirstAck; //Set true when first ACK is received
+bool txFirstAck; //Set true when first ACK is transmitted
+
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Architecture variables
