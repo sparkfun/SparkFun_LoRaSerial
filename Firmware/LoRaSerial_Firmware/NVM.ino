@@ -154,23 +154,16 @@ void nvmLoadVcUniqueId(int8_t vc)
 {
   uint8_t id[UNIQUE_ID_BYTES];
   int index;
-  int offset;
 
   //Read the ID from the flash
-  offset = NVM_UNIQUE_ID_OFFSET + (vc * UNIQUE_ID_BYTES);
-  EEPROM.get(offset, id);
+  nvmGetUniqueId(vc, id);
 
-  //Verify that the value was saved
-  for (index = 0; index < sizeof(id); index++)
+  //Update the VC when a unique ID is in the NVM
+  if (nvmIsVcUniqueIdSet(vc))
   {
-    //Determine if this entry was set to a value
-    if (id[index] != NVM_ERASE_VALUE)
-    {
-      //The unique ID was set, copy it into the VC structure
-      memcpy(virtualCircuitList[vc].uniqueId, id, sizeof(id));
-      virtualCircuitList[vc].flags.valid = true;
-      break;
-    }
+    //The unique ID was set, copy it into the VC structure
+    memcpy(virtualCircuitList[vc].uniqueId, id, sizeof(id));
+    virtualCircuitList[vc].flags.valid = true;
   }
 }
 
@@ -197,16 +190,11 @@ void nvmSaveVcUniqueId(int8_t vc)
 {
   uint8_t id[UNIQUE_ID_BYTES];
   int index;
-  int offset;
 
   //Read the ID from the flash
-  offset = NVM_UNIQUE_ID_OFFSET + (vc * UNIQUE_ID_BYTES);
-  EEPROM.get(offset, id);
+  nvmGetUniqueId(vc, id);
 
   //Write the ID into the flash
   if (memcmp(id, virtualCircuitList[vc].uniqueId, sizeof(id)) != 0)
-  {
-    EEPROM.put(offset, virtualCircuitList[vc].uniqueId);
-    arch.eepromCommit();
-  }
+    nvmSaveUniqueId(vc, virtualCircuitList[vc].uniqueId);
 }
