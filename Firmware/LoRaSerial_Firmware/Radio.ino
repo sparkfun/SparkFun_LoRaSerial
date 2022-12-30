@@ -264,10 +264,116 @@ uint16_t calcAirTime(uint8_t bytesToSend)
 }
 
 //Given spread factor and bandwidth, return symbol time
+float calcSymbolTimeUsec()
+{
+  //The following documentation is from https://en.wikipedia.org/wiki/LoRa
+  //
+  //Each symbol is represented by a cyclic shifted chirp over the frequency
+  //interval (f0-B/2,f0+B/2) where f0 is the center frequency and B the
+  //bandwidth of the signal (in Hertz).
+  //The spreading factor (SF) is a selectable radio parameter from 5 to 12 and
+  //represents the number of bits sent per symbol and in addition determines
+  //how much the information is spread over time.
+  //There are M=2^SF different initial frequencies of the cyclic shifted chirp
+  //(the instantaneous frequency is linearly increased and wrapped to f0-B/2
+  //when it reaches the maximum frequency f0+B/2.
+  //The symbol rate is determined by Rs=B/(2^SF.
+  //LoRa can trade off data rate for sensitivity (assuming a fixed channel
+  //bandwidth B) by selecting the SF, i.e. the amount of spread used.
+  //A lower SF corresponds to a higher data rate but a worse sensitivity, a
+  //higher SF implies a better sensitivity but a lower data rate.
+
+  //The LoRa PHY is described in https://wirelesspi.com/understanding-lora-phy-long-range-physical-layer/
+  //
+  // SF = spread factor = number of bits per symbol
+  //
+  // M = 2^SF = number of samples per symbol
+  //
+  // B = Bandwidth of the input signal
+  //
+  //From the sampling theorem:
+  //
+  // Fs >= 2 * B for real frequencies
+  // Fs >= B for complex frequencies
+  //
+  //Since this is a complex frequency and we want to use the lowest possible
+  //sampling frequency, we have
+  //
+  // Fs = B = 1 / Ts
+  //
+  // Ts = 1 / B
+  //
+  // Tm = M / B = Symbol time
+  //
+  // F1 = B / M = frequency step used within the bandwidth
+  //
+  // Fm = m * F1, m = 0 - (M-1)  Frequency starting and end points
+  //
+  // u = B / Tm = Chirp rate
+  //
+  // Example: SF = 2
+  //    M = 2 ^ 2 = 4
+  //
+  //Each symbol time (Tm), the signal changes frequencies from f0 - B/2 to f0 + B/2.
+  //Each symbol has a different starting (ending) frequency, but scans the entire
+  //bandwidth.
+  //
+  //     ___________________________ f0 + B/2
+  //             /|  /|  /|  /|
+  //            / | / | / |   |  /
+  //           /  |/  |   | / | /
+  //     _____/___|___|/__|/__|/_____
+  //                                  f0 - B/2
+  //   Symbol | 00 | 01 | 10 | 11 |
+  //          |    |    |    |    |
+  //          0   Tm   2Tm  3Tm  4Tm
+  //
+  //The signal is e^(j* [(u*pi*t^2)+(2*pi*Fm*t)+phi])
+  //
+  //I: The real portion of the signal, cos((u*pi*t^2)+(2*pi*Fm*t)+phi)
+  //Q: The imaginary portion of the signal, j*sin((u*pi*t^2)+(2*pi*Fm*t)+phi)
+  //
+  //Decoding the signal is done by down chirping, multiplying the following
+  //phase locked signal with the broadcast signal and putting it through a low
+  //pass filter.
+  //
+  //     ___________________________ f0 + B/2
+  //          |\   |\   |\   |\
+  //          | \  | \  | \  | \
+  //          |  \ |  \ |  \ |  \
+  //     _____|___\|___\|___\|___\__
+  //                                  f0 - B/2
+  //          |    |    |    |    |
+  //          0   Tm   2Tm  3Tm  4Tm
+  //
+  //The resulting signal is effectively added and offset to produce a constant
+  //frequency associated with the symbol over the symbol time.
+  //
+  //          0   Tm   2Tm  3Tm  4Tm
+  //          |    |    |    |    |
+  //                         _____    B
+  //                    _____
+  //               _____
+  //          _____
+  //                                  0
+  //          |    |    |    |    |
+  //          0   Tm   2Tm  3Tm  4Tm
+  //
+  //    SF           11      10       9       8       7       6
+  //    M          2048    1024     512     256     128      64
+  //    B KHz      62.5    62.5     125     125     500     500
+  //    Tm uSec   65536   32768    8192    4096     512     256
+  //    Symbols   15.25   30.52   122.1   244.1    1953    3906
+  //
+  //Compute time in microseconds using bandwidth in kHz
+  float tSymUsec = (pow(2, settings.radioSpreadFactor) * 1000.) / settings.radioBandwidth;
+  return (tSymUsec);
+}
+
+//Return symbol time in milliseconds
 float calcSymbolTimeMsec()
 {
-  float tSym = pow(2, settings.radioSpreadFactor) / settings.radioBandwidth;
-  return (tSym);
+  return calcSymbolTimeUsec() / 1000.;
 }
 
 //Given spread factor, bandwidth, coding rate and frame size, return most bytes we can push per second
