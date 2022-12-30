@@ -65,6 +65,9 @@ const int FIRMWARE_VERSION_MINOR = 0;
 #define AES_KEY_BYTES   16  //Number of bytes in the encryption key
 #define UNIQUE_ID_BYTES 16  //Number of bytes in the unique ID
 
+//Frame lengths
+#define P2P_FIND_PARTNER_BYTES  sizeof(unsigned long) //Number of data bytes in the FIND_PARTNER frame
+
 //Bit 0: Signal Detected indicates that a valid LoRa preamble has been detected
 //Bit 1: Signal Synchronized indicates that the end of Preamble has been detected, the modem is in lock
 //Bit 3: Header Info Valid toggles high when a valid Header (with correct CRC) is detected

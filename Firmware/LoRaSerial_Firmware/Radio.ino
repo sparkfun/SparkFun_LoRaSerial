@@ -868,9 +868,12 @@ const uint16_t crc16Table[256] =
 //First packet in the three way handshake to bring up the link
 bool xmitDatagramP2PFindPartner()
 {
-  radioCallHistory[RADIO_CALL_xmitDatagramP2PFindPartner] = millis();
+  uint8_t * startOfData;
 
   unsigned long currentMillis = millis();
+  radioCallHistory[RADIO_CALL_xmitDatagramP2PFindPartner] = currentMillis;
+
+  startOfData = endOfTxData;
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   endOfTxData += sizeof(unsigned long);
 
@@ -884,6 +887,14 @@ bool xmitDatagramP2PFindPartner()
       | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 4 bytes | n Bytes  |
       +----------+---------+----------+------------+---------+----------+
   */
+
+  //Verify the data length
+  if ((endOfTxData - startOfData) != P2P_FIND_PARTNER_BYTES)
+  {
+    systemPrintln("ERROR - Fix the P2P_FIND_PARTNER_BYTES value!");
+    outputSerialData(true);
+    waitForever();
+  }
 
   txControl.datagramType = DATAGRAM_FIND_PARTNER;
   return (transmitDatagram());
