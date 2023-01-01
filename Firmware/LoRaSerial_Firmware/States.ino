@@ -240,21 +240,21 @@ void updateRadioState()
                        |                         |   Start Rx              |   |
                        |                         |   MAX_PACKET_SIZE       |   |
                        |                         |                         |   |
-                       V                         V         Timeout         |   |
-      .--------------->+                P2P_WAIT_ZERO_ACKS ----------------'   |
-      |                |                         |                             |
-      |                | TX ZERO_ACKS            |                             |
-      |                |                         |                             |
-      |                V                         |                             |
-      |    P2P_WAIT_TX_ZERO_ACKS_DONE            |                             |
-      |                | Tx Complete - - - - - > | Rx ZERO_ACKS                |
-      | Stop           |   Start HOP timer       |   Start HOP Timer           |
-      | HOP            |   Start Rx              |   Start Rx                  |
-      | Timer          |   MAX_PACKET_SIZE       |   MAX_PACKET_SIZE           |
-      |                |   Zero ACKs             |   Zero ACKs                 |
-      |       Rx       |                         |                             |
-      |    SYNC_CLOCKS V                         V         Rx FIND_PARTNER     |
-      `---------- P2P_LINK_UP               P2P_LINK_UP -----------------------’
+                       |                         V         Timeout         |   |
+                       |                P2P_WAIT_ZERO_ACKS ----------------'   |
+                       |                         |                             |
+                       | TX ZERO_ACKS            |                             |
+                       |                         |                             |
+                       V                         |                             |
+           P2P_WAIT_TX_ZERO_ACKS_DONE            |                             |
+                       | Tx Complete - - - - - > | Rx ZERO_ACKS                |
+                       |   Start HOP timer       |   Start HOP Timer           |
+                       |   Start Rx              |   Start Rx                  |
+                       |   MAX_PACKET_SIZE       |   MAX_PACKET_SIZE           |
+                       |   Zero ACKs             |   Zero ACKs                 |
+                       |                         |                             |
+                       V                         V         Rx FIND_PARTNER     |
+                  P2P_LINK_UP               P2P_LINK_UP -----------------------’
                        |                         |
                        | Rx Data                 | Rx Data
                        |                         |
@@ -672,6 +672,8 @@ void updateRadioState()
             }
             break;
 
+          case DATAGRAM_SYNC_CLOCKS:
+          case DATAGRAM_ZERO_ACKS:
           case DATAGRAM_BAD:
             triggerEvent(TRIGGER_BAD_PACKET);
             break;
