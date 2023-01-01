@@ -2976,8 +2976,7 @@ void syncChannelTimer()
   if ((deltaMillis <= 0) && ((currentMillis - timerStart) > (settings.maxDwellTime - txRxTimeMsec)))
   {
     //Hop one channel to catch up with the remote system
-    if (allowAdjustments)
-      hopChannel();
+//    hopChannel();
     deltaHops -= 1;
   }
 
