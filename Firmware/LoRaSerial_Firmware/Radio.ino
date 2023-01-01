@@ -725,7 +725,7 @@ void updateHopISR()
 //We adjust the initial clock setup as needed
 int16_t getLinkupOffset()
 {
-  partialTimer = true; //Mark timer so that it runs only once with less than dwell time
+  reloadChannelTimer = true; //Mark timer so that it runs only once with less than dwell time
 
   int linkupOffset = 0;
 
@@ -2919,7 +2919,7 @@ void stopChannelTimer()
   channelTimer.disableTimer();
   triggerEvent(TRIGGER_HOP_TIMER_STOP);
   timeToHop = false;
-  partialTimer = false;
+  reloadChannelTimer = false;
 }
 
 //Given the remote unit's number of ms before its next hop,
@@ -3116,7 +3116,8 @@ void syncChannelTimer()
   while (msToNextHop < 0)
     msToNextHop += settings.maxDwellTime;
 
-  partialTimer = true;
+  //When the ISR fires, reload the channel timer with settings.maxDwellTime
+  reloadChannelTimer = true;
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
 

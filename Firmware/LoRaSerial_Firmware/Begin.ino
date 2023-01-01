@@ -100,9 +100,9 @@ void channelTimerHandler()
   timerStart = millis(); //Record when this ISR happened. Used for calculating clock sync.
 
   //If the last timer was used to sync clocks, restore full timer interval
-  if (partialTimer == true)
+  if (reloadChannelTimer == true)
   {
-    partialTimer = false;
+    reloadChannelTimer = false;
     channelTimer.setInterval_MS(settings.maxDwellTime, channelTimerHandler);
   }
 

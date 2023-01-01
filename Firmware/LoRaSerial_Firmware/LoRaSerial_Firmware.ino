@@ -162,7 +162,7 @@ bool trainViaButton = false; //Allows auto-creation of server if client times ou
 #include "SAMDTimerInterrupt.h" //http://librarymanager/All#SAMD_TimerInterrupt v1.9.0 (currently) by Koi Hang
 SAMDTimer channelTimer(TIMER_TCC); //Available: TC3, TC4, TC5, TCC, TCC1 or TCC2
 unsigned long timerStart = 0; //Tracks how long our timer has been running since last hop
-bool partialTimer = false; //After an ACK we reset and run a partial timer to sync units
+bool reloadChannelTimer = false; //When set channel timer interval needs to be reloaded with settings.maxDwellTime
 
 uint16_t petTimeout = 0; //A reduced amount of time before WDT triggers. Helps reduce amount of time spent petting.
 unsigned long lastPet = 0; //Remebers time of last WDT pet.
