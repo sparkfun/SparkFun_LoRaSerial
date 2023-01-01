@@ -2495,7 +2495,7 @@ bool transmitDatagram()
     //Hake sure that the transmitted msToNextHop is in the range 0 - maxDwellTime
     if (timeToHop)
       hopChannel();
-    uint16_t msToNextHop = settings.maxDwellTime - (millis() - timerStart);
+    uint16_t msToNextHop = settings.maxDwellTime - (millis() - channelTimerStart); //TX channel timer value
     memcpy(header, &msToNextHop, sizeof(msToNextHop));
     header += sizeof(msToNextHop); //aka CHANNEL_TIMER_BYTES
 
@@ -2907,7 +2907,7 @@ void startChannelTimer(int16_t startAmount)
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(startAmount, channelTimerHandler);
   channelTimer.enableTimer();
-  timerStart = millis(); //ISR normally takes care of this but allow for correct ACK sync before first ISR
+  channelTimerStart = millis(); //startChannelTimer - ISR updates value
   triggerEvent(TRIGGER_HOP_TIMER_START);
 }
 
@@ -2973,7 +2973,7 @@ void syncChannelTimer()
   //Determine if the remote system has hopped and the local system has not
   deltaHops = 0;
   deltaMillis = msToNextHopRemote - txRxTimeMsec;
-  if ((deltaMillis <= 0) && ((currentMillis - timerStart) > (settings.maxDwellTime - txRxTimeMsec)))
+  if ((deltaMillis <= 0) && ((currentMillis - channelTimerStart) > (settings.maxDwellTime - txRxTimeMsec)))
   {
     //Hop one channel to catch up with the remote system
 //    hopChannel();
@@ -3035,7 +3035,7 @@ void syncChannelTimer()
       break;
   }
 
-  int16_t msToNextHopLocal = settings.maxDwellTime - (millis() - timerStart);
+  int16_t msToNextHopLocal = settings.maxDwellTime - (millis() - channelTimerStart);
 
   //Precalculate large/small time amounts
   uint16_t smallAmount = settings.maxDwellTime / 8;

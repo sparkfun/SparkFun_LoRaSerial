@@ -97,7 +97,7 @@ void beginChannelTimer()
 //ISR that fires when channel timer expires
 void channelTimerHandler()
 {
-  timerStart = millis(); //Record when this ISR happened. Used for calculating clock sync.
+  channelTimerStart = millis(); //Record when this ISR happened. Used for calculating clock sync.
 
   //If the last timer was used to sync clocks, restore full timer interval
   if (reloadChannelTimer == true)
