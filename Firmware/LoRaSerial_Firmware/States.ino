@@ -156,7 +156,7 @@ void updateRadioState()
 
       selectHeaderAndTrailerBytes(); //Determine the components of the frame header and trailer
 
-      stopChannelTimer(); //Prevent radio from frequency hopping
+      stopChannelTimer(); //Stop frequency hopping - reset
 
       configureRadio(); //Setup radio, set freq to channel 0, calculate air times
 
@@ -216,40 +216,41 @@ void updateRadioState()
     /*
                     System A                 System B
 
-                     RESET                     RESET
-                       |                         |
-             Channel 0 |                         | Channel 0
-                       V                         V
-           .----> P2P_NO_LINK               P2P_NO_LINK
-           |           | Tx FIND_PARTNER         |
-           | Timeout   |                         |
-           |           V                         |
-           | P2P_WAIT_TX_FIND_PARTNER_DONE       |
-           |           |                         |
-           |           | Tx Complete - - - - - > | Rx FIND_PARTNER
-           |           |   Start Rx              |
-           |           |   MAX_PACKET_SIZE       |
-           |           V                         V
-           `---- P2P_WAIT_SYNC_CLOCKS            +<----------------------------.
-                       |                         | Tx SYNC_CLOCKS              |
-                       |                         V                             |
-                       |              P2P_WAIT_TX_SYNC_CLOCKS_DONE             |
+                     RESET                     RESET <-------------------------.
                        |                         |                             |
-        Rx SYNC_CLOCKS | < - - - - - - - - - - - | Tx Complete                 |
-                       |                         |   Start Rx                  |
-                       |                         |   MAX_PACKET_SIZE           |
-                       |                         |                             |
-                       V                         V         Timeout             |
-      .--------------->+                P2P_WAIT_ZERO_ACKS ------------------->+
-      |                |                         |                             ^
+             Channel 0 |                         | Channel 0                   |
+        Stop HOP Timer |                         | Stop HOP Timer              |
+                       V                         V                             |
+           .----> P2P_NO_LINK               P2P_NO_LINK <------------------.   |
+           |           | Tx FIND_PARTNER         |                         |   |
+           | Timeout   |                         |                         |   |
+           |           V                         |          Stop HOP Timer |   |
+           | P2P_WAIT_TX_FIND_PARTNER_DONE       |                         |   |
+           |           |                         |                         |   |
+           |           | Tx Complete - - - - - > | Rx FIND_PARTNER         |   |
+           |           |   Start Rx              |                         |   |
+           |           |   MAX_PACKET_SIZE       |                         |   |
+           |           V                         |                         |   |
+           `---- P2P_WAIT_SYNC_CLOCKS            |                         |   |
+                       |                         | Tx SYNC_CLOCKS          |   |
+                       |                         V                         |   |
+                       |              P2P_WAIT_TX_SYNC_CLOCKS_DONE         |   |
+                       |                         |                         |   |
+        Rx SYNC_CLOCKS | < - - - - - - - - - - - | Tx Complete             |   |
+                       |                         |   Start Rx              |   |
+                       |                         |   MAX_PACKET_SIZE       |   |
+                       |                         |                         |   |
+                       V                         V         Timeout         |   |
+      .--------------->+                P2P_WAIT_ZERO_ACKS ----------------'   |
+      |                |                         |                             |
       |                | TX ZERO_ACKS            |                             |
       |                |                         |                             |
       |                V                         |                             |
       |    P2P_WAIT_TX_ZERO_ACKS_DONE            |                             |
       |                | Tx Complete - - - - - > | Rx ZERO_ACKS                |
-      | Stop           |   Start HOP timer       |   Start HOP Timer           | Stop
-      | HOP            |   Start Rx              |   Start Rx                  | HOP
-      | Timer          |   MAX_PACKET_SIZE       |   MAX_PACKET_SIZE           | Timer
+      | Stop           |   Start HOP timer       |   Start HOP Timer           |
+      | HOP            |   Start Rx              |   Start Rx                  |
+      | Timer          |   MAX_PACKET_SIZE       |   MAX_PACKET_SIZE           |
       |                |   Zero ACKs             |   Zero ACKs                 |
       |       Rx       |                         |                             |
       |    SYNC_CLOCKS V                         V         Rx FIND_PARTNER     |
@@ -269,7 +270,6 @@ void updateRadioState()
       //If we are on the wrong channel, go home
       if (channelNumber != 0)
       {
-        stopChannelTimer();
         channelNumber = 0;
         setRadioFrequency(false);
       }
@@ -311,8 +311,6 @@ void updateRadioState()
             //Compute the receive time
             COMPUTE_RX_TIME(rxData, 1);
 
-            //In the case of a retransmission, stop the channel timer
-            stopChannelTimer();
             startChannelTimer();
 
             //Acknowledge the FIND_PARTNER with SYNC_CLOCKS
@@ -422,7 +420,7 @@ void updateRadioState()
           }
 
           //Stop the channel timer
-          stopChannelTimer();
+          stopChannelTimer(); //P2P_WAIT_SYNC_CLOCKS timeout
 
           //Start the TX timer: time to delay before transmitting the FIND_PARTNER
           triggerEvent(TRIGGER_HANDSHAKE_SYNC_CLOCKS_TIMEOUT);
@@ -507,7 +505,7 @@ void updateRadioState()
           }
 
           //Stop the channel timer
-          stopChannelTimer();
+          stopChannelTimer(); //P2P_WAIT_ZERO_ACKS timeout
 
           //Start the TX timer: time to delay before transmitting the FIND_PARTNER
           triggerEvent(TRIGGER_HANDSHAKE_ZERO_ACKS_TIMEOUT);
@@ -995,7 +993,7 @@ void updateRadioState()
     //Start searching for other radios
     //====================
     case RADIO_DISCOVER_BEGIN:
-      stopChannelTimer(); //Stop hopping
+      stopChannelTimer(); //Stop hopping - multipoint discovery
 
       if (settings.debugSync)
       {
