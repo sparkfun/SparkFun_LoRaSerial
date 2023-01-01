@@ -201,7 +201,7 @@ void updateRadioState()
         if (settings.server == true)
         {
           clockSyncReceiver = false; //Multipoint server is clock source
-          startChannelTimer(); //Start hopping
+          startChannelTimer(); //Start hopping - multipoint clock source
           changeState(RADIO_MP_STANDBY);
         }
         else
@@ -235,7 +235,7 @@ void updateRadioState()
            | P2P_WAIT_TX_FIND_PARTNER_DONE       |                  = true |   |
            |           |                         |                         |   |
            |           | Tx Complete - - - - - > | Rx FIND_PARTNER         |   |
-           |           |   Start Rx              |                         |   |
+           |           |   Start Rx              |   Start HOP Timer       |   |
            |           |   MAX_PACKET_SIZE       |   clockSyncReceiver     |   |
            |           V                         |     = false             |   |
            `---- P2P_WAIT_SYNC_CLOCKS            |                         |   |
@@ -245,8 +245,8 @@ void updateRadioState()
                        |                         |                         |   |
         Rx SYNC_CLOCKS | < - - - - - - - - - - - | Tx Complete             |   |
                        |                         |   Start Rx              |   |
-                       |                         |   MAX_PACKET_SIZE       |   |
-                       |                         |                         |   |
+                       | Start HOP Timer         |   MAX_PACKET_SIZE       |   |
+                       | Sync HOP Timer          |                         |   |
                        |                         V         Timeout         |   |
                        |                P2P_WAIT_ZERO_ACKS ----------------'   |
                        |                         |                             |
@@ -255,7 +255,6 @@ void updateRadioState()
                        V                         |                             |
            P2P_WAIT_TX_ZERO_ACKS_DONE            |                             |
                        | Tx Complete - - - - - > | Rx ZERO_ACKS                |
-                       |   Start HOP timer       |   Start HOP Timer           |
                        |   Start Rx              |   Start Rx                  |
                        |   MAX_PACKET_SIZE       |   MAX_PACKET_SIZE           |
                        |   Zero ACKs             |   Zero ACKs                 |
@@ -318,7 +317,8 @@ void updateRadioState()
             //Compute the receive time
             COMPUTE_RX_TIME(rxData, 1);
 
-            startChannelTimer();
+            //Start the channel timer
+            startChannelTimer(); //Start hopping - P2P clock source
 
             //This system is the source of clock synchronization
             clockSyncReceiver = false; //P2P clock source
@@ -410,6 +410,10 @@ void updateRadioState()
 
           case DATAGRAM_SYNC_CLOCKS:
             //Received SYNC_CLOCKS
+            //Start the channel timer
+            startChannelTimer(); //Start hopping - P2P clock receiver
+            syncChannelTimer();
+
             //Display the channelTimer sink
             if (settings.debugSync)
             {
@@ -441,9 +445,6 @@ void updateRadioState()
             systemPrintln("RX: SYNC_CLOCKS Timeout");
             outputSerialData(true);
           }
-
-          //Stop the channel timer
-          stopChannelTimer(); //P2P_WAIT_SYNC_CLOCKS timeout
 
           //Start the TX timer: time to delay before transmitting the FIND_PARTNER
           triggerEvent(TRIGGER_HANDSHAKE_SYNC_CLOCKS_TIMEOUT);
@@ -555,8 +556,6 @@ void updateRadioState()
       {
         transactionComplete = false; //Reset ISR flag
         COMPUTE_TX_TIME();
-
-        startChannelTimer(); //We are exiting the link first so do not adjust our starting Timer
 
         setHeartbeatShort(); //We sent the last ack so be responsible for sending the next heartbeat
 

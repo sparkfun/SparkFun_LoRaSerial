@@ -2906,8 +2906,10 @@ void startChannelTimer(int16_t startAmount)
 
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(startAmount, channelTimerHandler);
-  channelTimer.enableTimer();
+  reloadChannelTimer = (startAmount != settings.maxDwellTime);
+  timeToHop = false;
   channelTimerStart = millis(); //startChannelTimer - ISR updates value
+  channelTimer.enableTimer();
   triggerEvent(TRIGGER_HOP_TIMER_START);
 }
 
@@ -2919,7 +2921,6 @@ void stopChannelTimer()
   channelTimer.disableTimer();
   triggerEvent(TRIGGER_HOP_TIMER_STOP);
   timeToHop = false;
-  reloadChannelTimer = false;
 }
 
 //Given the remote unit's number of ms before its next hop,
