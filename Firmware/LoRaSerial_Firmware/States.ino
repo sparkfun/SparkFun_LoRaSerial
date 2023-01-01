@@ -157,6 +157,7 @@ void updateRadioState()
       selectHeaderAndTrailerBytes(); //Determine the components of the frame header and trailer
 
       stopChannelTimer(); //Stop frequency hopping - reset
+      clockSyncReceiver = true; //Assume receiving clocks - reset
 
       configureRadio(); //Setup radio, set freq to channel 0, calculate air times
 
@@ -182,8 +183,11 @@ void updateRadioState()
       else if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
       {
         if (settings.server)
+        {
           //Reserve the server's address (0)
           myVc = vcIdToAddressByte(VC_SERVER, myUniqueId);
+          clockSyncReceiver = false; //VC server is clock source
+        }
         else
           //Unknown client address
           myVc = VC_UNASSIGNED;
@@ -196,6 +200,7 @@ void updateRadioState()
       {
         if (settings.server == true)
         {
+          clockSyncReceiver = false; //Multipoint server is clock source
           startChannelTimer(); //Start hopping
           changeState(RADIO_MP_STANDBY);
         }
@@ -220,17 +225,19 @@ void updateRadioState()
                        |                         |                             |
              Channel 0 |                         | Channel 0                   |
         Stop HOP Timer |                         | Stop HOP Timer              |
+     clockSyncReceiver | = true                  | clockSyncReceiver = true    |
+                       |                         |                             |
                        V                         V                             |
            .----> P2P_NO_LINK               P2P_NO_LINK <------------------.   |
            |           | Tx FIND_PARTNER         |                         |   |
-           | Timeout   |                         |                         |   |
-           |           V                         |          Stop HOP Timer |   |
-           | P2P_WAIT_TX_FIND_PARTNER_DONE       |                         |   |
+           | Timeout   |                         |          Stop HOP Timer |   |
+           |           V                         |       clockSyncReceiver |   |
+           | P2P_WAIT_TX_FIND_PARTNER_DONE       |                  = true |   |
            |           |                         |                         |   |
            |           | Tx Complete - - - - - > | Rx FIND_PARTNER         |   |
            |           |   Start Rx              |                         |   |
-           |           |   MAX_PACKET_SIZE       |                         |   |
-           |           V                         |                         |   |
+           |           |   MAX_PACKET_SIZE       |   clockSyncReceiver     |   |
+           |           V                         |     = false             |   |
            `---- P2P_WAIT_SYNC_CLOCKS            |                         |   |
                        |                         | Tx SYNC_CLOCKS          |   |
                        |                         V                         |   |
@@ -313,6 +320,16 @@ void updateRadioState()
 
             startChannelTimer();
 
+            //This system is the source of clock synchronization
+            clockSyncReceiver = false; //P2P clock source
+
+            //Display the channelTimer source
+            if (settings.debugSync)
+            {
+              systemPrint("Sourcing channelTimer, TX + RX mSec: ");
+              systemPrintln(txRxTimeMsec);
+            }
+
             //Acknowledge the FIND_PARTNER with SYNC_CLOCKS
             triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
             if (xmitDatagramP2PSyncClocks() == true)
@@ -393,9 +410,15 @@ void updateRadioState()
 
           case DATAGRAM_SYNC_CLOCKS:
             //Received SYNC_CLOCKS
+            //Display the channelTimer sink
+            if (settings.debugSync)
+            {
+              systemPrint("Syncing channelTimer, TX + RX mSec: ");
+              systemPrintln(txRxTimeMsec);
+            }
+
             //Compute the receive time
             COMPUTE_RX_TIME(rxData + 1, 1);
-
 
             //Acknowledge the SYNC_CLOCKS
             triggerEvent(TRIGGER_SEND_ZERO_ACKS);
@@ -506,6 +529,7 @@ void updateRadioState()
 
           //Stop the channel timer
           stopChannelTimer(); //P2P_WAIT_ZERO_ACKS timeout
+          clockSyncReceiver = true; //P2P link timeout
 
           //Start the TX timer: time to delay before transmitting the FIND_PARTNER
           triggerEvent(TRIGGER_HANDSHAKE_ZERO_ACKS_TIMEOUT);

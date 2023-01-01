@@ -519,7 +519,7 @@ char platformPrefix[25]; //Used for printing platform specific device name, ie "
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 /*
-          Server                                Client
+                 Clock Sync Transmitter         Clock Sync Receiver
 
                   HEARTBEAT send needed
           call xmitDatagramP2PHeartbeat
@@ -578,6 +578,8 @@ char platformPrefix[25]; //Used for printing platform specific device name, ie "
 
 //Clock synchronization
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+bool clockSyncReceiver; //Receives and processes the clock synchronization
 
 //RX and TX time measurements
 uint32_t rxTimeUsec;

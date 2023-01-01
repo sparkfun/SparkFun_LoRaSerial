@@ -2938,6 +2938,7 @@ void syncChannelTimer()
   currentMillis = millis();
   radioCallHistory[RADIO_CALL_syncChannelTimer] = currentMillis;
 
+  if (!clockSyncReceiver) return; //syncChannelTimer
   if (settings.frequencyHop == false) return;
 
   //msToNextHopRemote is in the range of 0 - settings.maxDwellTime
