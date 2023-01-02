@@ -2967,7 +2967,7 @@ void stopChannelTimer()
 
 //Given the remote unit's number of ms before its next hop,
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
-void syncChannelTimer()
+bool syncChannelTimer(bool allowAdjustments)
 {
   int16_t adjustment;
   unsigned long currentMillis;
@@ -2988,8 +2988,8 @@ void syncChannelTimer()
   currentMillis = millis();
   radioCallHistory[RADIO_CALL_syncChannelTimer] = currentMillis;
 
-  if (!clockSyncReceiver) return; //syncChannelTimer
-  if (settings.frequencyHop == false) return;
+  if (!clockSyncReceiver) return false; //syncChannelTimer
+  if (settings.frequencyHop == false) return false;
 
   //msToNextHopRemote is obtained during rcvDatagram() and is in the range of
   //0 - settings.maxDwellTime
@@ -3029,6 +3029,7 @@ void syncChannelTimer()
   // Enter the critical section
   //----------------------------------------------------------------------
 
+if (allowAdjustments)
   //Synchronize with the hardware timer
   channelTimer.disableTimer();
 
@@ -3259,7 +3260,8 @@ else
   //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRmt + dwellTime)
   if (msToNextHopLocal < smallAmount && (msToNextHopRmt <= 0 && msToNextHopRmt >= (smallAmount * -1)))
   {
-    hopChannel();
+    if (allowAdjustments)
+      hopChannel();
     deltaHops += 1;
     msToNextHop = msToNextHopRmt + settings.maxDwellTime;
   }
@@ -3277,7 +3279,8 @@ else
   //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRmt)
   else if (msToNextHopLocal < smallAmount && msToNextHopRmt > largeAmount)
   {
-    hopChannel();
+    if (allowAdjustments)
+      hopChannel();
     deltaHops += 1;
     msToNextHop = msToNextHopRmt;
   }
@@ -3310,7 +3313,8 @@ else
     //Hop now, and adjust our clock to the remote's next hop (msToNextHopRmt + dwellTime)
     if (msToNextHop < (settings.maxDwellTime * -1)) //-402 < -400
     {
-      hopChannel();
+      if (allowAdjustments)
+        hopChannel();
       deltaHops += 1;
       msToNextHop += settings.maxDwellTime;
     }
@@ -3321,6 +3325,8 @@ else
     msToNextHop += settings.maxDwellTime;
 #endif  //COMPUTE_OLD_CHANNEL_TIMER_VALUE
 
+if (allowAdjustments)
+{
   //When the ISR fires, reload the channel timer with settings.maxDwellTime
   reloadChannelTimer = true;
 
@@ -3331,6 +3337,7 @@ else
   channelTimerMsec = msToNextHop; //syncChannelTimer update
   channelTimer.enableTimer();
   triggerEvent(TRIGGER_SYNC_CHANNEL); //Trigger after adjustments to timer to avoid skew during debug
+}
 
   //----------------------------------------------------------------------
   // Leave the critical section
@@ -3384,30 +3391,18 @@ else
       systemPrintln(rxTimeUsec);
       systemPrint("txTimeUsec: ");
       systemPrintln(txTimeUsec);
-      systemPrintln("RX Frame");
       outputSerialData(true);
-      dumpBuffer(incomingBuffer, headerBytes + rxDataBytes + trailerBytes);
-
-      data = incomingBuffer;
-      if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
+      if (allowAdjustments)
       {
-        systemPrint("    Net Id: ");
-        systemPrint(*data);
-        systemPrint(" (0x");
-        systemPrint(*data++, HEX);
-        systemPrintln(")");
+        systemPrintln("RX Frame");
         outputSerialData(true);
-      }
-      printControl(*data++);
-      memcpy(&channelTimer, data, sizeof(channelTimer));
-      data += sizeof(channelTimer);
-      systemPrint("    Channel Timer(ms): ");
-      systemPrintln(channelTimer);
-
-      systemPrintln("ERROR: Must fix channel timer synchronization math");
-      outputSerialData(true);
+        dumpBuffer(incomingBuffer, headerBytes + rxDataBytes + trailerBytes);
     }
+    outputSerialData(true);
   }
+  return syncError;
+#else
+  return false;
 #endif  //COMPUTE_OLD_CHANNEL_TIMER_VALUE
 }
 

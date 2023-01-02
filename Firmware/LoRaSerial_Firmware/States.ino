@@ -335,7 +335,7 @@ void updateRadioState()
             }
 
             //Acknowledge the FIND_PARTNER with SYNC_CLOCKS
-            triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
+            triggerEvent(TRIGGER_TX_SYNC_CLOCKS);
             if (xmitDatagramP2PSyncClocks() == true)
             {
               sf6ExpectedSize = headerBytes + P2P_ZERO_ACKS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
@@ -349,7 +349,7 @@ void updateRadioState()
       else if ((receiveInProcess() == false) && ((millis() - heartbeatTimer) >= randomTime))
       {
         //Transmit the FIND_PARTNER
-        triggerEvent(TRIGGER_HANDSHAKE_SEND_FIND_PARTNER);
+        triggerEvent(TRIGGER_TX_FIND_PARTNER);
         if (xmitDatagramP2PFindPartner() == true)
         {
           sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect SYNC_CLOCKS to contain millis info
@@ -404,7 +404,7 @@ void updateRadioState()
             COMPUTE_RX_TIME(rxData + 1, 1);
 
             //Acknowledge the FIND_PARTNER
-            triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
+            triggerEvent(TRIGGER_TX_SYNC_CLOCKS);
             if (xmitDatagramP2PSyncClocks() == true)
             {
               sf6ExpectedSize = headerBytes + P2P_ZERO_ACKS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
@@ -416,7 +416,7 @@ void updateRadioState()
             //Received SYNC_CLOCKS
             //Start the channel timer
             startChannelTimer(); //Start hopping - P2P clock receiver
-            syncChannelTimer();
+            syncChannelTimer(true);
 
             //Display the channelTimer sink
             if (settings.debugSync)
@@ -429,7 +429,7 @@ void updateRadioState()
             COMPUTE_RX_TIME(rxData + 1, 1);
 
             //Acknowledge the SYNC_CLOCKS
-            triggerEvent(TRIGGER_SEND_ZERO_ACKS);
+            triggerEvent(TRIGGER_TX_ZERO_ACKS);
             if (xmitDatagramP2PZeroAcks() == true)
             {
               sf6ExpectedSize = MAX_PACKET_SIZE; //Tell SF6 to return to max packet length
@@ -722,7 +722,7 @@ void updateRadioState()
             COMPUTE_TIMESTAMP_OFFSET(rxData, 1);
 
             //Transmit ACK
-            P2P_SEND_ACK(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
+            P2P_SEND_ACK(TRIGGER_TX_HEARTBEAT_ACK);
             break;
 
           case DATAGRAM_DATA:
@@ -730,11 +730,11 @@ void updateRadioState()
             serialBufferOutput(rxData, rxDataBytes);
 
             //Transmit ACK
-            P2P_SEND_ACK(TRIGGER_LINK_SEND_ACK_FOR_DATA);
+            P2P_SEND_ACK(TRIGGER_TX_DATA_ACK);
             break;
 
           case DATAGRAM_DUPLICATE:
-            P2P_SEND_ACK(TRIGGER_LINK_SEND_ACK_FOR_DUP);
+            P2P_SEND_ACK(TRIGGER_TX_DUPLICATE_ACK);
             break;
 
           case DATAGRAM_DATA_ACK:
@@ -742,7 +742,40 @@ void updateRadioState()
             COMPUTE_RX_TIME(rxData, 1);
 
             //The datagram we are expecting
-            syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
+            syncChannelTimer(true); //Adjust freq hop ISR based on remote's remaining clock
+
+#if 0
+if (rxFirstAck)
+{
+  uint16_t channelTimer = msToNextHopRemote;
+  int failureCount = 0;
+  unsigned long saveChannelTimerStart = channelTimerStart;
+  systemPrintln("Starting syncChannelTimer verification");
+  outputSerialData(true);
+  for (int16_t r = 0; r < settings.maxDwellTime; r++)
+  {
+    msToNextHopRemote = r;
+    for (int16_t t = 0; t < settings.maxDwellTime; t++)
+    {
+      channelTimerStart = millis() - t;
+      if (syncChannelTimer(false))
+        failureCount += 1;
+      petWDT();
+    }
+  }
+  systemPrintln("Finished syncChannelTimer verification");
+  outputSerialData(true);
+  if (failureCount)
+  {
+    systemPrint("failureCount: ");
+    systemPrintln(failureCount);
+    systemPrint(P
+    waitForever();
+  }
+  msToNextHopRemote = channelTimer;
+  channelTimerStart = saveChannelTimerStart;
+}
+#endif // 0
 
             triggerEvent(TRIGGER_LINK_ACK_RECEIVED);
 
@@ -792,7 +825,7 @@ void updateRadioState()
         heartbeatTimeout = ((millis() - heartbeatTimer) > heartbeatRandomTime);
         if (heartbeatTimeout)
         {
-          triggerEvent(TRIGGER_HEARTBEAT);
+          triggerEvent(TRIGGER_TX_HEARTBEAT);
 
           if (xmitDatagramP2PHeartbeat() == true)
             changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
@@ -939,7 +972,7 @@ void updateRadioState()
             //Check for time to send serial data
             if (processWaitingSerial(heartbeatTimeout) == true)
             {
-              triggerEvent(TRIGGER_LINK_DATA_XMIT);
+              triggerEvent(TRIGGER_TX_DATA);
 
               if (xmitDatagramP2PData() == true)
                 changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
@@ -1086,7 +1119,7 @@ void updateRadioState()
             COMPUTE_TIMESTAMP_OFFSET(rxData + 1, 0);
 
             //Server has responded with ACK
-            syncChannelTimer(); //Start and adjust freq hop ISR based on remote's remaining clock
+            syncChannelTimer(true); //Start and adjust freq hop ISR based on remote's remaining clock
 
             //Change to the server's channel number
             channelNumber = rxVcData[0];
@@ -1241,7 +1274,7 @@ void updateRadioState()
 
             //Sync clock if server sent the heartbeat
             if (settings.server == false)
-              syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
+              syncChannelTimer(true); //Adjust freq hop ISR based on remote's remaining clock
 
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
@@ -1256,7 +1289,7 @@ void updateRadioState()
 
             //Sync clock if server sent the datagram
             if (settings.server == false)
-              syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
+              syncChannelTimer(true); //Adjust freq hop ISR based on remote's remaining clock
 
             setHeartbeatMultipoint(); //We're sync'd so reset heartbeat timer
 
@@ -1283,7 +1316,7 @@ void updateRadioState()
         {
           if (heartbeatTimeout)
           {
-            triggerEvent(TRIGGER_HEARTBEAT);
+            triggerEvent(TRIGGER_TX_HEARTBEAT);
             if (xmitDatagramMpHeartbeat() == true)
             {
               setHeartbeatMultipoint(); //We're sending something with clock data so reset heartbeat timer
@@ -2844,7 +2877,7 @@ void vcReceiveHeartbeat(uint32_t rxMillis)
   int vcSrc;
 
   if (rxSrcVc == VC_SERVER)
-    syncChannelTimer(); //Adjust freq hop ISR based on server's remaining clock
+    syncChannelTimer(true); //Adjust freq hop ISR based on server's remaining clock
 
   //Update the timestamp offset
   if (rxSrcVc == VC_SERVER)
