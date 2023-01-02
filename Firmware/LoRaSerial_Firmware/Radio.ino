@@ -2957,6 +2957,7 @@ void stopChannelTimer()
 {
   radioCallHistory[RADIO_CALL_stopChannelTimer] = millis();
 
+  //Turn off the channel timer
   channelTimer.disableTimer();
   digitalWrite(pin_hop_timer, channelNumber & 1);
 
@@ -2968,14 +2969,21 @@ void stopChannelTimer()
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
 void syncChannelTimer()
 {
-  long adjustment;
+  int16_t adjustment;
   unsigned long currentMillis;
-  int8_t deltaHops;
+  int8_t delayedHopCount;
+  int16_t lclHopTimeMsec;
+  uint16_t msToNextHop;
+  int16_t rmtHopTimeMsec;
+
+  int16_t nextChannelTimerMsec;
+  int8_t deltaHops = 0;
+  int16_t msToNextHopRmt;
   long deltaMillis;
   long millisToNextHop;
-  int16_t msToNextHopRmt;
   bool syncError;
-  long txRxTimeUsec;
+
+#define COMPUTE_OLD_CHANNEL_TIMER_VALUE 0
 
   currentMillis = millis();
   radioCallHistory[RADIO_CALL_syncChannelTimer] = currentMillis;
@@ -2983,54 +2991,212 @@ void syncChannelTimer()
   if (!clockSyncReceiver) return; //syncChannelTimer
   if (settings.frequencyHop == false) return;
 
-  //msToNextHopRemote is in the range of 0 - settings.maxDwellTime
+  //msToNextHopRemote is obtained during rcvDatagram() and is in the range of
+  //0 - settings.maxDwellTime
   //Validate this range
-  if ((msToNextHopRemote < 0) || (msToNextHopRemote > settings.maxDwellTime))
+  if (ENABLE_DEVELOPER)
   {
-    int16_t channelTimer;
-    uint8_t * data;
-
-    systemPrintln("RX Frame");
-    dumpBuffer(incomingBuffer, headerBytes + rxDataBytes + trailerBytes);
-
-    data = incomingBuffer;
-    if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
+    if ((msToNextHopRemote < 0) || (msToNextHopRemote > settings.maxDwellTime))
     {
-      systemPrint("    Net Id: ");
-      systemPrint(*data);
-      systemPrint(" (0x");
-      systemPrint(*data++, HEX);
-      systemPrintln(")");
+      int16_t channelTimer;
+      uint8_t * data;
+
+      systemPrintln("RX Frame");
+      dumpBuffer(incomingBuffer, headerBytes + rxDataBytes + trailerBytes);
+
+      data = incomingBuffer;
+      if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
+      {
+        systemPrint("    Net Id: ");
+        systemPrint(*data);
+        systemPrint(" (0x");
+        systemPrint(*data++, HEX);
+        systemPrintln(")");
+      }
+      printControl(*data++);
+      memcpy(&channelTimer, data, sizeof(channelTimer));
+      data += sizeof(channelTimer);
+      systemPrint("    Channel Timer(ms): ");
+      systemPrintln(channelTimer);
+
+      systemPrint("ERROR: Invalid msToNextHopRemote value, ");
+      systemPrintln(msToNextHopRemote);
+      waitForever();
     }
-    printControl(*data++);
-    memcpy(&channelTimer, data, sizeof(channelTimer));
-    data += sizeof(channelTimer);
-    systemPrint("    Channel Timer(ms): ");
-    systemPrintln(channelTimer);
+  } //ENABLE_DEVELOPER
 
-    systemPrint("ERROR: Invalid msToNextHopRemote value, ");
-    systemPrintln(msToNextHopRemote);
-    waitForever();
-  }
+  //----------------------------------------------------------------------
+  // Enter the critical section
+  //----------------------------------------------------------------------
 
-  //Determine if the remote system has hopped and the local system has not
-  deltaHops = 0;
-  deltaMillis = msToNextHopRemote - txRxTimeMsec;
-  if ((deltaMillis <= 0) && ((currentMillis - channelTimerStart) > (settings.maxDwellTime - txRxTimeMsec)))
-  {
-    //Hop one channel to catch up with the remote system
-//    hopChannel();
-    deltaHops -= 1;
-  }
+  //Synchronize with the hardware timer
+  channelTimer.disableTimer();
 
-  //Compute the time to next hop
+  //When timeToHop is true, a hop is required to match the hops indicated by
+  //the channelTimerStart value.  Delay this hop to avoid adding unaccounted
+  //delay.  After the channel timer is restarted, perform this hop because
+  //the channelTimerStart value indicated that it was done.  The channel
+  //timer update will add only microseconds to when the hop is done.
+  delayedHopCount = timeToHop ? 1 : 0;
+
+  //The radios are using the same frequencies since the frame was successfully
+  //received.  The goal is to adjust the channel timer to fire in close proximity
+  //to the firing of the remote sysstem's channel timer.  The following cases
+  //need to be identified:
+  //
+  // 1. Both systems are on the same channel
+  //      Adjust channel timer value
+  // 2. Remote system is on next channel (remote hopped, local did not)
+  //      Immediate local hop
+  //      Adjust channel timer value
+  // 3. Remote system on previous channel (local hopped, remote did not)
+  //      Extend channel timer value by maxDwellTime
+  //
+  //For low transmission rates, the transmission may have spanned multiple hops
+  //and all of the frequencies must have matched for the frame to be received
+  //successfully.  Therefore the above cases hold for low frequencies as well.
+  //
+  //Compute the remote system's channel timer firing time offset in milliseconds
+  //using the channel timer value and the adjustments for transmit and receive
+  //time (time of flight)
+  rmtHopTimeMsec = msToNextHopRemote - txRxTimeMsec;
+
+  //Compute the when the local system last hopped
+  lclHopTimeMsec = currentMillis - channelTimerStart;
   adjustment = 0;
-  millisToNextHop = msToNextHopRemote - txRxTimeMsec;
-  if (millisToNextHop <= 0)
+
+#define REMOTE_SYSTEM_LIKELY_TO_HOP_MSEC    2
+#define CHANNEL_TIMER_SYNC_PLUS_MINUS_MSEC  3
+#define CHANNEL_TIMER_SYNC_MSEC             (2 * CHANNEL_TIMER_SYNC_PLUS_MINUS_MSEC)
+
+  //Determine if the remote has hopped or is likely to hop very soon
+  if (rmtHopTimeMsec <= REMOTE_SYSTEM_LIKELY_TO_HOP_MSEC)
   {
-    adjustment = settings.maxDwellTime;
-    millisToNextHop += adjustment;
+    //Adjust the next channel timer value
+    adjustment += settings.maxDwellTime;
+
+    //Determine if the local system has just hopped
+    if (lclHopTimeMsec <= CHANNEL_TIMER_SYNC_MSEC)
+    {
+      //Case 1 above, both systems using the same channel
+      //
+      //Remote system
+      //
+      //  channelTimerStart                                        Channel timer fires
+      //    |------...-------------------------------------------->|
+      //                                     Channel Timer value   |
+      //                                 |<----------------------->|
+      //                                 |                         | rmtHopTimeMsec
+      //                                 |                         |<--|
+      //                                 |                             |
+      //                                 |                           Current Time
+      //                                 |<------------>|<------------>|
+      //                                    txTimeUsec     rxTimeUsec  |
+      //                                                               |
+      //Local system                                                   |
+      //                                                lclHopTimeMsec |
+      //                                                      |------->|
+      //                                                      |        | New timer value
+      //                                                      |    |<--|----------------...-->|
+      //                                                      |----------------...-->|
+      //                                      channelTimerStart           Channel timer fires
+      //
+      //No hop is necessary
+    }
+    else
+    {
+      //Case 2 above, the local system did not hop
+      //
+      //Remote system
+      //
+      //  channelTimerStart            Channel timer fires                                    Channel timer fires
+      //    |...---------------------->|------...-------------------------------------------->|
+      //           Channel Timer value |
+      //                       |<----->|
+      //                       |       |   rmtHopTimeMsec
+      //                       |       |<--------------------|
+      //                       |                           Current Time
+      //                       |<------------>|<------------>|
+      //                          txTimeUsec     rxTimeUsec  |
+      //                                                     |
+      //                                                     |
+      //Local system                                         |
+      //                                      Computed value |     New timer value
+      //                               |<--------------------|------...----------------------->|
+      //                                                     |
+      //                            lclHopTimeMsec           |
+      //               |------------------------------------>|
+      //               |------...-------------------------------------------->|
+      //       channelTimerStart                                     Channel timer fires
+      //
+      //A hop is necessary to get to a common channel
+if (COMPUTE_OLD_CHANNEL_TIMER_VALUE)
+deltaHops -= 1;
+else
+      delayedHopCount += 1;
+    }
   }
+  else
+  {
+    //The remote system has not hopped
+    //Determine if the local system has just hopped
+    if (lclHopTimeMsec <= CHANNEL_TIMER_SYNC_MSEC)
+    {
+      //Case 3 above, extend the channel timer value
+      //
+      //      channelTimerStart                                        Channel timer fires
+      //        |------...-------------------------------------------->|
+      //                                     Channel Timer value       |
+      //                           |<--------------------------------->|
+      //                           |                    rmtHopTimeMsec |
+      //                           |                             |---->|
+      //                           |                             |
+      //                           |                       Current Time
+      //                           |<------------>|<------------>|
+      //                              txTimeUsec     rxTimeUsec  |
+      //                                                         |
+      //Local system                                             |
+      //                                                         | New timer value     Extend this value
+      //                                                         |---->|------...----------------------->|
+      //                                                         |
+      //                                          lclHopTimeMsec |
+      //                                                     |-->|
+      //    |------...-------------------------------------->|------...----------------------->|
+      //  channelTimerStart                                  Channel timer fires
+      //
+      //No hop is needed
+      //Extend the timer value
+      adjustment += settings.maxDwellTime;
+    }
+    else
+    {
+      //Case 1 above, both systems using the same channel
+      //
+      //  channelTimerStart                                        Channel timer fires
+      //    |------...-------------------------------------------->|
+      //                                Channel Timer value        |
+      //                       |<--------------------------------->|
+      //                       |                                   |
+      //                       |                    rmtHopTimeMsec |
+      //                       |                             |---->|
+      //                       |                       Current Time
+      //                       |<------------>|<------------>|
+      //                          txTimeUsec     rxTimeUsec  |
+      //                                                     |
+      //Local system                                         |
+      //                                                     | New timer value
+      //                                                     |---->|
+      //               |------...-------------------------------------->|
+      //             channelTimerStart                       |          Channel timer fires
+      //                                                     |--------->|
+      //                                                    lclHopTimeMsec
+      //
+      //No hop is necessary
+    }
+  }
+
+#if COMPUTE_OLD_CHANNEL_TIMER_VALUE
+  nextChannelTimerMsec = msToNextHop;
 
   //msToNextHopRemote is obtained during rcvDatagram()
 
@@ -3078,15 +3244,13 @@ void syncChannelTimer()
       break;
   }
 
-  int16_t msToNextHopLocal = settings.maxDwellTime - (millis() - channelTimerStart);
+  int16_t msToNextHopLocal = settings.maxDwellTime - (currentMillis - channelTimerStart);
 
   //Precalculate large/small time amounts
   uint16_t smallAmount = settings.maxDwellTime / 8;
   uint16_t largeAmount = settings.maxDwellTime - smallAmount;
 
-  int16_t msToNextHop = msToNextHopRmt; //By default, we will adjust our clock to match our mate's
-
-  bool resetHop = false; //The hop ISR may occur while we are forcing a hop (case A and C). Reset timeToHop as needed.
+  msToNextHop = msToNextHopRmt; //By default, we will adjust our clock to match our mate's
 
   //Below are the edge cases that occur when a hop occurs near ACK reception
 
@@ -3098,7 +3262,6 @@ void syncChannelTimer()
     hopChannel();
     deltaHops += 1;
     msToNextHop = msToNextHopRmt + settings.maxDwellTime;
-    resetHop = true; //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
   }
 
   //msToNextHopLocal is large and msToNextHopRmt is negative
@@ -3117,7 +3280,6 @@ void syncChannelTimer()
     hopChannel();
     deltaHops += 1;
     msToNextHop = msToNextHopRmt;
-    resetHop = true; //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
   }
 
   //msToNextHopLocal is large and msToNextHopRmt is large
@@ -3151,38 +3313,45 @@ void syncChannelTimer()
       hopChannel();
       deltaHops += 1;
       msToNextHop += settings.maxDwellTime;
-      resetHop = true; //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
     }
   }
 
   //Insure against negative timer values
   while (msToNextHop < 0)
     msToNextHop += settings.maxDwellTime;
+#endif  //COMPUTE_OLD_CHANNEL_TIMER_VALUE
 
   //When the ISR fires, reload the channel timer with settings.maxDwellTime
   reloadChannelTimer = true;
-  channelTimer.disableTimer();
+
+  //Restart the channel timer
   channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
   digitalWrite(pin_hop_timer, channelNumber & 1);
   channelTimerStart = currentMillis;
   channelTimerMsec = msToNextHop; //syncChannelTimer update
-
-  if (resetHop) //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
-    timeToHop = false;
-
   channelTimer.enableTimer();
   triggerEvent(TRIGGER_SYNC_CHANNEL); //Trigger after adjustments to timer to avoid skew during debug
 
+  //----------------------------------------------------------------------
+  // Leave the critical section
+  //----------------------------------------------------------------------
+
+  //Hop if the timer fired prior to disabling the timer, resetting the channelTimerStart value
+  if (delayedHopCount)
+    hopChannel(true, delayedHopCount);
+
+#if COMPUTE_OLD_CHANNEL_TIMER_VALUE
   //Check for a sync error
-  deltaMillis = (millisToNextHop - msToNextHop + settings.maxDwellTime) % settings.maxDwellTime;
-  syncError = deltaHops || ((deltaMillis > 3) && (deltaMillis < (settings.maxDwellTime - 2)));
+  deltaMillis = (nextChannelTimerMsec - msToNextHop + settings.maxDwellTime) % settings.maxDwellTime;
+  syncError = deltaHops || ((deltaMillis > CHANNEL_TIMER_SYNC_PLUS_MINUS_MSEC)
+      && (deltaMillis < (settings.maxDwellTime - CHANNEL_TIMER_SYNC_PLUS_MINUS_MSEC)));
 
   //Display the channel sync timer calculations
   if (settings.debugSync || syncError)
   {
     systemPrint(msToNextHopRemote);
     systemPrint(" Nxt Hop - ");
-    systemPrint((txTimeUsec + rxTimeUsec) / 1000);
+    systemPrint(txRxTimeMsec);
     systemPrint(" (TX + RX)");
     if (adjustment)
     {
@@ -3191,7 +3360,7 @@ void syncChannelTimer()
       systemPrint(" Adj");
     }
     systemPrint(" = ");
-    systemPrint(millisToNextHop);
+    systemPrint(nextChannelTimerMsec);
     systemPrintln(" mSec");
 
     systemPrint("msToNextHopRmt: ");
@@ -3205,6 +3374,7 @@ void syncChannelTimer()
     systemPrint(" deltaHops: ");
     systemPrint(deltaHops);
     systemPrintln();
+    outputSerialData(true);
     if (syncError)
     {
       int16_t channelTimer;
@@ -3215,6 +3385,7 @@ void syncChannelTimer()
       systemPrint("txTimeUsec: ");
       systemPrintln(txTimeUsec);
       systemPrintln("RX Frame");
+      outputSerialData(true);
       dumpBuffer(incomingBuffer, headerBytes + rxDataBytes + trailerBytes);
 
       data = incomingBuffer;
@@ -3225,6 +3396,7 @@ void syncChannelTimer()
         systemPrint(" (0x");
         systemPrint(*data++, HEX);
         systemPrintln(")");
+        outputSerialData(true);
       }
       printControl(*data++);
       memcpy(&channelTimer, data, sizeof(channelTimer));
@@ -3233,9 +3405,10 @@ void syncChannelTimer()
       systemPrintln(channelTimer);
 
       systemPrintln("ERROR: Must fix channel timer synchronization math");
-      waitForever();
+      outputSerialData(true);
     }
   }
+#endif  //COMPUTE_OLD_CHANNEL_TIMER_VALUE
 }
 
 //This function resets the heartbeat time and re-rolls the random time
