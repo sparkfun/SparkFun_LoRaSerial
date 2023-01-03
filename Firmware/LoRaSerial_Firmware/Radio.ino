@@ -2910,6 +2910,7 @@ void startChannelTimer(int16_t startAmount)
   reloadChannelTimer = (startAmount != settings.maxDwellTime);
   timeToHop = false;
   channelTimerStart = millis(); //startChannelTimer - ISR updates value
+  channelTimerMsec = startAmount; //startChannelTimer - ISR updates value
   channelTimer.enableTimer();
   triggerEvent(TRIGGER_HOP_TIMER_START);
 }
@@ -3126,6 +3127,7 @@ void syncChannelTimer()
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
   digitalWrite(pin_hop_timer, channelNumber & 1);
+  channelTimerMsec = msToNextHop; //syncChannelTimer update
 
   if (resetHop) //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
     timeToHop = false;

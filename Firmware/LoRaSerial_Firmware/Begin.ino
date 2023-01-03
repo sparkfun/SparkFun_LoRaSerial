@@ -104,6 +104,7 @@ void channelTimerHandler()
   {
     reloadChannelTimer = false;
     channelTimer.setInterval_MS(settings.maxDwellTime, channelTimerHandler);
+    channelTimerMsec = settings.maxDwellTime; //ISR update
   }
   digitalWrite(pin_hop_timer, channelNumber & 1);
 
