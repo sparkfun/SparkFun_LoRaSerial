@@ -102,6 +102,7 @@ uint8_t pin_rssi4LED = PIN_UNDEFINED;
 uint8_t pin_boardID = PIN_UNDEFINED;
 
 uint8_t pin_trigger = PIN_UNDEFINED;
+uint8_t pin_hop_timer = PIN_UNDEFINED;
 
 #define GREEN_LED_1         pin_rssi1LED
 #define GREEN_LED_2         pin_rssi2LED

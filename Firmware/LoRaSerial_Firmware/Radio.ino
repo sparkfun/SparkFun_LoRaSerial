@@ -2906,6 +2906,7 @@ void startChannelTimer(int16_t startAmount)
 
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(startAmount, channelTimerHandler);
+  digitalWrite(pin_hop_timer, channelNumber & 1);
   reloadChannelTimer = (startAmount != settings.maxDwellTime);
   timeToHop = false;
   channelTimerStart = millis(); //startChannelTimer - ISR updates value
@@ -2919,6 +2920,8 @@ void stopChannelTimer()
   radioCallHistory[RADIO_CALL_stopChannelTimer] = millis();
 
   channelTimer.disableTimer();
+  digitalWrite(pin_hop_timer, channelNumber & 1);
+
   triggerEvent(TRIGGER_HOP_TIMER_STOP);
   timeToHop = false;
 }
@@ -3122,6 +3125,7 @@ void syncChannelTimer()
   reloadChannelTimer = true;
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
+  digitalWrite(pin_hop_timer, channelNumber & 1);
 
   if (resetHop) //We moved channels. Don't allow the ISR to move us again until after we've updated the timer.
     timeToHop = false;

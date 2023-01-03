@@ -87,6 +87,7 @@ void samdBeginBoard()
   pin_trainButton = 4;
 
   pin_trigger = A0;
+  pin_hop_timer = A1;
 
   //Flow control
   pinMode(pin_rts, OUTPUT);
@@ -115,6 +116,8 @@ void samdBeginBoard()
   //Debug
   pinMode(pin_trigger, OUTPUT);
   digitalWrite(pin_trigger, HIGH);
+  pinMode(pin_hop_timer, OUTPUT);
+  digitalWrite(pin_hop_timer, LOW);
 
   //Get average of board ID voltage divider
   int val = 0;
