@@ -733,8 +733,6 @@ void updateHopISR()
 //We adjust the initial clock setup as needed
 int16_t getLinkupOffset()
 {
-  reloadChannelTimer = true; //Mark timer so that it runs only once with less than dwell time
-
   int linkupOffset = 0;
 
   switch (settings.airSpeed)
@@ -2944,7 +2942,6 @@ void startChannelTimer(int16_t startAmount)
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(startAmount, channelTimerHandler);
   digitalWrite(pin_hop_timer, channelNumber & 1);
-  reloadChannelTimer = (startAmount != settings.maxDwellTime);
   timeToHop = false;
   channelTimerStart = millis(); //startChannelTimer - ISR updates value
   channelTimerMsec = startAmount; //startChannelTimer - ISR updates value
@@ -3185,9 +3182,6 @@ void syncChannelTimer()
 
   //Compute the next hop time
   msToNextHop = rmtHopTimeMsec + adjustment;
-
-  //When the ISR fires, reload the channel timer with settings.maxDwellTime
-  reloadChannelTimer = true;
 
   //Restart the channel timer
   channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
