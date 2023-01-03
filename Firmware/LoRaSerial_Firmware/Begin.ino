@@ -91,18 +91,18 @@ void beginChannelTimer()
   if (channelTimer.attachInterruptInterval_MS(settings.maxDwellTime, channelTimerHandler) == false)
     Serial.println("Error starting ChannelTimer!");
 
-  stopChannelTimer(); //Start timer only after link is up
+  stopChannelTimer(); //Start timer in state machine - beginChannelTimer
 }
 
 //ISR that fires when channel timer expires
 void channelTimerHandler()
 {
-  timerStart = millis(); //Record when this ISR happened. Used for calculating clock sync.
+  channelTimerStart = millis(); //Record when this ISR happened. Used for calculating clock sync.
 
   //If the last timer was used to sync clocks, restore full timer interval
-  if (partialTimer == true)
+  if (reloadChannelTimer == true)
   {
-    partialTimer = false;
+    reloadChannelTimer = false;
     channelTimer.setInterval_MS(settings.maxDwellTime, channelTimerHandler);
   }
 

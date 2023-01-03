@@ -725,7 +725,7 @@ void updateHopISR()
 //We adjust the initial clock setup as needed
 int16_t getLinkupOffset()
 {
-  partialTimer = true; //Mark timer so that it runs only once with less than dwell time
+  reloadChannelTimer = true; //Mark timer so that it runs only once with less than dwell time
 
   int linkupOffset = 0;
 
@@ -2495,7 +2495,7 @@ bool transmitDatagram()
     //Hake sure that the transmitted msToNextHop is in the range 0 - maxDwellTime
     if (timeToHop)
       hopChannel();
-    uint16_t msToNextHop = settings.maxDwellTime - (millis() - timerStart);
+    uint16_t msToNextHop = settings.maxDwellTime - (millis() - channelTimerStart); //TX channel timer value
     memcpy(header, &msToNextHop, sizeof(msToNextHop));
     header += sizeof(msToNextHop); //aka CHANNEL_TIMER_BYTES
 
@@ -2906,8 +2906,10 @@ void startChannelTimer(int16_t startAmount)
 
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(startAmount, channelTimerHandler);
+  reloadChannelTimer = (startAmount != settings.maxDwellTime);
+  timeToHop = false;
+  channelTimerStart = millis(); //startChannelTimer - ISR updates value
   channelTimer.enableTimer();
-  timerStart = millis(); //ISR normally takes care of this but allow for correct ACK sync before first ISR
   triggerEvent(TRIGGER_HOP_TIMER_START);
 }
 
@@ -2919,7 +2921,6 @@ void stopChannelTimer()
   channelTimer.disableTimer();
   triggerEvent(TRIGGER_HOP_TIMER_STOP);
   timeToHop = false;
-  partialTimer = false;
 }
 
 //Given the remote unit's number of ms before its next hop,
@@ -2938,6 +2939,7 @@ void syncChannelTimer()
   currentMillis = millis();
   radioCallHistory[RADIO_CALL_syncChannelTimer] = currentMillis;
 
+  if (!clockSyncReceiver) return; //syncChannelTimer
   if (settings.frequencyHop == false) return;
 
   //msToNextHopRemote is in the range of 0 - settings.maxDwellTime
@@ -2973,11 +2975,10 @@ void syncChannelTimer()
   //Determine if the remote system has hopped and the local system has not
   deltaHops = 0;
   deltaMillis = msToNextHopRemote - txRxTimeMsec;
-  if ((deltaMillis <= 0) && ((currentMillis - timerStart) > (settings.maxDwellTime - txRxTimeMsec)))
+  if ((deltaMillis <= 0) && ((currentMillis - channelTimerStart) > (settings.maxDwellTime - txRxTimeMsec)))
   {
     //Hop one channel to catch up with the remote system
-    if (allowAdjustments)
-      hopChannel();
+//    hopChannel();
     deltaHops -= 1;
   }
 
@@ -3036,7 +3037,7 @@ void syncChannelTimer()
       break;
   }
 
-  int16_t msToNextHopLocal = settings.maxDwellTime - (millis() - timerStart);
+  int16_t msToNextHopLocal = settings.maxDwellTime - (millis() - channelTimerStart);
 
   //Precalculate large/small time amounts
   uint16_t smallAmount = settings.maxDwellTime / 8;
@@ -3117,7 +3118,8 @@ void syncChannelTimer()
   while (msToNextHop < 0)
     msToNextHop += settings.maxDwellTime;
 
-  partialTimer = true;
+  //When the ISR fires, reload the channel timer with settings.maxDwellTime
+  reloadChannelTimer = true;
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
 
