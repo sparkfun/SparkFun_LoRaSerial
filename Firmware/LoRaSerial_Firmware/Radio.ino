@@ -2507,6 +2507,35 @@ bool transmitDatagram()
     memcpy(header, &msToNextHop, sizeof(msToNextHop));
     header += sizeof(msToNextHop); //aka CHANNEL_TIMER_BYTES
 
+    if (ENABLE_DEVELOPER && (!clockSyncReceiver))
+    {
+      if ((msToNextHop < 0) || (msToNextHop > settings.maxDwellTime))
+      {
+        int16_t channelTimer;
+        uint8_t * data;
+
+        systemPrintln("TX Frame");
+        data = outgoingPacket;
+        if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
+        {
+          systemPrint("    Net Id: ");
+          systemPrint(*data);
+          systemPrint(" (0x");
+          systemPrint(*data++, HEX);
+          systemPrintln(")");
+        }
+        printControl(*data++);
+        memcpy(&channelTimer, data, sizeof(channelTimer));
+        data += sizeof(channelTimer);
+        systemPrint("    Channel Timer(ms): ");
+        systemPrintln(channelTimer);
+
+        systemPrint("ERROR: Invalid msToNextHop value, ");
+        systemPrintln(msToNextHop);
+        waitForever();
+      }
+    } //ENABLE_DEVELOPER
+
     if (settings.debugTransmit)
     {
       systemPrintTimestamp();
