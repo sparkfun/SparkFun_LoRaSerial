@@ -194,9 +194,6 @@ bool setRadioFrequency(bool rxAdjust)
   else
     triggerEvent(TRIGGER_FREQ_CHANGE);
 
-  //Determine the time in milliseconds when channel zero is reached again
-  nextChannelZeroTimeInMillis = millis() + ((settings.numberOfChannels - channelNumber) * settings.maxDwellTime);
-
   //Print the frequency if requested
   if (settings.printChannel && (previousChannelNumber != channelNumber))
   {
@@ -212,7 +209,7 @@ bool setRadioFrequency(bool rxAdjust)
     systemPrint(": ");
     systemPrint(radioFrequency, 3);
     systemPrint(" MHz, Ch 0 in ");
-    systemPrint(nextChannelZeroTimeInMillis - millis());
+    systemPrint(mSecToChannelZero());
     systemPrintln(" mSec");
     outputSerialData(true);
   }
@@ -566,6 +563,22 @@ void hopChannel(bool moveForwardThroughTable)
 
   //Select the new frequency
   setRadioFrequency(radioStateTable[radioState].rxState);
+}
+
+//Determine the time in milliseconds when channel zero is reached again
+unsigned long mSecToChannelZero()
+{
+  unsigned long nextChannelZeroTimeInMillis;
+  uint16_t remainingChannels;
+
+  //Compute the time remaining at the current channel
+  nextChannelZeroTimeInMillis = channelTimerMsec - (millis() - channelTimerStart);
+
+  //Compute the time associated with the additional channels
+  remainingChannels = settings.numberOfChannels - 1 - channelNumber;
+  if (remainingChannels > 0)
+    nextChannelZeroTimeInMillis += remainingChannels * settings.maxDwellTime;
+  return nextChannelZeroTimeInMillis;
 }
 
 //Returns true if the radio indicates we have an ongoing reception
@@ -3274,12 +3287,7 @@ void setVcHeartbeatTimer()
   petWDT();
 
   //Determine the delay before channel zero is reached
-  deltaMillis = nextChannelZeroTimeInMillis - heartbeatTimer;
-  if (deltaMillis <= 0)
-  {
-    nextChannelZeroTimeInMillis = heartbeatTimer + ((settings.numberOfChannels - channelNumber) * settings.maxDwellTime);
-    deltaMillis = nextChannelZeroTimeInMillis - heartbeatTimer;
-  }
+  deltaMillis = mSecToChannelZero() - heartbeatTimer;
 
   //Determine the delay before the next HEARTBEAT frame
   if ((!settings.server) || (deltaMillis > ((3 * settings.heartbeatTimeout) / 2))

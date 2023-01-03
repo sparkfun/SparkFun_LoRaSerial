@@ -503,7 +503,7 @@ bool commandAT(const char * commandString)
         if (channelNumber)
         {
           systemPrint("        Next Ch 0 time: ");
-          systemPrintTimestamp(nextChannelZeroTimeInMillis + timestampOffset);
+          systemPrintTimestamp(millis() + mSecToChannelZero() + timestampOffset);
           int hopCount = settings.numberOfChannels - channelNumber;
           systemPrint(", in ");
           systemPrint(hopCount);
