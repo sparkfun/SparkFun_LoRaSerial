@@ -105,6 +105,7 @@ void channelTimerHandler()
     reloadChannelTimer = false;
     channelTimer.setInterval_MS(settings.maxDwellTime, channelTimerHandler);
   }
+  digitalWrite(pin_hop_timer, channelNumber & 1);
 
   if (settings.frequencyHop)
   {
