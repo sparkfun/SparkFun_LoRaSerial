@@ -3390,6 +3390,7 @@ const I16_TO_STRING radioCallName[] =
   //Insert new values before this line
   {RADIO_CALL_hopISR, "hopISR"},
   {RADIO_CALL_transactionCompleteISR, "transactionCompleteISR"},
+  {RADIO_CALL_channelTimerHandler, "channelTimerHandler"},
 #ifdef  RADIOLIB_LOW_LEVEL
   {RADIO_CALL_readSX1276Register, "readSX1276Register"},
   {RADIO_CALL_printSX1276Registers, "printSX1276Registers"},
