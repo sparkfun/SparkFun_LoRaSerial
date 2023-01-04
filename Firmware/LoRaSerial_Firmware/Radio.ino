@@ -2423,17 +2423,17 @@ bool transmitDatagram()
   }
 
   /*
-                                        endOfTxData ---.
-                                                       |
-                                                       V
-      +----------+----------+------------+---  ...  ---+----------+
-      | Optional |          |  Optional  |             | Optional |
-      |  NET ID  | Control  | SF6 Length |    Data     | Trailer  |
-      |  8 bits  |  8 bits  |   8 bits   |   n bytes   | n Bytes  |
-      +----------+----------+------------+-------------+----------+
-      |                                  |             |
-      |                                  |<- Length -->|
-      |<--------- txDatagramSize --------------------->|
+                                                   endOfTxData ---.
+                                                                  |
+                                                                  V
+      +----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional |  Optional  |             | Optional |
+      |  NET ID  | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
+      |  8 bits  |  8 bits  | 2 bytes  |   8 bits   |   n bytes   | n Bytes  |
+      +----------+----------+----------+------------+-------------+----------+
+      |                                             |             |
+      |                                             |<- Length -->|
+      |<-------------------- txDatagramSize --------------------->|
   */
 
   //Display the packet contents
@@ -2468,6 +2468,20 @@ bool transmitDatagram()
       hopChannel();
   }
 
+  /*
+      .------ Header                               endOfTxData ---.
+      |                                                           |
+      V                                                           V
+      +----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional |  Optional  |             | Optional |
+      |  NET ID  | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
+      |  8 bits  |  8 bits  | 2 bytes  |   8 bits   |   n bytes   | n Bytes  |
+      +----------+----------+----------+------------+-------------+----------+
+      |                                             |             |
+      |                                             |<- Length -->|
+      |<-------------------- txDatagramSize --------------------->|
+  */
+
   //Add the netID if necessary
   if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
   {
@@ -2492,6 +2506,20 @@ bool transmitDatagram()
   //Add the control byte
   control = *(uint8_t *)&txControl;
   *header++ = control;
+
+  /*
+                            .------ Header         endOfTxData ---.
+                            |                                     |
+                            V                                     V
+      +----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional |  Optional  |             | Optional |
+      |  NET ID  | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
+      |  8 bits  |  8 bits  | 2 bytes  |   8 bits   |   n bytes   | n Bytes  |
+      +----------+----------+----------+------------+-------------+----------+
+      |                                             |             |
+      |                                             |<- Length -->|
+      |<-------------------- txDatagramSize --------------------->|
+  */
 
   //Display the control value
   if (settings.debugTransmit)
@@ -2547,6 +2575,20 @@ bool transmitDatagram()
     }
   }
 
+  /*
+                          Header ------.           endOfTxData ---.
+                                       |                          |
+                                       V                          V
+      +----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional |  Optional  |             | Optional |
+      |  NET ID  | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
+      |  8 bits  |  8 bits  | 2 bytes  |   8 bits   |   n bytes   | n Bytes  |
+      +----------+----------+----------+------------+-------------+----------+
+      |                                             |             |
+      |                                             |<- Length -->|
+      |<-------------------- txDatagramSize --------------------->|
+  */
+
   //Add the spread factor 6 length if required
   if (settings.radioSpreadFactor == 6)
   {
@@ -2586,6 +2628,20 @@ bool transmitDatagram()
     }
   }
 
+  /*                                               endOfTxData ---.
+                                       Header ------.             |
+                                                    |             |
+                                                    V             V
+      +----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional |  Optional  |             | Optional |
+      |  NET ID  | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
+      |  8 bits  |  8 bits  | 2 bytes  |   8 bits   |   n bytes   | n Bytes  |
+      +----------+----------+----------+------------+-------------+----------+
+      |                                             |             |
+      |                                             |<- Length -->|
+      |<-------------------- txDatagramSize --------------------->|
+  */
+
   //Verify the Virtual-Circuit length
   if (settings.debugTransmit && (settings.operatingMode == MODE_VIRTUAL_CIRCUIT))
   {
@@ -2608,16 +2664,16 @@ bool transmitDatagram()
   }
 
   /*
-                                        endOfTxData ---.
-                                                       |
-                                                       V
-      +----------+----------+------------+---  ...  ---+
-      | Optional |          |  Optional  |             |
-      |  NET ID  | Control  | SF6 Length |    Data     |
-      |  8 bits  |  8 bits  |   8 bits   |   n bytes   |
-      +----------+----------+------------+-------------+
-      |                                                |
-      |<--------------- txDatagramSize --------------->|
+                                                   endOfTxData ---.
+                                                                  |
+                                                                  V
+      +----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional |  Optional  |             | Optional |
+      |  NET ID  | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
+      |  8 bits  |  8 bits  | 2 bytes  |   8 bits   |   n bytes   | n Bytes  |
+      +----------+----------+----------+------------+-------------+----------+
+      |                                                           |
+      |<-------------------- txDatagramSize --------------------->|
   */
 
   //Add the datagram trailer
@@ -2669,11 +2725,11 @@ bool transmitDatagram()
                                                    endOfTxData ---.
                                                                   |
                                                                   V
-      +----------+----------+------------+---  ...  ---+----------+
-      | Optional |          |  Optional  |             | Optional |
-      |  NET ID  | Control  | SF6 Length |    Data     | Trailer  |
-      |  8 bits  |  8 bits  |   8 bits   |   n bytes   | n Bytes  |
-      +----------+----------+------------+-------------+----------+
+      +----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional |  Optional  |             | Optional |
+      |  NET ID  | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
+      |  8 bits  |  8 bits  | 2 bytes  |   8 bits   |   n bytes   | n Bytes  |
+      +----------+----------+----------+------------+-------------+----------+
       |                                                           |
       |<-------------------- txDatagramSize --------------------->|
   */
