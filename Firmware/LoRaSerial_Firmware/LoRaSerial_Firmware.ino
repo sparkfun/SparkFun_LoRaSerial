@@ -43,7 +43,7 @@ const int FIRMWARE_VERSION_MAJOR = 2;
 const int FIRMWARE_VERSION_MINOR = 0;
 
 #define RADIOLIB_LOW_LEVEL  //Enable access to the module functions
-#define ENABLE_DEVELOPER //Uncomment this line to enable special developer modes
+#define ENABLE_DEVELOPER true //Uncomment this line to enable special developer modes
 
 #define UNUSED(x) (void)(x)
 
@@ -76,6 +76,11 @@ const int FIRMWARE_VERSION_MINOR = 0;
 //Bit 1: Signal Synchronized indicates that the end of Preamble has been detected, the modem is in lock
 //Bit 3: Header Info Valid toggles high when a valid Header (with correct CRC) is detected
 #define RECEIVE_IN_PROCESS_MASK   0b1011
+
+//Always define ENABLE_DEVELOPER to enable its use in conditional statements
+#ifndef ENABLE_DEVELOPER
+#define ENABLE_DEVELOPER false
+#endif  //ENABLE_DEVELOPER
 
 #include "settings.h"
 

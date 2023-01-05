@@ -536,6 +536,7 @@ typedef enum
   //Insert new values before this line
   RADIO_CALL_transactionCompleteISR,
   RADIO_CALL_hopISR,
+  RADIO_CALL_channelTimerHandler,
 #ifdef  RADIOLIB_LOW_LEVEL
   RADIO_CALL_readSX1276Register,
   RADIO_CALL_printSX1276Registers,

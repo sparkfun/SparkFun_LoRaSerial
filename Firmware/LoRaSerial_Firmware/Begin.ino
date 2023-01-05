@@ -98,6 +98,7 @@ void beginChannelTimer()
 void channelTimerHandler()
 {
   channelTimerStart = millis(); //Record when this ISR happened. Used for calculating clock sync.
+  radioCallHistory[RADIO_CALL_channelTimerHandler] = channelTimerStart;
 
   //If the last timer was used to sync clocks, restore full timer interval
   if (reloadChannelTimer == true)
