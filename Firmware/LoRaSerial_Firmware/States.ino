@@ -836,73 +836,71 @@ void updateRadioState()
         //An ACK is expected when the ACK timer running
         else if (ackTimer)
         {
-          //Check for ACK timeout
-          if ((millis() - ackTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+          //Throttle back retransmits based on the number of retransmits we've attempted
+          //retransmitTimeout is a random number set in retransmitDatagram
+          if (millis() - datagramTimer > retransmitTimeout)
           {
             //Determine if another retransmission is allowed
             if ((!settings.maxResends) || (frameSentCount < settings.maxResends))
             {
-              //Throttle back retransmits based on the number of retransmits we've attempted
-              //retransmitTimeout is a random number, set when the first datagram is sent
-              if (millis() - datagramTimer > (frameSentCount * retransmitTimeout))
+              lostFrames++;
+
+              //Display the retransmit
+              if (settings.debugDatagrams)
               {
-                lostFrames++;
-
-                //Display the retransmit
-                if (settings.debugDatagrams)
-                {
-                  systemPrintTimestamp();
-                  systemPrintln("RX: ACK Timeout");
-                  outputSerialData(true);
-                }
-
-                triggerEvent(TRIGGER_RETRANSMIT);
-                if (settings.debugDatagrams)
-                {
-                  systemPrintTimestamp();
-                  systemPrint("TX: Retransmit ");
-                  systemPrint(frameSentCount);
-                  systemPrint(", ");
-                  systemPrint(radioDatagramType[txControl.datagramType]);
-                  switch (txControl.datagramType)
-                  {
-                    default:
-                      systemPrintln();
-                      break;
-
-                    case DATAGRAM_DATA:
-                    case DATAGRAM_DATA_ACK:
-                    case DATAGRAM_REMOTE_COMMAND:
-                    case DATAGRAM_REMOTE_COMMAND_RESPONSE:
-                    case DATAGRAM_HEARTBEAT:
-                      systemPrint(" (ACK #");
-                      systemPrint(txControl.ackNumber);
-                      systemPrint(")");
-                      systemPrintln();
-                      break;
-                  }
-                  outputSerialData(true);
-                }
-
-                //Attempt the retransmission
-                RESTORE_TX_BUFFER();
-                if (rexmtControl.datagramType == DATAGRAM_HEARTBEAT)
-                {
-                  //Never retransmit the heartbeat, always send a new version to
-                  //send the updated time value
-                  if (xmitDatagramP2PHeartbeat() == true)
-                  {
-                    changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
-                    triggerEvent(TRIGGER_TX_HEARTBEAT);
-                  }
-                }
-                else if (retransmitDatagram(NULL) == true)
-                  changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
-
-                //We're re-sending data, so don't be the first to send next heartbeat
-                setHeartbeatLong();
-                START_ACK_TIMER();
+                systemPrintTimestamp();
+                systemPrintln("RX: ACK Timeout");
+                outputSerialData(true);
               }
+
+              if (settings.debugDatagrams)
+              {
+                systemPrintTimestamp();
+                systemPrint("TX: Retransmit ");
+                systemPrint(frameSentCount);
+                systemPrint(", ");
+                systemPrint(radioDatagramType[txControl.datagramType]);
+                switch (txControl.datagramType)
+                {
+                  default:
+                    systemPrintln();
+                    break;
+
+                  case DATAGRAM_DATA:
+                  case DATAGRAM_DATA_ACK:
+                  case DATAGRAM_REMOTE_COMMAND:
+                  case DATAGRAM_REMOTE_COMMAND_RESPONSE:
+                  case DATAGRAM_HEARTBEAT:
+                    systemPrint(" (ACK #");
+                    systemPrint(txControl.ackNumber);
+                    systemPrint(")");
+                    systemPrintln();
+                    break;
+                }
+                outputSerialData(true);
+              }
+
+              //Attempt the retransmission
+              RESTORE_TX_BUFFER();
+              if (rexmtControl.datagramType == DATAGRAM_HEARTBEAT)
+              {
+                //Never retransmit the heartbeat, always send a new version to
+                //send the updated time value
+                if (xmitDatagramP2PHeartbeat() == true)
+                {
+                  triggerEvent(TRIGGER_TX_HEARTBEAT);
+                  changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+                }
+              }
+              else if (retransmitDatagram(NULL) == true)
+              {
+                triggerEvent(TRIGGER_RETRANSMIT);
+                changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+              }
+
+              //We're re-sending data, so don't be the first to send next heartbeat
+              setHeartbeatLong();
+              START_ACK_TIMER();
             }
             else
             {
