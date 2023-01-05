@@ -170,6 +170,7 @@ SAMDTimer channelTimer(TIMER_TCC); //Available: TC3, TC4, TC5, TCC, TCC1 or TCC2
 volatile uint16_t channelTimerMsec; //Last value programmed into the channel timer
 volatile unsigned long channelTimerStart = 0; //Tracks how long our timer has been running since last hop
 volatile bool timeToHop = false; //Set by channelTimerHandler to indicate that hopChannel needs to be called
+volatile bool reloadChannelTimer = false; //When set channel timer interval needs to be reloaded with settings.maxDwellTime
 
 uint16_t petTimeout = 0; //A reduced amount of time before WDT triggers. Helps reduce amount of time spent petting.
 unsigned long lastPet = 0; //Remebers time of last WDT pet.
@@ -585,6 +586,7 @@ char platformPrefix[25]; //Used for printing platform specific device name, ie "
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 bool clockSyncReceiver; //Receives and processes the clock synchronization
+bool startChannelTimerPending; //When true, call startChannelTimer in transactionCompleteISR
 
 //RX and TX time measurements
 uint32_t rxTimeUsec;

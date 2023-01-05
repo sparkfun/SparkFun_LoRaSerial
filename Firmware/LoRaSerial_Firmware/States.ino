@@ -243,18 +243,23 @@ void updateRadioState()
            | P2P_WAIT_TX_FIND_PARTNER_DONE       |                  = true |   |
            |           |                         |                         |   |
            |           | Tx Complete - - - - - > | Rx FIND_PARTNER         |   |
-           |           |   Start Rx              |   Start HOP Timer       |   |
-           |           |   MAX_PACKET_SIZE       |   clockSyncReceiver     |   |
-           |           V                         |     = false             |   |
+           |           |   Start Rx              |   clockSyncReceiver     |   |
+           |           |   MAX_PACKET_SIZE       |     = false             |   |
+           |           V                         |                         |   |
            `---- P2P_WAIT_SYNC_CLOCKS            |                         |   |
                        |                         | Tx SYNC_CLOCKS          |   |
                        |                         V                         |   |
                        |              P2P_WAIT_TX_SYNC_CLOCKS_DONE         |   |
                        |                         |                         |   |
-        Rx SYNC_CLOCKS | < - - - - - - - - - - - | Tx Complete             |   |
+       Rx Complete ISR | < - - - - - - - - - - - | Tx Complete ISR         |   |
+                       |                         |   Start HOP Timer       |   |
+                       | Start HOP Timer         |                         |   |
+                       |                         V                         |   |
+                       V                         | In state machine        |   |
+        Rx SYNC_CLOCKS | In state machine        | Tx Complete             |   |
                        |                         |   Start Rx              |   |
-                       | Start HOP Timer         |   MAX_PACKET_SIZE       |   |
-                       | Sync HOP Timer          |                         |   |
+                       |                         |   MAX_PACKET_SIZE       |   |
+                       |                         |                         |   |
                        |                         V         Timeout         |   |
                        |                P2P_WAIT_ZERO_ACKS ----------------'   |
                        |                         |                             |
@@ -321,9 +326,6 @@ void updateRadioState()
             //Compute the receive time
             COMPUTE_RX_TIME(rxData, 1);
 
-            //Start the channel timer
-            startChannelTimer(); //Start hopping - P2P clock source
-
             //This system is the source of clock synchronization
             clockSyncReceiver = false; //P2P clock source
 
@@ -338,6 +340,7 @@ void updateRadioState()
             triggerEvent(TRIGGER_TX_SYNC_CLOCKS);
             if (xmitDatagramP2PSyncClocks() == true)
             {
+              startChannelTimerPending = true; //Starts at SYNC_CLOCKS TX done
               sf6ExpectedSize = headerBytes + P2P_ZERO_ACKS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
               changeState(RADIO_P2P_WAIT_TX_SYNC_CLOCKS_DONE);
             }
@@ -367,6 +370,7 @@ void updateRadioState()
         COMPUTE_TX_TIME();
         triggerEvent(TRIGGER_TX_DONE);
         transactionComplete = false; //Reset ISR flag
+        startChannelTimerPending = true; //Starts at RX of SYNC_CLOCKS frame
         returnToReceiving();
         changeState(RADIO_P2P_WAIT_SYNC_CLOCKS);
       }
@@ -377,6 +381,13 @@ void updateRadioState()
       {
         //Decode the received packet
         PacketType packetType = rcvDatagram();
+
+        //Restart the channel timer when the SYNC_CLOCKS frame is received
+        if (packetType != DATAGRAM_SYNC_CLOCKS)
+        {
+          stopChannelTimer(); //Restart channel timer if SYNC_CLOCKS not RX
+          startChannelTimerPending = true; //Restart channel timer if SYNC_CLOCKS not RX
+        }
 
         //Process the received datagram
         switch (packetType)
@@ -416,10 +427,6 @@ void updateRadioState()
 
           case DATAGRAM_SYNC_CLOCKS:
             //Received SYNC_CLOCKS
-            //Start the channel timer
-            startChannelTimer(); //Start hopping - P2P clock receiver
-            syncChannelTimer();
-
             //Display the channelTimer sink
             if (settings.debugSync)
             {
@@ -429,6 +436,9 @@ void updateRadioState()
 
             //Compute the receive time
             COMPUTE_RX_TIME(rxData + 1, 1);
+
+            //Hop to the next channel
+            hopChannel();
 
             //Acknowledge the SYNC_CLOCKS
             triggerEvent(TRIGGER_TX_ZERO_ACKS);
@@ -477,6 +487,9 @@ void updateRadioState()
         COMPUTE_TX_TIME();
         triggerEvent(TRIGGER_TX_DONE);
         transactionComplete = false; //Reset ISR flag
+
+        //Hop to the next channel
+        hopChannel();
         returnToReceiving();
         changeState(RADIO_P2P_WAIT_ZERO_ACKS);
       }

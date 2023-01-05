@@ -702,9 +702,17 @@ void printSX1276Registers()
 void transactionCompleteISR(void)
 {
   transactionCompleteMicros = micros();
-  triggerEvent(TRIGGER_TRANSACTION_COMPLETE);
   radioCallHistory[RADIO_CALL_transactionCompleteISR] = millis();
+  triggerEvent(TRIGGER_TRANSACTION_COMPLETE);
 
+  //Start the channel timer if requested
+  if (startChannelTimerPending)
+  {
+    startChannelTimer(); //transactionCompleteISR, upon TX or RX of SYNC_CLOCKS
+    startChannelTimerPending = false; //transactionCompleteISR, upon TX or RX of SYNC_CLOCKS
+  }
+
+  //Signal the state machine that a receive or transmit has completed
   transactionComplete = true;
 }
 
@@ -727,51 +735,6 @@ void updateHopISR()
     hop = false;
     radio.clearFHSSInt(); //Clear the interrupt
   }
-}
-
-//As we complete linkup, different airspeeds exit at different rates
-//We adjust the initial clock setup as needed
-int16_t getLinkupOffset()
-{
-  int linkupOffset = 0;
-
-  switch (settings.airSpeed)
-  {
-    default:
-      break;
-    case (40):
-      linkupOffset = 0;
-      break;
-    case (150):
-      linkupOffset = 0;
-      break;
-    case (400):
-      linkupOffset = 0;
-      break;
-    case (1200):
-      linkupOffset = 0;
-      break;
-    case (2400):
-      linkupOffset = 0;
-      break;
-    case (4800):
-      linkupOffset = 0;
-      break;
-    case (9600):
-      linkupOffset = 0;
-      break;
-    case (19200):
-      linkupOffset = 0;
-      break;
-    case (28800):
-      linkupOffset = 0;
-      break;
-    case (38400):
-      linkupOffset = 0;
-      break;
-  }
-
-  return (settings.maxDwellTime - getReceiveCompletionOffset() - linkupOffset); //Reduce the default window by the offset
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -2529,10 +2492,10 @@ bool transmitDatagram()
     //Hake sure that the transmitted msToNextHop is in the range 0 - maxDwellTime
     if (timeToHop)
       hopChannel();
-    uint16_t msToNextHop = settings.maxDwellTime - (millis() - channelTimerStart); //TX channel timer value
-    memcpy(header, &msToNextHop, sizeof(msToNextHop));
-    header += sizeof(msToNextHop); //aka CHANNEL_TIMER_BYTES
+    unsigned long currentMillis = millis();
+    uint16_t msToNextHop = channelTimerMsec - (currentMillis - channelTimerStart); //TX channel timer value
 
+    //Validate this value
     if (ENABLE_DEVELOPER && (!clockSyncReceiver))
     {
       if ((msToNextHop < 0) || (msToNextHop > settings.maxDwellTime))
@@ -2540,7 +2503,8 @@ bool transmitDatagram()
         int16_t channelTimer;
         uint8_t * data;
 
-        systemPrintln("TX Frame");
+        systemPrint("TX Frame ");
+        systemPrintln(radioDatagramType[txControl.datagramType]);
         data = outgoingPacket;
         if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
         {
@@ -2558,9 +2522,33 @@ bool transmitDatagram()
 
         systemPrint("ERROR: Invalid msToNextHop value, ");
         systemPrintln(msToNextHop);
-        waitForever();
+
+        //Set a valid value
+        msToNextHop = settings.maxDwellTime;
+      }
+      else if (settings.debugSync)
+      {
+        switch (txControl.datagramType)
+        {
+          case DATAGRAM_DATA_ACK:
+          case DATAGRAM_SYNC_CLOCKS:
+            systemPrint("TX: ");
+            systemPrint(channelTimerMsec);
+            systemPrint(" channelTimerMsec + (");
+            systemPrint(currentMillis);
+            systemPrint(" millis() - ");
+            systemPrint(channelTimerStart);
+            systemPrint(" channelTimerStart) = ");
+            systemPrint(msToNextHop);
+            systemPrintln(" mSec");
+          break;
+        }
       }
     } //ENABLE_DEVELOPER
+
+    //Set the time in the frame
+    memcpy(header, &msToNextHop, sizeof(msToNextHop));
+    header += sizeof(msToNextHop); //aka CHANNEL_TIMER_BYTES
 
     if (settings.debugTransmit)
     {
@@ -2998,6 +2986,7 @@ void startChannelTimer(int16_t startAmount)
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(startAmount, channelTimerHandler);
   digitalWrite(pin_hop_timer, channelNumber & 1);
+  reloadChannelTimer = (startAmount != settings.maxDwellTime);
   timeToHop = false;
   channelTimerStart = millis(); //startChannelTimer - ISR updates value
   channelTimerMsec = startAmount; //startChannelTimer - ISR updates value
@@ -3013,6 +3002,7 @@ void stopChannelTimer()
   //Turn off the channel timer
   channelTimer.disableTimer();
   digitalWrite(pin_hop_timer, channelNumber & 1);
+  channelTimerMsec = 0; //Indicate that the timer is off
 
   triggerEvent(TRIGGER_HOP_TIMER_STOP);
   timeToHop = false;
@@ -3238,6 +3228,9 @@ void syncChannelTimer()
 
   //Compute the next hop time
   msToNextHop = rmtHopTimeMsec + adjustment;
+
+  //When the ISR fires, reload the channel timer with settings.maxDwellTime
+  reloadChannelTimer = true;
 
   //Restart the channel timer
   channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's

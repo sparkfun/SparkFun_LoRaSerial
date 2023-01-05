@@ -100,13 +100,17 @@ void channelTimerHandler()
   channelTimerStart = millis(); //Record when this ISR happened. Used for calculating clock sync.
   radioCallHistory[RADIO_CALL_channelTimerHandler] = channelTimerStart;
 
-  //Restore the full timer interval
-  channelTimer.setInterval_MS(settings.maxDwellTime, channelTimerHandler);
-  channelTimerMsec = settings.maxDwellTime; //ISR update
-  digitalWrite(pin_hop_timer, channelNumber & 1);
+  //If the last timer was used to sync clocks, restore full timer interval
+  if (reloadChannelTimer == true)
+  {
+    reloadChannelTimer = false;
+    channelTimer.setInterval_MS(settings.maxDwellTime, channelTimerHandler);
+    channelTimerMsec = settings.maxDwellTime; //ISR update
+  }
 
   if (settings.frequencyHop)
   {
+    digitalWrite(pin_hop_timer, ((channelNumber + 1) % settings.numberOfChannels) & 1);
     triggerEvent(TRIGGER_CHANNEL_TIMER_ISR);
     timeToHop = true;
   }
