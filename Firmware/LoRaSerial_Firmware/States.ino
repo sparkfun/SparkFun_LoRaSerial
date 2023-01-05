@@ -335,7 +335,7 @@ void updateRadioState()
             }
 
             //Acknowledge the FIND_PARTNER with SYNC_CLOCKS
-            triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
+            triggerEvent(TRIGGER_TX_SYNC_CLOCKS);
             if (xmitDatagramP2PSyncClocks() == true)
             {
               sf6ExpectedSize = headerBytes + P2P_ZERO_ACKS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
@@ -349,9 +349,11 @@ void updateRadioState()
       else if ((receiveInProcess() == false) && ((millis() - heartbeatTimer) >= randomTime))
       {
         //Transmit the FIND_PARTNER
-        triggerEvent(TRIGGER_HANDSHAKE_SEND_FIND_PARTNER);
+        triggerEvent(TRIGGER_TX_FIND_PARTNER);
         if (xmitDatagramP2PFindPartner() == true)
         {
+          if (settings.debugSync)
+            triggerFrequency(channels[channelNumber]);
           sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 we expect SYNC_CLOCKS to contain millis info
           changeState(RADIO_P2P_WAIT_TX_FIND_PARTNER_DONE);
         }
@@ -363,7 +365,7 @@ void updateRadioState()
       if (transactionComplete)
       {
         COMPUTE_TX_TIME();
-        triggerEvent(TRIGGER_HANDSHAKE_SEND_FIND_PARTNER_COMPLETE);
+        triggerEvent(TRIGGER_TX_DONE);
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
         changeState(RADIO_P2P_WAIT_SYNC_CLOCKS);
@@ -404,7 +406,7 @@ void updateRadioState()
             COMPUTE_RX_TIME(rxData + 1, 1);
 
             //Acknowledge the FIND_PARTNER
-            triggerEvent(TRIGGER_SEND_SYNC_CLOCKS);
+            triggerEvent(TRIGGER_TX_SYNC_CLOCKS);
             if (xmitDatagramP2PSyncClocks() == true)
             {
               sf6ExpectedSize = headerBytes + P2P_ZERO_ACKS_BYTES + trailerBytes; //Tell SF6 we expect ZERO_ACKS to contain millis info
@@ -429,7 +431,7 @@ void updateRadioState()
             COMPUTE_RX_TIME(rxData + 1, 1);
 
             //Acknowledge the SYNC_CLOCKS
-            triggerEvent(TRIGGER_SEND_ZERO_ACKS);
+            triggerEvent(TRIGGER_TX_ZERO_ACKS);
             if (xmitDatagramP2PZeroAcks() == true)
             {
               sf6ExpectedSize = MAX_PACKET_SIZE; //Tell SF6 to return to max packet length
@@ -473,7 +475,7 @@ void updateRadioState()
       if (transactionComplete)
       {
         COMPUTE_TX_TIME();
-        triggerEvent(TRIGGER_HANDSHAKE_SEND_SYNC_CLOCKS_COMPLETE);
+        triggerEvent(TRIGGER_TX_DONE);
         transactionComplete = false; //Reset ISR flag
         returnToReceiving();
         changeState(RADIO_P2P_WAIT_ZERO_ACKS);
@@ -647,12 +649,12 @@ void updateRadioState()
         {
           COMPUTE_TX_TIME();
         }
+        triggerEvent(TRIGGER_TX_DONE);
 
         //Determine the next packet size for SF6
         if (ackTimer)
         {
           //Waiting for an ACK
-          triggerEvent(TRIGGER_LINK_WAIT_FOR_ACK);
           sf6ExpectedSize = headerBytes + CHANNEL_TIMER_BYTES + trailerBytes;
         }
         else
@@ -713,6 +715,7 @@ void updateRadioState()
             break;
 
           case DATAGRAM_FIND_PARTNER:
+            triggerEvent(TRIGGER_RX_FIND_PARTNER);
             breakLink();
             break;
 
@@ -720,21 +723,24 @@ void updateRadioState()
             //Received heartbeat while link was idle. Send ack to sync clocks.
             //Adjust the timestamp offset
             COMPUTE_TIMESTAMP_OFFSET(rxData, 1);
+            triggerEvent(TRIGGER_RX_HEARTBEAT);
 
             //Transmit ACK
-            P2P_SEND_ACK(TRIGGER_LINK_SEND_ACK_FOR_HEARTBEAT);
+            P2P_SEND_ACK(TRIGGER_TX_ACK);
             break;
 
           case DATAGRAM_DATA:
+            triggerEvent(TRIGGER_RX_DATA);
+
             //Place the data in the serial output buffer
             serialBufferOutput(rxData, rxDataBytes);
 
             //Transmit ACK
-            P2P_SEND_ACK(TRIGGER_LINK_SEND_ACK_FOR_DATA);
+            P2P_SEND_ACK(TRIGGER_TX_ACK);
             break;
 
           case DATAGRAM_DUPLICATE:
-            P2P_SEND_ACK(TRIGGER_LINK_SEND_ACK_FOR_DUP);
+            P2P_SEND_ACK(TRIGGER_TX_DUPLICATE_ACK);
             break;
 
           case DATAGRAM_DATA_ACK:
@@ -744,7 +750,7 @@ void updateRadioState()
             //The datagram we are expecting
             syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
 
-            triggerEvent(TRIGGER_LINK_ACK_RECEIVED);
+            triggerEvent(TRIGGER_RX_ACK);
 
             //Stop the ACK timer
             STOP_ACK_TIMER();
@@ -754,6 +760,8 @@ void updateRadioState()
             break;
 
           case DATAGRAM_REMOTE_COMMAND:
+            triggerEvent(TRIGGER_RX_COMMAND);
+
             //Determine the number of bytes received
             length = 0;
             if ((commandRXHead + rxDataBytes) > sizeof(commandRXBuffer))
@@ -770,16 +778,18 @@ void updateRadioState()
             commandRXHead %= sizeof(commandRXBuffer);
 
             //Transmit ACK
-            P2P_SEND_ACK(TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND);
+            P2P_SEND_ACK(TRIGGER_TX_ACK);
             break;
 
           case DATAGRAM_REMOTE_COMMAND_RESPONSE:
+            triggerEvent(TRIGGER_RX_COMMAND_RESPONSE);
+
             //Print received data. This is blocking but we do not use the serialTransmitBuffer because we're in command mode (and it's not much data to print).
             for (int x = 0 ; x < rxDataBytes ; x++)
               Serial.write(rxData[x]);
 
             //Transmit ACK
-            P2P_SEND_ACK(TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND_RESPONSE);
+            P2P_SEND_ACK(TRIGGER_TX_ACK);
             break;
         }
       }
@@ -792,10 +802,11 @@ void updateRadioState()
         heartbeatTimeout = ((millis() - heartbeatTimer) > heartbeatRandomTime);
         if (heartbeatTimeout)
         {
-          triggerEvent(TRIGGER_HEARTBEAT);
-
           if (xmitDatagramP2PHeartbeat() == true)
+          {
+            triggerEvent(TRIGGER_TX_HEARTBEAT);
             changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+          }
 
           //Save the message for retransmission
           SAVE_TX_BUFFER();
@@ -832,7 +843,7 @@ void updateRadioState()
                   outputSerialData(true);
                 }
 
-                triggerEvent(TRIGGER_LINK_RETRANSMIT);
+                triggerEvent(TRIGGER_RETRANSMIT);
                 if (settings.debugDatagrams)
                 {
                   systemPrintTimestamp();
@@ -867,7 +878,10 @@ void updateRadioState()
                   //Never retransmit the heartbeat, always send a new version to
                   //send the updated time value
                   if (xmitDatagramP2PHeartbeat() == true)
+                  {
                     changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+                    triggerEvent(TRIGGER_TX_HEARTBEAT);
+                  }
                 }
                 else if (retransmitDatagram(NULL) == true)
                   changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
@@ -882,7 +896,7 @@ void updateRadioState()
               lostFrames++;
 
               //Failed to reach the other system, break the link
-              triggerEvent(TRIGGER_LINK_RETRANSMIT_FAIL);
+              triggerEvent(TRIGGER_RETRANSMIT_FAIL);
 
               //Break the link
               breakLink();
@@ -900,18 +914,23 @@ void updateRadioState()
           //Load command bytes into outgoing packet
           readyOutgoingCommandPacket(0);
 
-          triggerEvent(TRIGGER_LINK_DATA_XMIT);
           if (remoteCommandResponse)
           {
             //Send the command response
             if (xmitDatagramP2PCommandResponse() == true)
+            {
+              triggerEvent(TRIGGER_TX_COMMAND_RESPONSE);
               changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+            }
           }
           else
           {
             //Send the command
             if (xmitDatagramP2PCommand() == true)
+            {
+              triggerEvent(TRIGGER_TX_COMMAND);
               changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+            }
           }
 
           //Save the message for retransmission
@@ -939,10 +958,11 @@ void updateRadioState()
             //Check for time to send serial data
             if (processWaitingSerial(heartbeatTimeout) == true)
             {
-              triggerEvent(TRIGGER_LINK_DATA_XMIT);
-
               if (xmitDatagramP2PData() == true)
+              {
+                triggerEvent(TRIGGER_TX_DATA);
                 changeState(RADIO_P2P_LINK_UP_WAIT_TX_DONE);
+              }
 
               //Save the message for retransmission
               SAVE_TX_BUFFER();
@@ -1079,7 +1099,7 @@ void updateRadioState()
             break;
 
           case DATAGRAM_SYNC_CLOCKS:
-            triggerEvent(TRIGGER_LINK_ACK_RECEIVED);
+            triggerEvent(TRIGGER_RX_SYNC_CLOCKS);
 
             //Compute the common clock
             currentMillis = millis();
@@ -1143,7 +1163,10 @@ void updateRadioState()
 
           //Send FIND_PARTNER
           if (xmitDatagramP2PFindPartner() == true)
+          {
+            triggerEvent(TRIGGER_TX_FIND_PARTNER);
             changeState(RADIO_DISCOVER_WAIT_TX_FIND_PARTNER_DONE);
+          }
         }
       }
 
@@ -1220,13 +1243,15 @@ void updateRadioState()
             break;
 
           case DATAGRAM_FIND_PARTNER:
+            triggerEvent(TRIGGER_RX_FIND_PARTNER);
+
             //A new radio is saying hello
             if (settings.server == true)
             {
               //Ack their FIND_PARTNER with SYNC_CLOCK
               if (xmitDatagramP2PSyncClocks() == true)
               {
-                triggerEvent(TRIGGER_MP_SEND_ACK_FOR_FIND_PARTNER);
+                triggerEvent(TRIGGER_TX_SYNC_CLOCKS);
                 changeState(RADIO_MP_WAIT_TX_DONE);
               }
             }
@@ -1238,6 +1263,7 @@ void updateRadioState()
 
           case DATAGRAM_HEARTBEAT:
             //Received heartbeat - do not ack.
+            triggerEvent(TRIGGER_RX_HEARTBEAT);
 
             //Sync clock if server sent the heartbeat
             if (settings.server == false)
@@ -1253,6 +1279,7 @@ void updateRadioState()
 
           case DATAGRAM_DATA:
             //Received data - do not ack.
+            triggerEvent(TRIGGER_RX_DATA);
 
             //Sync clock if server sent the datagram
             if (settings.server == false)
@@ -1265,7 +1292,6 @@ void updateRadioState()
 
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
-            triggerEvent(TRIGGER_MP_DATA_PACKET);
             lastPacketReceived = millis(); //Update timestamp for Link LED
 
             changeState(RADIO_MP_STANDBY);
@@ -1283,9 +1309,9 @@ void updateRadioState()
         {
           if (heartbeatTimeout)
           {
-            triggerEvent(TRIGGER_HEARTBEAT);
             if (xmitDatagramMpHeartbeat() == true)
             {
+              triggerEvent(TRIGGER_TX_HEARTBEAT);
               setHeartbeatMultipoint(); //We're sending something with clock data so reset heartbeat timer
               changeState(RADIO_MP_WAIT_TX_DONE); //Wait for heartbeat to transmit
             }
@@ -1296,9 +1322,9 @@ void updateRadioState()
         //Check for time to send serial data
         else if (availableRadioTXBytes() && (processWaitingSerial(heartbeatTimeout) == true))
         {
-          triggerEvent(TRIGGER_MP_DATA_PACKET);
           if (xmitDatagramMpData() == true)
           {
+            triggerEvent(TRIGGER_MP_TX_DATA);
             setHeartbeatMultipoint(); //We're sending something with clock data so reset heartbeat timer
             changeState(RADIO_MP_WAIT_TX_DONE);
           }
@@ -1722,7 +1748,7 @@ void updateRadioState()
         transactionComplete = false;
 
         //Indicate that the transmission is complete
-        triggerEvent(TRIGGER_VC_TX_DONE);
+        triggerEvent(TRIGGER_TX_DONE);
 
         //Start the receive operation
         returnToReceiving();
@@ -1809,9 +1835,11 @@ void updateRadioState()
           case DATAGRAM_DUPLICATE:
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
-            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_DUP);
             if (xmitVcAckFrame(rxSrcVc))
+            {
+              triggerEvent(TRIGGER_TX_DUPLICATE_ACK);
               changeState(RADIO_VC_WAIT_TX_DONE);
+            }
             break;
 
           //Second step in the 3-way handshake, received UNKNOWN_ACKS, respond
@@ -1856,11 +1884,13 @@ void updateRadioState()
             petWDT();
 
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND);
 
             //Transmit ACK
             if (xmitVcAckFrame(rxSrcVc))
+            {
+              triggerEvent(TRIGGER_TX_ACK);
               changeState(RADIO_VC_WAIT_TX_DONE);
+            }
 
             //Process the command
             petWDT();
@@ -1901,9 +1931,11 @@ void updateRadioState()
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             //ACK the command response
-            triggerEvent(TRIGGER_LINK_SEND_ACK_FOR_REMOTE_COMMAND_RESPONSE);
             if (xmitVcAckFrame(rxSrcVc)) //Transmit ACK
+            {
+              triggerEvent(TRIGGER_TX_ACK);
               changeState(RADIO_VC_WAIT_TX_DONE);
+            }
             break;
         }
       }
@@ -1919,6 +1951,7 @@ void updateRadioState()
           //Send another heartbeat
           if (xmitVcHeartbeat(myVc, myUniqueId))
           {
+            triggerEvent(TRIGGER_TX_HEARTBEAT);
             if (((uint8_t)myVc) < MAX_VC)
               virtualCircuitList[myVc].lastTrafficMillis = currentMillis;
             changeState(RADIO_VC_WAIT_TX_DONE);
@@ -1979,7 +2012,10 @@ void updateRadioState()
 
               //Retransmit the packet
               if (retransmitDatagram(((uint8_t)txDestVc <= MAX_VC) ? &virtualCircuitList[txDestVc] : NULL))
+              {
+                triggerEvent(TRIGGER_RETRANSMIT);
                 changeState(RADIO_VC_WAIT_TX_DONE);
+              }
 
               START_ACK_TIMER();
               lostFrames++;
@@ -2009,7 +2045,10 @@ void updateRadioState()
           vcHeader->length = readyOutgoingCommandPacket(VC_RADIO_HEADER_BYTES)
                              + VC_RADIO_HEADER_BYTES;
           if (xmitDatagramP2PCommandResponse())
+          {
+            triggerEvent(TRIGGER_TX_COMMAND_RESPONSE);
             changeState(RADIO_VC_WAIT_TX_DONE);
+          }
 
           START_ACK_TIMER();
 
@@ -2100,13 +2139,13 @@ void updateRadioState()
               if (vcHeader->destVc == VC_BROADCAST)
               {
                 //Broadcast this data to all VCs, no ACKs will be received
-                triggerEvent(TRIGGER_VC_TX_DATA);
+                triggerEvent(TRIGGER_TX_DATA);
                 xmitVcDatagram();
                 break;
               }
 
               //Transmit the packet
-              triggerEvent(TRIGGER_VC_TX_DATA);
+              triggerEvent(TRIGGER_TX_DATA);
               if (xmitDatagramP2PData() == true)
                 changeState(RADIO_VC_WAIT_TX_DONE);
 

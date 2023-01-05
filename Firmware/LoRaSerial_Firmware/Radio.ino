@@ -2146,7 +2146,7 @@ PacketType rcvDatagram()
   requestYield = rxControl.requestYield;
   if (requestYield)
   {
-    triggerEvent(TRIGGER_LINK_REQUEST_YIELD_RECEIVED);
+    triggerEvent(TRIGGER_RX_YIELD);
     yieldTimerStart = millis();
   }
 
@@ -2372,7 +2372,7 @@ bool transmitDatagram()
   //the sender yield to give us an opportunity to send our data
   if ((txControl.datagramType == DATAGRAM_DATA_ACK) && availableRadioTXBytes())
   {
-    triggerEvent(TRIGGER_LINK_REQUEST_YIELD_SENT);
+    triggerEvent(TRIGGER_TX_YIELD);
     txControl.requestYield = 1;
   }
   else
@@ -3251,7 +3251,9 @@ void syncChannelTimer()
   channelTimerStart = currentMillis;
   channelTimerMsec = msToNextHop; //syncChannelTimer update
   channelTimer.enableTimer();
-  triggerFrequency(msToNextHop); //Trigger after adjustments to timer to avoid skew during debug
+
+  //Trigger after adjustments to timer to avoid skew during debug
+  triggerEvent(TRIGGER_SYNC_CHANNEL_TIMER);
 
   //----------------------------------------------------------------------
   // Leave the critical section
