@@ -468,7 +468,6 @@ unsigned long rcvTimeMillis;
 unsigned long xmitTimeMillis;
 long timestampOffset;
 unsigned long vcTxHeartbeatMillis;
-unsigned long nextChannelZeroTimeInMillis;
 
 //Transmit control
 uint8_t * endOfTxData;
