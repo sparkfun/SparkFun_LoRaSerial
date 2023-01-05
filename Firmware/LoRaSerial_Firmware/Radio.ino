@@ -534,32 +534,27 @@ uint16_t myRand()
 //at the beginning and during of a transmission or reception
 void hopChannel()
 {
-  hopChannel(true); //Move forward
+  hopChannel(true, 1); //Move forward
 }
 
 //Hop to the previous channel in the frequency list
 void hopChannelReverse()
 {
-  hopChannel(false); //Move backward
+  hopChannel(false, 1); //Move backward
 }
 
 //Set the next radio frequency given the hop direction and frequency table
-void hopChannel(bool moveForwardThroughTable)
+void hopChannel(bool moveForwardThroughTable, uint8_t channelCount)
 {
   radioCallHistory[RADIO_CALL_hopChannel] = millis();
 
   timeToHop = false;
 
   if (moveForwardThroughTable)
-  {
-    channelNumber++;
-    channelNumber %= settings.numberOfChannels;
-  }
+    channelNumber += channelCount;
   else
-  {
-    if (channelNumber == 0) channelNumber = settings.numberOfChannels;
-    channelNumber--;
-  }
+    channelNumber += settings.numberOfChannels - channelCount;
+  channelNumber %= settings.numberOfChannels;
 
   //Select the new frequency
   setRadioFrequency(radioStateTable[radioState].rxState);
