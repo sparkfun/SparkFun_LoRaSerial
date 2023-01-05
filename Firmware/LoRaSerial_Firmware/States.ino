@@ -53,15 +53,17 @@
     unsigned long deltaUsec = txTimeUsec + rxTimeUsec;                          \
     memcpy(&remoteSystemMillis, millisBuffer, sizeof(currentMillis));           \
     timestampOffset = (remoteSystemMillis + (deltaUsec / 1000) - currentMillis);\
-    timestampOffset >>= rShift;                                                  \
+    timestampOffset >>= rShift;                                                 \
   }
 
 #define COMPUTE_RX_TIME(millisBuffer, rShift)                                   \
   {                                                                             \
     currentMillis = millis();                                                   \
-    if (!rxFirstAck)                                                            \
+    long deltaUsec = micros() - transactionCompleteMicros;                      \
+    if ((!rxFirstAck) || (deltaUsec < rxTimeUsec))                              \
     {                                                                           \
-      rxTimeUsec = micros() - transactionCompleteMicros;                        \
+      rxFirstAck = true;                                                        \
+      rxTimeUsec = deltaUsec;                                                   \
       txRxTimeMsec = (txTimeUsec + rxTimeUsec) / 1000;                          \
                                                                                 \
       /*Display the results*/                                                   \
@@ -84,9 +86,12 @@
 #define COMPUTE_TX_TIME()                                                       \
   {                                                                             \
     currentMillis = millis();                                                   \
-    if (!txFirstAck)                                                            \
+    long deltaUsec = transactionCompleteMicros - txDatagramMicros;              \
+    if ((!txFirstAck) || (deltaUsec < txTimeUsec))                              \
     {                                                                           \
-      txTimeUsec = transactionCompleteMicros - txDatagramMicros;                \
+      txFirstAck = true;                                                        \
+      txTimeUsec = deltaUsec;                                                   \
+      txRxTimeMsec = (txTimeUsec + rxTimeUsec) / 1000;                          \
                                                                                 \
       /*Display the results*/                                                   \
       if (settings.debugSync)                                                   \
@@ -95,6 +100,9 @@
         systemPrint(" TX Time: ");                                              \
         systemPrint(txTimeUsec);                                                \
         systemPrintln(" uSec");                                                 \
+        systemPrint(" TX + RX Time: ");                                         \
+        systemPrint(txRxTimeMsec);                                              \
+        systemPrintln(" mSec");                                                 \
       }                                                                         \
     }                                                                           \
   }
@@ -279,10 +287,6 @@ void updateRadioState()
         channelNumber = 0;
         setRadioFrequency(false);
       }
-
-      //Update the transmit and receive times until the first ACK TX and RX
-      rxFirstAck = false;
-      txFirstAck = false;
 
       //Determine if a FIND_PARTNER was received
       if (transactionComplete)
@@ -642,7 +646,6 @@ void updateRadioState()
         if (txControl.datagramType = DATAGRAM_DATA_ACK)
         {
           COMPUTE_TX_TIME();
-          txFirstAck = true;
         }
 
         //Determine the next packet size for SF6
@@ -737,10 +740,6 @@ void updateRadioState()
           case DATAGRAM_DATA_ACK:
             //Adjust the timestamp offset
             COMPUTE_RX_TIME(rxData, 1);
-
-            //Stop updating the rxTimeUsec and txTimeUsec after TX and RX of ACKs
-            if (txFirstAck)
-              rxFirstAck = true;
 
             //The datagram we are expecting
             syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
