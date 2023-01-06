@@ -3076,6 +3076,7 @@ void syncChannelTimer()
   //the channelTimerStart value indicated that it was done.  The channel
   //timer update will add only microseconds to when the hop is done.
   delayedHopCount = timeToHop ? 1 : 0;
+  timeToHop = false;
 
   //The radios are using the same frequencies since the frame was successfully
   //received.  The goal is to adjust the channel timer to fire in close proximity
