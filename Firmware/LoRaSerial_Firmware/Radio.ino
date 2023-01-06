@@ -3059,7 +3059,7 @@ void syncChannelTimer()
 
       systemPrint("ERROR: Invalid msToNextHopRemote value, ");
       systemPrintln(msToNextHopRemote);
-      waitForever();
+      return;
     }
   } //ENABLE_DEVELOPER
 
