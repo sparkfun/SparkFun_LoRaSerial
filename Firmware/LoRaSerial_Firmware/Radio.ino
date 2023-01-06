@@ -200,7 +200,6 @@ bool setRadioFrequency(bool rxAdjust)
     systemPrintTimestamp();
     systemPrint("CH");
     systemPrintln(channelNumber);
-    outputSerialData(true);
   }
   if (settings.printFrequency && (previousFrequency != radioFrequency))
   {
@@ -211,7 +210,6 @@ bool setRadioFrequency(bool rxAdjust)
     systemPrint(" MHz, Ch 0 in ");
     systemPrint(mSecToChannelZero());
     systemPrintln(" mSec");
-    outputSerialData(true);
   }
   previousChannelNumber = channelNumber;
   return true;
