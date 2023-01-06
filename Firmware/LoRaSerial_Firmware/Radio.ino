@@ -2976,15 +2976,6 @@ void syncChannelTimer()
   uint16_t msToNextHop;
   int16_t rmtHopTimeMsec;
 
-  int16_t nextChannelTimerMsec;
-  int8_t deltaHops = 0;
-  int16_t msToNextHopRmt;
-  long deltaMillis;
-  long millisToNextHop;
-  bool syncError;
-
-#define COMPUTE_OLD_CHANNEL_TIMER_VALUE 0
-
   currentMillis = millis();
   radioCallHistory[RADIO_CALL_syncChannelTimer] = currentMillis;
 
@@ -3130,9 +3121,6 @@ void syncChannelTimer()
       //       channelTimerStart                                     Channel timer fires
       //
       //A hop is necessary to get to a common channel
-if (COMPUTE_OLD_CHANNEL_TIMER_VALUE)
-deltaHops -= 1;
-else
       delayedHopCount += 1;
     }
   }
@@ -3195,131 +3183,8 @@ else
     }
   }
 
-#if COMPUTE_OLD_CHANNEL_TIMER_VALUE
-  nextChannelTimerMsec = msToNextHop;
-
-  //msToNextHopRemote is obtained during rcvDatagram()
-
-  //If the sync arrived in an ACK, we know how long that packet took to transmit
-  //Calculate the packet airTime based on the size of data received
-  msToNextHopRmt = msToNextHopRemote - calcAirTimeMsec(packetLength);
-
-  //  if (settings.debugReceive == true)
-  //    msToNextHopRmt -= 91; //Must adjust for the blob of text being printed
-
-  //Different airspeeds complete the transmitComplete ISR at different rates
-  //We adjust the clock setup as needed
-  switch (settings.airSpeed)
-  {
-    default:
-      break;
-    case (40):
-      msToNextHopRmt -= getReceiveCompletionOffset();
-      break;
-    case (150):
-      msToNextHopRmt -= 145;
-      break;
-    case (400):
-      msToNextHopRmt -= getReceiveCompletionOffset();
-      break;
-    case (1200):
-      msToNextHopRmt -= getReceiveCompletionOffset();
-      break;
-    case (2400):
-      msToNextHopRmt -= getReceiveCompletionOffset();
-      break;
-    case (4800):
-      msToNextHopRmt -= 5;
-      break;
-    case (9600):
-      break;
-    case (19200):
-      msToNextHopRmt -= 4;
-      break;
-    case (28800):
-      msToNextHopRmt -= 2;
-      break;
-    case (38400):
-      msToNextHopRmt -= 3;
-      break;
-  }
-
-  int16_t msToNextHopLocal = settings.maxDwellTime - (currentMillis - channelTimerStart);
-
-  //Precalculate large/small time amounts
-  uint16_t smallAmount = settings.maxDwellTime / 8;
-  uint16_t largeAmount = settings.maxDwellTime - smallAmount;
-
-  msToNextHop = msToNextHopRmt; //By default, we will adjust our clock to match our mate's
-
-  //Below are the edge cases that occur when a hop occurs near ACK reception
-
-  //msToNextHopLocal is small and msToNextHopRmt is negative (and small)
-  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRmt comes in negative (and small) then the remote has hopped
-  //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRmt + dwellTime)
-  if (msToNextHopLocal < smallAmount && (msToNextHopRmt <= 0 && msToNextHopRmt >= (smallAmount * -1)))
-  {
-    hopChannel();
-    deltaHops += 1;
-    msToNextHop = msToNextHopRmt + settings.maxDwellTime;
-  }
-
-  //msToNextHopLocal is large and msToNextHopRmt is negative
-  //If we just hopped (msToNextHopLocal is large), and msToNextHopRmt comes in negative then the remote has hopped
-  //No need to hop. Adjust our clock to the remote's next hop (msToNextHopRmt + dwellTime)
-  else if (msToNextHopLocal > largeAmount && msToNextHopRmt <= 0)
-  {
-    msToNextHop = msToNextHopRmt + settings.maxDwellTime;
-  }
-
-  //msToNextHopLocal is small and msToNextHopRmt is large
-  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRmt comes in large then the remote has hopped recently
-  //Then hop now, and adjust our clock to the remote's next hop (msToNextHopRmt)
-  else if (msToNextHopLocal < smallAmount && msToNextHopRmt > largeAmount)
-  {
-    hopChannel();
-    deltaHops += 1;
-    msToNextHop = msToNextHopRmt;
-  }
-
-  //msToNextHopLocal is large and msToNextHopRmt is large
-  //If we just hopped (msToNextHopLocal is large), and a msToNextHopRmt comes in large then the remote has hopped
-  //Then adjust our clock to the remote's next hop (msToNextHopRmt)
-  else if (msToNextHopLocal > largeAmount && msToNextHopRmt > largeAmount)
-  {
-    msToNextHop = msToNextHopRmt;
-  }
-
-  //msToNextHopLocal is large and msToNextHopRmt is small
-  //If we just hopped (msToNextHopLocal is large), and a msToNextHopRmt comes in small then the remote is about to hop
-  //Then adjust our clock to the remote's next hop (msToNextHopRmt + dwellTime)
-  else if (msToNextHopLocal > largeAmount && msToNextHopRmt < smallAmount)
-  {
-    msToNextHop = msToNextHopRmt + settings.maxDwellTime;
-  }
-
-  //msToNextHopLocal is small and msToNextHopRmt is small
-  //If we are about to hop (msToNextHopLocal is small), and a msToNextHopRmt comes in small then the remote is about to hop
-  //Then adjust our clock to the remote's next hop (msToNextHopRmt)
-  else if (msToNextHopLocal < smallAmount && msToNextHopRmt < smallAmount)
-  {
-    msToNextHop = msToNextHopRmt;
-
-    //If we have a negative remote hop time that is larger than a dwell time then the remote has hopped again
-    //This is seen at lower air speeds
-    //Hop now, and adjust our clock to the remote's next hop (msToNextHopRmt + dwellTime)
-    if (msToNextHop < (settings.maxDwellTime * -1)) //-402 < -400
-    {
-      hopChannel();
-      deltaHops += 1;
-      msToNextHop += settings.maxDwellTime;
-    }
-  }
-
-  //Insure against negative timer values
-  while (msToNextHop < 0)
-    msToNextHop += settings.maxDwellTime;
-#endif  //COMPUTE_OLD_CHANNEL_TIMER_VALUE
+  //Compute the next hop time
+  msToNextHop = rmtHopTimeMsec + adjustment;
 
   //When the ISR fires, reload the channel timer with settings.maxDwellTime
   reloadChannelTimer = true;
@@ -3330,7 +3195,7 @@ else
   channelTimerStart = currentMillis;
   channelTimerMsec = msToNextHop; //syncChannelTimer update
   channelTimer.enableTimer();
-  triggerEvent(TRIGGER_SYNC_CHANNEL); //Trigger after adjustments to timer to avoid skew during debug
+  triggerFrequency(msToNextHop); //Trigger after adjustments to timer to avoid skew during debug
 
   //----------------------------------------------------------------------
   // Leave the critical section
@@ -3340,15 +3205,11 @@ else
   if (delayedHopCount)
     hopChannel(true, delayedHopCount);
 
-#if COMPUTE_OLD_CHANNEL_TIMER_VALUE
-  //Check for a sync error
-  deltaMillis = (nextChannelTimerMsec - msToNextHop + settings.maxDwellTime) % settings.maxDwellTime;
-  syncError = deltaHops || ((deltaMillis > CHANNEL_TIMER_SYNC_PLUS_MINUS_MSEC)
-      && (deltaMillis < (settings.maxDwellTime - CHANNEL_TIMER_SYNC_PLUS_MINUS_MSEC)));
-
   //Display the channel sync timer calculations
-  if (settings.debugSync || syncError)
+  if (settings.debugSync)
   {
+    systemPrint(delayedHopCount);
+    systemPrint(" Hops, ");
     systemPrint(msToNextHopRemote);
     systemPrint(" Nxt Hop - ");
     systemPrint(txRxTimeMsec);
@@ -3360,55 +3221,9 @@ else
       systemPrint(" Adj");
     }
     systemPrint(" = ");
-    systemPrint(nextChannelTimerMsec);
-    systemPrintln(" mSec");
-
-    systemPrint("msToNextHopRmt: ");
-    systemPrint(msToNextHopRmt);
-    systemPrint(" msToNextHopLocal: ");
-    systemPrint(msToNextHopLocal);
-    systemPrint(" msToNextHop: ");
     systemPrint(msToNextHop);
-    systemPrint(" delta: ");
-    systemPrint(deltaMillis);
-    systemPrint(" deltaHops: ");
-    systemPrint(deltaHops);
-    systemPrintln();
-    outputSerialData(true);
-    if (syncError)
-    {
-      int16_t channelTimer;
-      uint8_t * data;
-
-      systemPrint("rxTimeUsec: ");
-      systemPrintln(rxTimeUsec);
-      systemPrint("txTimeUsec: ");
-      systemPrintln(txTimeUsec);
-      systemPrintln("RX Frame");
-      outputSerialData(true);
-      dumpBuffer(incomingBuffer, headerBytes + rxDataBytes + trailerBytes);
-
-      data = incomingBuffer;
-      if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
-      {
-        systemPrint("    Net Id: ");
-        systemPrint(*data);
-        systemPrint(" (0x");
-        systemPrint(*data++, HEX);
-        systemPrintln(")");
-        outputSerialData(true);
-      }
-      printControl(*data++);
-      memcpy(&channelTimer, data, sizeof(channelTimer));
-      data += sizeof(channelTimer);
-      systemPrint("    Channel Timer(ms): ");
-      systemPrintln(channelTimer);
-
-      systemPrintln("ERROR: Must fix channel timer synchronization math");
-      outputSerialData(true);
-    }
+    systemPrintln(" mSec");
   }
-#endif  //COMPUTE_OLD_CHANNEL_TIMER_VALUE
 }
 
 //This function resets the heartbeat time and re-rolls the random time
