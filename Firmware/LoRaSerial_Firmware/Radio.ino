@@ -3105,8 +3105,7 @@ void syncChannelTimer()
   adjustment = 0;
 
 #define REMOTE_SYSTEM_LIKELY_TO_HOP_MSEC    2
-#define CHANNEL_TIMER_SYNC_PLUS_MINUS_MSEC  3
-#define CHANNEL_TIMER_SYNC_MSEC             (2 * CHANNEL_TIMER_SYNC_PLUS_MINUS_MSEC)
+#define CHANNEL_TIMER_SYNC_MSEC   (txRxTimeMsec + REMOTE_SYSTEM_LIKELY_TO_HOP_MSEC)
 
   //Determine if the remote has hopped or is likely to hop very soon
   if (rmtHopTimeMsec <= REMOTE_SYSTEM_LIKELY_TO_HOP_MSEC)
@@ -3115,7 +3114,7 @@ void syncChannelTimer()
     adjustment += settings.maxDwellTime;
 
     //Determine if the local system has just hopped
-    if (lclHopTimeMsec <= CHANNEL_TIMER_SYNC_MSEC)
+    if (((unsigned long)lclHopTimeMsec) <= CHANNEL_TIMER_SYNC_MSEC)
     {
       //Case 1 above, both systems using the same channel
       //
@@ -3176,7 +3175,7 @@ void syncChannelTimer()
   {
     //The remote system has not hopped
     //Determine if the local system has just hopped
-    if (lclHopTimeMsec <= CHANNEL_TIMER_SYNC_MSEC)
+    if (((unsigned long)lclHopTimeMsec) <= CHANNEL_TIMER_SYNC_MSEC)
     {
       //Case 3 above, extend the channel timer value
       //
