@@ -2493,7 +2493,11 @@ bool transmitDatagram()
     if (timeToHop)
       hopChannel();
     unsigned long currentMillis = millis();
-    uint16_t msToNextHop = channelTimerMsec - (currentMillis - channelTimerStart); //TX channel timer value
+    uint16_t msToNextHop; //TX channel timer value
+    if (channelTimerMsec)
+      msToNextHop = channelTimerMsec - (currentMillis - channelTimerStart);
+    else
+      msToNextHop = settings.maxDwellTime;
 
     //Validate this value
     if (ENABLE_DEVELOPER && (!clockSyncReceiver))
