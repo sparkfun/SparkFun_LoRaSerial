@@ -125,14 +125,16 @@ uint8_t pin_hop_timer = PIN_UNDEFINED;
 #define RADIO_USE_BAD_FRAMES_LED  BLUE_LED    //Blue
 #define RADIO_USE_BAD_CRC_LED     YELLOW_LED  //Yellow
 
-#define LED_MP_HOP_CHANNEL        BLUE_LED
-#define LED_MP_HEARTBEAT          YELLOW_LED
+#define LED_MP_HEARTBEAT          BLUE_LED
+#define LED_MP_HOP_CHANNEL        YELLOW_LED
 
 #define CYLON_TX_DATA_LED   BLUE_LED
 #define CYLON_RX_DATA_LED   YELLOW_LED
 
 #define LED_ON              HIGH
 #define LED_OFF             LOW
+
+#define LED_MAX_PULSE_WIDTH     24 //mSec
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Radio Library
@@ -364,10 +366,8 @@ bool writeOnCommandExit = false; //Goes true if user specifies ATW command
 
 //Global variables - LEDs
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-int trainCylonNumber = 0b0001;
-int trainCylonDirection = -1;
-
-unsigned long lastTrainBlink = 0; //Controls LED during training
+uint8_t cylonLedPattern = 0b0001;
+bool cylonPatternGoingLeft;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - Radio (General)
@@ -390,18 +390,7 @@ float frequencyCorrection = 0; //Adjust receive freq based on the last packet re
 
 volatile bool hop = true; //Clear the DIO1 hop ISR when possible
 
-//RSSI must be above these negative numbers for LED to illuminate
-const int rssiLevelLow = -150;
-const int rssiLevelMed = -120;
-const int rssiLevelHigh = -100;
-const int rssiLevelMax = -70;
 int rssi; //Average signal level, measured during reception of a packet
-
-//LED control values
-uint32_t ledPreviousRssiMillis;
-uint32_t ledHeartbeatMillis;
-int8_t ledRssiCount; //Pulse width count for LED display
-int8_t ledRssiValue; //Target pulse width count for LED display
 
 //Link quality metrics
 uint32_t datagramsSent;     //Total number of datagrams sent

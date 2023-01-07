@@ -741,6 +741,7 @@ void updateRadioState()
             //Adjust the timestamp offset
             COMPUTE_TIMESTAMP_OFFSET(rxData, 1);
             triggerEvent(TRIGGER_RX_HEARTBEAT);
+            blinkHeartbeatLed(true);
 
             //Transmit ACK
             P2P_SEND_ACK(TRIGGER_TX_ACK);
@@ -1288,7 +1289,7 @@ void updateRadioState()
 
             lastPacketReceived = millis(); //Update timestamp for Link LED
 
-            ledMpHeartbeatOn();
+            blinkHeartbeatLed(true);
             changeState(RADIO_MP_STANDBY);
             break;
 
@@ -1330,7 +1331,6 @@ void updateRadioState()
               setHeartbeatMultipoint(); //We're sending something with clock data so reset heartbeat timer
               changeState(RADIO_MP_WAIT_TX_DONE); //Wait for heartbeat to transmit
             }
-            ledMpHeartbeatOn();
           }
         }
 
@@ -2903,6 +2903,9 @@ void vcReceiveHeartbeat(uint32_t rxMillis)
   //Update the timestamp offset
   if (rxSrcVc == VC_SERVER)
   {
+    //Blink the heartbeat LED
+    blinkHeartbeatLed(true);
+
     //Assume client and server are running the same level of debugging,
     //then the delay from reading the millisecond value on the server should
     //get offset by the transmit setup time and the receive overhead time.

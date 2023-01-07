@@ -558,6 +558,7 @@ void hopChannel(bool moveForwardThroughTable, uint8_t channelCount)
 
   //Select the new frequency
   setRadioFrequency(radioStateTable[radioState].rxState);
+  blinkChannelHopLed(true);
 }
 
 //Determine the time in milliseconds when channel zero is reached again
@@ -2190,10 +2191,7 @@ PacketType rcvDatagram()
   linkDownTimer = millis();
 
   //Blink the RX LED
-  if (settings.selectLedUse == LEDS_RADIO_USE)
-    digitalWrite(RADIO_USE_RX_DATA_LED, LED_ON);
-  else if (settings.selectLedUse == LEDS_CYLON)
-    digitalWrite(CYLON_RX_DATA_LED, LED_ON);
+  blinkRadioRxLed(true);
   return datagramType;
 }
 
@@ -2971,11 +2969,8 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   retransmitTimeout = random(ackAirTime, frameAirTime + ackAirTime)
                     * (frameSentCount + 1) * 3 / 2;
 
-  //BLink the RX LED
-  if (settings.selectLedUse == LEDS_RADIO_USE)
-    digitalWrite(RADIO_USE_TX_DATA_LED, LED_ON);
-  else if (settings.selectLedUse == LEDS_CYLON)
-    digitalWrite(CYLON_TX_DATA_LED, LED_ON);
+  //BLink the TX LED
+  blinkRadioTxLed(true);
 
   return (true); //Transmission has started
 }

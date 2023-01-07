@@ -247,7 +247,7 @@ void updateSerial()
   previousHead = rxHead;
   while (rtsAsserted && arch.serialAvailable() && (transactionComplete == false))
   {
-    rxLED(true); //Turn on LED during serial reception
+    blinkSerialRxLed(true); //Turn on LED during serial reception
 
     //Take a break if there are ISRs to attend to
     petWDT();
@@ -262,7 +262,7 @@ void updateSerial()
     serialReceiveBuffer[rxHead++] = incoming; //Push char to holding buffer
     rxHead %= sizeof(serialReceiveBuffer);
   } //End Serial.available()
-  rxLED(false); //Turn off LED
+  blinkSerialRxLed(false); //Turn off LED
 
   //Print the number of bytes received via serial
   if (settings.debugSerial && (rxHead - previousHead))
@@ -440,7 +440,7 @@ void outputSerialData(bool ignoreISR)
   dataBytes = availableTXBytes();
   while (dataBytes-- && isCTS() && (ignoreISR || (!transactionComplete)))
   {
-    txLED(true); //Turn on LED during serial transmissions
+    blinkSerialTxLed(true); //Turn on LED during serial transmissions
 
     //Take a break if there are ISRs to attend to
     petWDT();
@@ -452,7 +452,7 @@ void outputSerialData(bool ignoreISR)
     txTail++;
     txTail %= sizeof(serialTransmitBuffer);
   }
-  txLED(false); //Turn off LED
+  blinkSerialTxLed(false); //Turn off LED
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
