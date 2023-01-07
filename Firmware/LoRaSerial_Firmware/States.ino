@@ -293,6 +293,10 @@ void updateRadioState()
         setRadioFrequency(false);
       }
 
+      //Stop the channel timer if it is running
+      if (channelTimerMsec)
+        stopChannelTimer();
+
       //Determine if a FIND_PARTNER was received
       if (transactionComplete)
       {
