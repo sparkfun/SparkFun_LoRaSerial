@@ -584,6 +584,7 @@ uint32_t rxTimeUsec;
 uint32_t txTimeUsec;
 uint16_t txRxTimeMsec;
 
+uint32_t txSetChannelTimerMicros; //Timestamp when millis is read in TX routine to set channel timer value
 uint32_t transactionCompleteMicros; //Timestamp at the beginning of the transactionCompleteIsr routine
 uint32_t txDatagramMicros; //Timestamp at the beginning of the transmitDatagram routine
 uint16_t maxFrameAirTime; //Air time of the maximum sized message

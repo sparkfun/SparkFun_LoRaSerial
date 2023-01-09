@@ -2490,6 +2490,10 @@ bool transmitDatagram()
     //Hake sure that the transmitted msToNextHop is in the range 0 - maxDwellTime
     if (timeToHop)
       hopChannel();
+
+    //Measure the time to the next hop
+    triggerEvent(TRIGGER_TX_LOAD_CHANNE_TIMER_VALUE);
+    txSetChannelTimerMicros = micros();
     unsigned long currentMillis = millis();
     uint16_t msToNextHop; //TX channel timer value
     if (channelTimerMsec)
@@ -2534,13 +2538,7 @@ bool transmitDatagram()
         {
           case DATAGRAM_DATA_ACK:
           case DATAGRAM_SYNC_CLOCKS:
-            systemPrint("TX: ");
-            systemPrint(channelTimerMsec);
-            systemPrint(" channelTimerMsec + (");
-            systemPrint(currentMillis);
-            systemPrint(" millis() - ");
-            systemPrint(channelTimerStart);
-            systemPrint(" channelTimerStart) = ");
+            systemPrint("TX msToNextHop: ");
             systemPrint(msToNextHop);
             systemPrintln(" mSec");
           break;
