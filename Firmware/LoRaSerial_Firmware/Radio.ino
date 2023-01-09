@@ -1536,6 +1536,110 @@ bool xmitVcZeroAcks(int8_t destVc)
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Datagram reception
+//
+//Security or lack there of:
+//
+//The comments below outline the radio parameters and how they can be determined by
+//listening to the radio traffic.  The required parameters are followed by one or
+//more step numbers indicating the step which determines the parameter's value.  The
+//comments further describe the steps that can be taken to reduce the attack surface
+//for the LoRaSerial network.
+//
+//The following settings define the LoRaSerial radio network:
+//
+//    AirSpeed - 3, 4, 5
+//    AutoTune - This is receive only
+//    Bandwidth - 3
+//    CodingRate - 5
+//    FrequencyHop - 1
+//    FrequencyMax - 1
+//    FrequencyMin - 1
+//    MaxDwellTime - 1
+//    NumberOfChannels - 1
+//    PreambleLength - 4
+//    SpreadFactor - 4
+//    SyncWord - 4
+//    TxPower
+//
+//  Protocol settings:
+//
+//    DataScrambling - 6
+//    EnableCRC16 - 8
+//    EncryptData - 7
+//    EncryptionKey - 7
+//    FramesToYield
+//    HeartBeatTimeout - 12
+//    MaxResends - 14
+//    NetID - 9
+//    OperatingMode - 10, 11
+//    Server - 10, 11
+//    VerifyRxNetID - 9
+//
+//Attempting to attack a network of LoRaSerial radios would be done with the following
+//steps:
+//
+// 1. Locate the frequencies that the network is using
+//    a. Listen for traffic on a specific channel to determine if the network is using
+//       that channel
+//    b. Repeat across all of the channels in the available frequency band
+// 2. Once the frequencies are identified, attempt to determine the channel sequence
+//    by monitoring when traffic occurs on each of the identified frequencies, this
+//    allows the attacker to construct the hop table for the network
+// 3. Look at the bandwidth utilized by the radio network.  The signal for each
+//    symbol is a ramp that spans the bandwidth selected for use
+// 4. Using a receiver that uses the opposite ramp to generate the sub frequencies
+//    within the bandwidth to decode the symbols.  By monitoring the network traffic
+//    it is possible to determine the spreadfactor since there are 2^SF sub frequencies
+//    that will be used within the bandwidth
+// 5. Now that the spread factor is known, the next step is to determine the coding
+//    rate used for forward error correction.  Here 4 data bits are converted into
+//    between 5 to 8 bits in the transmitted frame
+// 6. Look at the signal for multiple transmissions, does this signal have a DC offset?
+//    The data scrambling setting is false if a DC offset is present, or is true when
+//    no DC offset is present
+// 7. Next step is breaking the encryption key
+// 8. After the encryption key is obtained, it is possible determine if the link is
+//    using software CRC by computing the CRC-16 value on the first n-2 bytes and
+//    comparing that with the last 2 bytes
+// 9. Determine if the link is using a network ID value, by checking the first byte
+//    in each of the transmitted frames
+// 10. Determine if the virtual circuit header is contained in the transmitted frames
+// 11. Determine which set of data frames are being transmitted
+// 12. Determine the maximum interval between HEARTBEAT frames to roughly determine
+//     the HeartbeatTimeout value
+// 13. Look for HEARTBEAT frames and FIND_PARTNER frames.  A FIND_PARTNER frame
+//     is sent following a link failure which occurs after three HEARTBEAT timeout
+//     periods.
+// 14. The MaxResends value can be estimated by the maximum number of data
+//     retransmissions done prior to the link failure.  A large number of link
+//     failures will need to be collected from a very radio near the network.
+//
+//How do you prevent the attacks on a LoRaSerial radio network:
+//
+// 1. Don't advertize the network.  Reduce the TxPower value to the minimum needed
+//    to successfully operate the network
+//
+// 2. Encrypt the data on the network.  Don't use the factory default encryption key.
+//    Select a new encryption key and and train all of the radios in the network with
+//    this key.  This will prevent attacks from any groups that are not able to break
+//    the encryption.  However the radio network is vulnerable to well funded or
+//    dedicated groups that are able to break the encryption.
+//
+// 3. Change the encryption key. When another network is using the same encryption key
+//    and same network ID traffic from the other network is likely to be received.
+//    Selecting another encryption key will avoid this behavior.  Also the encryption
+//    key may be tested by setting a radio to MODE_MULTIPOINT, disabling VerifyRxNetID
+//    and disabling EnableCRC16.  Both settings of DataScrambling will need to be tested.
+//
+// 4. Use a network ID.  This won't prevent attacks, but it prevents the reception
+//    of frames from other networks use the same encryption key.
+//
+// 5. Use software CRC-16.  This won't prevent attacks but will eliminate most
+//    frames from networks using the same encryption key that don't use a network
+//    ID.  Occasionally, when they get lucky, our network ID matches the first byte
+//    of their transmitted frame.  The software CRC-16 will most likely cause this
+//    frame to be discarded.
+//
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Determine the type of datagram received
