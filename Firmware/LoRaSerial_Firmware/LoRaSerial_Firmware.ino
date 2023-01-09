@@ -429,6 +429,8 @@ unsigned long radioStateHistory[RADIO_MAX_STATE];
 
 uint8_t packetLength = 0; //Total bytes received, used for calculating clock sync times in multi-point mode
 int16_t msToNextHopRemote; //Can become negative
+uint8_t clockSyncIndex;
+CLOCK_SYNC_DATA clockSyncData[16];
 
 bool requestYield = false; //Datagram sender can tell this radio to stop transmitting to enable two-way comm
 unsigned long yieldTimerStart = 0;

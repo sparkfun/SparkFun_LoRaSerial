@@ -3075,7 +3075,6 @@ void syncChannelTimer(uint16_t frameAirTimeMsec)
   //the channelTimerStart value indicated that it was done.  The channel
   //timer update will add only microseconds to when the hop is done.
   delayedHopCount = timeToHop ? 1 : 0;
-  timeToHop = false;
 
   //The radios are using the same frequencies since the frame was successfully
   //received.  The goal is to adjust the channel timer to fire in close proximity
@@ -3235,19 +3234,30 @@ void syncChannelTimer(uint16_t frameAirTimeMsec)
   //When the ISR fires, reload the channel timer with settings.maxDwellTime
   reloadChannelTimer = true;
 
+  //Log the previous clock sync
+  clockSyncData[clockSyncIndex].msToNextHop = msToNextHop;
+  clockSyncData[clockSyncIndex].frameAirTimeMsec = frameAirTimeMsec;
+  clockSyncData[clockSyncIndex].msToNextHopRemote = msToNextHopRemote;
+  clockSyncData[clockSyncIndex].adjustment = adjustment;
+  clockSyncData[clockSyncIndex].delayedHopCount = delayedHopCount;
+  clockSyncData[clockSyncIndex].lclHopTimeMsec = lclHopTimeMsec;
+  clockSyncData[clockSyncIndex].timeToHop = timeToHop;
+  clockSyncIndex += 1;
+
   //Restart the channel timer
+  timeToHop = false;
   channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
   digitalWrite(pin_hop_timer, channelNumber & 1);
   channelTimerStart = currentMillis;
   channelTimerMsec = msToNextHop; //syncChannelTimer update
   channelTimer.enableTimer();
 
-  //Trigger after adjustments to timer to avoid skew during debug
-  triggerEvent(TRIGGER_SYNC_CHANNEL_TIMER);
-
   //----------------------------------------------------------------------
   // Leave the critical section
   //----------------------------------------------------------------------
+
+  //Trigger after adjustments to timer to avoid skew during debug
+  triggerEvent(TRIGGER_SYNC_CHANNEL_TIMER);
 
   //Hop if the timer fired prior to disabling the timer, resetting the channelTimerStart value
   if (delayedHopCount)

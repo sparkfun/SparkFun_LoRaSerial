@@ -353,6 +353,17 @@ typedef enum
   //Add user LED types from 255 working down
 } LEDS_USE_TYPE;
 
+typedef struct _CLOCK_SYNC_DATA
+{
+  int16_t msToNextHopRemote;
+  uint16_t frameAirTimeMsec;
+  uint16_t msToNextHop;
+  int16_t lclHopTimeMsec;
+  int16_t adjustment;
+  int8_t delayedHopCount;
+  bool timeToHop;
+} CLOCK_SYNC_DATA;
+
 //These are all the settings that can be set on Serial Terminal Radio. It's recorded to NVM.
 typedef struct struct_settings {
   uint16_t sizeOfSettings = 0; //sizeOfSettings **must** be the first entry and must be int

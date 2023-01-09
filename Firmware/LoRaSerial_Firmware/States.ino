@@ -1355,6 +1355,7 @@ void updateRadioState()
               systemPrintln("HEARTBEAT Timeout");
               outputSerialData(true);
             }
+            dumpClockSynchronization();
             changeState(RADIO_DISCOVER_BEGIN);
           }
         }
@@ -2615,6 +2616,43 @@ void displayRadioStateHistory()
   petWDT();
 }
 
+//Dump the clock synchronization data
+void dumpClockSynchronization()
+{
+  //Dump the clock sync data
+  petWDT();
+  for (uint8_t x = 0; x < (sizeof(clockSyncData) / sizeof(clockSyncData[0])); x++)
+  {
+    uint8_t index = (x + clockSyncIndex) % clockSyncIndex;
+    if (clockSyncData[index].frameAirTimeMsec)
+    {
+      systemPrint("Lcl: ");
+      systemPrint(clockSyncData[index].lclHopTimeMsec);
+      systemPrint(", Rmt: ");
+      systemPrint(clockSyncData[index].msToNextHopRemote);
+      systemPrint(" - ");
+      systemPrint(clockSyncData[index].frameAirTimeMsec);
+      systemPrint(" = ");
+      systemPrint(clockSyncData[index].msToNextHopRemote - clockSyncData[index].frameAirTimeMsec);
+      systemPrint(" + ");
+      systemPrint(clockSyncData[index].adjustment);
+      systemPrint(" = ");
+      systemPrint(clockSyncData[index].msToNextHop);
+      systemPrint(" msToNextHop");
+      if (clockSyncData[index].delayedHopCount)
+      {
+        systemPrint(", timeToHop: ");
+        systemPrint(clockSyncData[index].timeToHop);
+        systemPrint(", Hops: ");
+        systemPrint(clockSyncData[index].delayedHopCount);
+      }
+      systemPrintln();
+      outputSerialData(true);
+      petWDT();
+    }
+  }
+}
+
 //Break a point-to-point link
 void breakLink()
 {
@@ -2630,6 +2668,13 @@ void breakLink()
       linkDownTime += timestampOffset;
   }
   linkFailures++;
+
+  //Stop the ACK timer
+  STOP_ACK_TIMER();
+
+  //Dump the clock synchronization
+  dumpClockSynchronization();
+
   if (settings.printLinkUpDown)
   {
     if (settings.printTimestamp)
@@ -2640,13 +2685,12 @@ void breakLink()
     systemPrintln("--------- Link DOWN ---------");
     outputSerialData(true);
   }
-  triggerEvent(TRIGGER_RADIO_RESET);
-
-  //Stop the ACK timer
-  STOP_ACK_TIMER();
 
   //Flush the buffers
   resetSerial();
+
+  //Reset the radio and the link
+  triggerEvent(TRIGGER_RADIO_RESET);
   changeState(RADIO_RESET);
 }
 
