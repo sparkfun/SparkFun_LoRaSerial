@@ -411,15 +411,14 @@ bool commandAT(const char * commandString)
 
         //Clock synchronization
         systemPrintln("    Clock Synchronization");
-        systemPrint("        TX Time: ");
-        systemPrint(txTimeUsec / 1000., 4);
-        systemPrintln(" mSec");
-        systemPrint("        RX Time: ");
-        systemPrint(rxTimeUsec / 1000., 4);
-        systemPrintln(" mSec");
-        systemPrint("        Total Time: ");
-        systemPrint((txTimeUsec + rxTimeUsec) / 1000., 5);
-        systemPrintln(" mSec");
+        systemPrint("        ACK Time: ");
+        systemPrint(txDataAckUsec);
+        systemPrint("        HEARTBEAT Time: ");
+        systemPrint(txHeartbeatUsec);
+        systemPrintln(" uSec");
+        systemPrint("        SYNC_CLOCKS Time: ");
+        systemPrint(txSyncClockUsec);
+        systemPrintln(" uSec");
         systemPrint("        Uptime: ");
         deltaMillis = millis();
         systemPrintTimestamp(deltaMillis);
