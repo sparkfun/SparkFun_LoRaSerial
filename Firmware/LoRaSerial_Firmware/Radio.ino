@@ -3349,7 +3349,7 @@ void syncChannelTimer(uint16_t frameAirTimeMsec)
   //Restart the channel timer
   timeToHop = false;
   channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
-  digitalWrite(pin_hop_timer, channelNumber & 1);
+  digitalWrite(pin_hop_timer, ((channelNumber + delayedHopCount) % settings.numberOfChannels) & 1);
   channelTimerStart = currentMillis;
   channelTimerMsec = msToNextHop; //syncChannelTimer update
   channelTimer.enableTimer();
