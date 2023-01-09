@@ -72,6 +72,8 @@ const int FIRMWARE_VERSION_MINOR = 0;
 #define P2P_ACK_BYTES           sizeof(unsigned long) //Number of data bytes in the ACK frame
 #define VC_HEARTBEAT_BYTES      0 //Number of data bytes in the VC_HEARTBEAT frame
 
+#define TX_TO_RX_USEC           680 //Time from TX to RX transactionComplete in microseconds
+
 //Bit 0: Signal Detected indicates that a valid LoRa preamble has been detected
 //Bit 1: Signal Synchronized indicates that the end of Preamble has been detected, the modem is in lock
 //Bit 3: Header Info Valid toggles high when a valid Header (with correct CRC) is detected

@@ -48,15 +48,15 @@
     ackTimer = 0;             \
   }
 
-#define COMPUTE_TIMESTAMP_OFFSET(millisBuffer, rShift)                          \
-  {                                                                             \
-    unsigned long deltaUsec = txTimeUsec + rxTimeUsec;                          \
-    memcpy(&remoteSystemMillis, millisBuffer, sizeof(currentMillis));           \
-    timestampOffset = (remoteSystemMillis + (deltaUsec / 1000) - currentMillis);\
-    timestampOffset >>= rShift;                                                 \
+#define COMPUTE_TIMESTAMP_OFFSET(millisBuffer, rShift, frameAirTimeUsec)               \
+  {                                                                                    \
+    unsigned long deltaUsec = frameAirTimeUsec + micros() - transactionCompleteMicros; \
+    memcpy(&remoteSystemMillis, millisBuffer, sizeof(currentMillis));                  \
+    timestampOffset = (remoteSystemMillis + (deltaUsec / 1000) - currentMillis);       \
+    timestampOffset >>= rShift;                                                        \
   }
 
-#define COMPUTE_RX_TIME(millisBuffer, rShift)                                   \
+#define COMPUTE_RX_TIME(millisBuffer, rShift, frameAirTimeUsec)                 \
   {                                                                             \
     currentMillis = millis();                                                   \
     long deltaUsec = micros() - transactionCompleteMicros;                      \
@@ -80,7 +80,7 @@
     }                                                                           \
                                                                                 \
     /*Adjust the timestamp offset*/                                             \
-    COMPUTE_TIMESTAMP_OFFSET(millisBuffer, rShift);                             \
+    COMPUTE_TIMESTAMP_OFFSET(millisBuffer, rShift, frameAirTimeUsec);           \
   }
 
 #define COMPUTE_TX_TIME()                                                       \
@@ -328,7 +328,7 @@ void updateRadioState()
           case DATAGRAM_FIND_PARTNER:
             //Received FIND_PARTNER
             //Compute the receive time
-            COMPUTE_RX_TIME(rxData, 1);
+            COMPUTE_RX_TIME(rxData, 1, calcAirTimeUsec(headerBytes + P2P_FIND_PARTNER_BYTES + trailerBytes));
 
             //This system is the source of clock synchronization
             clockSyncReceiver = false; //P2P clock source
@@ -418,7 +418,7 @@ void updateRadioState()
           case DATAGRAM_FIND_PARTNER:
             //Received FIND_PARTNER
             //Compute the receive time
-            COMPUTE_RX_TIME(rxData + 1, 1);
+            COMPUTE_RX_TIME(rxData + 1, 1, calcAirTimeUsec(headerBytes + P2P_FIND_PARTNER_BYTES + trailerBytes));
 
             //Acknowledge the FIND_PARTNER
             triggerEvent(TRIGGER_TX_SYNC_CLOCKS);
@@ -439,7 +439,7 @@ void updateRadioState()
             }
 
             //Compute the receive time
-            COMPUTE_RX_TIME(rxData + 1, 1);
+            COMPUTE_RX_TIME(rxData + 1, 1, txSyncClockUsec);
 
             //Hop to the next channel
             hopChannel();
@@ -541,7 +541,7 @@ void updateRadioState()
           case DATAGRAM_ZERO_ACKS:
             //Received ACK 2
             //Compute the receive time
-            COMPUTE_RX_TIME(rxData, 1);
+            COMPUTE_RX_TIME(rxData, 1, calcAirTimeUsec(headerBytes + P2P_ZERO_ACKS_BYTES + trailerBytes));
 
             setHeartbeatLong(); //We sent SYNC_CLOCKS and they sent ZERO_ACKS, so don't be the first to send heartbeat
 
@@ -772,7 +772,7 @@ void updateRadioState()
           case DATAGRAM_HEARTBEAT:
             //Received heartbeat while link was idle. Send ack to sync clocks.
             //Adjust the timestamp offset
-            COMPUTE_TIMESTAMP_OFFSET(rxData, 1);
+            COMPUTE_TIMESTAMP_OFFSET(rxData, 1, txHeartbeatUsec);
             triggerEvent(TRIGGER_RX_HEARTBEAT);
             blinkHeartbeatLed(true);
 
@@ -796,7 +796,7 @@ void updateRadioState()
 
           case DATAGRAM_DATA_ACK:
             //Adjust the timestamp offset
-            COMPUTE_RX_TIME(rxData, 1);
+            COMPUTE_RX_TIME(rxData, 1, txDataAckUsec);
 
             //The datagram we are expecting
             syncChannelTimer(txRxTimeMsec); //Adjust freq hop ISR based on remote's remaining clock
@@ -1152,7 +1152,7 @@ void updateRadioState()
 
             //Compute the common clock
             currentMillis = millis();
-            COMPUTE_TIMESTAMP_OFFSET(rxData + 1, 0);
+            COMPUTE_TIMESTAMP_OFFSET(rxData + 1, 0, txTimeUsec + rxTimeUsec);
 
             //Server has responded with ACK
             syncChannelTimer(txRxTimeMsec); //Start and adjust freq hop ISR based on remote's remaining clock
@@ -1172,7 +1172,6 @@ void updateRadioState()
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             lastPacketReceived = millis(); //Reset
-
             changeState(RADIO_MP_STANDBY);
             break;
         }
