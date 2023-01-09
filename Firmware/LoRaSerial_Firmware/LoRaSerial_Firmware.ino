@@ -70,7 +70,7 @@ const int FIRMWARE_VERSION_MINOR = 0;
 #define P2P_ZERO_ACKS_BYTES     sizeof(unsigned long) //Number of data bytes in the ZERO_ACKS frame
 #define P2P_HEARTBEAT_BYTES     sizeof(unsigned long) //Number of data bytes in the HEARTBEAT frame
 #define P2P_ACK_BYTES           sizeof(unsigned long) //Number of data bytes in the ACK frame
-#define VC_HEARTBEAT_BYTES      0 //Number of data bytes in the VC_HEARTBEAT frame
+#define VC_HEARTBEAT_BYTES      1 + 1 + 1 + 16 + 4 //Number of data bytes in the VC_HEARTBEAT frame
 
 #define TX_TO_RX_USEC           680 //Time from TX to RX transactionComplete in microseconds
 
