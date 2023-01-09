@@ -766,7 +766,7 @@ void updateRadioState()
             COMPUTE_RX_TIME(rxData, 1);
 
             //The datagram we are expecting
-            syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
+            syncChannelTimer(txRxTimeMsec); //Adjust freq hop ISR based on remote's remaining clock
 
             triggerEvent(TRIGGER_RX_ACK);
 
@@ -1122,7 +1122,7 @@ void updateRadioState()
             COMPUTE_TIMESTAMP_OFFSET(rxData + 1, 0);
 
             //Server has responded with ACK
-            syncChannelTimer(); //Start and adjust freq hop ISR based on remote's remaining clock
+            syncChannelTimer(txRxTimeMsec); //Start and adjust freq hop ISR based on remote's remaining clock
 
             //Change to the server's channel number
             channelNumber = rxVcData[0];
@@ -1283,7 +1283,7 @@ void updateRadioState()
 
             //Sync clock if server sent the heartbeat
             if (settings.server == false)
-              syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
+              syncChannelTimer(txRxTimeMsec); //Adjust freq hop ISR based on remote's remaining clock
 
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
@@ -1299,7 +1299,7 @@ void updateRadioState()
 
             //Sync clock if server sent the datagram
             if (settings.server == false)
-              syncChannelTimer(); //Adjust freq hop ISR based on remote's remaining clock
+              syncChannelTimer(txRxTimeMsec); //Adjust freq hop ISR based on remote's remaining clock
 
             setHeartbeatMultipoint(); //We're sync'd so reset heartbeat timer
 
@@ -2914,7 +2914,7 @@ void vcReceiveHeartbeat(uint32_t rxMillis)
   int vcSrc;
 
   if (rxSrcVc == VC_SERVER)
-    syncChannelTimer(); //Adjust freq hop ISR based on server's remaining clock
+    syncChannelTimer(txRxTimeMsec); //Adjust freq hop ISR based on server's remaining clock
 
   //Update the timestamp offset
   if (rxSrcVc == VC_SERVER)

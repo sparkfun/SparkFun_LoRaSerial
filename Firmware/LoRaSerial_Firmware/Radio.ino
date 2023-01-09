@@ -3013,7 +3013,7 @@ void stopChannelTimer()
 
 //Given the remote unit's number of ms before its next hop,
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
-void syncChannelTimer()
+void syncChannelTimer(uint16_t frameAirTimeMsec)
 {
   int16_t adjustment;
   unsigned long currentMillis;
@@ -3097,14 +3097,14 @@ void syncChannelTimer()
   //Compute the remote system's channel timer firing time offset in milliseconds
   //using the channel timer value and the adjustments for transmit and receive
   //time (time of flight)
-  rmtHopTimeMsec = msToNextHopRemote - txRxTimeMsec;
+  rmtHopTimeMsec = msToNextHopRemote - frameAirTimeMsec;
 
   //Compute the when the local system last hopped
   lclHopTimeMsec = currentMillis - channelTimerStart;
   adjustment = 0;
 
 #define REMOTE_SYSTEM_LIKELY_TO_HOP_MSEC    2
-#define CHANNEL_TIMER_SYNC_MSEC   (txRxTimeMsec + REMOTE_SYSTEM_LIKELY_TO_HOP_MSEC)
+#define CHANNEL_TIMER_SYNC_MSEC   (frameAirTimeMsec + REMOTE_SYSTEM_LIKELY_TO_HOP_MSEC)
 
   //Determine if the remote has hopped or is likely to hop very soon
   if (rmtHopTimeMsec <= REMOTE_SYSTEM_LIKELY_TO_HOP_MSEC)
@@ -3260,7 +3260,7 @@ void syncChannelTimer()
     systemPrint(" Hops, ");
     systemPrint(msToNextHopRemote);
     systemPrint(" Nxt Hop - ");
-    systemPrint(txRxTimeMsec);
+    systemPrint(frameAirTimeMsec);
     systemPrint(" (TX + RX)");
     if (adjustment)
     {
