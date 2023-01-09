@@ -1068,6 +1068,7 @@ const COMMAND_ENTRY commands[] =
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &tempSettings.debugTransmit},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugSerial",          &tempSettings.debugSerial},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DisplayRealMillis",    &tempSettings.displayRealMillis},
+  {'D',   0,   1,    0, 1000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &tempSettings.overheadTime},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintAckNumbers",      &tempSettings.printAckNumbers},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintChannel",         &tempSettings.printChannel},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintFrequency",       &tempSettings.printFrequency},
@@ -1106,7 +1107,6 @@ const COMMAND_ENTRY commands[] =
   {'R',   0,   0,    0, 255,    0, TYPE_U8,           valInt,         "MaxResends",           &tempSettings.maxResends},
   {'R',   0,   1,    0, 255,    0, TYPE_U8,           valInt,         "NetID",                &tempSettings.netID},
   {'R',   0,   1,    0,   2,    0, TYPE_U8,           valInt,         "OperatingMode",        &tempSettings.operatingMode},
-  {'R',   0,   1,    0, 1000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &tempSettings.overheadTime},
   {'R',   0,   0,    0,   1,    0, TYPE_BOOL,         valServer,      "Server",               &tempSettings.server},
   {'R',   0,   1,    0,   1,    0, TYPE_BOOL,         valInt,         "VerifyRxNetID",        &tempSettings.verifyRxNetID},
 
