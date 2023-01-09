@@ -187,36 +187,45 @@ void updateRadioState()
 
       //Start the link between the radios
       if (settings.operatingMode == MODE_POINT_TO_POINT)
+      {
         changeState(RADIO_P2P_LINK_DOWN);
-      else if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+        break;
+      }
+
+      //Virtual circuit mode
+      if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
       {
         if (settings.server)
         {
           //Reserve the server's address (0)
           myVc = vcIdToAddressByte(VC_SERVER, myUniqueId);
           clockSyncReceiver = false; //VC server is clock source
+          if (settings.frequencyHop)
+            startChannelTimer();
+
+          //Start sending heartbeats
+          xmitVcHeartbeat(myVc, myUniqueId);
+          changeState(RADIO_VC_WAIT_TX_DONE);
+          break;
         }
-        else
-          //Unknown client address
-          myVc = VC_UNASSIGNED;
+
+        //Unknown client address
+        myVc = VC_UNASSIGNED;
 
         //Start sending heartbeats
-        xmitVcHeartbeat(myVc, myUniqueId);
-        changeState(RADIO_VC_WAIT_TX_DONE);
+        changeState(RADIO_VC_WAIT_SERVER);
+        break;
+      }
+
+      //Multipoint mode
+      if (settings.server == true)
+      {
+        clockSyncReceiver = false; //Multipoint server is clock source
+        startChannelTimer(); //Start hopping - multipoint clock source
+        changeState(RADIO_MP_STANDBY);
       }
       else
-      {
-        if (settings.server == true)
-        {
-          clockSyncReceiver = false; //Multipoint server is clock source
-          startChannelTimer(); //Start hopping - multipoint clock source
-          changeState(RADIO_MP_STANDBY);
-        }
-        else
-        {
-          changeState(RADIO_DISCOVER_BEGIN);
-        }
-      }
+        changeState(RADIO_DISCOVER_BEGIN);
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -1780,10 +1789,19 @@ void updateRadioState()
     //Wait for a HEARTBEAT from the server
     //====================
     case RADIO_VC_WAIT_SERVER:
+      //The server should never be in this state
       if (myVc == VC_SERVER)
       {
         changeState(RADIO_VC_WAIT_RECEIVE);
         break;
+      }
+
+      //Stop the frequency hopping
+      stopChannelTimer();
+      if (channelNumber != 0)
+      {
+        channelNumber = 0;
+        setRadioFrequency(false);
       }
 
       //If dio0ISR has fired, a packet has arrived
@@ -1796,6 +1814,11 @@ void updateRadioState()
         //Process the received datagram
         if ((packetType == DATAGRAM_VC_HEARTBEAT) && (rxSrcVc == VC_SERVER))
         {
+          //Start the channel timer
+          startChannelTimer();
+          channelTimerStart -= settings.maxDwellTime;
+
+          //Synchronize the channel timer with the server
           vcReceiveHeartbeat(millis() - currentMillis);
           changeState(RADIO_VC_WAIT_RECEIVE);
         }
@@ -1817,6 +1840,17 @@ void updateRadioState()
       if (transactionComplete == true)
       {
         transactionComplete = false;
+
+        //Compute the HEARTBEAT frame transmit frame
+        if ((!txHeartbeatUsec) && (txControl.datagramType == DATAGRAM_HEARTBEAT))
+        {
+          txHeartbeatUsec = transactionCompleteMicros - txSetChannelTimerMicros;
+          if (settings.debugSync)
+          {
+            systemPrint("txHeartbeatUsec: ");
+            systemPrintln(txHeartbeatUsec);
+          }
+        }
 
         //Indicate that the transmission is complete
         triggerEvent(TRIGGER_TX_DONE);
@@ -3034,7 +3068,7 @@ void vcReceiveHeartbeat(uint32_t rxMillis)
   uint32_t deltaMillis;
   int vcSrc;
 
-  if (rxSrcVc == VC_SERVER)
+  if ((rxSrcVc == VC_SERVER) || (memcmp(rxVcData, myUniqueId, sizeof(myUniqueId)) == 0))
     syncChannelTimer(txRxTimeMsec); //Adjust freq hop ISR based on server's remaining clock
 
   //Update the timestamp offset
