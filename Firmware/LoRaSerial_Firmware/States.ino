@@ -488,6 +488,17 @@ void updateRadioState()
       //Determine if a SYNC_CLOCKS has completed transmission
       if (transactionComplete)
       {
+        //Compute the SYNC_CLOCKS frame transmit frame
+        if ((!txSyncClockUsec) && (txControl.datagramType == DATAGRAM_SYNC_CLOCKS))
+        {
+          txSyncClockUsec = transactionCompleteMicros - txSetChannelTimerMicros;
+          if (settings.debugSync)
+          {
+            systemPrint("txSyncClockUsec: ");
+            systemPrintln(txSyncClockUsec);
+          }
+        }
+
         COMPUTE_TX_TIME();
         triggerEvent(TRIGGER_TX_DONE);
         transactionComplete = false; //Reset ISR flag
@@ -660,6 +671,28 @@ void updateRadioState()
       if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
+
+        //Compute the ACK frame transmit frame
+        if ((!txDataAckUsec) && (txControl.datagramType == DATAGRAM_HEARTBEAT))
+        {
+          txDataAckUsec = transactionCompleteMicros - txSetChannelTimerMicros;
+          if (settings.debugSync)
+          {
+            systemPrint("txDataAckUsec: ");
+            systemPrintln(txDataAckUsec);
+          }
+        }
+
+        //Compute the HEARTBEAT frame transmit frame
+        if ((!txHeartbeatUsec) && (txControl.datagramType == DATAGRAM_HEARTBEAT))
+        {
+          txHeartbeatUsec = transactionCompleteMicros - txSetChannelTimerMicros;
+          if (settings.debugSync)
+          {
+            systemPrint("txHeartbeatUsec: ");
+            systemPrintln(txHeartbeatUsec);
+          }
+        }
 
         //Determine if an ACK was transmitted
         if (txControl.datagramType = DATAGRAM_DATA_ACK)
@@ -1374,6 +1407,29 @@ void updateRadioState()
       if (transactionComplete == true)
       {
         transactionComplete = false; //Reset ISR flag
+
+        //Compute the HEARTBEAT frame transmit frame
+        if ((!txHeartbeatUsec) && (txControl.datagramType == DATAGRAM_HEARTBEAT))
+        {
+          txHeartbeatUsec = transactionCompleteMicros - txSetChannelTimerMicros;
+          if (settings.debugSync)
+          {
+            systemPrint("txHeartbeatUsec: ");
+            systemPrintln(txHeartbeatUsec);
+          }
+        }
+
+        //Compute the SYNC_CLOCKS frame transmit frame
+        else if ((!txSyncClockUsec) && (txControl.datagramType == DATAGRAM_SYNC_CLOCKS))
+        {
+          txSyncClockUsec = transactionCompleteMicros - txSetChannelTimerMicros;
+          if (settings.debugSync)
+          {
+            systemPrint("txSyncClockUsec: ");
+            systemPrintln(txSyncClockUsec);
+          }
+        }
+
         returnToReceiving();
         changeState(RADIO_MP_STANDBY);
       }
