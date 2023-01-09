@@ -1384,14 +1384,14 @@ bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
   *txData = (uint8_t)(endOfTxData - txData);
 
   /*
-                                                                              endOfTxData ---.
-                                                                                             |
-                                                                                             V
-      +----------+---------+----------+------------+----------+---------+----------+---------+----------+
-      | Optional |         | Optional | Optional   |          |         |          |         | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | DestAddr | SrcAddr | Src ID   | millis  | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | 16 Bytes | 4 Bytes | n Bytes  |
-      +----------+---------+----------+------------+----------+---------+----------+---------+----------+
+                                                                                         endOfTxData ---.
+                                                                                                        |
+                                                                                                        V
+      +----------+---------+----------+------------+----------+----------+---------+----------+---------+----------+
+      | Optional |         | Optional | Optional   |          |          |         |          |         | Optional |
+      | NET ID   | Control | C-Timer  | SF6 Length |  Length  | DestAddr | SrcAddr | Src ID   | millis  | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     |  8 bits  | 8 bits   | 8 bits  | 16 Bytes | 4 Bytes | n Bytes  |
+      +----------+---------+----------+------------+----------+----------+---------+----------+---------+----------+
   */
 
   //Verify the data length
