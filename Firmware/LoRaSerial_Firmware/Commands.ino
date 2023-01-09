@@ -1102,7 +1102,6 @@ const COMMAND_ENTRY commands[] =
   {'R',   0,   1,    0,   1,    0, TYPE_BOOL,         valInt,         "EncryptData",          &tempSettings.encryptData},
   {'R',   0,   1,    0,   0,    0, TYPE_KEY,          valKey,         "EncryptionKey",        &tempSettings.encryptionKey},
   {'R',   0,   0,    0, 255,    0, TYPE_U8,           valInt,         "FramesToYield",        &tempSettings.framesToYield},
-  {'R',   0,   0,   10, 2000,   0, TYPE_U16,          valInt,         "FrameTimeout",         &tempSettings.serialTimeoutBeforeSendingFrame_ms},
   {'R',   0,   0,  250, 65535,  0, TYPE_U16,          valInt,         "HeartBeatTimeout",     &tempSettings.heartbeatTimeout},
   {'R',   0,   0,    0, 255,    0, TYPE_U8,           valInt,         "MaxResends",           &tempSettings.maxResends},
   {'R',   0,   1,    0, 255,    0, TYPE_U8,           valInt,         "NetID",                &tempSettings.netID},
@@ -1118,6 +1117,7 @@ const COMMAND_ENTRY commands[] =
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "FlowControl",          &tempSettings.flowControl},
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertCts",            &tempSettings.invertCts},
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertRts",            &tempSettings.invertRts},
+  {'S',   0,   0,   10, 2000,   0, TYPE_U16,          valInt,         "SerialDelay",          &tempSettings.serialTimeoutBeforeSendingFrame_ms},
   {'S',   0,   0,    0,   0,    0, TYPE_SPEED_SERIAL, valSpeedSerial, "SerialSpeed",          &tempSettings.serialSpeed},
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "UsbSerialWait",        &tempSettings.usbSerialWait},
 
