@@ -1867,6 +1867,8 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DATA:
+            triggerEvent(TRIGGER_RX_DATA);
+
             //Move the data into the serial output buffer
             if (settings.debugSerial)
             {
@@ -1884,6 +1886,8 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DATAGRAM:
+            triggerEvent(TRIGGER_RX_DATAGRAM);
+
             //Move the data into the serial output buffer
             if (settings.debugSerial)
             {
@@ -1899,6 +1903,7 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DATA_ACK:
+            triggerEvent(TRIGGER_RX_ACK);
             vcSendPcAckNack(rexmtTxDestVc, true);
             STOP_ACK_TIMER();
             break;
@@ -1916,6 +1921,7 @@ void updateRadioState()
           //Second step in the 3-way handshake, received UNKNOWN_ACKS, respond
           //with SYNC_ACKS
           case DATAGRAM_VC_UNKNOWN_ACKS:
+            triggerEvent(TRIGGER_RX_VC_UNKNOWN_ACKS);
             if (xmitVcSyncAcks(rxSrcVc))
               changeState(RADIO_VC_WAIT_TX_DONE);
             vcChangeState(rxSrcVc, VC_STATE_WAIT_ZERO_ACKS);
@@ -1924,6 +1930,7 @@ void updateRadioState()
 
           //Third step in the 3-way handshake, received SYNC_ACKS, respond with ZERO_ACKS
           case DATAGRAM_VC_SYNC_ACKS:
+            triggerEvent(TRIGGER_RX_VC_SYNC_ACKS);
             if (xmitVcZeroAcks(rxSrcVc))
             {
               changeState(RADIO_VC_WAIT_TX_DONE);
@@ -1934,11 +1941,13 @@ void updateRadioState()
 
           //Last step in the 3-way handshake, received ZERO_ACKS, done
           case DATAGRAM_VC_ZERO_ACKS:
+            triggerEvent(TRIGGER_RX_VC_ZERO_ACKS);
             vcZeroAcks(rxSrcVc);
             vcChangeState(rxSrcVc, VC_STATE_CONNECTED);
             break;
 
           case DATAGRAM_REMOTE_COMMAND:
+            triggerEvent(TRIGGER_RX_COMMAND);
             rmtCmdVc = rxSrcVc;
 
             //Copy the command into the command buffer
@@ -1984,6 +1993,8 @@ void updateRadioState()
             break;
 
           case DATAGRAM_REMOTE_COMMAND_RESPONSE:
+            triggerEvent(TRIGGER_RX_COMMAND_RESPONSE);
+
             //Debug the serial path
             if (settings.debugSerial)
             {
@@ -2022,7 +2033,7 @@ void updateRadioState()
           //Send another heartbeat
           if (xmitVcHeartbeat(myVc, myUniqueId))
           {
-            triggerEvent(TRIGGER_TX_HEARTBEAT);
+            triggerEvent(TRIGGER_TX_VC_HEARTBEAT);
             if (((uint8_t)myVc) < MAX_VC)
               virtualCircuitList[myVc].lastTrafficMillis = currentMillis;
             changeState(RADIO_VC_WAIT_TX_DONE);
@@ -2147,6 +2158,7 @@ void updateRadioState()
                 //Send the UNKNOWN_ACKS datagram, first part of the 3-way handshake
                 if (xmitVcUnknownAcks(index))
                 {
+                  triggerEvent(TRIGGER_RX_VC_UNKNOWN_ACKS);
                   vcChangeState(index, VC_STATE_WAIT_SYNC_ACKS);
                   virtualCircuitList[index].timerMillis = datagramTimer;
                   changeState(RADIO_VC_WAIT_TX_DONE);
@@ -2163,6 +2175,7 @@ void updateRadioState()
                   //Retransmit the UNKNOWN_ACKS
                   if (xmitVcUnknownAcks(index))
                   {
+                    triggerEvent(TRIGGER_RX_VC_UNKNOWN_ACKS);
                     virtualCircuitList[index].timerMillis = datagramTimer;
                     changeState(RADIO_VC_WAIT_TX_DONE);
                   }
@@ -2179,6 +2192,7 @@ void updateRadioState()
                   //Retransmit the SYNC_CLOCKS
                   if (xmitVcSyncAcks(index))
                   {
+                    triggerEvent(TRIGGER_RX_VC_SYNC_ACKS);
                     virtualCircuitList[index].timerMillis = datagramTimer;
                     changeState(RADIO_VC_WAIT_TX_DONE);
                   }
@@ -2210,15 +2224,20 @@ void updateRadioState()
               if (vcHeader->destVc == VC_BROADCAST)
               {
                 //Broadcast this data to all VCs, no ACKs will be received
-                triggerEvent(TRIGGER_TX_DATA);
-                xmitVcDatagram();
+                if (xmitVcDatagram())
+                {
+                  triggerEvent(TRIGGER_TX_DATA);
+                  changeState(RADIO_VC_WAIT_TX_DONE);
+                }
                 break;
               }
 
               //Transmit the packet
-              triggerEvent(TRIGGER_TX_DATA);
               if (xmitDatagramP2PData() == true)
+              {
+                triggerEvent(TRIGGER_TX_DATA);
                 changeState(RADIO_VC_WAIT_TX_DONE);
+              }
 
               START_ACK_TIMER();
 
@@ -2289,7 +2308,10 @@ void updateRadioState()
               //Send the remote command
               vcHeader->destVc &= VCAB_NUMBER_MASK;
               if (xmitDatagramP2PCommand() == true)
+              {
+                triggerEvent(TRIGGER_TX_COMMAND);
                 changeState(RADIO_VC_WAIT_TX_DONE);
+              }
 
               START_ACK_TIMER();
 
@@ -3027,6 +3049,7 @@ void vcReceiveHeartbeat(uint32_t rxMillis)
     memcpy(&timestampOffset, &rxVcData[UNIQUE_ID_BYTES], sizeof(timestampOffset));
     timestampOffset += vcTxHeartbeatMillis + rxMillis - millis();
   }
+  triggerEvent(TRIGGER_RX_VC_HEARTBEAT);
 
   //Save our address
   if ((myVc == VC_UNASSIGNED) && (memcmp(myUniqueId, rxVcData, UNIQUE_ID_BYTES) == 0))
