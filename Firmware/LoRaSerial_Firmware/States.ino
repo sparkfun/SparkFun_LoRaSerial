@@ -2618,10 +2618,25 @@ void displayRadioStateHistory()
 //Break a point-to-point link
 void breakLink()
 {
+  unsigned long linkDownTime;
+
   //Break the link
+  if (settings.printTimestamp)
+  {
+    linkDownTime = millis();
+
+    //Offset the value for display
+    if (!settings.displayRealMillis)
+      linkDownTime += timestampOffset;
+  }
   linkFailures++;
   if (settings.printLinkUpDown)
   {
+    if (settings.printTimestamp)
+    {
+      systemPrintTimestamp(linkDownTime);
+      systemPrint(": ");
+    }
     systemPrintln("--------- Link DOWN ---------");
     outputSerialData(true);
   }
@@ -2663,6 +2678,7 @@ void enterLinkUp()
   changeState(RADIO_P2P_LINK_UP);
   if (settings.printLinkUpDown)
   {
+    systemPrintTimestamp();
     systemPrintln("========== Link UP ==========");
     outputSerialData(true);
   }
