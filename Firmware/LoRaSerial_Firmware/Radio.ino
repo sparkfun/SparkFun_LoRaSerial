@@ -3555,7 +3555,7 @@ void setVcHeartbeatTimer()
   petWDT();
 
   //Determine the delay before channel zero is reached
-  deltaMillis = mSecToChannelZero() - heartbeatTimer;
+  deltaMillis = mSecToChannelZero();
 
   //Determine the delay before the next HEARTBEAT frame
   if ((!settings.server) || (deltaMillis > ((3 * settings.heartbeatTimeout) / 2))
@@ -3566,17 +3566,15 @@ void setVcHeartbeatTimer()
   else if (deltaMillis >= settings.heartbeatTimeout)
     heartbeatRandomTime = deltaMillis / 2;
   else
-    heartbeatRandomTime = deltaMillis;
+    heartbeatRandomTime = deltaMillis + VC_DELAY_HEARTBEAT_MSEC;
 
   //Display the next HEARTBEAT time interval
   if (settings.debugHeartbeat)
   {
-    systemPrint("deltaMillis: ");
+    systemPrint("mSecToChannelZero: ");
     systemPrintln(deltaMillis);
     systemPrint("heartbeatRandomTime: ");
     systemPrintln(heartbeatRandomTime);
-    outputSerialData(true);
-    petWDT();
   }
 }
 

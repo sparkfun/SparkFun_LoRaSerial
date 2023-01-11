@@ -210,18 +210,15 @@ void updateRadioState()
           clockSyncReceiver = false; //VC server is clock source
           if (settings.frequencyHop)
             startChannelTimer();
-
-          //Start sending heartbeats
-          xmitVcHeartbeat(myVc, myUniqueId);
-          changeState(RADIO_VC_WAIT_TX_DONE);
-          break;
         }
+        else
+          //Unknown client address
+          myVc = VC_UNASSIGNED;
 
-        //Unknown client address
-        myVc = VC_UNASSIGNED;
-
-        //Start sending heartbeats
-        changeState(RADIO_VC_WAIT_SERVER);
+        //Server: Start sending HEARTBEAT
+        //Client: Determine HEARTBEAT transmit time
+        xmitVcHeartbeat(myVc, myUniqueId);
+        changeState(RADIO_VC_WAIT_TX_DONE);
         break;
       }
 
@@ -1853,7 +1850,8 @@ void updateRadioState()
       }
 
       //Stop the frequency hopping
-      stopChannelTimer();
+      if (channelTimerMsec)
+        stopChannelTimer();
       if (channelNumber != 0)
       {
         channelNumber = 0;
@@ -1870,12 +1868,17 @@ void updateRadioState()
         //Process the received datagram
         if ((packetType == DATAGRAM_VC_HEARTBEAT) && (rxSrcVc == VC_SERVER))
         {
+          virtualCircuitList[VC_SERVER].lastTrafficMillis = currentMillis;
+
           //Start the channel timer
           startChannelTimer();
-          channelTimerStart -= settings.maxDwellTime;
+          channelTimerStart -= settings.maxDwellTime >> 1;
 
           //Synchronize the channel timer with the server
           vcReceiveHeartbeat(millis() - currentMillis);
+
+          //Delay for a while before sending the HEARTBEAT
+          heartbeatRandomTime = random((settings.heartbeatTimeout * 2) / 10, settings.heartbeatTimeout);
           changeState(RADIO_VC_WAIT_RECEIVE);
         }
         else
@@ -1898,7 +1901,7 @@ void updateRadioState()
         transactionComplete = false;
 
         //Compute the HEARTBEAT frame transmit frame
-        if ((!txHeartbeatUsec) && (txControl.datagramType == DATAGRAM_HEARTBEAT))
+        if ((!txHeartbeatUsec) && (txControl.datagramType == DATAGRAM_VC_HEARTBEAT))
         {
           txHeartbeatUsec = transactionCompleteMicros - txSetChannelTimerMicros;
           if (settings.debugSync)
@@ -1915,7 +1918,10 @@ void updateRadioState()
         returnToReceiving();
 
         //Set the next state
-        changeState(RADIO_VC_WAIT_RECEIVE);
+        if (virtualCircuitList[VC_SERVER].vcState == VC_STATE_LINK_DOWN)
+          changeState(RADIO_VC_WAIT_SERVER);
+        else
+          changeState(RADIO_VC_WAIT_RECEIVE);
       }
       break;
 
@@ -2123,7 +2129,11 @@ void updateRadioState()
           //Send another heartbeat
           if (xmitVcHeartbeat(myVc, myUniqueId))
           {
+            if (settings.server)
+              blinkHeartbeatLed(true);
             triggerEvent(TRIGGER_TX_VC_HEARTBEAT);
+            if (settings.debugHeartbeat && settings.server)
+              systemPrintln(channelNumber);
             if (((uint8_t)myVc) < MAX_VC)
               virtualCircuitList[myVc].lastTrafficMillis = currentMillis;
             changeState(RADIO_VC_WAIT_TX_DONE);
@@ -3124,8 +3134,9 @@ void vcReceiveHeartbeat(uint32_t rxMillis)
   uint32_t deltaMillis;
   int vcSrc;
 
+  //Adjust freq hop ISR based on server's remaining clock
   if ((rxSrcVc == VC_SERVER) || (memcmp(rxVcData, myUniqueId, sizeof(myUniqueId)) == 0))
-    syncChannelTimer(txRxTimeMsec); //Adjust freq hop ISR based on server's remaining clock
+    syncChannelTimer((txHeartbeatUsec + TX_TO_RX_USEC + micros() - transactionCompleteMicros) / 1000);
 
   //Update the timestamp offset
   if (rxSrcVc == VC_SERVER)
@@ -3137,7 +3148,7 @@ void vcReceiveHeartbeat(uint32_t rxMillis)
     //then the delay from reading the millisecond value on the server should
     //get offset by the transmit setup time and the receive overhead time.
     memcpy(&timestampOffset, &rxVcData[UNIQUE_ID_BYTES], sizeof(timestampOffset));
-    timestampOffset += vcTxHeartbeatMillis + rxMillis - millis();
+    timestampOffset += (txHeartbeatUsec + TX_TO_RX_USEC + micros() - transactionCompleteMicros) / 1000;
   }
   triggerEvent(TRIGGER_RX_VC_HEARTBEAT);
 

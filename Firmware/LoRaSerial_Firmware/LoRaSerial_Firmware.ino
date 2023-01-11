@@ -596,6 +596,8 @@ uint32_t txDatagramMicros; //Timestamp at the beginning of the transmitDatagram 
 uint16_t maxFrameAirTime; //Air time of the maximum sized message
 unsigned long remoteSystemMillis; //Millis value contained in the received message
 
+#define VC_DELAY_HEARTBEAT_MSEC     5
+
 bool rxFirstAck; //Set true when first ACK is received
 bool txFirstAck; //Set true when first ACK is transmitted
 
