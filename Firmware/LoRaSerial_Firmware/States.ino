@@ -3148,6 +3148,7 @@ void vcReceiveHeartbeat(uint32_t rxMillis)
     //then the delay from reading the millisecond value on the server should
     //get offset by the transmit setup time and the receive overhead time.
     memcpy(&timestampOffset, &rxVcData[UNIQUE_ID_BYTES], sizeof(timestampOffset));
+    timestampOffset -= millis();
     timestampOffset += (txHeartbeatUsec + TX_TO_RX_USEC + micros() - transactionCompleteMicros) / 1000;
   }
   triggerEvent(TRIGGER_RX_VC_HEARTBEAT);
