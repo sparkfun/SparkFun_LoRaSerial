@@ -2605,7 +2605,7 @@ bool transmitDatagram()
       hopChannel();
 
     //Measure the time to the next hop
-    triggerEvent(TRIGGER_TX_LOAD_CHANNE_TIMER_VALUE);
+    triggerEvent(TRIGGER_TX_LOAD_CHANNEL_TIMER_VALUE);
     txSetChannelTimerMicros = micros();
     unsigned long currentMillis = millis();
     uint16_t msToNextHop; //TX channel timer value
