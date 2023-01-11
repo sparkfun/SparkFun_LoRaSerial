@@ -417,7 +417,7 @@ bool commandAT(const char * commandString)
         systemPrint(txHeartbeatUsec);
         systemPrintln(" uSec");
         systemPrint("        SYNC_CLOCKS Time: ");
-        systemPrint(txSyncClockUsec);
+        systemPrint(txSyncClocksUsec);
         systemPrintln(" uSec");
         systemPrint("        Uptime: ");
         deltaMillis = millis();

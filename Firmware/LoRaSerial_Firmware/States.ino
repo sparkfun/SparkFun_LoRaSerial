@@ -448,7 +448,7 @@ void updateRadioState()
             }
 
             //Compute the receive time
-            COMPUTE_RX_TIME(rxData + 1, 1, txSyncClockUsec);
+            COMPUTE_RX_TIME(rxData + 1, 1, txSyncClocksUsec);
 
             //Hop to the next channel
             hopChannel();
@@ -498,13 +498,13 @@ void updateRadioState()
       if (transactionComplete)
       {
         //Compute the SYNC_CLOCKS frame transmit frame
-        if ((!txSyncClockUsec) && (txControl.datagramType == DATAGRAM_SYNC_CLOCKS))
+        if ((!txSyncClocksUsec) && (txControl.datagramType == DATAGRAM_SYNC_CLOCKS))
         {
-          txSyncClockUsec = transactionCompleteMicros - txSetChannelTimerMicros;
+          txSyncClocksUsec = transactionCompleteMicros - txSetChannelTimerMicros;
           if (settings.debugSync)
           {
-            systemPrint("txSyncClockUsec: ");
-            systemPrintln(txSyncClockUsec);
+            systemPrint("txSyncClocksUsec: ");
+            systemPrintln(txSyncClocksUsec);
           }
         }
 
@@ -1174,28 +1174,28 @@ void updateRadioState()
               }
 
               //Get the SYNC_CLOCKS TX time
-              if (!txSyncClockUsec)
+              if (!txSyncClocksUsec)
               {
-                memcpy(&txSyncClockUsec, rxData + 1 + 4 + 4, sizeof(txSyncClockUsec));
+                memcpy(&txSyncClocksUsec, rxData + 1 + 4 + 4, sizeof(txSyncClocksUsec));
                 if (settings.debugSync)
                 {
-                  systemPrint("txSyncClockUsec: ");
-                  systemPrintln(txSyncClockUsec);
+                  systemPrint("txSyncClocksUsec: ");
+                  systemPrintln(txSyncClocksUsec);
                 }
               }
 
               //Ignore this frame when the times are not filled in
-              if ((!txHeartbeatUsec) || (!txSyncClockUsec))
+              if ((!txHeartbeatUsec) || (!txSyncClocksUsec))
                 triggerEvent(TRIGGER_RX_SYNC_CLOCKS);
               else
               {
-                COMPUTE_TIMESTAMP_OFFSET(rxData + 1, 0, txSyncClockUsec);
+                COMPUTE_TIMESTAMP_OFFSET(rxData + 1, 0, txSyncClocksUsec);
 
                 //Server has responded to FIND_PARTNER with SYNC_CLOCKS
                 //Start and adjust freq hop ISR based on remote's remaining clock
                 startChannelTimer();
                 channelTimerStart -= settings.maxDwellTime;
-                syncChannelTimer((txSyncClockUsec + TX_TO_RX_USEC + micros() - transactionCompleteMicros) / 1000);
+                syncChannelTimer((txSyncClocksUsec + TX_TO_RX_USEC + micros() - transactionCompleteMicros) / 1000);
                 triggerEvent(TRIGGER_RX_SYNC_CLOCKS);
 
                 //Switch to the proper frequency for the channel
@@ -1463,13 +1463,13 @@ void updateRadioState()
         }
 
         //Compute the SYNC_CLOCKS frame transmit frame
-        else if ((!txSyncClockUsec) && (txControl.datagramType == DATAGRAM_SYNC_CLOCKS))
+        else if ((!txSyncClocksUsec) && (txControl.datagramType == DATAGRAM_SYNC_CLOCKS))
         {
-          txSyncClockUsec = transactionCompleteMicros - txSetChannelTimerMicros;
+          txSyncClocksUsec = transactionCompleteMicros - txSetChannelTimerMicros;
           if (settings.debugSync)
           {
-            systemPrint("txSyncClockUsec: ");
-            systemPrintln(txSyncClockUsec);
+            systemPrint("txSyncClocksUsec: ");
+            systemPrintln(txSyncClocksUsec);
           }
         }
 

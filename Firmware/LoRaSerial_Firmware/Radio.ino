@@ -892,8 +892,8 @@ bool xmitDatagramP2PSyncClocks()
   memcpy(endOfTxData, &txHeartbeatUsec, sizeof(txHeartbeatUsec));
   endOfTxData += sizeof(txHeartbeatUsec);
 
-  memcpy(endOfTxData, &txSyncClockUsec, sizeof(txSyncClockUsec));
-  endOfTxData += sizeof(txSyncClockUsec);
+  memcpy(endOfTxData, &txSyncClocksUsec, sizeof(txSyncClocksUsec));
+  endOfTxData += sizeof(txSyncClocksUsec);
 
   memcpy(endOfTxData, &txDataAckUsec, sizeof(txDataAckUsec));
   endOfTxData += sizeof(txDataAckUsec);
