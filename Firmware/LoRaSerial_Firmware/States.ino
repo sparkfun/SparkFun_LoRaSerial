@@ -180,14 +180,20 @@ void updateRadioState()
 
       petWDT();
 
-      returnToReceiving(); //Start receiving
-
       //Stop the ACK timer
       STOP_ACK_TIMER();
 
       //Start the link between the radios
       if (settings.operatingMode == MODE_POINT_TO_POINT)
       {
+        //Determine transmit frame times for SYNC_CLOCKS, ACK
+        getTxTime(xmitDatagramP2PFindPartner, &txFindPartnerUsec, "FIND_PARTNER");
+        getTxTime(xmitDatagramP2PSyncClocks, &txSyncClocksUsec, "SYNC_CLOCKS");
+        getTxTime(xmitDatagramP2PHeartbeat, &txHeartbeatUsec, "HEARTBEAT");
+        getTxTime(xmitDatagramP2PAck, &txDataAckUsec, "ACK");
+
+        //Start receiving
+        returnToReceiving();
         changeState(RADIO_P2P_LINK_DOWN);
         break;
       }
@@ -195,6 +201,8 @@ void updateRadioState()
       //Virtual circuit mode
       if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
       {
+        //Determine transmit frame time for HEARTBEAT
+        getTxTime(xmitVcHeartbeat, &txHeartbeatUsec, "HEARTBEAT");
         if (settings.server)
         {
           //Reserve the server's address (0)
@@ -218,13 +226,26 @@ void updateRadioState()
       }
 
       //Multipoint mode
+      //Determine transmit frame times for SYNC_CLOCKS, HEARTBEAT, ACK
+      getTxTime(xmitDatagramP2PSyncClocks, &txSyncClocksUsec, "SYNC_CLOCKS");
+      getTxTime(xmitDatagramMpHeartbeat, &txHeartbeatUsec, "HEARTBEAT");
+      getTxTime(xmitDatagramP2PAck, &txDataAckUsec, "ACK");
+
+      //Start receiving
+      returnToReceiving();
+
       if (settings.server == true)
       {
         clockSyncReceiver = false; //Multipoint server is clock source
         startChannelTimer(); //Start hopping - multipoint clock source
+
+        //Start receiving
+        returnToReceiving();
         changeState(RADIO_MP_STANDBY);
       }
       else
+        //Start receiving
+        returnToReceiving();
         changeState(RADIO_DISCOVER_BEGIN);
       break;
 

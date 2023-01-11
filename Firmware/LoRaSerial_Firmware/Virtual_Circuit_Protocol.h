@@ -28,6 +28,7 @@
 #define VC_BROADCAST        ((int8_t)(VC_RSVD_SPECIAL_VCS | VCAB_NUMBER_MASK))
 #define VC_COMMAND          (VC_BROADCAST - 1) //Command input and command response
 #define VC_UNASSIGNED       (VC_COMMAND - 1)
+#define VC_IGNORE_TX        (VC_UNASSIGNED - 1)
 
 //Source and destinations reserved for the local host
 #define PC_COMMAND          VC_RSVD_SPECIAL_VCS //Command input and command response

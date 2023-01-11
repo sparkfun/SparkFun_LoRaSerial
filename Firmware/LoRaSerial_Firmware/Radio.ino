@@ -1365,6 +1365,11 @@ bool xmitVcDatagram()
 }
 
 //Broadcast a HEARTBEAT to all of the VCs
+bool xmitVcHeartbeat()
+{
+  return xmitVcHeartbeat(VC_IGNORE_TX, myUniqueId);
+}
+
 bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
 {
   uint32_t currentMillis = millis();
@@ -2947,15 +2952,17 @@ void printControl(uint8_t value)
     systemPrintln(control->datagramType);
   }
 
-  systemPrintTimestamp();
-  systemPrint("        requestYield ");
   if (control->requestYield)
-    systemPrintln("1");
-  else
-    systemPrintln("0");
+  {
+    systemPrintTimestamp();
+    systemPrintln("        requestYield");
+  }
 
   if (control->ignoreFrame)
+  {
+    systemPrintTimestamp();
     systemPrintln("        Ignore Frame");
+  }
 
   outputSerialData(true);
 
@@ -3102,6 +3109,68 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
 
   return (true); //Transmission has started
 }
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//Transmit Ignored Frames
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+bool getTxTime(bool (*transmitFrame)(), uint32_t * txFrameUsec, const char * frameName)
+{
+  bool txStatus;
+  uint32_t transmitDelay;
+
+#define IGNORE_TRANSMIT_DELAY_MSEC    100
+
+  //Transmit the frame
+  transmitDelay = 0;
+  do
+  {
+    //Delay between retries
+    if (transmitDelay)
+      delay(transmitDelay);
+    transmitDelay += IGNORE_TRANSMIT_DELAY_MSEC;
+
+    //Fail transmission after 5 attempts
+    if (transmitDelay > (5 * IGNORE_TRANSMIT_DELAY_MSEC))
+    {
+      if (settings.debugSync)
+      {
+        systemPrintTimestamp();
+        systemPrint("TX ignore ");
+        systemPrint(frameName);
+        systemPrintln(" failed!");
+        outputSerialData(true);
+      }
+      return false;
+    }
+
+    //Attempt to transmit the requested frame
+    txControl.ignoreFrame = true;
+    txStatus = transmitFrame();
+    txControl.ignoreFrame = false;
+  } while (!txStatus);
+
+  //Wait for transmit completion
+  while (!transactionComplete)
+    petWDT();
+  transactionComplete = false;
+
+  //Compute the transmit time
+  *txFrameUsec = transactionCompleteMicros - txSetChannelTimerMicros;
+  if (settings.debugSync)
+  {
+    systemPrintTimestamp();
+    systemPrint("TX ");
+    systemPrint(frameName);
+    systemPrint(": ");
+    systemPrint(*txFrameUsec);
+    systemPrintln(" mSec");
+    outputSerialData(true);
+  }
+  return true;
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Use the maximum dwell setting to start the timer that indicates when to hop channels
 void startChannelTimer()

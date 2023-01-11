@@ -589,6 +589,7 @@ uint16_t txRxTimeMsec;
 uint32_t txSetChannelTimerMicros; //Timestamp when millis is read in TX routine to set channel timer value
 uint32_t transactionCompleteMicros; //Timestamp at the beginning of the transactionCompleteIsr routine
 uint32_t txDataAckUsec; //Time in microseconds to transmit the DATA_ACK frame
+uint32_t txFindPartnerUsec; //Time in microseconds to transmit the FIND_PARTNER frame
 uint32_t txHeartbeatUsec; //Time in microseconds to transmit the HEARTBEAT frame
 uint32_t txSyncClocksUsec; //Time in microseconds to transmit the SYNC_CLOCKS frame
 uint32_t txDatagramMicros; //Timestamp at the beginning of the transmitDatagram routine

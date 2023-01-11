@@ -413,6 +413,10 @@ bool commandAT(const char * commandString)
         systemPrintln("    Clock Synchronization");
         systemPrint("        ACK Time: ");
         systemPrint(txDataAckUsec);
+        systemPrintln(" uSec");
+        systemPrint("        FIND_PARTNER Time: ");
+        systemPrint(txFindPartnerUsec);
+        systemPrintln(" uSec");
         systemPrint("        HEARTBEAT Time: ");
         systemPrint(txHeartbeatUsec);
         systemPrintln(" uSec");
