@@ -378,6 +378,7 @@ uint16_t radioBand = 0; //In MHz. Detected radio module type. Sets the upper/low
 uint8_t outgoingPacket[MAX_PACKET_SIZE]; //Contains the current data in route to receiver
 uint16_t frameAirTime = 0; //Recalc'd with each new packet transmission
 uint16_t ackAirTime = 0; //Recalc'd with each change of settings
+uint16_t systemDescriptionAirTime = 0; //Pre-calc'd amount of time for xmitDatagramP2PSyncClocks to get to receiver
 uint16_t maxPacketAirTime = 0; //Recalc'd with each change of settings
 uint8_t frameSentCount = 0; //Increases each time a frame is sent
 

@@ -466,7 +466,7 @@ void updateRadioState()
       else
       {
         //If we timeout during handshake, return to link down
-        if ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+        if ((millis() - datagramTimer) >= (frameAirTime + systemDescriptionAirTime + settings.overheadTime + getReceiveCompletionOffset()))
         {
           if (settings.debugDatagrams)
           {
