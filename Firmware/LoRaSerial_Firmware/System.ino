@@ -592,31 +592,166 @@ void setRSSI(uint8_t ledBits)
     digitalWrite(pin_rssi4LED, LOW);
 }
 
-//Set the serial TX (blue) LED value
-void txLED(bool illuminate)
+//Start the cylon LEDs
+void startCylonLEDs()
 {
-  if (settings.selectLedUse != LEDS_RSSI)
-    return;
-  if (pin_txLED != PIN_UNDEFINED)
+  cylonLedPattern = 0b0001;
+  cylonPatternGoingLeft = true;
+}
+
+//Update the RSSI LED or LEDs
+void blinkRadioRssiLed()
+{
+  unsigned long currentMillis;
+  static uint32_t ledPreviousRssiMillis;
+  static unsigned long lastCylonBlink; //Controls LED during training
+  static int8_t ledRssiPulseWidth; //Target pulse width for LED display
+
+  currentMillis = millis();
+  switch (settings.selectLedUse)
   {
-    if (illuminate == true)
-      digitalWrite(pin_txLED, HIGH);
-    else
-      digitalWrite(pin_txLED, LOW);
+    //Update the pattern on the 4 green LEDs
+    case LEDS_CYLON:
+      //Determine if it is time to update the cylon pattern
+      if ((currentMillis - lastCylonBlink) > 75)
+      {
+        lastCylonBlink = currentMillis;
+
+	//The following shows the cylon pattern in four LEDs
+	//
+	//	LED3  LED2  LED1  LED0
+	//                         X
+	//		      X
+	//		X
+	//	  X
+	//		X
+	//		      X
+	//                         X
+	//		      X
+	//		...
+	//
+        //Cylon the RSSI LEDs
+        setRSSI(cylonLedPattern);
+
+	//Determine if a change in direction is necessary
+        if ((cylonLedPattern == 0b1000) || (cylonLedPattern == 0b0001))
+          cylonPatternGoingLeft = cylonPatternGoingLeft ? false : true;
+
+        if (cylonPatternGoingLeft)
+          cylonLedPattern <<= 1;
+        else
+          cylonLedPattern >>= 1;
+      }
+      break;
+
+    //Update the single RSSI LED
+    case LEDS_MULTIPOINT:
+    case LEDS_RADIO_USE:
+      //Check for the start of a new pulse
+      if ((currentMillis - ledPreviousRssiMillis) >= LED_MAX_PULSE_WIDTH)
+      {
+        ledPreviousRssiMillis = currentMillis;
+
+        //Determine the RSSI LED pulse width
+        //The RSSI value ranges from -164 to 30 dB
+        ledRssiPulseWidth = (150 + rssi) / 10;
+        if (ledRssiPulseWidth > 0)
+          digitalWrite(RADIO_USE_RSSI_LED, LED_ON);
+      }
+
+      //Check for time to turn off the LED
+      else if ((currentMillis - ledPreviousRssiMillis) >= ledRssiPulseWidth)
+        digitalWrite(RADIO_USE_RSSI_LED, LED_OFF);
+      break;
+
+    //Update the 4 green LEDs based upon the RSSI value
+    case LEDS_RSSI:
+      if (rssi > -70)
+        setRSSI(0b1111);
+      else if (rssi > -100)
+        setRSSI(0b0111);
+      else if (rssi > -120)
+        setRSSI(0b0011);
+      else if (rssi > -150)
+        setRSSI(0b0001);
+      else
+        setRSSI(0);
+      break;
+  }
+}
+
+//Set the serial TX (blue) LED value
+void blinkSerialTxLed(bool illuminate)
+{
+  switch (settings.selectLedUse)
+  {
+    case LEDS_RSSI:
+      if (pin_txLED != PIN_UNDEFINED)
+      {
+        if (illuminate == true)
+          digitalWrite(pin_txLED, HIGH);
+        else
+          digitalWrite(pin_txLED, LOW);
+      }
+      break;
   }
 }
 
 //Set the serial RX (yellow) LED value
-void rxLED(bool illuminate)
+void blinkSerialRxLed(bool illuminate)
 {
-  if (settings.selectLedUse != LEDS_RSSI)
-    return;
-  if (pin_rxLED != PIN_UNDEFINED)
+  switch (settings.selectLedUse)
   {
-    if (illuminate == true)
-      digitalWrite(pin_rxLED, HIGH);
-    else
-      digitalWrite(pin_rxLED, LOW);
+    case LEDS_RSSI:
+      if (illuminate == true)
+        digitalWrite(pin_rxLED, HIGH);
+      else
+        digitalWrite(pin_rxLED, LOW);
+    break;
+  }
+}
+
+//Blink the RX LED
+void blinkRadioRxLed(bool on)
+{
+  switch (settings.selectLedUse)
+  {
+    case LEDS_CYLON:
+      if (on)
+        digitalWrite(CYLON_RX_DATA_LED, LED_ON);
+      else if ((millis() - linkDownTimer) >= RADIO_USE_BLINK_MILLIS)
+        digitalWrite(CYLON_RX_DATA_LED, LED_OFF);
+      break;
+
+    case LEDS_MULTIPOINT:
+    case LEDS_RADIO_USE:
+      if (on)
+        digitalWrite(RADIO_USE_RX_DATA_LED, LED_ON);
+      else if ((millis() - linkDownTimer) >= RADIO_USE_BLINK_MILLIS)
+        digitalWrite(RADIO_USE_RX_DATA_LED, LED_OFF);
+      break;
+  }
+}
+
+//BLink the TX LED
+void blinkRadioTxLed(bool on)
+{
+  switch (settings.selectLedUse)
+  {
+    case LEDS_CYLON:
+      if (on)
+        digitalWrite(CYLON_TX_DATA_LED, LED_ON);
+      else if ((millis() - datagramTimer) >= RADIO_USE_BLINK_MILLIS)
+        digitalWrite(CYLON_TX_DATA_LED, LED_OFF);
+      break;
+
+    case LEDS_MULTIPOINT:
+    case LEDS_RADIO_USE:
+      if (on)
+        digitalWrite(RADIO_USE_TX_DATA_LED, LED_ON);
+      else if ((millis() - datagramTimer) >= RADIO_USE_BLINK_MILLIS)
+        digitalWrite(RADIO_USE_TX_DATA_LED, LED_OFF);
+      break;
   }
 }
 
@@ -636,16 +771,19 @@ void radioLeds()
   static uint32_t badCrcMillis;
 
   //Turn off the RX LED to end the blink
-  currentMillis = millis();
-  if ((currentMillis - linkDownTimer) >= RADIO_USE_BLINK_MILLIS)
-    digitalWrite(RADIO_USE_RX_DATA_LED, LED_OFF);
+  blinkRadioRxLed(false);
 
   //Turn off the TX LED to end the blink
-  currentMillis = millis();
-  if ((currentMillis - datagramTimer) >= RADIO_USE_BLINK_MILLIS)
-    digitalWrite(RADIO_USE_TX_DATA_LED, LED_OFF);
+  blinkRadioTxLed(false);
+
+  //Update the link LED
+  digitalWrite(RADIO_USE_LINK_LED, isLinked() ? LED_ON : LED_OFF);
+
+  //Update the RSSI LED
+  blinkRadioRssiLed();
 
   //Blink the bad frames LED
+  currentMillis = millis();
   if (badFrames != previousBadFrames)
   {
     previousBadFrames = badFrames;
@@ -676,35 +814,39 @@ void radioLeds()
     badCrcMillis = 0;
     digitalWrite(RADIO_USE_BAD_CRC_LED, LED_OFF);
   }
-
-  //Update the link LED
-  digitalWrite(RADIO_USE_LINK_LED, isLinked() ? LED_ON : LED_OFF);
-
-  //Update the RSSI LED
-  if (currentMillis != ledPreviousRssiMillis)
-  {
-    if (ledRssiCount >= 16)
-    {
-      ledRssiValue = (150 + rssi) / 10;
-      ledRssiCount = 0;
-      if (ledRssiValue >= ledRssiCount)
-        digitalWrite(RADIO_USE_RSSI_LED, LED_ON);
-    }
-
-    //Turn off the RSSI LED
-    else if (ledRssiValue < ledRssiCount++)
-      digitalWrite(RADIO_USE_RSSI_LED, LED_OFF);
-  }
-
-  //Save the last millis value
-  ledPreviousRssiMillis = currentMillis;
 }
 
-//Turn on the heartbeat LED
-void ledMpHeartbeatOn()
+//Blink the heartbeat LED
+void blinkHeartbeatLed(bool on)
 {
-  digitalWrite(LED_MP_HEARTBEAT, LED_OFF);
-  ledHeartbeatMillis = millis();
+  static unsigned long ledHeartbeatMillis;
+
+  switch (settings.selectLedUse)
+  {
+    case LEDS_MULTIPOINT:
+      if (on)
+      {
+        digitalWrite(LED_MP_HEARTBEAT, LED_ON);
+        ledHeartbeatMillis = millis();
+      }
+      else if ((millis() - ledHeartbeatMillis) > RADIO_USE_BLINK_MILLIS)
+        digitalWrite(LED_MP_HEARTBEAT, LED_OFF);
+      break;
+  }
+}
+
+//Blink the channel hop LED
+void blinkChannelHopLed(bool on)
+{
+  switch (settings.selectLedUse)
+  {
+    case LEDS_MULTIPOINT:
+      if (on)
+        digitalWrite(LED_MP_HOP_CHANNEL, LED_ON);
+      else if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
+        digitalWrite(LED_MP_HOP_CHANNEL, LED_OFF);
+      break;
+  }
 }
 
 //Display the multi-point LED pattern
@@ -713,83 +855,37 @@ void multiPointLeds()
   uint32_t currentMillis;
 
   //Turn off the RX LED to end the blink
-  currentMillis = millis();
-  if ((currentMillis - linkDownTimer) >= RADIO_USE_BLINK_MILLIS)
-    digitalWrite(RADIO_USE_RX_DATA_LED, LED_OFF);
+  blinkRadioRxLed(false);
 
   //Turn off the TX LED to end the blink
-  currentMillis = millis();
-  if ((currentMillis - datagramTimer) >= RADIO_USE_BLINK_MILLIS)
-    digitalWrite(RADIO_USE_TX_DATA_LED, LED_OFF);
+  blinkRadioTxLed(false);
 
   //Update the sync LED
   digitalWrite(RADIO_USE_LINK_LED, isMultiPointSync() ? LED_ON : LED_OFF);
 
   //Update the RSSI LED
-  if (currentMillis != ledPreviousRssiMillis)
-  {
-    if (ledRssiCount >= 16)
-    {
-      ledRssiValue = (150 + rssi) / 10;
-      ledRssiCount = 0;
-      if (ledRssiValue >= ledRssiCount)
-        digitalWrite(RADIO_USE_RSSI_LED, LED_ON);
-    }
-
-    //Turn off the RSSI LED
-    else if (ledRssiValue < ledRssiCount++)
-      digitalWrite(RADIO_USE_RSSI_LED, LED_OFF);
-  }
+  blinkRadioRssiLed();
 
   //Update the hop LED
   if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
     digitalWrite(LED_MP_HOP_CHANNEL, LED_OFF);
 
   //Update the HEARTBEAT LED
-  if ((millis() - ledHeartbeatMillis) >= RADIO_USE_BLINK_MILLIS)
-    digitalWrite(LED_MP_HEARTBEAT, LED_OFF);
-
-  //Save the last millis value
-  ledPreviousRssiMillis = currentMillis;
-}
-
-//Start the cylon LEDs
-void startCylonLEDs()
-{
-  trainCylonNumber = 0b0001;
-  trainCylonDirection = -1;
+  blinkHeartbeatLed(false);
 }
 
 //Update the cylon LEDs
 void updateCylonLEDs()
 {
-  unsigned long currentMillis;
-
-  currentMillis = millis();
-  if ((currentMillis - lastTrainBlink) > 75) //Blink while unit waits in training state
-  {
-    lastTrainBlink = millis();
-
-    //Cylon the RSSI LEDs
-    setRSSI(trainCylonNumber);
-
-    if (trainCylonNumber == 0b1000 || trainCylonNumber == 0b0001)
-      trainCylonDirection *= -1; //Change direction
-
-    if (trainCylonDirection > 0)
-      trainCylonNumber <<= 1;
-    else
-      trainCylonNumber >>= 1;
-  }
+  //Display the cylon pattern on the RSSI LEDs
+  blinkRadioRssiLed();
 
   //Use the blue and yellow LEDS to indicate radio activity during training
   //Turn off the RX LED to end the blink
-  if ((currentMillis - linkDownTimer) >= RADIO_USE_BLINK_MILLIS)
-    digitalWrite(CYLON_RX_DATA_LED, LED_OFF);
+  blinkRadioRxLed(false);
 
   //Turn off the TX LED to end the blink
-  if ((currentMillis - datagramTimer) >= RADIO_USE_BLINK_MILLIS)
-    digitalWrite(CYLON_TX_DATA_LED, LED_OFF);
+  blinkRadioTxLed(false);
 }
 
 //Update the LED values depending upon the selected display
@@ -816,14 +912,7 @@ void updateLeds()
     //Set LEDs according to RSSI level
     default:
     case LEDS_RSSI:
-      if (rssi > rssiLevelLow)
-        setRSSI(0b0001);
-      if (rssi > rssiLevelMed)
-        setRSSI(0b0011);
-      if (rssi > rssiLevelHigh)
-        setRSSI(0b0111);
-      if (rssi > rssiLevelMax)
-        setRSSI(0b1111);
+      blinkRadioRssiLed();
       break;
 
     case LEDS_RADIO_USE:

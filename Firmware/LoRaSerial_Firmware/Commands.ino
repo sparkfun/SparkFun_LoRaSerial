@@ -411,15 +411,14 @@ bool commandAT(const char * commandString)
 
         //Clock synchronization
         systemPrintln("    Clock Synchronization");
-        systemPrint("        TX Time: ");
-        systemPrint(txTimeUsec / 1000., 4);
-        systemPrintln(" mSec");
-        systemPrint("        RX Time: ");
-        systemPrint(rxTimeUsec / 1000., 4);
-        systemPrintln(" mSec");
-        systemPrint("        Total Time: ");
-        systemPrint((txTimeUsec + rxTimeUsec) / 1000., 5);
-        systemPrintln(" mSec");
+        systemPrint("        ACK Time: ");
+        systemPrint(txDataAckUsec);
+        systemPrint("        HEARTBEAT Time: ");
+        systemPrint(txHeartbeatUsec);
+        systemPrintln(" uSec");
+        systemPrint("        SYNC_CLOCKS Time: ");
+        systemPrint(txSyncClockUsec);
+        systemPrintln(" uSec");
         systemPrint("        Uptime: ");
         deltaMillis = millis();
         systemPrintTimestamp(deltaMillis);
@@ -1068,6 +1067,7 @@ const COMMAND_ENTRY commands[] =
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugTransmit",        &tempSettings.debugTransmit},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugSerial",          &tempSettings.debugSerial},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DisplayRealMillis",    &tempSettings.displayRealMillis},
+  {'D',   0,   1,    0, 1000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &tempSettings.overheadTime},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintAckNumbers",      &tempSettings.printAckNumbers},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintChannel",         &tempSettings.printChannel},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "PrintFrequency",       &tempSettings.printFrequency},
@@ -1102,12 +1102,10 @@ const COMMAND_ENTRY commands[] =
   {'R',   0,   1,    0,   1,    0, TYPE_BOOL,         valInt,         "EncryptData",          &tempSettings.encryptData},
   {'R',   0,   1,    0,   0,    0, TYPE_KEY,          valKey,         "EncryptionKey",        &tempSettings.encryptionKey},
   {'R',   0,   0,    0, 255,    0, TYPE_U8,           valInt,         "FramesToYield",        &tempSettings.framesToYield},
-  {'R',   0,   0,   10, 2000,   0, TYPE_U16,          valInt,         "FrameTimeout",         &tempSettings.serialTimeoutBeforeSendingFrame_ms},
   {'R',   0,   0,  250, 65535,  0, TYPE_U16,          valInt,         "HeartBeatTimeout",     &tempSettings.heartbeatTimeout},
   {'R',   0,   0,    0, 255,    0, TYPE_U8,           valInt,         "MaxResends",           &tempSettings.maxResends},
   {'R',   0,   1,    0, 255,    0, TYPE_U8,           valInt,         "NetID",                &tempSettings.netID},
   {'R',   0,   1,    0,   2,    0, TYPE_U8,           valInt,         "OperatingMode",        &tempSettings.operatingMode},
-  {'R',   0,   1,    0, 1000,   0, TYPE_U16,          valInt,         "OverHeadtime",         &tempSettings.overheadTime},
   {'R',   0,   0,    0,   1,    0, TYPE_BOOL,         valServer,      "Server",               &tempSettings.server},
   {'R',   0,   1,    0,   1,    0, TYPE_BOOL,         valInt,         "VerifyRxNetID",        &tempSettings.verifyRxNetID},
 
@@ -1118,6 +1116,7 @@ const COMMAND_ENTRY commands[] =
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "FlowControl",          &tempSettings.flowControl},
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertCts",            &tempSettings.invertCts},
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertRts",            &tempSettings.invertRts},
+  {'S',   0,   0,   10, 2000,   0, TYPE_U16,          valInt,         "SerialDelay",          &tempSettings.serialTimeoutBeforeSendingFrame_ms},
   {'S',   0,   0,    0,   0,    0, TYPE_SPEED_SERIAL, valSpeedSerial, "SerialSpeed",          &tempSettings.serialSpeed},
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "UsbSerialWait",        &tempSettings.usbSerialWait},
 

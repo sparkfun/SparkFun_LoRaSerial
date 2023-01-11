@@ -70,7 +70,9 @@ const int FIRMWARE_VERSION_MINOR = 0;
 #define P2P_ZERO_ACKS_BYTES     sizeof(unsigned long) //Number of data bytes in the ZERO_ACKS frame
 #define P2P_HEARTBEAT_BYTES     sizeof(unsigned long) //Number of data bytes in the HEARTBEAT frame
 #define P2P_ACK_BYTES           sizeof(unsigned long) //Number of data bytes in the ACK frame
-#define VC_HEARTBEAT_BYTES      0 //Number of data bytes in the VC_HEARTBEAT frame
+#define VC_HEARTBEAT_BYTES      1 + 1 + 1 + 16 + 4 //Number of data bytes in the VC_HEARTBEAT frame
+
+#define TX_TO_RX_USEC           680 //Time from TX to RX transactionComplete in microseconds
 
 //Bit 0: Signal Detected indicates that a valid LoRa preamble has been detected
 //Bit 1: Signal Synchronized indicates that the end of Preamble has been detected, the modem is in lock
@@ -125,14 +127,16 @@ uint8_t pin_hop_timer = PIN_UNDEFINED;
 #define RADIO_USE_BAD_FRAMES_LED  BLUE_LED    //Blue
 #define RADIO_USE_BAD_CRC_LED     YELLOW_LED  //Yellow
 
-#define LED_MP_HOP_CHANNEL        BLUE_LED
-#define LED_MP_HEARTBEAT          YELLOW_LED
+#define LED_MP_HEARTBEAT          BLUE_LED
+#define LED_MP_HOP_CHANNEL        YELLOW_LED
 
 #define CYLON_TX_DATA_LED   BLUE_LED
 #define CYLON_RX_DATA_LED   YELLOW_LED
 
 #define LED_ON              HIGH
 #define LED_OFF             LOW
+
+#define LED_MAX_PULSE_WIDTH     24 //mSec
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Radio Library
@@ -170,6 +174,7 @@ SAMDTimer channelTimer(TIMER_TCC); //Available: TC3, TC4, TC5, TCC, TCC1 or TCC2
 volatile uint16_t channelTimerMsec; //Last value programmed into the channel timer
 volatile unsigned long channelTimerStart = 0; //Tracks how long our timer has been running since last hop
 volatile bool timeToHop = false; //Set by channelTimerHandler to indicate that hopChannel needs to be called
+volatile bool reloadChannelTimer = false; //When set channel timer interval needs to be reloaded with settings.maxDwellTime
 
 uint16_t petTimeout = 0; //A reduced amount of time before WDT triggers. Helps reduce amount of time spent petting.
 unsigned long lastPet = 0; //Remebers time of last WDT pet.
@@ -363,10 +368,8 @@ bool writeOnCommandExit = false; //Goes true if user specifies ATW command
 
 //Global variables - LEDs
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-int trainCylonNumber = 0b0001;
-int trainCylonDirection = -1;
-
-unsigned long lastTrainBlink = 0; //Controls LED during training
+uint8_t cylonLedPattern = 0b0001;
+bool cylonPatternGoingLeft;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - Radio (General)
@@ -389,18 +392,7 @@ float frequencyCorrection = 0; //Adjust receive freq based on the last packet re
 
 volatile bool hop = true; //Clear the DIO1 hop ISR when possible
 
-//RSSI must be above these negative numbers for LED to illuminate
-const int rssiLevelLow = -150;
-const int rssiLevelMed = -120;
-const int rssiLevelHigh = -100;
-const int rssiLevelMax = -70;
 int rssi; //Average signal level, measured during reception of a packet
-
-//LED control values
-uint32_t ledPreviousRssiMillis;
-uint32_t ledHeartbeatMillis;
-int8_t ledRssiCount; //Pulse width count for LED display
-int8_t ledRssiValue; //Target pulse width count for LED display
 
 //Link quality metrics
 uint32_t datagramsSent;     //Total number of datagrams sent
@@ -439,6 +431,8 @@ unsigned long radioStateHistory[RADIO_MAX_STATE];
 
 uint8_t packetLength = 0; //Total bytes received, used for calculating clock sync times in multi-point mode
 int16_t msToNextHopRemote; //Can become negative
+uint8_t clockSyncIndex;
+CLOCK_SYNC_DATA clockSyncData[16];
 
 bool requestYield = false; //Datagram sender can tell this radio to stop transmitting to enable two-way comm
 unsigned long yieldTimerStart = 0;
@@ -585,13 +579,18 @@ char platformPrefix[25]; //Used for printing platform specific device name, ie "
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 bool clockSyncReceiver; //Receives and processes the clock synchronization
+bool startChannelTimerPending; //When true, call startChannelTimer in transactionCompleteISR
 
 //RX and TX time measurements
 uint32_t rxTimeUsec;
 uint32_t txTimeUsec;
 uint16_t txRxTimeMsec;
 
+uint32_t txSetChannelTimerMicros; //Timestamp when millis is read in TX routine to set channel timer value
 uint32_t transactionCompleteMicros; //Timestamp at the beginning of the transactionCompleteIsr routine
+uint32_t txDataAckUsec; //Time in microseconds to transmit the DATA_ACK frame
+uint32_t txHeartbeatUsec; //Time in microseconds to transmit the HEARTBEAT frame
+uint32_t txSyncClockUsec; //Time in microseconds to transmit the SYNC_CLOCKS frame
 uint32_t txDatagramMicros; //Timestamp at the beginning of the transmitDatagram routine
 uint16_t maxFrameAirTime; //Air time of the maximum sized message
 unsigned long remoteSystemMillis; //Millis value contained in the received message

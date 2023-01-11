@@ -558,6 +558,7 @@ void hopChannel(bool moveForwardThroughTable, uint8_t channelCount)
 
   //Select the new frequency
   setRadioFrequency(radioStateTable[radioState].rxState);
+  blinkChannelHopLed(true);
 }
 
 //Determine the time in milliseconds when channel zero is reached again
@@ -702,9 +703,17 @@ void printSX1276Registers()
 void transactionCompleteISR(void)
 {
   transactionCompleteMicros = micros();
-  triggerEvent(TRIGGER_TRANSACTION_COMPLETE);
   radioCallHistory[RADIO_CALL_transactionCompleteISR] = millis();
+  triggerEvent(TRIGGER_TRANSACTION_COMPLETE);
 
+  //Start the channel timer if requested
+  if (startChannelTimerPending)
+  {
+    startChannelTimer(); //transactionCompleteISR, upon TX or RX of SYNC_CLOCKS
+    startChannelTimerPending = false; //transactionCompleteISR, upon TX or RX of SYNC_CLOCKS
+  }
+
+  //Signal the state machine that a receive or transmit has completed
   transactionComplete = true;
 }
 
@@ -727,51 +736,6 @@ void updateHopISR()
     hop = false;
     radio.clearFHSSInt(); //Clear the interrupt
   }
-}
-
-//As we complete linkup, different airspeeds exit at different rates
-//We adjust the initial clock setup as needed
-int16_t getLinkupOffset()
-{
-  int linkupOffset = 0;
-
-  switch (settings.airSpeed)
-  {
-    default:
-      break;
-    case (40):
-      linkupOffset = 0;
-      break;
-    case (150):
-      linkupOffset = 0;
-      break;
-    case (400):
-      linkupOffset = 0;
-      break;
-    case (1200):
-      linkupOffset = 0;
-      break;
-    case (2400):
-      linkupOffset = 0;
-      break;
-    case (4800):
-      linkupOffset = 0;
-      break;
-    case (9600):
-      linkupOffset = 0;
-      break;
-    case (19200):
-      linkupOffset = 0;
-      break;
-    case (28800):
-      linkupOffset = 0;
-      break;
-    case (38400):
-      linkupOffset = 0;
-      break;
-  }
-
-  return (settings.maxDwellTime - getReceiveCompletionOffset() - linkupOffset); //Reduce the default window by the offset
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -1420,14 +1384,14 @@ bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
   *txData = (uint8_t)(endOfTxData - txData);
 
   /*
-                                                                              endOfTxData ---.
-                                                                                             |
-                                                                                             V
-      +----------+---------+----------+------------+----------+---------+----------+---------+----------+
-      | Optional |         | Optional | Optional   |          |         |          |         | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | DestAddr | SrcAddr | Src ID   | millis  | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | 16 Bytes | 4 Bytes | n Bytes  |
-      +----------+---------+----------+------------+----------+---------+----------+---------+----------+
+                                                                                         endOfTxData ---.
+                                                                                                        |
+                                                                                                        V
+      +----------+---------+----------+------------+----------+----------+---------+----------+---------+----------+
+      | Optional |         | Optional | Optional   |          |          |         |          |         | Optional |
+      | NET ID   | Control | C-Timer  | SF6 Length |  Length  | DestAddr | SrcAddr | Src ID   | millis  | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     |  8 bits  | 8 bits   | 8 bits  | 16 Bytes | 4 Bytes | n Bytes  |
+      +----------+---------+----------+------------+----------+----------+---------+----------+---------+----------+
   */
 
   //Verify the data length
@@ -1572,6 +1536,110 @@ bool xmitVcZeroAcks(int8_t destVc)
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Datagram reception
+//
+//Security or lack there of:
+//
+//The comments below outline the radio parameters and how they can be determined by
+//listening to the radio traffic.  The required parameters are followed by one or
+//more step numbers indicating the step which determines the parameter's value.  The
+//comments further describe the steps that can be taken to reduce the attack surface
+//for the LoRaSerial network.
+//
+//The following settings define the LoRaSerial radio network:
+//
+//    AirSpeed - 3, 4, 5
+//    AutoTune - This is receive only
+//    Bandwidth - 3
+//    CodingRate - 5
+//    FrequencyHop - 1
+//    FrequencyMax - 1
+//    FrequencyMin - 1
+//    MaxDwellTime - 1
+//    NumberOfChannels - 1
+//    PreambleLength - 4
+//    SpreadFactor - 4
+//    SyncWord - 4
+//    TxPower
+//
+//  Protocol settings:
+//
+//    DataScrambling - 6
+//    EnableCRC16 - 8
+//    EncryptData - 7
+//    EncryptionKey - 7
+//    FramesToYield
+//    HeartBeatTimeout - 12
+//    MaxResends - 14
+//    NetID - 9
+//    OperatingMode - 10, 11
+//    Server - 10, 11
+//    VerifyRxNetID - 9
+//
+//Attempting to attack a network of LoRaSerial radios would be done with the following
+//steps:
+//
+// 1. Locate the frequencies that the network is using
+//    a. Listen for traffic on a specific channel to determine if the network is using
+//       that channel
+//    b. Repeat across all of the channels in the available frequency band
+// 2. Once the frequencies are identified, attempt to determine the channel sequence
+//    by monitoring when traffic occurs on each of the identified frequencies, this
+//    allows the attacker to construct the hop table for the network
+// 3. Look at the bandwidth utilized by the radio network.  The signal for each
+//    symbol is a ramp that spans the bandwidth selected for use
+// 4. Using a receiver that uses the opposite ramp to generate the sub frequencies
+//    within the bandwidth to decode the symbols.  By monitoring the network traffic
+//    it is possible to determine the spreadfactor since there are 2^SF sub frequencies
+//    that will be used within the bandwidth
+// 5. Now that the spread factor is known, the next step is to determine the coding
+//    rate used for forward error correction.  Here 4 data bits are converted into
+//    between 5 to 8 bits in the transmitted frame
+// 6. Look at the signal for multiple transmissions, does this signal have a DC offset?
+//    The data scrambling setting is false if a DC offset is present, or is true when
+//    no DC offset is present
+// 7. Next step is breaking the encryption key
+// 8. After the encryption key is obtained, it is possible determine if the link is
+//    using software CRC by computing the CRC-16 value on the first n-2 bytes and
+//    comparing that with the last 2 bytes
+// 9. Determine if the link is using a network ID value, by checking the first byte
+//    in each of the transmitted frames
+// 10. Determine if the virtual circuit header is contained in the transmitted frames
+// 11. Determine which set of data frames are being transmitted
+// 12. Determine the maximum interval between HEARTBEAT frames to roughly determine
+//     the HeartbeatTimeout value
+// 13. Look for HEARTBEAT frames and FIND_PARTNER frames.  A FIND_PARTNER frame
+//     is sent following a link failure which occurs after three HEARTBEAT timeout
+//     periods.
+// 14. The MaxResends value can be estimated by the maximum number of data
+//     retransmissions done prior to the link failure.  A large number of link
+//     failures will need to be collected from a very radio near the network.
+//
+//How do you prevent the attacks on a LoRaSerial radio network:
+//
+// 1. Don't advertize the network.  Reduce the TxPower value to the minimum needed
+//    to successfully operate the network
+//
+// 2. Encrypt the data on the network.  Don't use the factory default encryption key.
+//    Select a new encryption key and and train all of the radios in the network with
+//    this key.  This will prevent attacks from any groups that are not able to break
+//    the encryption.  However the radio network is vulnerable to well funded or
+//    dedicated groups that are able to break the encryption.
+//
+// 3. Change the encryption key. When another network is using the same encryption key
+//    and same network ID traffic from the other network is likely to be received.
+//    Selecting another encryption key will avoid this behavior.  Also the encryption
+//    key may be tested by setting a radio to MODE_MULTIPOINT, disabling VerifyRxNetID
+//    and disabling EnableCRC16.  Both settings of DataScrambling will need to be tested.
+//
+// 4. Use a network ID.  This won't prevent attacks, but it prevents the reception
+//    of frames from other networks use the same encryption key.
+//
+// 5. Use software CRC-16.  This won't prevent attacks but will eliminate most
+//    frames from networks using the same encryption key that don't use a network
+//    ID.  Occasionally, when they get lucky, our network ID matches the first byte
+//    of their transmitted frame.  The software CRC-16 will most likely cause this
+//    frame to be discarded.
+//
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Determine the type of datagram received
@@ -2227,10 +2295,7 @@ PacketType rcvDatagram()
   linkDownTimer = millis();
 
   //Blink the RX LED
-  if (settings.selectLedUse == LEDS_RADIO_USE)
-    digitalWrite(RADIO_USE_RX_DATA_LED, LED_ON);
-  else if (settings.selectLedUse == LEDS_CYLON)
-    digitalWrite(CYLON_RX_DATA_LED, LED_ON);
+  blinkRadioRxLed(true);
   return datagramType;
 }
 
@@ -2529,10 +2594,18 @@ bool transmitDatagram()
     //Hake sure that the transmitted msToNextHop is in the range 0 - maxDwellTime
     if (timeToHop)
       hopChannel();
-    uint16_t msToNextHop = settings.maxDwellTime - (millis() - channelTimerStart); //TX channel timer value
-    memcpy(header, &msToNextHop, sizeof(msToNextHop));
-    header += sizeof(msToNextHop); //aka CHANNEL_TIMER_BYTES
 
+    //Measure the time to the next hop
+    triggerEvent(TRIGGER_TX_LOAD_CHANNE_TIMER_VALUE);
+    txSetChannelTimerMicros = micros();
+    unsigned long currentMillis = millis();
+    uint16_t msToNextHop; //TX channel timer value
+    if (channelTimerMsec)
+      msToNextHop = channelTimerMsec - (currentMillis - channelTimerStart);
+    else
+      msToNextHop = settings.maxDwellTime;
+
+    //Validate this value
     if (ENABLE_DEVELOPER && (!clockSyncReceiver))
     {
       if ((msToNextHop < 0) || (msToNextHop > settings.maxDwellTime))
@@ -2540,7 +2613,8 @@ bool transmitDatagram()
         int16_t channelTimer;
         uint8_t * data;
 
-        systemPrintln("TX Frame");
+        systemPrint("TX Frame ");
+        systemPrintln(radioDatagramType[txControl.datagramType]);
         data = outgoingPacket;
         if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
         {
@@ -2558,9 +2632,27 @@ bool transmitDatagram()
 
         systemPrint("ERROR: Invalid msToNextHop value, ");
         systemPrintln(msToNextHop);
-        waitForever();
+
+        //Set a valid value
+        msToNextHop = settings.maxDwellTime;
+      }
+      else if (settings.debugSync)
+      {
+        switch (txControl.datagramType)
+        {
+          case DATAGRAM_DATA_ACK:
+          case DATAGRAM_SYNC_CLOCKS:
+            systemPrint("TX msToNextHop: ");
+            systemPrint(msToNextHop);
+            systemPrintln(" mSec");
+          break;
+        }
       }
     } //ENABLE_DEVELOPER
+
+    //Set the time in the frame
+    memcpy(header, &msToNextHop, sizeof(msToNextHop));
+    header += sizeof(msToNextHop); //aka CHANNEL_TIMER_BYTES
 
     if (settings.debugTransmit)
     {
@@ -2973,13 +3065,14 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
 
   frameAirTime += responseDelay;
   datagramTimer = millis(); //Move timestamp even if error
-  retransmitTimeout = random(ackAirTime, frameAirTime + ackAirTime); //Wait this number of ms between retransmits. Increases with each re-transmit.
 
-  //BLink the RX LED
-  if (settings.selectLedUse == LEDS_RADIO_USE)
-    digitalWrite(RADIO_USE_TX_DATA_LED, LED_ON);
-  else if (settings.selectLedUse == LEDS_CYLON)
-    digitalWrite(CYLON_TX_DATA_LED, LED_ON);
+  //Compute the interval before a retransmission occurs in milliseconds,
+  //this value increases with each transmission
+  retransmitTimeout = random(ackAirTime, frameAirTime + ackAirTime)
+                    * (frameSentCount + 1) * 3 / 2;
+
+  //BLink the TX LED
+  blinkRadioTxLed(true);
 
   return (true); //Transmission has started
 }
@@ -2998,6 +3091,7 @@ void startChannelTimer(int16_t startAmount)
   channelTimer.disableTimer();
   channelTimer.setInterval_MS(startAmount, channelTimerHandler);
   digitalWrite(pin_hop_timer, channelNumber & 1);
+  reloadChannelTimer = (startAmount != settings.maxDwellTime);
   timeToHop = false;
   channelTimerStart = millis(); //startChannelTimer - ISR updates value
   channelTimerMsec = startAmount; //startChannelTimer - ISR updates value
@@ -3013,6 +3107,7 @@ void stopChannelTimer()
   //Turn off the channel timer
   channelTimer.disableTimer();
   digitalWrite(pin_hop_timer, channelNumber & 1);
+  channelTimerMsec = 0; //Indicate that the timer is off
 
   triggerEvent(TRIGGER_HOP_TIMER_STOP);
   timeToHop = false;
@@ -3020,7 +3115,7 @@ void stopChannelTimer()
 
 //Given the remote unit's number of ms before its next hop,
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
-void syncChannelTimer()
+void syncChannelTimer(uint16_t frameAirTimeMsec)
 {
   int16_t adjustment;
   unsigned long currentMillis;
@@ -3065,7 +3160,7 @@ void syncChannelTimer()
 
       systemPrint("ERROR: Invalid msToNextHopRemote value, ");
       systemPrintln(msToNextHopRemote);
-      waitForever();
+      return;
     }
   } //ENABLE_DEVELOPER
 
@@ -3103,15 +3198,14 @@ void syncChannelTimer()
   //Compute the remote system's channel timer firing time offset in milliseconds
   //using the channel timer value and the adjustments for transmit and receive
   //time (time of flight)
-  rmtHopTimeMsec = msToNextHopRemote - txRxTimeMsec;
+  rmtHopTimeMsec = msToNextHopRemote - frameAirTimeMsec;
 
   //Compute the when the local system last hopped
   lclHopTimeMsec = currentMillis - channelTimerStart;
   adjustment = 0;
 
 #define REMOTE_SYSTEM_LIKELY_TO_HOP_MSEC    2
-#define CHANNEL_TIMER_SYNC_PLUS_MINUS_MSEC  3
-#define CHANNEL_TIMER_SYNC_MSEC             (2 * CHANNEL_TIMER_SYNC_PLUS_MINUS_MSEC)
+#define CHANNEL_TIMER_SYNC_MSEC   (frameAirTimeMsec + REMOTE_SYSTEM_LIKELY_TO_HOP_MSEC)
 
   //Determine if the remote has hopped or is likely to hop very soon
   if (rmtHopTimeMsec <= REMOTE_SYSTEM_LIKELY_TO_HOP_MSEC)
@@ -3120,7 +3214,7 @@ void syncChannelTimer()
     adjustment += settings.maxDwellTime;
 
     //Determine if the local system has just hopped
-    if (lclHopTimeMsec <= CHANNEL_TIMER_SYNC_MSEC)
+    if (((unsigned long)lclHopTimeMsec) <= CHANNEL_TIMER_SYNC_MSEC)
     {
       //Case 1 above, both systems using the same channel
       //
@@ -3181,7 +3275,7 @@ void syncChannelTimer()
   {
     //The remote system has not hopped
     //Determine if the local system has just hopped
-    if (lclHopTimeMsec <= CHANNEL_TIMER_SYNC_MSEC)
+    if (((unsigned long)lclHopTimeMsec) <= CHANNEL_TIMER_SYNC_MSEC)
     {
       //Case 3 above, extend the channel timer value
       //
@@ -3239,19 +3333,33 @@ void syncChannelTimer()
   //Compute the next hop time
   msToNextHop = rmtHopTimeMsec + adjustment;
 
+  //When the ISR fires, reload the channel timer with settings.maxDwellTime
+  reloadChannelTimer = true;
+
+  //Log the previous clock sync
+  clockSyncData[clockSyncIndex].msToNextHop = msToNextHop;
+  clockSyncData[clockSyncIndex].frameAirTimeMsec = frameAirTimeMsec;
+  clockSyncData[clockSyncIndex].msToNextHopRemote = msToNextHopRemote;
+  clockSyncData[clockSyncIndex].adjustment = adjustment;
+  clockSyncData[clockSyncIndex].delayedHopCount = delayedHopCount;
+  clockSyncData[clockSyncIndex].lclHopTimeMsec = lclHopTimeMsec;
+  clockSyncData[clockSyncIndex].timeToHop = timeToHop;
+  clockSyncIndex += 1;
+
   //Restart the channel timer
+  timeToHop = false;
   channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
-  digitalWrite(pin_hop_timer, channelNumber & 1);
+  digitalWrite(pin_hop_timer, ((channelNumber + delayedHopCount) % settings.numberOfChannels) & 1);
   channelTimerStart = currentMillis;
   channelTimerMsec = msToNextHop; //syncChannelTimer update
   channelTimer.enableTimer();
 
-  //Trigger after adjustments to timer to avoid skew during debug
-  triggerEvent(TRIGGER_SYNC_CHANNEL_TIMER);
-
   //----------------------------------------------------------------------
   // Leave the critical section
   //----------------------------------------------------------------------
+
+  //Trigger after adjustments to timer to avoid skew during debug
+  triggerEvent(TRIGGER_SYNC_CHANNEL_TIMER);
 
   //Hop if the timer fired prior to disabling the timer, resetting the channelTimerStart value
   if (delayedHopCount)
@@ -3264,7 +3372,7 @@ void syncChannelTimer()
     systemPrint(" Hops, ");
     systemPrint(msToNextHopRemote);
     systemPrint(" Nxt Hop - ");
-    systemPrint(txRxTimeMsec);
+    systemPrint(frameAirTimeMsec);
     systemPrint(" (TX + RX)");
     if (adjustment)
     {
