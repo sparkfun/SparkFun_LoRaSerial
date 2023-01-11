@@ -1932,6 +1932,20 @@ PacketType rcvDatagram()
     return (DATAGRAM_BAD);
   }
 
+  //Ignore this frame is requested
+  if (rxControl.ignoreFrame)
+  {
+    if (settings.debugReceive || settings.debugDatagrams)
+    {
+      systemPrintTimestamp();
+      systemPrint("RX: Ignore this ");
+      systemPrintln(datagramType);
+      outputSerialData(true);
+    }
+    badFrames++;
+    return (DATAGRAM_BAD);
+  }
+
   //Display the CRC
   if (settings.enableCRC16 && settings.debugReceive)
   {
@@ -2939,6 +2953,9 @@ void printControl(uint8_t value)
     systemPrintln("1");
   else
     systemPrintln("0");
+
+  if (control->ignoreFrame)
+    systemPrintln("        Ignore Frame");
 
   outputSerialData(true);
 

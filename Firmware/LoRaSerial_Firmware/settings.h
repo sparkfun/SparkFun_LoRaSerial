@@ -325,7 +325,7 @@ typedef struct _CONTROL_U8
   PacketType datagramType: 4;
   uint8_t ackNumber : 2;
   uint8_t requestYield : 1;
-  uint8_t filler : 1;
+  uint8_t ignoreFrame : 1;
 } CONTROL_U8;
 
 typedef bool (* VALIDATION_ROUTINE)(void * value, uint32_t valMin, uint32_t valMax);
