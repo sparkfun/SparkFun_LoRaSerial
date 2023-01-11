@@ -66,7 +66,7 @@ const int FIRMWARE_VERSION_MINOR = 0;
 //Frame lengths
 #define MP_HEARTBEAT_BYTES      0 //Number of data bytes in the MP_HEARTBEAT frame
 #define P2P_FIND_PARTNER_BYTES  sizeof(unsigned long) //Number of data bytes in the FIND_PARTNER frame
-#define P2P_SYNC_CLOCKS_BYTES   (sizeof(uint8_t) + sizeof(unsigned long)) //Number of data bytes in the SYNC_CLOCKS frame
+#define P2P_SYNC_CLOCKS_BYTES   (sizeof(uint8_t) + sizeof(unsigned long) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t)) //Number of data bytes in the SYNC_CLOCKS frame
 #define P2P_ZERO_ACKS_BYTES     sizeof(unsigned long) //Number of data bytes in the ZERO_ACKS frame
 #define P2P_HEARTBEAT_BYTES     sizeof(unsigned long) //Number of data bytes in the HEARTBEAT frame
 #define P2P_ACK_BYTES           sizeof(unsigned long) //Number of data bytes in the ACK frame
