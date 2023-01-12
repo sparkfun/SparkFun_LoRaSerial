@@ -889,24 +889,15 @@ bool xmitDatagramP2PSyncClocks()
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   endOfTxData += sizeof(unsigned long);
 
-  memcpy(endOfTxData, &txHeartbeatUsec, sizeof(txHeartbeatUsec));
-  endOfTxData += sizeof(txHeartbeatUsec);
-
-  memcpy(endOfTxData, &txSyncClocksUsec, sizeof(txSyncClocksUsec));
-  endOfTxData += sizeof(txSyncClocksUsec);
-
-  memcpy(endOfTxData, &txDataAckUsec, sizeof(txDataAckUsec));
-  endOfTxData += sizeof(txDataAckUsec);
-
   /*
-                                                                                                endOfTxData ---.
-                                                                                                               |
-                                                                                                               V
-      +----------+---------+----------+------------+---------+---------+-------------+-------------+-----------+----------+
-      | Optional |         | Optional | Optional   | Channel |         |  HEARTBEAT  | SYNC_CLOCKS | DATA_ACK  |          |
-      | NET ID   | Control | C-Timer  | SF6 Length | Number  | Millis  |    Micros   |    Micros   |   Micros  | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 1 byte  | 4 bytes |   4 Bytes   |   4 Bytes   |  4 Bytes  | n Bytes  |
-      +----------+---------+----------+------------+---------+---------+-------------+-------------+-----------+----------+
+                                                        endOfTxData ---.
+                                                                       |
+                                                                       V
+      +----------+---------+----------+------------+---------+---------+----------+
+      | Optional |         | Optional | Optional   | Channel |         |          |
+      | NET ID   | Control | C-Timer  | SF6 Length | Number  | Millis  | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 1 byte  | 4 bytes | n Bytes  |
+      +----------+---------+----------+------------+---------+---------+----------+
   */
 
   //Verify the data length
