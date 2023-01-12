@@ -51,8 +51,8 @@
 #define COMPUTE_TIMESTAMP_OFFSET(millisBuffer, rShift, frameAirTimeUsec)               \
   {                                                                                    \
     unsigned long deltaUsec = frameAirTimeUsec + micros() - transactionCompleteMicros; \
-    memcpy(&remoteSystemMillis, millisBuffer, sizeof(currentMillis));                  \
-    timestampOffset = (remoteSystemMillis + (deltaUsec / 1000) - currentMillis);       \
+    memcpy(&remoteSystemMillis, millisBuffer, sizeof(remoteSystemMillis));             \
+    timestampOffset = remoteSystemMillis + (deltaUsec / 1000) - millis();              \
     timestampOffset >>= rShift;                                                        \
   }
 
@@ -180,14 +180,20 @@ void updateRadioState()
 
       petWDT();
 
-      returnToReceiving(); //Start receiving
-
       //Stop the ACK timer
       STOP_ACK_TIMER();
 
       //Start the link between the radios
       if (settings.operatingMode == MODE_POINT_TO_POINT)
       {
+        //Determine transmit frame times for SYNC_CLOCKS, ACK
+        getTxTime(xmitDatagramP2PFindPartner, &txFindPartnerUsec, "FIND_PARTNER");
+        getTxTime(xmitDatagramP2PSyncClocks, &txSyncClocksUsec, "SYNC_CLOCKS");
+        getTxTime(xmitDatagramP2PHeartbeat, &txHeartbeatUsec, "HEARTBEAT");
+        getTxTime(xmitDatagramP2PAck, &txDataAckUsec, "ACK");
+
+        //Start receiving
+        returnToReceiving();
         changeState(RADIO_P2P_LINK_DOWN);
         break;
       }
@@ -195,6 +201,8 @@ void updateRadioState()
       //Virtual circuit mode
       if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
       {
+        //Determine transmit frame time for HEARTBEAT
+        getTxTime(xmitVcHeartbeat, &txHeartbeatUsec, "HEARTBEAT");
         if (settings.server)
         {
           //Reserve the server's address (0)
@@ -202,29 +210,39 @@ void updateRadioState()
           clockSyncReceiver = false; //VC server is clock source
           if (settings.frequencyHop)
             startChannelTimer();
-
-          //Start sending heartbeats
-          xmitVcHeartbeat(myVc, myUniqueId);
-          changeState(RADIO_VC_WAIT_TX_DONE);
-          break;
         }
+        else
+          //Unknown client address
+          myVc = VC_UNASSIGNED;
 
-        //Unknown client address
-        myVc = VC_UNASSIGNED;
-
-        //Start sending heartbeats
-        changeState(RADIO_VC_WAIT_SERVER);
+        //Server: Start sending HEARTBEAT
+        //Client: Determine HEARTBEAT transmit time
+        xmitVcHeartbeat(myVc, myUniqueId);
+        changeState(RADIO_VC_WAIT_TX_DONE);
         break;
       }
 
       //Multipoint mode
+      //Determine transmit frame times for SYNC_CLOCKS, HEARTBEAT, ACK
+      getTxTime(xmitDatagramP2PSyncClocks, &txSyncClocksUsec, "SYNC_CLOCKS");
+      getTxTime(xmitDatagramMpHeartbeat, &txHeartbeatUsec, "HEARTBEAT");
+      getTxTime(xmitDatagramP2PAck, &txDataAckUsec, "ACK");
+
+      //Start receiving
+      returnToReceiving();
+
       if (settings.server == true)
       {
         clockSyncReceiver = false; //Multipoint server is clock source
         startChannelTimer(); //Start hopping - multipoint clock source
+
+        //Start receiving
+        returnToReceiving();
         changeState(RADIO_MP_STANDBY);
       }
       else
+        //Start receiving
+        returnToReceiving();
         changeState(RADIO_DISCOVER_BEGIN);
       break;
 
@@ -448,7 +466,7 @@ void updateRadioState()
             }
 
             //Compute the receive time
-            COMPUTE_RX_TIME(rxData + 1, 1, txSyncClockUsec);
+            COMPUTE_RX_TIME(rxData + 1, 1, txSyncClocksUsec);
 
             //Hop to the next channel
             hopChannel();
@@ -498,13 +516,13 @@ void updateRadioState()
       if (transactionComplete)
       {
         //Compute the SYNC_CLOCKS frame transmit frame
-        if ((!txSyncClockUsec) && (txControl.datagramType == DATAGRAM_SYNC_CLOCKS))
+        if ((!txSyncClocksUsec) && (txControl.datagramType == DATAGRAM_SYNC_CLOCKS))
         {
-          txSyncClockUsec = transactionCompleteMicros - txSetChannelTimerMicros;
+          txSyncClocksUsec = transactionCompleteMicros - txSetChannelTimerMicros;
           if (settings.debugSync)
           {
-            systemPrint("txSyncClockUsec: ");
-            systemPrintln(txSyncClockUsec);
+            systemPrint("txSyncClocksUsec: ");
+            systemPrintln(txSyncClocksUsec);
           }
         }
 
@@ -704,7 +722,7 @@ void updateRadioState()
         }
 
         //Determine if an ACK was transmitted
-        if (txControl.datagramType = DATAGRAM_DATA_ACK)
+        if (txControl.datagramType == DATAGRAM_DATA_ACK)
         {
           COMPUTE_TX_TIME();
         }
@@ -808,7 +826,7 @@ void updateRadioState()
             COMPUTE_RX_TIME(rxData, 1, txDataAckUsec);
 
             //The datagram we are expecting
-            syncChannelTimer(txRxTimeMsec); //Adjust freq hop ISR based on remote's remaining clock
+            syncChannelTimer(txDataAckUsec); //Adjust freq hop ISR based on remote's remaining clock
 
             triggerEvent(TRIGGER_RX_ACK);
 
@@ -1112,6 +1130,12 @@ void updateRadioState()
     //Walk through channel table backwards, transmitting a FIND_PARTNER and looking for an SYNC_CLOCKS
     //====================
     case RADIO_DISCOVER_SCANNING:
+      if (settings.server)
+      {
+        changeState(RADIO_MP_STANDBY);
+        break;
+      }
+
       stopChannelTimer(); //Stop hopping - multipoint discovery
 
       if (transactionComplete)
@@ -1162,59 +1186,32 @@ void updateRadioState()
               //Change to the server's channel number
               channelNumber = rxVcData[0];
 
-              //Get the HEARTBEAT TX time
-              if (!txHeartbeatUsec)
+              //Update the timestamp
+              COMPUTE_TIMESTAMP_OFFSET(rxData + 1, 0, txSyncClocksUsec);
+
+              //Server has responded to FIND_PARTNER with SYNC_CLOCKS
+              //Start and adjust freq hop ISR based on remote's remaining clock
+              startChannelTimer();
+              channelTimerStart -= settings.maxDwellTime;
+              syncChannelTimer(txSyncClocksUsec);
+              triggerEvent(TRIGGER_RX_SYNC_CLOCKS);
+
+              //Switch to the proper frequency for the channel
+              setRadioFrequency(false);
+
+              if (settings.debugSync)
               {
-                memcpy(&txHeartbeatUsec, rxData + 1 + 4, sizeof(txHeartbeatUsec));
-                if (settings.debugSync)
-                {
-                  systemPrint("txHeartbeatUsec: ");
-                  systemPrintln(txHeartbeatUsec);
-                }
+                systemPrint("    Channel Number: ");
+                systemPrintln(channelNumber);
+                outputSerialData(true);
+                if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+                  hopChannel();
               }
 
-              //Get the SYNC_CLOCKS TX time
-              if (!txSyncClockUsec)
-              {
-                memcpy(&txSyncClockUsec, rxData + 1 + 4 + 4, sizeof(txSyncClockUsec));
-                if (settings.debugSync)
-                {
-                  systemPrint("txSyncClockUsec: ");
-                  systemPrintln(txSyncClockUsec);
-                }
-              }
+              frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
-              //Ignore this frame when the times are not filled in
-              if ((!txHeartbeatUsec) || (!txSyncClockUsec))
-                triggerEvent(TRIGGER_RX_SYNC_CLOCKS);
-              else
-              {
-                COMPUTE_TIMESTAMP_OFFSET(rxData + 1, 0, txSyncClockUsec);
-
-                //Server has responded to FIND_PARTNER with SYNC_CLOCKS
-                //Start and adjust freq hop ISR based on remote's remaining clock
-                startChannelTimer();
-                channelTimerStart -= settings.maxDwellTime;
-                syncChannelTimer((txSyncClockUsec + TX_TO_RX_USEC + micros() - transactionCompleteMicros) / 1000);
-                triggerEvent(TRIGGER_RX_SYNC_CLOCKS);
-
-                //Switch to the proper frequency for the channel
-                setRadioFrequency(false);
-
-                if (settings.debugSync)
-                {
-                  systemPrint("    Channel Number: ");
-                  systemPrintln(channelNumber);
-                  outputSerialData(true);
-                  if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-                    hopChannel();
-                }
-
-                frequencyCorrection += radio.getFrequencyError() / 1000000.0;
-
-                lastPacketReceived = millis(); //Reset
-                changeState(RADIO_MP_STANDBY);
-              }
+              lastPacketReceived = millis(); //Reset
+              changeState(RADIO_MP_STANDBY);
             }
             break;
         }
@@ -1359,7 +1356,7 @@ void updateRadioState()
               uint16_t frameAirTimeMsec;
 
               //Adjust freq hop ISR based on server's remaining clock
-              syncChannelTimer((txHeartbeatUsec + TX_TO_RX_USEC + micros() - transactionCompleteMicros) / 1000);
+              syncChannelTimer(txHeartbeatUsec);
               systemPrint("HEARTBEAT TX mSec: ");
               systemPrintln(frameAirTime);
             }
@@ -1450,29 +1447,6 @@ void updateRadioState()
       if (transactionComplete == true)
       {
         transactionComplete = false; //Reset ISR flag
-
-        //Compute the HEARTBEAT frame transmit frame
-        if ((!txHeartbeatUsec) && (txControl.datagramType == DATAGRAM_HEARTBEAT))
-        {
-          txHeartbeatUsec = transactionCompleteMicros - txSetChannelTimerMicros;
-          if (settings.debugSync)
-          {
-            systemPrint("txHeartbeatUsec: ");
-            systemPrintln(txHeartbeatUsec);
-          }
-        }
-
-        //Compute the SYNC_CLOCKS frame transmit frame
-        else if ((!txSyncClockUsec) && (txControl.datagramType == DATAGRAM_SYNC_CLOCKS))
-        {
-          txSyncClockUsec = transactionCompleteMicros - txSetChannelTimerMicros;
-          if (settings.debugSync)
-          {
-            systemPrint("txSyncClockUsec: ");
-            systemPrintln(txSyncClockUsec);
-          }
-        }
-
         returnToReceiving();
         changeState(RADIO_MP_STANDBY);
       }
@@ -1832,7 +1806,8 @@ void updateRadioState()
       }
 
       //Stop the frequency hopping
-      stopChannelTimer();
+      if (channelTimerMsec)
+        stopChannelTimer();
       if (channelNumber != 0)
       {
         channelNumber = 0;
@@ -1849,12 +1824,17 @@ void updateRadioState()
         //Process the received datagram
         if ((packetType == DATAGRAM_VC_HEARTBEAT) && (rxSrcVc == VC_SERVER))
         {
+          virtualCircuitList[VC_SERVER].lastTrafficMillis = currentMillis;
+
           //Start the channel timer
           startChannelTimer();
-          channelTimerStart -= settings.maxDwellTime;
+          channelTimerStart -= settings.maxDwellTime >> 1;
 
           //Synchronize the channel timer with the server
           vcReceiveHeartbeat(millis() - currentMillis);
+
+          //Delay for a while before sending the HEARTBEAT
+          heartbeatRandomTime = random((settings.heartbeatTimeout * 2) / 10, settings.heartbeatTimeout);
           changeState(RADIO_VC_WAIT_RECEIVE);
         }
         else
@@ -1874,27 +1854,18 @@ void updateRadioState()
       //If dio0ISR has fired, we are done transmitting
       if (transactionComplete == true)
       {
-        transactionComplete = false;
-
-        //Compute the HEARTBEAT frame transmit frame
-        if ((!txHeartbeatUsec) && (txControl.datagramType == DATAGRAM_HEARTBEAT))
-        {
-          txHeartbeatUsec = transactionCompleteMicros - txSetChannelTimerMicros;
-          if (settings.debugSync)
-          {
-            systemPrint("txHeartbeatUsec: ");
-            systemPrintln(txHeartbeatUsec);
-          }
-        }
-
         //Indicate that the transmission is complete
+        transactionComplete = false;
         triggerEvent(TRIGGER_TX_DONE);
 
         //Start the receive operation
         returnToReceiving();
 
         //Set the next state
-        changeState(RADIO_VC_WAIT_RECEIVE);
+        if (virtualCircuitList[VC_SERVER].vcState == VC_STATE_LINK_DOWN)
+          changeState(RADIO_VC_WAIT_SERVER);
+        else
+          changeState(RADIO_VC_WAIT_RECEIVE);
       }
       break;
 
@@ -2102,7 +2073,11 @@ void updateRadioState()
           //Send another heartbeat
           if (xmitVcHeartbeat(myVc, myUniqueId))
           {
+            if (settings.server)
+              blinkHeartbeatLed(true);
             triggerEvent(TRIGGER_TX_VC_HEARTBEAT);
+            if (settings.debugHeartbeat && settings.server)
+              systemPrintln(channelNumber);
             if (((uint8_t)myVc) < MAX_VC)
               virtualCircuitList[myVc].lastTrafficMillis = currentMillis;
             changeState(RADIO_VC_WAIT_TX_DONE);
@@ -3103,8 +3078,9 @@ void vcReceiveHeartbeat(uint32_t rxMillis)
   uint32_t deltaMillis;
   int vcSrc;
 
+  //Adjust freq hop ISR based on server's remaining clock
   if ((rxSrcVc == VC_SERVER) || (memcmp(rxVcData, myUniqueId, sizeof(myUniqueId)) == 0))
-    syncChannelTimer(txRxTimeMsec); //Adjust freq hop ISR based on server's remaining clock
+    syncChannelTimer(txHeartbeatUsec);
 
   //Update the timestamp offset
   if (rxSrcVc == VC_SERVER)
@@ -3116,7 +3092,8 @@ void vcReceiveHeartbeat(uint32_t rxMillis)
     //then the delay from reading the millisecond value on the server should
     //get offset by the transmit setup time and the receive overhead time.
     memcpy(&timestampOffset, &rxVcData[UNIQUE_ID_BYTES], sizeof(timestampOffset));
-    timestampOffset += vcTxHeartbeatMillis + rxMillis - millis();
+    timestampOffset -= millis();
+    timestampOffset += (txHeartbeatUsec + TX_TO_RX_USEC + micros() - transactionCompleteMicros) / 1000;
   }
   triggerEvent(TRIGGER_RX_VC_HEARTBEAT);
 

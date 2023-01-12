@@ -890,24 +890,15 @@ bool xmitDatagramP2PSyncClocks()
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   endOfTxData += sizeof(unsigned long);
 
-  memcpy(endOfTxData, &txHeartbeatUsec, sizeof(txHeartbeatUsec));
-  endOfTxData += sizeof(txHeartbeatUsec);
-
-  memcpy(endOfTxData, &txSyncClockUsec, sizeof(txSyncClockUsec));
-  endOfTxData += sizeof(txSyncClockUsec);
-
-  memcpy(endOfTxData, &txDataAckUsec, sizeof(txDataAckUsec));
-  endOfTxData += sizeof(txDataAckUsec);
-
   /*
-                                                                                                endOfTxData ---.
-                                                                                                               |
-                                                                                                               V
-      +----------+---------+----------+------------+---------+---------+-------------+-------------+-----------+----------+
-      | Optional |         | Optional | Optional   | Channel |         |  HEARTBEAT  | SYNC_CLOCKS | DATA_ACK  |          |
-      | NET ID   | Control | C-Timer  | SF6 Length | Number  | Millis  |    Micros   |    Micros   |   Micros  | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 1 byte  | 4 bytes |   4 Bytes   |   4 Bytes   |  4 Bytes  | n Bytes  |
-      +----------+---------+----------+------------+---------+---------+-------------+-------------+-----------+----------+
+                                                        endOfTxData ---.
+                                                                       |
+                                                                       V
+      +----------+---------+----------+------------+---------+---------+----------+
+      | Optional |         | Optional | Optional   | Channel |         |          |
+      | NET ID   | Control | C-Timer  | SF6 Length | Number  | Millis  | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 1 byte  | 4 bytes | n Bytes  |
+      +----------+---------+----------+------------+---------+---------+----------+
   */
 
   //Verify the data length
@@ -1366,6 +1357,11 @@ bool xmitVcDatagram()
 }
 
 //Broadcast a HEARTBEAT to all of the VCs
+bool xmitVcHeartbeat()
+{
+  return xmitVcHeartbeat(VC_IGNORE_TX, myUniqueId);
+}
+
 bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
 {
   uint32_t currentMillis = millis();
@@ -1414,10 +1410,6 @@ bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
 
   txControl.datagramType = DATAGRAM_VC_HEARTBEAT;
   txControl.ackNumber = 0;
-
-  //Determine the time that it took to pass this frame to the radio
-  //This time is used to adjust the time offset
-  vcTxHeartbeatMillis = millis() - currentMillis;
 
   //Select a random for the next heartbeat
   setVcHeartbeatTimer();
@@ -1926,6 +1918,20 @@ PacketType rcvDatagram()
     {
       systemPrintTimestamp();
       systemPrint("RX: Invalid datagram type ");
+      systemPrintln(datagramType);
+      outputSerialData(true);
+    }
+    badFrames++;
+    return (DATAGRAM_BAD);
+  }
+
+  //Ignore this frame is requested
+  if (rxControl.ignoreFrame)
+  {
+    if (settings.debugReceive || settings.debugDatagrams)
+    {
+      systemPrintTimestamp();
+      systemPrint("RX: Ignore this ");
       systemPrintln(datagramType);
       outputSerialData(true);
     }
@@ -2934,12 +2940,17 @@ void printControl(uint8_t value)
     systemPrintln(control->datagramType);
   }
 
-  systemPrintTimestamp();
-  systemPrint("        requestYield ");
   if (control->requestYield)
-    systemPrintln("1");
-  else
-    systemPrintln("0");
+  {
+    systemPrintTimestamp();
+    systemPrintln("        requestYield");
+  }
+
+  if (control->ignoreFrame)
+  {
+    systemPrintTimestamp();
+    systemPrintln("        Ignore Frame");
+  }
 
   outputSerialData(true);
 
@@ -3087,6 +3098,68 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   return (true); //Transmission has started
 }
 
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//Transmit Ignored Frames
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+bool getTxTime(bool (*transmitFrame)(), uint32_t * txFrameUsec, const char * frameName)
+{
+  bool txStatus;
+  uint32_t transmitDelay;
+
+#define IGNORE_TRANSMIT_DELAY_MSEC    100
+
+  //Transmit the frame
+  transmitDelay = 0;
+  do
+  {
+    //Delay between retries
+    if (transmitDelay)
+      delay(transmitDelay);
+    transmitDelay += IGNORE_TRANSMIT_DELAY_MSEC;
+
+    //Fail transmission after 5 attempts
+    if (transmitDelay > (5 * IGNORE_TRANSMIT_DELAY_MSEC))
+    {
+      if (settings.debugSync)
+      {
+        systemPrintTimestamp();
+        systemPrint("TX ignore ");
+        systemPrint(frameName);
+        systemPrintln(" failed!");
+        outputSerialData(true);
+      }
+      return false;
+    }
+
+    //Attempt to transmit the requested frame
+    txControl.ignoreFrame = true;
+    txStatus = transmitFrame();
+    txControl.ignoreFrame = false;
+  } while (!txStatus);
+
+  //Wait for transmit completion
+  while (!transactionComplete)
+    petWDT();
+  transactionComplete = false;
+
+  //Compute the transmit time
+  *txFrameUsec = transactionCompleteMicros - txSetChannelTimerMicros;
+  if (settings.debugSync)
+  {
+    systemPrintTimestamp();
+    systemPrint("TX ");
+    systemPrint(frameName);
+    systemPrint(": ");
+    systemPrint(*txFrameUsec);
+    systemPrintln(" mSec");
+    outputSerialData(true);
+  }
+  return true;
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 //Use the maximum dwell setting to start the timer that indicates when to hop channels
 void startChannelTimer()
 {
@@ -3125,11 +3198,12 @@ void stopChannelTimer()
 
 //Given the remote unit's number of ms before its next hop,
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
-void syncChannelTimer(uint16_t frameAirTimeMsec)
+void syncChannelTimer(uint32_t frameAirTimeUsec)
 {
   int16_t adjustment;
   unsigned long currentMillis;
   int8_t delayedHopCount;
+  uint16_t frameAirTimeMsec;
   int16_t lclHopTimeMsec;
   uint16_t msToNextHop;
   int16_t rmtHopTimeMsec;
@@ -3211,6 +3285,7 @@ void syncChannelTimer(uint16_t frameAirTimeMsec)
   //Compute the remote system's channel timer firing time offset in milliseconds
   //using the channel timer value and the adjustments for transmit and receive
   //time (time of flight)
+  frameAirTimeMsec = (frameAirTimeUsec + TX_TO_RX_USEC + micros() - transactionCompleteMicros) / 1000;
   rmtHopTimeMsec = msToNextHopRemote - frameAirTimeMsec;
 
   //Compute the when the local system last hopped
@@ -3473,7 +3548,7 @@ void setVcHeartbeatTimer()
   petWDT();
 
   //Determine the delay before channel zero is reached
-  deltaMillis = mSecToChannelZero() - heartbeatTimer;
+  deltaMillis = mSecToChannelZero();
 
   //Determine the delay before the next HEARTBEAT frame
   if ((!settings.server) || (deltaMillis > ((3 * settings.heartbeatTimeout) / 2))
@@ -3484,17 +3559,15 @@ void setVcHeartbeatTimer()
   else if (deltaMillis >= settings.heartbeatTimeout)
     heartbeatRandomTime = deltaMillis / 2;
   else
-    heartbeatRandomTime = deltaMillis;
+    heartbeatRandomTime = deltaMillis + VC_DELAY_HEARTBEAT_MSEC;
 
   //Display the next HEARTBEAT time interval
   if (settings.debugHeartbeat)
   {
-    systemPrint("deltaMillis: ");
+    systemPrint("mSecToChannelZero: ");
     systemPrintln(deltaMillis);
     systemPrint("heartbeatRandomTime: ");
     systemPrintln(heartbeatRandomTime);
-    outputSerialData(true);
-    petWDT();
   }
 }
 
