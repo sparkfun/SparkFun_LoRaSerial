@@ -582,11 +582,7 @@ char platformPrefix[25]; //Used for printing platform specific device name, ie "
 bool clockSyncReceiver; //Receives and processes the clock synchronization
 bool startChannelTimerPending; //When true, call startChannelTimer in transactionCompleteISR
 
-//RX and TX time measurements
-uint32_t rxTimeUsec;
-uint32_t txTimeUsec;
-uint16_t txRxTimeMsec;
-
+//TX time measurements
 uint32_t txSetChannelTimerMicros; //Timestamp when millis is read in TX routine to set channel timer value
 uint32_t transactionCompleteMicros; //Timestamp at the beginning of the transactionCompleteIsr routine
 uint32_t txDataAckUsec; //Time in microseconds to transmit the DATA_ACK frame
@@ -598,9 +594,6 @@ uint16_t maxFrameAirTime; //Air time of the maximum sized message
 unsigned long remoteSystemMillis; //Millis value contained in the received message
 
 #define VC_DELAY_HEARTBEAT_MSEC     5
-
-bool rxFirstAck; //Set true when first ACK is received
-bool txFirstAck; //Set true when first ACK is transmitted
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
