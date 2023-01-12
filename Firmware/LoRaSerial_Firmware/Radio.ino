@@ -1662,6 +1662,9 @@ PacketType rcvDatagram()
   //Save the receive time
   rcvTimeMillis = millis();
 
+  //Get the IRQ flags
+  irqFlags = radio.getIRQFlags();
+
   //Get the received datagram
   framesReceived++;
   int state = radio.readData(incomingBuffer, MAX_PACKET_SIZE);

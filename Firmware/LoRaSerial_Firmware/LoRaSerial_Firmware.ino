@@ -385,6 +385,7 @@ uint8_t frameSentCount = 0; //Increases each time a frame is sent
 unsigned long lastPacketReceived = 0; //Controls link LED in broadcast mode
 unsigned long lastLinkBlink = 0; //Controls link LED in broadcast mode
 
+volatile uint16_t irqFlags; //IRQ Flags register value
 volatile bool transactionComplete = false; //Used in dio0ISR
 uint8_t sf6ExpectedSize = MAX_PACKET_SIZE; //Used during SF6 operation to reduce packet size when needed
 

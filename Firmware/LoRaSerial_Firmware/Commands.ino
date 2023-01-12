@@ -578,6 +578,25 @@ bool commandAT(const char * commandString)
         systemPrint("        lastModemStatus: ");
         systemPrint(lastModemStatus, HEX);
         systemPrintln();
+        systemPrint("        irqFlags: 0x");
+        systemPrint(irqFlags, HEX);
+        systemPrintln();
+        if (irqFlags & 0x80)
+          systemPrintln("            RX Timeout");
+        if (irqFlags & 0x40)
+          systemPrintln("            RX Done");
+        if (irqFlags & 0x20)
+          systemPrintln("            Payload CRC Error");
+        if (irqFlags & 0x10)
+          systemPrintln("            Valid Header");
+        if (irqFlags & 8)
+          systemPrintln("            TX Done");
+        if (irqFlags & 4)
+          systemPrintln("            CAD Done");
+        if (irqFlags & 2)
+          systemPrintln("            FHSS Change Channel");
+        if (irqFlags & 1)
+          systemPrintln("            CAD Detected");
         systemPrint("        receiveInProcess: ");
         systemPrintln(receiveInProcess() ? "True" : "False");
         outputSerialData(true);

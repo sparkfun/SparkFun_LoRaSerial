@@ -401,6 +401,7 @@ void updateRadioState()
         COMPUTE_TX_TIME();
         triggerEvent(TRIGGER_TX_DONE);
         transactionComplete = false; //Reset ISR flag
+        irqFlags = radio.getIRQFlags();
         startChannelTimerPending = true; //Starts at RX of SYNC_CLOCKS frame
         returnToReceiving();
         changeState(RADIO_P2P_WAIT_SYNC_CLOCKS);
@@ -529,6 +530,7 @@ void updateRadioState()
         COMPUTE_TX_TIME();
         triggerEvent(TRIGGER_TX_DONE);
         transactionComplete = false; //Reset ISR flag
+        irqFlags = radio.getIRQFlags();
 
         //Hop to the next channel
         hopChannel();
@@ -617,6 +619,7 @@ void updateRadioState()
       {
         transactionComplete = false; //Reset ISR flag
         COMPUTE_TX_TIME();
+        irqFlags = radio.getIRQFlags();
 
         setHeartbeatShort(); //We sent the last ack so be responsible for sending the next heartbeat
 
@@ -727,6 +730,7 @@ void updateRadioState()
           COMPUTE_TX_TIME();
         }
         triggerEvent(TRIGGER_TX_DONE);
+        irqFlags = radio.getIRQFlags();
 
         //Determine the next packet size for SF6
         if (ackTimer)
@@ -1267,6 +1271,7 @@ void updateRadioState()
       if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
+        irqFlags = radio.getIRQFlags();
         returnToReceiving();
         changeState(RADIO_DISCOVER_SCANNING);
       }
@@ -1447,6 +1452,7 @@ void updateRadioState()
       if (transactionComplete == true)
       {
         transactionComplete = false; //Reset ISR flag
+        irqFlags = radio.getIRQFlags();
         returnToReceiving();
         changeState(RADIO_MP_STANDBY);
       }
@@ -1498,6 +1504,7 @@ void updateRadioState()
 
         //Indicate that the receive is complete
         triggerEvent(TRIGGER_TRAINING_CLIENT_TX_FIND_PARTNER_DONE);
+        irqFlags = radio.getIRQFlags();
 
         //Start the receive operation
         returnToReceiving();
@@ -1592,6 +1599,7 @@ void updateRadioState()
       if (transactionComplete == true)
       {
         transactionComplete = false;
+        irqFlags = radio.getIRQFlags();
         endClientServerTraining(TRIGGER_TRAINING_CLIENT_TX_ACK_DONE);
       }
       break;
@@ -1712,6 +1720,7 @@ void updateRadioState()
 
         //Indicate that the receive is complete
         triggerEvent(TRIGGER_TRAINING_SERVER_TX_PARAMS_DONE);
+        irqFlags = radio.getIRQFlags();
 
         //Start the receive operation
         returnToReceiving();
@@ -1857,6 +1866,7 @@ void updateRadioState()
         //Indicate that the transmission is complete
         transactionComplete = false;
         triggerEvent(TRIGGER_TX_DONE);
+        irqFlags = radio.getIRQFlags();
 
         //Start the receive operation
         returnToReceiving();
