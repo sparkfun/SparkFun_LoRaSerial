@@ -3433,6 +3433,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
   clockSyncData[clockSyncIndex].lclHopTimeMsec = lclHopTimeMsec;
   clockSyncData[clockSyncIndex].timeToHop = timeToHop;
   clockSyncIndex += 1;
+  if(clockSyncIndex >= sizeof(clockSyncData)) clockSyncIndex = 0;
 
   //Restart the channel timer
   timeToHop = false;
