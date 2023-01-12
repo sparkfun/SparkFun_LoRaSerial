@@ -3433,8 +3433,8 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
   clockSyncData[clockSyncIndex].lclHopTimeMsec = lclHopTimeMsec;
   clockSyncData[clockSyncIndex].timeToHop = timeToHop;
   clockSyncIndex += 1;
-  if(clockSyncIndex >= sizeof(clockSyncData)) clockSyncIndex = 0;
-
+  if(clockSyncIndex >= (sizeof(clockSyncData) / sizeof(CLOCK_SYNC_DATA)) ) clockSyncIndex = 0;
+  
   //Restart the channel timer
   timeToHop = false;
   channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
