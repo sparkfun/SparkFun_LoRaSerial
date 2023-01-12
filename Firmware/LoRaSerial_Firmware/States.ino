@@ -826,7 +826,7 @@ void updateRadioState()
             COMPUTE_RX_TIME(rxData, 1, txDataAckUsec);
 
             //The datagram we are expecting
-            syncChannelTimer(txRxTimeMsec); //Adjust freq hop ISR based on remote's remaining clock
+            syncChannelTimer(txDataAckUsec); //Adjust freq hop ISR based on remote's remaining clock
 
             triggerEvent(TRIGGER_RX_ACK);
 
@@ -1213,7 +1213,7 @@ void updateRadioState()
                 //Start and adjust freq hop ISR based on remote's remaining clock
                 startChannelTimer();
                 channelTimerStart -= settings.maxDwellTime;
-                syncChannelTimer((txSyncClocksUsec + TX_TO_RX_USEC + micros() - transactionCompleteMicros) / 1000);
+                syncChannelTimer(txSyncClocksUsec);
                 triggerEvent(TRIGGER_RX_SYNC_CLOCKS);
 
                 //Switch to the proper frequency for the channel
@@ -1377,7 +1377,7 @@ void updateRadioState()
               uint16_t frameAirTimeMsec;
 
               //Adjust freq hop ISR based on server's remaining clock
-              syncChannelTimer((txHeartbeatUsec + TX_TO_RX_USEC + micros() - transactionCompleteMicros) / 1000);
+              syncChannelTimer(txHeartbeatUsec);
               systemPrint("HEARTBEAT TX mSec: ");
               systemPrintln(frameAirTime);
             }
@@ -3136,7 +3136,7 @@ void vcReceiveHeartbeat(uint32_t rxMillis)
 
   //Adjust freq hop ISR based on server's remaining clock
   if ((rxSrcVc == VC_SERVER) || (memcmp(rxVcData, myUniqueId, sizeof(myUniqueId)) == 0))
-    syncChannelTimer((txHeartbeatUsec + TX_TO_RX_USEC + micros() - transactionCompleteMicros) / 1000);
+    syncChannelTimer(txHeartbeatUsec);
 
   //Update the timestamp offset
   if (rxSrcVc == VC_SERVER)

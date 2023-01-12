@@ -3210,11 +3210,12 @@ void stopChannelTimer()
 
 //Given the remote unit's number of ms before its next hop,
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
-void syncChannelTimer(uint16_t frameAirTimeMsec)
+void syncChannelTimer(uint32_t frameAirTimeUsec)
 {
   int16_t adjustment;
   unsigned long currentMillis;
   int8_t delayedHopCount;
+  uint16_t frameAirTimeMsec;
   int16_t lclHopTimeMsec;
   uint16_t msToNextHop;
   int16_t rmtHopTimeMsec;
@@ -3293,6 +3294,7 @@ void syncChannelTimer(uint16_t frameAirTimeMsec)
   //Compute the remote system's channel timer firing time offset in milliseconds
   //using the channel timer value and the adjustments for transmit and receive
   //time (time of flight)
+  frameAirTimeMsec = (frameAirTimeUsec + TX_TO_RX_USEC + micros() - transactionCompleteMicros) / 1000;
   rmtHopTimeMsec = msToNextHopRemote - frameAirTimeMsec;
 
   //Compute the when the local system last hopped
