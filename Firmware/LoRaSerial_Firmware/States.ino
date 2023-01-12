@@ -722,7 +722,7 @@ void updateRadioState()
         }
 
         //Determine if an ACK was transmitted
-        if (txControl.datagramType = DATAGRAM_DATA_ACK)
+        if (txControl.datagramType == DATAGRAM_DATA_ACK)
         {
           COMPUTE_TX_TIME();
         }
