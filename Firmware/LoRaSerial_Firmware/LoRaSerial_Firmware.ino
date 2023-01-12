@@ -465,7 +465,6 @@ unsigned long linkDownTimer;
 unsigned long rcvTimeMillis;
 unsigned long xmitTimeMillis;
 long timestampOffset;
-unsigned long vcTxHeartbeatMillis;
 
 //Transmit control
 uint8_t * endOfTxData;

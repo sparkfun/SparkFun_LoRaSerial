@@ -1898,20 +1898,8 @@ void updateRadioState()
       //If dio0ISR has fired, we are done transmitting
       if (transactionComplete == true)
       {
-        transactionComplete = false;
-
-        //Compute the HEARTBEAT frame transmit frame
-        if ((!txHeartbeatUsec) && (txControl.datagramType == DATAGRAM_VC_HEARTBEAT))
-        {
-          txHeartbeatUsec = transactionCompleteMicros - txSetChannelTimerMicros;
-          if (settings.debugSync)
-          {
-            systemPrint("txHeartbeatUsec: ");
-            systemPrintln(txHeartbeatUsec);
-          }
-        }
-
         //Indicate that the transmission is complete
+        transactionComplete = false;
         triggerEvent(TRIGGER_TX_DONE);
 
         //Start the receive operation

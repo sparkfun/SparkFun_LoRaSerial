@@ -1419,10 +1419,6 @@ bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
   txControl.datagramType = DATAGRAM_VC_HEARTBEAT;
   txControl.ackNumber = 0;
 
-  //Determine the time that it took to pass this frame to the radio
-  //This time is used to adjust the time offset
-  vcTxHeartbeatMillis = millis() - currentMillis;
-
   //Select a random for the next heartbeat
   setVcHeartbeatTimer();
   return (transmitDatagram());
