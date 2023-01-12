@@ -51,8 +51,8 @@
 #define COMPUTE_TIMESTAMP_OFFSET(millisBuffer, rShift, frameAirTimeUsec)               \
   {                                                                                    \
     unsigned long deltaUsec = frameAirTimeUsec + micros() - transactionCompleteMicros; \
-    memcpy(&remoteSystemMillis, millisBuffer, sizeof(currentMillis));                  \
-    timestampOffset = (remoteSystemMillis + (deltaUsec / 1000) - currentMillis);       \
+    memcpy(&remoteSystemMillis, millisBuffer, sizeof(remoteSystemMillis));             \
+    timestampOffset = remoteSystemMillis + (deltaUsec / 1000) - millis();              \
     timestampOffset >>= rShift;                                                        \
   }
 
