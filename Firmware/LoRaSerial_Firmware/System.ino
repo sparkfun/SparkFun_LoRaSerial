@@ -646,6 +646,7 @@ void blinkRadioRssiLed()
 
     //Update the single RSSI LED
     case LEDS_MULTIPOINT:
+    case LEDS_P2P:
     case LEDS_RADIO_USE:
     case LEDS_VC:
       //Check for the start of a new pulse
@@ -732,6 +733,7 @@ void blinkRadioRxLed(bool on)
       break;
 
     case LEDS_MULTIPOINT:
+    case LEDS_P2P:
     case LEDS_RADIO_USE:
     case LEDS_VC:
       if (on)
@@ -755,6 +757,7 @@ void blinkRadioTxLed(bool on)
       break;
 
     case LEDS_MULTIPOINT:
+    case LEDS_P2P:
     case LEDS_RADIO_USE:
     case LEDS_VC:
       if (on)
@@ -834,6 +837,7 @@ void blinkHeartbeatLed(bool on)
   switch (settings.selectLedUse)
   {
     case LEDS_MULTIPOINT:
+    case LEDS_P2P:
     case LEDS_VC:
       if (on)
       {
@@ -852,6 +856,7 @@ void blinkChannelHopLed(bool on)
   switch (settings.selectLedUse)
   {
     case LEDS_MULTIPOINT:
+    case LEDS_P2P:
     case LEDS_VC:
       if (on)
         digitalWrite(LED_MP_HOP_CHANNEL, LED_ON);
@@ -875,6 +880,27 @@ void multiPointLeds()
 
   //Update the RSSI LED
   blinkRadioRssiLed();
+
+  //Update the hop LED
+  if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
+    digitalWrite(LED_MP_HOP_CHANNEL, LED_OFF);
+
+  //Update the HEARTBEAT LED
+  blinkHeartbeatLed(false);
+}
+
+void p2pLeds()
+{
+  //Turn off the RX LED to end the blink
+  blinkRadioRxLed(false);
+
+  //Turn off the TX LED to end the blink
+  blinkRadioTxLed(false);
+
+  //Pulse width modulate the RSSI LED (GREEN_LED_3)
+  blinkRadioRssiLed();
+
+  //Leave the LINK LED (GREEN_LED_2) off
 
   //Update the hop LED
   if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
@@ -964,6 +990,11 @@ void updateLeds()
   {
     //Set LEDs according to RSSI level
     default:
+    //Display the RSSI LED pattern
+    case LEDS_RSSI:
+      blinkRadioRssiLed();
+      break;
+
     //Display the multipoint LED pattern
     case LEDS_MULTIPOINT:
       multiPointLeds();
@@ -971,7 +1002,7 @@ void updateLeds()
 
     //Display the point-to-point LED pattern
     case LEDS_P2P:
-      blinkRadioRssiLed();
+      p2pLeds();
       break;
 
     //Display the multipoint LED pattern
@@ -982,11 +1013,6 @@ void updateLeds()
     //Display the cylon LED pattern
     case LEDS_CYLON:
       updateCylonLEDs();
-      break;
-
-    //Display the RSSI LED pattern
-    case LEDS_RSSI:
-      blinkRadioRssiLed();
       break;
 
     //Display the radio use LED pattern
