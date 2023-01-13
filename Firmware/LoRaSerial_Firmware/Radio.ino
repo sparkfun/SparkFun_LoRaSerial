@@ -3204,6 +3204,7 @@ void stopChannelTimer()
 void syncChannelTimer(uint32_t frameAirTimeUsec)
 {
   int16_t adjustment;
+  uint8_t caseNumber;
   unsigned long currentMillis;
   int8_t delayedHopCount;
   uint16_t frameAirTimeMsec;
@@ -3307,6 +3308,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
     //Determine if the local system has just hopped
     if (((unsigned long)lclHopTimeMsec) <= CHANNEL_TIMER_SYNC_MSEC)
     {
+      caseNumber = 1;
       //Case 1 above, both systems using the same channel
       //
       //Remote system
@@ -3334,6 +3336,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
     }
     else
     {
+      caseNumber = 2;
       //Case 2 above, the local system did not hop
       //
       //Remote system
@@ -3368,6 +3371,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
     //Determine if the local system has just hopped
     if (((unsigned long)lclHopTimeMsec) <= CHANNEL_TIMER_SYNC_MSEC)
     {
+      caseNumber = 3;
       //Case 3 above, extend the channel timer value
       //
       //      channelTimerStart                                        Channel timer fires
@@ -3396,6 +3400,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
     }
     else
     {
+      caseNumber = 4;
       //Case 1 above, both systems using the same channel
       //
       //  channelTimerStart                                        Channel timer fires
@@ -3460,6 +3465,9 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
   //Display the channel sync timer calculations
   if (settings.debugSync)
   {
+    systemPrint("Case #");
+    systemPrint(caseNumber);
+    systemPrint(", ");
     systemPrint(delayedHopCount);
     systemPrint(" Hops, ");
     systemPrint(msToNextHopRemote);
