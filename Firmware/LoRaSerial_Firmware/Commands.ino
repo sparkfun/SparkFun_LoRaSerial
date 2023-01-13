@@ -620,39 +620,39 @@ bool commandAT(const char * commandString)
         return true;
 
       case ('2'): //ATI12 - Display the VC details
+        systemPrintTimestamp();
         systemPrint("VC ");
         systemPrint(cmdVc);
         systemPrint(": ");
         if (!vc->flags.valid)
-        {
-          systemPrint("Down, Not valid @ ");
-          systemPrintTimestamp(millis() + timestampOffset);
-          systemPrintln();
-        }
+          systemPrintln("Down, Not valid");
         else
         {
-          systemPrint(vcStateNames[vc->vcState]);
-          systemPrint(" @ ");
-          systemPrintTimestamp(millis() + timestampOffset);
-          systemPrintln();
+          systemPrintln(vcStateNames[vc->vcState]);
+          systemPrintTimestamp();
           systemPrint("    ID: ");
           systemPrintUniqueID(vc->uniqueId);
           systemPrintln(vc->flags.valid ? " (Valid)" : " (Invalid)");
 
           //Heartbeat metrics
+          systemPrintTimestamp();
           systemPrintln("    Heartbeats");
           if (cmdVc == myVc)
           {
+            systemPrintTimestamp();
             systemPrint("        Next TX: ");
             systemPrintTimestamp(heartbeatTimer + heartbeatRandomTime + timestampOffset);
             systemPrintln();
           }
+          systemPrintTimestamp();
           systemPrint("        Last:    ");
           systemPrintTimestamp(vc->lastTrafficMillis + timestampOffset);
           systemPrintln();
+          systemPrintTimestamp();
           systemPrint("        First:   ");
           systemPrintTimestamp(vc->firstHeartbeatMillis + timestampOffset);
           systemPrintln();
+          systemPrintTimestamp();
           systemPrint("        Up Time: ");
           deltaMillis = vc->lastTrafficMillis - vc->firstHeartbeatMillis;
           if (deltaMillis < 0)
@@ -663,37 +663,50 @@ bool commandAT(const char * commandString)
           petWDT();
 
           //Transmitter metrics
+          systemPrintTimestamp();
           systemPrintln("    Sent");
+          systemPrintTimestamp();
           systemPrint("        Frames: ");
           systemPrintln(vc->framesSent);
+          systemPrintTimestamp();
           systemPrint("        Messages: ");
           systemPrintln(vc->messagesSent);
           outputSerialData(true);
           petWDT();
 
           //Receiver metrics
+          systemPrintTimestamp();
           systemPrintln("    Received");
+          systemPrintTimestamp();
           systemPrint("        Frames: ");
           systemPrintln(vc->framesReceived);
+          systemPrintTimestamp();
           systemPrint("        Messages: ");
           systemPrintln(vc->messagesReceived);
+          systemPrintTimestamp();
           systemPrint("        Bad Lengths: ");
           systemPrintln(vc->badLength);
+          systemPrintTimestamp();
           systemPrint("        Link Failures: ");
           systemPrintln(linkFailures);
           outputSerialData(true);
           petWDT();
 
           //ACK Management metrics
+          systemPrintTimestamp();
           systemPrintln("    ACK Management");
+          systemPrintTimestamp();
           systemPrint("        Last RX ACK number: ");
           systemPrintln(vc->rxAckNumber);
+          systemPrintTimestamp();
           systemPrint("        Next RX ACK number: ");
           systemPrintln(vc->rmtTxAckNumber);
+          systemPrintTimestamp();
           systemPrint("        Last TX ACK number: ");
           systemPrintln(vc->txAckNumber);
           if (txDestVc == cmdVc)
           {
+            systemPrintTimestamp();
             systemPrint("        ackTimer: ");
             if (ackTimer)
               systemPrintTimestamp(ackTimer + timestampOffset);
