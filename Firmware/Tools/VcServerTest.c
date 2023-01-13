@@ -14,8 +14,8 @@
 
 #define DEBUG_LOCAL_COMMANDS      0
 #define DEBUG_PC_TO_RADIO         0
-#define DEBUG_RADIO_TO_PC         1
-#define DISPLAY_DATA_ACK          1
+#define DEBUG_RADIO_TO_PC         0
+#define DISPLAY_DATA_ACK          0
 #define DISPLAY_DATA_NACK         1
 #define DISPLAY_VC_STATE          0
 #define SEND_ATC_COMMAND          1
