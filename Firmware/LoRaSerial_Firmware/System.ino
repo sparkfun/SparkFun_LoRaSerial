@@ -647,6 +647,7 @@ void blinkRadioRssiLed()
     //Update the single RSSI LED
     case LEDS_MULTIPOINT:
     case LEDS_RADIO_USE:
+    case LEDS_VC:
       //Check for the start of a new pulse
       if ((currentMillis - ledPreviousRssiMillis) >= LED_MAX_PULSE_WIDTH)
       {
@@ -708,6 +709,13 @@ void blinkSerialRxLed(bool illuminate)
       else
         digitalWrite(pin_rxLED, LOW);
     break;
+
+    case LEDS_VC:
+      if (illuminate == true)
+        digitalWrite(RADIO_USE_LINK_LED, HIGH);
+      else
+        digitalWrite(RADIO_USE_LINK_LED, LOW);
+    break;
   }
 }
 
@@ -725,6 +733,7 @@ void blinkRadioRxLed(bool on)
 
     case LEDS_MULTIPOINT:
     case LEDS_RADIO_USE:
+    case LEDS_VC:
       if (on)
         digitalWrite(RADIO_USE_RX_DATA_LED, LED_ON);
       else if ((millis() - linkDownTimer) >= RADIO_USE_BLINK_MILLIS)
@@ -747,6 +756,7 @@ void blinkRadioTxLed(bool on)
 
     case LEDS_MULTIPOINT:
     case LEDS_RADIO_USE:
+    case LEDS_VC:
       if (on)
         digitalWrite(RADIO_USE_TX_DATA_LED, LED_ON);
       else if ((millis() - datagramTimer) >= RADIO_USE_BLINK_MILLIS)
@@ -824,6 +834,7 @@ void blinkHeartbeatLed(bool on)
   switch (settings.selectLedUse)
   {
     case LEDS_MULTIPOINT:
+    case LEDS_VC:
       if (on)
       {
         digitalWrite(LED_MP_HEARTBEAT, LED_ON);
@@ -841,6 +852,7 @@ void blinkChannelHopLed(bool on)
   switch (settings.selectLedUse)
   {
     case LEDS_MULTIPOINT:
+    case LEDS_VC:
       if (on)
         digitalWrite(LED_MP_HOP_CHANNEL, LED_ON);
       else if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
@@ -852,8 +864,6 @@ void blinkChannelHopLed(bool on)
 //Display the multi-point LED pattern
 void multiPointLeds()
 {
-  uint32_t currentMillis;
-
   //Turn off the RX LED to end the blink
   blinkRadioRxLed(false);
 
@@ -865,6 +875,49 @@ void multiPointLeds()
 
   //Update the RSSI LED
   blinkRadioRssiLed();
+
+  //Update the hop LED
+  if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
+    digitalWrite(LED_MP_HOP_CHANNEL, LED_OFF);
+
+  //Update the HEARTBEAT LED
+  blinkHeartbeatLed(false);
+}
+
+//Display the VC LED pattern
+void vcLeds()
+{
+  uint32_t currentMillis;
+  static uint32_t blinkSyncMillis;
+
+  //Turn off the RX LED to end the blink
+  blinkRadioRxLed(false);
+
+  //Turn off the TX LED to end the blink
+  blinkRadioTxLed(false);
+
+  //Pulse width modulate the RSSI LED (GREEN_LED_3)
+  currentMillis = millis();
+  if (virtualCircuitList[VC_SERVER].vcState)
+    blinkRadioRssiLed();
+
+#define VC_SYNC_BLINK_RATE      (1000 / 4)
+
+  //Turn on the RSSI LED
+  else if (((currentMillis - blinkSyncMillis) >= (VC_SYNC_BLINK_RATE >> 1))
+          && (digitalRead(RADIO_USE_RSSI_LED) == LED_OFF))
+    digitalWrite(RADIO_USE_RSSI_LED, LED_ON);
+
+  //Turn off the RSSI LED
+  else if ((!virtualCircuitList[VC_SERVER].vcState)
+          && (((currentMillis - blinkSyncMillis) >= VC_SYNC_BLINK_RATE))
+             && (digitalRead(RADIO_USE_RSSI_LED) == LED_ON))
+  {
+    digitalWrite(RADIO_USE_RSSI_LED, LED_OFF);
+    blinkSyncMillis = currentMillis;
+  }
+
+  //Serial RX displayed on the LINK LED (GREEN_LED_2) by blinkSerialRxLed
 
   //Update the hop LED
   if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
@@ -911,29 +964,41 @@ void updateLeds()
   {
     //Set LEDs according to RSSI level
     default:
-    case LEDS_RSSI:
-      blinkRadioRssiLed();
-      break;
-
-    case LEDS_RADIO_USE:
-      radioLeds();
-      break;
-
     //Display the multipoint LED pattern
     case LEDS_MULTIPOINT:
       multiPointLeds();
       break;
 
-    //Display the cylon pattern during training
+    //Display the point-to-point LED pattern
+    case LEDS_P2P:
+      blinkRadioRssiLed();
+      break;
+
+    //Display the multipoint LED pattern
+    case LEDS_VC:
+      vcLeds();
+      break;
+
+    //Display the cylon LED pattern
     case LEDS_CYLON:
       updateCylonLEDs();
+      break;
+
+    //Display the RSSI LED pattern
+    case LEDS_RSSI:
+      blinkRadioRssiLed();
+      break;
+
+    //Display the radio use LED pattern
+    case LEDS_RADIO_USE:
+      radioLeds();
       break;
 
     //Turn off all the LEDs
     case LEDS_ALL_OFF:
       break;
 
-    //Turn on the blue LED for testing and to identify this radio
+    //Turn on the blue LED for testing
     case LEDS_BLUE_ON:
       digitalWrite(BLUE_LED, LED_ON);
       break;
@@ -951,6 +1016,26 @@ void updateLeds()
     //Turn on the green 2 LED for testing
     case LEDS_GREEN_2_ON:
       digitalWrite(GREEN_LED_2, LED_ON);
+      break;
+
+    //Turn on the green 3 LED for testing
+    case LEDS_GREEN_3_ON:
+      digitalWrite(GREEN_LED_3, LED_ON);
+      break;
+
+    //Turn on the green 4 LED for testing
+    case LEDS_GREEN_4_ON:
+      digitalWrite(GREEN_LED_4, LED_ON);
+      break;
+
+    //Turn on all the LEDs for testing
+    case LEDS_ALL_ON:
+      digitalWrite(GREEN_LED_1, LED_ON);
+      digitalWrite(GREEN_LED_2, LED_ON);
+      digitalWrite(GREEN_LED_3, LED_ON);
+      digitalWrite(GREEN_LED_4, LED_ON);
+      digitalWrite(BLUE_LED, LED_ON);
+      digitalWrite(YELLOW_LED, LED_ON);
       break;
   }
 }

@@ -346,20 +346,27 @@ typedef struct _COMMAND_ENTRY
 
 typedef enum
 {
-  LEDS_RSSI = 0,    //Green: RSSI, Blue: Serial TX, Yellow: Serial RX
-  LEDS_RADIO_USE,   //Green1: RX, Green2: Link, Green3: RSSI, Green4: TX
-                    //Blue: Bad frames, Yellow: Bad CRC
-  LEDS_MULTIPOINT,  //Green1: RX, Green2: Sync, Green3: RSSI, Green4: TX
-                    //Blue: Hop, Yellow: HEARTBEAT RX/TX
-  LEDS_ALL_OFF,     //All LEDs off
-  LEDS_BLUE_ON,     //Blue: ON, other: OFF
-  LEDS_YELLOW_ON,   //Yellow: ON, other: OFF
-  LEDS_GREEN_1_ON,  //Green 1: ON, other: OFF
-  LEDS_GREEN_2_ON,  //Green 2: ON, other: OFF
-  LEDS_GREEN_3_ON,  //Green 3: ON, other: OFF
-  LEDS_GREEN_4_ON,  //Green 4: ON, other: OFF
+  LEDS_MULTIPOINT = 0,  // 0: Green1: RX, Green2: Sync, Green3: RSSI, Green4: TX
+                        //    Blue: Hop, Yellow: HEARTBEAT RX/TX
+  LEDS_P2P,         // 1: Green: RSSI, Blue: Serial TX, Yellow: Serial RX
+  LEDS_VC,          // 2; Green1: RX, Green2: Sync, Green3: RSSI, Green4: TX
+                    //    Blue: Hop, Yellow: HEARTBEAT RX/TX
+  LEDS_RADIO_USE,   // 3: Green1: RX, Green2: Link, Green3: RSSI, Green4: TX
+                    //    Blue: Bad frames, Yellow: Bad CRC
+  LEDS_RSSI,        // 4: Green: RSSI, Blue: Serial TX, Yellow: Serial RX
+  LEDS_RESERVED_1,  // 5
+  LEDS_RESERVED_2,  // 6
+  LEDS_CYLON,       // 7: Display the cylon pattern on the green LEDs, others off
 
-  LEDS_CYLON,       //Display the cylon pattern on the green LEDs, others off
+  //Testing
+  LEDS_ALL_OFF,     // 8: All LEDs off
+  LEDS_BLUE_ON,     // 9: Blue: ON, other: OFF
+  LEDS_YELLOW_ON,   //10; Yellow: ON, other: OFF
+  LEDS_GREEN_1_ON,  //11; Green 1: ON, other: OFF
+  LEDS_GREEN_2_ON,  //12; Green 2: ON, other: OFF
+  LEDS_GREEN_3_ON,  //13; Green 3: ON, other: OFF
+  LEDS_GREEN_4_ON,  //14: Green 4: ON, other: OFF
+  LEDS_ALL_ON,      //15: All LEDs on
 
   //Add user LED types from 255 working down
 } LEDS_USE_TYPE;
@@ -445,7 +452,7 @@ typedef struct struct_settings {
   bool printLinkUpDown = false; //Print the link up and link down messages
   bool invertCts = false; //Invert the input of CTS
   bool invertRts = false; //Invert the output of RTS
-  uint8_t selectLedUse = 0; //Select LED use
+  uint8_t selectLedUse = LEDS_RSSI; //Select LED use
   uint8_t trainingTimeout = 1; //Timeout in minutes to complete the training
   bool debugSerial = false; //Debug the serial input
   bool debugSync = false; //Print clock sync processing
