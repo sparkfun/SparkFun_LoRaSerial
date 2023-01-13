@@ -430,7 +430,7 @@ typedef struct struct_settings {
   bool usbSerialWait = WAIT_SERIAL_DEFAULT; //Wait for USB serial initialization
   bool printRfData = false; //Print RX and TX data
   bool printPktData = false; //Print data, before encryption and after decryption
-  bool verifyRxNetID = false; //Verify RX netID value when not operating in point-to-point mode
+  bool verifyRxNetID = true; //Verify RX netID value when not operating in point-to-point mode
   uint8_t triggerWidth = 25; //Trigger width in microSeconds or multipler for trigger width
   bool triggerWidthIsMultiplier = true; //Use the trigger width as a multiplier
   uint32_t triggerEnable = 0; //Determine which triggers are enabled: 31 - 0
