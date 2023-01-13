@@ -2754,7 +2754,7 @@ void dumpClockSynchronization()
   petWDT();
   for (uint8_t x = 0; x < (sizeof(clockSyncData) / sizeof(clockSyncData[0])); x++)
   {
-    uint8_t index = (x + clockSyncIndex) % clockSyncIndex;
+    uint8_t index = (x + clockSyncIndex) % (sizeof(clockSyncData) / sizeof(clockSyncData[0]));
     if (clockSyncData[index].frameAirTimeMsec)
     {
       systemPrint("Lcl: ");
