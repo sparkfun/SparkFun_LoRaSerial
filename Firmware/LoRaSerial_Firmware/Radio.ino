@@ -3367,63 +3367,29 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
   }
   else
   {
-    //The remote system has not hopped
-    //Determine if the local system has just hopped
-    if (((unsigned long)lclHopTimeMsec) <= CHANNEL_TIMER_SYNC_MSEC)
-    {
-      caseNumber = 3;
-      //Case 3 above, extend the channel timer value
-      //
-      //      channelTimerStart                                        Channel timer fires
-      //        |------...-------------------------------------------->|
-      //                                     Channel Timer value       |
-      //                           |<--------------------------------->|
-      //                           |                    rmtHopTimeMsec |
-      //                           |                             |---->|
-      //                           |                             |
-      //                           |                       Current Time
-      //                           |<------------>|<------------>|
-      //                              txTimeUsec     rxTimeUsec  |
-      //                                                         |
-      //Local system                                             |
-      //                                                         | New timer value     Extend this value
-      //                                                         |---->|------...----------------------->|
-      //                                                         |
-      //                                          lclHopTimeMsec |
-      //                                                     |-->|
-      //    |------...-------------------------------------->|------...----------------------->|
-      //  channelTimerStart                                  Channel timer fires
-      //
-      //No hop is needed
-      //Extend the timer value
-      adjustment += settings.maxDwellTime;
-    }
-    else
-    {
-      caseNumber = 4;
-      //Case 1 above, both systems using the same channel
-      //
-      //  channelTimerStart                                        Channel timer fires
-      //    |------...-------------------------------------------->|
-      //                                Channel Timer value        |
-      //                       |<--------------------------------->|
-      //                       |                                   |
-      //                       |                    rmtHopTimeMsec |
-      //                       |                             |---->|
-      //                       |                       Current Time
-      //                       |<------------>|<------------>|
-      //                          txTimeUsec     rxTimeUsec  |
-      //                                                     |
-      //Local system                                         |
-      //                                                     | New timer value
-      //                                                     |---->|
-      //               |------...-------------------------------------->|
-      //             channelTimerStart                       |          Channel timer fires
-      //                                                     |--------->|
-      //                                                    lclHopTimeMsec
-      //
-      //No hop is necessary
-    }
+    caseNumber = 3;
+    //Case 3, both systems using the same channel
+    //
+    //  channelTimerStart                                        Channel timer fires
+    //    |------...-------------------------------------------->|
+    //                                Channel Timer value        |
+    //                       |<--------------------------------->|
+    //                       |                                   |
+    //                       |                    rmtHopTimeMsec |
+    //                       |                             |---->|
+    //                       |                       Current Time
+    //                       |<------------>|<------------>|
+    //                          txTimeUsec     rxTimeUsec  |
+    //                                                     |
+    //Local system                                         |
+    //                                                     | New timer value
+    //                                                     |---->|
+    //               |------...-------------------------------------->|
+    //             channelTimerStart                       |          Channel timer fires
+    //                                                     |--------->|
+    //                                                    lclHopTimeMsec
+    //
+    //No hop is necessary
   }
 
   //Compute the next hop time
