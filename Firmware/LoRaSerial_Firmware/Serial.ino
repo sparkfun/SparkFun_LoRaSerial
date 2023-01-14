@@ -321,10 +321,12 @@ void updateSerial()
 void processSerialInput()
 {
   uint16_t radioHead;
+  static uint32_t lastEscapeCharEnteredMillis;
 
   //Process the serial data
   radioHead = radioTxHead;
-  while (availableRXBytes() && (availableRadioTXBytes() < (sizeof(radioTxBuffer) - 1))
+  while (availableRXBytes()
+    && (availableRadioTXBytes() < (sizeof(radioTxBuffer) - maxEscapeCharacters))
     && (transactionComplete == false))
   {
     //Take a break if there are ISRs to attend to
@@ -380,45 +382,68 @@ void processSerialInput()
     else
     {
       //Check general serial stream for command characters
-      if (incoming == escapeCharacter)
+      //Ignore escape characters received within 2 seconds of serial traffic
+      //Allow escape characters received within first 2 seconds of power on
+      if ((incoming == escapeCharacter)
+        && ((millis() - lastByteReceived_ms > minEscapeTime_ms)
+          || (millis() < minEscapeTime_ms)))
       {
-        //Ignore escape characters received within 2 seconds of serial traffic
-        //Allow escape characters received within first 2 seconds of power on
-        if (millis() - lastByteReceived_ms > minEscapeTime_ms || millis() < minEscapeTime_ms)
+        escapeCharsReceived++;
+        lastEscapeCharEnteredMillis = millis();
+        if (escapeCharsReceived == maxEscapeCharacters)
         {
-          escapeCharsReceived++;
-          if (escapeCharsReceived == maxEscapeCharacters)
-          {
-            systemPrintln("\r\nOK");
-            outputSerialData(true);
+          systemPrintln("\r\nOK");
+          outputSerialData(true);
 
-            inCommandMode = true; //Allow AT parsing. Prevent received RF data from being printed.
-            forceRadioReset = false; //Don't reset the radio link unless a setting requires it
-            writeOnCommandExit = false; //Don't record settings changes unless user commands it
+          inCommandMode = true; //Allow AT parsing. Prevent received RF data from being printed.
+          forceRadioReset = false; //Don't reset the radio link unless a setting requires it
+          writeOnCommandExit = false; //Don't record settings changes unless user commands it
 
-            tempSettings = settings;
+          tempSettings = settings;
 
-            escapeCharsReceived = 0;
-            lastByteReceived_ms = millis();
-            return; //Avoid recording this incoming command char
-          }
-        }
-        else //This is just a character in the stream, ignore
-        {
+          escapeCharsReceived = 0;
           lastByteReceived_ms = millis();
-          escapeCharsReceived = 0; //Update timeout check for escape char and partial frame
+          return; //Avoid recording this incoming command char
         }
       }
+
+      //This is just a character in the stream, ignore
       else
       {
+        //Update timeout check for escape char and partial frame
         lastByteReceived_ms = millis();
-        escapeCharsReceived = 0; //Update timeout check for escape char and partial frame
-      }
 
-      //This data byte will be sent over the long range radio
-      radioTxBuffer[radioTxHead++] = incoming;
-      radioTxHead %= sizeof(radioTxBuffer);
+        //Replay any escape characters if the sequence was not entered in the
+        //necessary time
+        while (escapeCharsReceived)
+        {
+          escapeCharsReceived--;
+          radioTxBuffer[radioTxHead++] = escapeCharacter;
+          radioTxHead %= sizeof(radioTxBuffer);
+        }
+
+        //The input data byte will be sent over the long range radio
+        radioTxBuffer[radioTxHead++] = incoming;
+        radioTxHead %= sizeof(radioTxBuffer);
+      }
     } //End process rx buffer
+  }
+
+  //Check for escape timeout, more than two seconds have elapsed without entering
+  //command mode.  The escape characters must be part of the input stream but were
+  //the last characters entered.  Send these characters over the long range radio.
+  if (escapeCharsReceived && (millis() - lastEscapeCharEnteredMillis > minEscapeTime_ms)
+     && (availableRXBytes() < (sizeof(radioTxBuffer) - maxEscapeCharacters)))
+  {
+    //Replay the escape characters
+    while (escapeCharsReceived)
+    {
+      escapeCharsReceived--;
+
+      //Transmit the escape character over the long range radio
+      radioTxBuffer[radioTxHead++] = escapeCharacter;
+      radioTxHead %= sizeof(radioTxBuffer);
+    }
   }
 
   //Print the number of bytes placed into the rxTxBuffer
