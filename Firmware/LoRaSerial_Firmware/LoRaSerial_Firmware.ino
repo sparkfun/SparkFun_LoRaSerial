@@ -180,6 +180,11 @@ uint16_t petTimeout = 0; //A reduced amount of time before WDT triggers. Helps r
 unsigned long lastPet = 0; //Remebers time of last WDT pet.
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+//I2C
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+#include <Wire.h>
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 //Global variables - Serial
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint8_t escapeCharacter = '+';
@@ -627,6 +632,8 @@ void setup()
   }
 
   arch.uniqueID(myUniqueId); //Get the unique ID
+
+  Wire.begin(); //Start I2C
 
   beginLoRa(); //Start radio
 
