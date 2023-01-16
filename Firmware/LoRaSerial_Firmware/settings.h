@@ -515,6 +515,13 @@ typedef struct struct_settings {
   //Add new parameters immediately before this line
   //-- Add commands to set the parameters
   //-- Add parameters to routine updateRadioParameters
+
+  //----------------------------------------
+  //Sprinkler Parameters
+  //----------------------------------------
+
+  bool debugSprinklers = false; //Enable debugging of sprinkler controller
+  uint16_t pulseDuration = 250; //Milliseconds for latching solenoid pulse duration
 } Settings;
 Settings settings;
 

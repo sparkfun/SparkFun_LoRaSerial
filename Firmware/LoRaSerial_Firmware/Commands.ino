@@ -73,6 +73,7 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATT - Enter training mode");
         systemPrintln("  ATV - Display virtual circuit settings");
         systemPrintln("  ATW - Save current settings to NVM");
+        systemPrintln("  ATY - Display the sprinkler controller settings");
         systemPrintln("  ATZ - Reboot the radio");
         systemPrintln("  AT-Param=xxx - Set parameter's value to xxx by name (Param)");
         systemPrintln("  AT-Param? - Print parameter's current value by name (Param)");
@@ -780,6 +781,7 @@ const COMMAND_PREFIX prefixTable[] = {
   {"ATR",  1, commandDisplayRadio},
   {"ATS",  1, commandDisplaySerial},
   {"ATV",  1, commandDisplayVirtualCircuit},
+  {"ATY",  1, commandDisplaySprinklerController},
   {"AT-?", 1, commandDisplayAll},
   {"AT-",  1, commandSetByName},
   {"AT",   1, commandAT},
@@ -924,6 +926,13 @@ bool commandDisplayRadio(const char * commandString)
 bool commandDisplaySerial(const char * commandString)
 {
   displayParameters('S', false);
+  return true;
+}
+
+//Display only the sprinkler controller commands
+bool commandDisplaySprinklerController(const char * commandString)
+{
+  displayParameters('Y', false);
   return true;
 }
 
@@ -1179,7 +1188,14 @@ const COMMAND_ENTRY commands[] =
 
   /*Virtual circuit parameters
     Ltr, All, reset, min, max, digits,    type,         validation,     name,                   setting addr */
-  {'V',   0,   0,    0, MAX_VC - 1, 0, TYPE_U8,         valInt,         "CmdVC",                &cmdVc},
+  {'V',   0,   0,    0, MAX_VC - 1, 0, TYPE_U8,         valInt,       "CmdVC",                &cmdVc},
+
+  //Define any user parameters
+
+  /*Sprinkler Controller parameters
+    Ltr, All, reset, min, max, digits,    type,         validation,     name,                   setting addr */
+  {'Y',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugSprinklers",      &settings.debugSprinklers},
+  {'Y',   0,   0,  100, 1000,   0, TYPE_U16,          valInt,         "PulseDuration",        &settings.pulseDuration},
 };
 
 const int commandCount = sizeof(commands) / sizeof(commands[0]);
