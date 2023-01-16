@@ -17,6 +17,14 @@ enum {
   TYPE_U8,
   TYPE_U16,
   TYPE_U32,
+
+  //Sprinkler Controller types
+  TYPE_DAY,
+  TYPE_DURATION,
+  TYPE_START,
+  TYPE_TIME,
+  TYPE_ZONE,
+  TYPE_ZONE_MASK,
 };
 
 typedef bool (* COMMAND_ROUTINE)(const char * commandString);
@@ -1207,11 +1215,56 @@ const int commandCount = sizeof(commands) / sizeof(commands[0]);
 //Display a command
 void commandDisplay(const COMMAND_ENTRY * command)
 {
+  uint32_t hours;
+  uint32_t minutes;
+  CONTROLLER_SCHEDULE * schedule;
+  uint32_t seconds;
+  char * string;
+  char timeString[12];
+  uint32_t value;
+
   //Print the setting value
   switch (command->type)
   {
     case TYPE_BOOL:
       systemPrint((uint8_t)(*(bool *)(command->setting)));
+      break;
+    case TYPE_DURATION:
+      if (!commandZone)
+        break;
+      schedule = (CONTROLLER_SCHEDULE *)command->setting;
+      value = schedule[commandDay].zoneScheduleDuration[commandZone-1];
+
+      //Compute the time
+      seconds = value;
+      hours = seconds / MILLISECONDS_IN_AN_HOUR;
+      seconds -= hours * MILLISECONDS_IN_AN_HOUR;
+      minutes = seconds / MILLISECONDS_IN_A_MINUTE;
+      seconds -= minutes * MILLISECONDS_IN_A_MINUTE;
+      seconds /= MILLISECONDS_IN_A_SECOND;
+
+      //Build the string
+      string = timeString;
+      if (hours > 9)
+        *string++ = '0' + (hours / 10);
+      *string++ = '0' + (hours % 10);
+      *string++ = ':';
+      *string++ = '0' + (minutes / 10);
+      *string++ = '0' + (minutes % 10);
+      *string++ = ':';
+      *string++ = '0' + (seconds / 10);
+      *string++ = '0' + (seconds % 10);
+      *string++ = 0;
+
+      //Display the time
+      systemPrint(value);
+      systemPrint(" (");
+      systemPrint(dayName[commandDay]);
+      systemPrint(" zone ");
+      systemPrint(commandZone);
+      systemPrint(" ");
+      systemPrint(timeString);
+      systemPrint(")");
       break;
     case TYPE_FLOAT:
       systemPrint(*((float *)(command->setting)), command->digits);
@@ -1229,6 +1282,78 @@ void commandDisplay(const COMMAND_ENTRY * command)
     case TYPE_SPEED_SERIAL:
     case TYPE_U32:
       systemPrint(*(uint32_t *)(command->setting));
+      break;
+    case TYPE_START:
+      schedule = (CONTROLLER_SCHEDULE *)command->setting;
+      value = schedule[commandDay].scheduleStartTime;
+
+      //Compute the time
+      seconds = value;
+      hours = seconds / MILLISECONDS_IN_AN_HOUR;
+      seconds -= hours * MILLISECONDS_IN_AN_HOUR;
+      minutes = seconds / MILLISECONDS_IN_A_MINUTE;
+      seconds -= minutes * MILLISECONDS_IN_A_MINUTE;
+      seconds /= MILLISECONDS_IN_A_SECOND;
+
+      //Build the string
+      string = timeString;
+      if (hours > 9)
+        *string++ = '0' + (hours / 10);
+      *string++ = '0' + (hours % 10);
+      *string++ = ':';
+      *string++ = '0' + (minutes / 10);
+      *string++ = '0' + (minutes % 10);
+      *string++ = ':';
+      *string++ = '0' + (seconds / 10);
+      *string++ = '0' + (seconds % 10);
+      *string++ = 0;
+
+      //Display the time
+      systemPrint(value);
+      systemPrint(" (");
+      systemPrint(dayName[commandDay]);
+      systemPrint(" @ ");
+      systemPrint(timeString);
+      systemPrint(")");
+      break;
+    case TYPE_TIME:
+      //Compute the time
+      seconds = *(uint32_t *)(command->setting) - startOfDay;
+      hours = seconds / MILLISECONDS_IN_AN_HOUR;
+      seconds -= hours * MILLISECONDS_IN_AN_HOUR;
+      minutes = seconds / MILLISECONDS_IN_A_MINUTE;
+      seconds -= minutes * MILLISECONDS_IN_A_MINUTE;
+      seconds /= MILLISECONDS_IN_A_SECOND;
+
+      //Build the string
+      string = timeString;
+      if (hours > 9)
+        *string++ = '0' + (hours / 10);
+      *string++ = '0' + (hours % 10);
+      *string++ = ':';
+      *string++ = '0' + (minutes / 10);
+      *string++ = '0' + (minutes % 10);
+      *string++ = ':';
+      *string++ = '0' + (seconds / 10);
+      *string++ = '0' + (seconds % 10);
+      *string++ = 0;
+
+      //Display the time
+      systemPrint((uint32_t)(*(uint32_t *)(command->setting)));
+      systemPrint(" (");
+      systemPrint(timeString);
+      systemPrint(")");
+      break;
+    case TYPE_DAY:
+      systemPrint(*(uint8_t *)(command->setting));
+      systemPrint(" (");
+      systemWrite(dayLetter[*(uint8_t *)(command->setting)]);
+      systemPrint(", ");
+      systemPrint(dayName[*(uint8_t *)(command->setting)]);
+      systemPrint(")");
+      break;
+    case TYPE_ZONE_MASK:
+      systemPrintln(((*(ZONE_MASK *)(command->setting)) >> commandZone) & 1);
       break;
   }
   systemPrintln();
@@ -1285,6 +1410,9 @@ bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer
 {
   const char * digit;
   double doubleSettingValue;
+  int index;
+  uint32_t number;
+  CONTROLLER_SCHEDULE * schedule;
   uint32_t settingValue;
   bool valid;
 
@@ -1330,6 +1458,15 @@ bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer
         if (valid)
           *(bool *)(command->setting) = (bool)settingValue;
         break;
+      case TYPE_DURATION:
+        valid = command->validate((void *)&settingValue, command->minValue, command->maxValue)
+              && commandZone;
+        if (valid)
+        {
+          schedule = (CONTROLLER_SCHEDULE *)command->setting;
+          schedule[commandDay].zoneScheduleDuration[commandZone- 1] = settingValue;
+        }
+        break;
       case TYPE_FLOAT:
         valid = command->validate((void *)&doubleSettingValue, command->minValue, command->maxValue);
         if (valid)
@@ -1343,11 +1480,21 @@ bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer
         break;
       case TYPE_SPEED_AIR:
       case TYPE_SPEED_SERIAL:
+      case TYPE_TIME:
       case TYPE_U32:
         valid = command->validate((void *)&settingValue, command->minValue, command->maxValue);
         if (valid)
           *(uint32_t *)(command->setting) = settingValue;
         break;
+      case TYPE_START:
+        valid = command->validate((void *)&settingValue, command->minValue, command->maxValue);
+        if (valid)
+        {
+          schedule = (CONTROLLER_SCHEDULE *)command->setting;
+          schedule[commandDay].scheduleStartTime = settingValue;
+        }
+        break;
+      case TYPE_DAY:
       case TYPE_U8:
         valid = command->validate((void *)&settingValue, command->minValue, command->maxValue);
         if (valid)
@@ -1357,6 +1504,14 @@ bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer
         valid = command->validate((void *)&settingValue, command->minValue, command->maxValue);
         if (valid)
           *(uint16_t *)(command->setting) = (uint16_t)settingValue;
+        break;
+      case TYPE_ZONE_MASK:
+        valid = command->validate((void *)&settingValue, command->minValue, command->maxValue);
+        if (valid)
+        {
+          *(ZONE_MASK *)(command->setting) &= ~(1 << (commandZone- 1));
+          *(ZONE_MASK *)(command->setting) |= settingValue << (commandZone - 1);
+        }
         break;
     }
     if (valid == false)
