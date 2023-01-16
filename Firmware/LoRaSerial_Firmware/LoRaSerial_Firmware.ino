@@ -185,6 +185,11 @@ unsigned long lastPet = 0; //Remebers time of last WDT pet.
 #include <Wire.h>
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+//External Display
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#include <SparkFun_Qwiic_OLED.h> //http://librarymanager/All#SparkFun_Qwiic_Graphic_OLED
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 //Quad Relay Board
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 #include <SparkFun_Qwiic_Relay.h>
@@ -693,6 +698,8 @@ void setup()
   if(quadRelay.begin())
     online.quadRelay = true;
 
+  beginDisplay(); //Start display first to be able to display any errors
+
   beginLoRa(); //Start radio
 
   beginButton(); //Start watching the train button
@@ -728,6 +735,8 @@ void loop()
   updateLeds(); //Update the LEDs on the board
 
   updateZones(); //Turn on or off the sprinkler zones
+
+  updateDisplay();
 
   updateHopISR(); //Clear hop ISR as needed
 }
