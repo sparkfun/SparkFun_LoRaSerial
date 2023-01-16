@@ -48,6 +48,26 @@ void systemPrint(int value, uint8_t printType)
   systemPrint(temp);
 }
 
+//Print a uint32_t value as HEX or decimal
+void systemPrint(uint32_t value, uint8_t printType)
+{
+  char temp[20];
+
+  if (printType == HEX)
+    sprintf(temp, "%08x", value);
+  else if (printType == DEC)
+    sprintf(temp, "%lu", value);
+
+  systemPrint(temp);
+}
+
+//Print a uint32_t value as HEX or decimal
+void systemPrintln(uint32_t value, uint8_t printType)
+{
+  systemPrint(value, printType);
+  systemPrintln();
+}
+
 //Print an integer value with a carriage return and line feed
 void systemPrintln(int value)
 {
