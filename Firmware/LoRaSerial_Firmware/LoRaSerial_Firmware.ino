@@ -517,6 +517,52 @@ unsigned long retransmitTimeout = 0; //Throttle back re-transmits
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+//Sprinkler controller variables
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+//Days of week
+const char dayLetter[7] = {'U', 'M', 'T', 'W', 'R', 'F', 'S'};
+const char * day3Letter[7] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+const char * dayName[7] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+
+//Display support
+ZONE_MASK zoneOn;
+ZONE_MASK relayOn;
+
+//Sprinkler solenoid management
+uint8_t zoneNumber;               //0 = None, 1 - ZONE_NUMBER_MAX
+ZONE_MASK latchingSolenoid = 0xff;//Mask of latching solenoids
+ZONE_MASK zoneActive;             //The current zone that is on or off
+ZONE_MASK zoneManualOn;           //Mask of zones on/off, set only one bit!
+ZONE_MASK zoneManualPreviousOn;   //Previous mask of zones on and off
+uint32_t pulseDuration;           //Length of the pulse in milliseconds, off = 0
+uint32_t pulseStartTime;          //Time the pulse started
+uint32_t onTime;                  //Time the zone was turned on
+bool enableSprinklerController;   //Enable the sprinkler controller
+bool turnWaterOff;                //Set true when zone is being turned off
+
+//Sprinkler controller schedule for today
+uint32_t startOfDay;              //Number of milliseconds at midnight
+uint32_t timeOfDay;               //Number of milliseconds from midnight
+uint8_t dayOfWeek;                //Day of week 0 - 6
+bool scheduleCopied;              //True after daily schedule copied from week to today;
+bool scheduleActive;              //True while an entry is active in the schedule
+
+CONTROLLER_SCHEDULE week[7];
+CONTROLLER_SCHEDULE today;        //Active schedule
+uint32_t zoneOnTime;              //Time when the zone was turned on
+uint32_t zoneOnDuration;          //Amount of time that the zone should be on
+
+#define MILLISECONDS_IN_A_SECOND  1000
+#define MILLISECONDS_IN_A_MINUTE  (60 * MILLISECONDS_IN_A_SECOND)
+#define MILLISECONDS_IN_AN_HOUR   (60 * MILLISECONDS_IN_A_MINUTE)
+#define MILLISECONDS_IN_A_DAY     (24 * MILLISECONDS_IN_AN_HOUR)
+
+//Sprinkler commands
+uint8_t commandZone;              //Zone number for commands, 0 - ZONE_NUMBER_MAX
+uint8_t commandDay;               //Day of week number or commands, 0 - 6
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 //Global variables
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const Settings defaultSettings;

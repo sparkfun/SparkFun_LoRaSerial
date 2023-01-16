@@ -525,6 +525,18 @@ struct struct_online {
   bool quadRelay = false;
 } online;
 
+//Increasing above 4 requires adding support for second quad relay board
+//Increasing above 8 requires more relay boards an changing ZONE_MASK type
+#define ZONE_NUMBER_MAX     4   //0 = No zone (off), 1 - 8 = Zone number
+
+typedef uint8_t ZONE_MASK;      //0 = No zone (off), bit # + 1: 1 - 8 = Zone number
+
+typedef struct _CONTROLLER_SCHEDULE
+{
+  uint32_t scheduleStartTime;     //Schedule start time offset in milliseconds
+  uint32_t zoneScheduleDuration[ZONE_NUMBER_MAX]; //Scheduled duration for the zone
+} CONTROLLER_SCHEDULE;
+
 #include <RadioLib.h> //Click here to get the library: http://librarymanager/All#RadioLib v5.5.0
 
 typedef void (* ARCH_BEGIN_BOARD)();
