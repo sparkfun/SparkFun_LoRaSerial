@@ -522,6 +522,7 @@ Settings settings;
 struct struct_online {
   bool radio = false;
   bool eeprom = false;
+  bool quadRelay = false;
 } online;
 
 #include <RadioLib.h> //Click here to get the library: http://librarymanager/All#RadioLib v5.5.0

@@ -185,6 +185,14 @@ unsigned long lastPet = 0; //Remebers time of last WDT pet.
 #include <Wire.h>
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+//Quad Relay Board
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+#include <SparkFun_Qwiic_Relay.h>
+
+Qwiic_Relay quadRelay(0x6d);
+
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 //Global variables - Serial
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint8_t escapeCharacter = '+';
@@ -634,6 +642,10 @@ void setup()
   arch.uniqueID(myUniqueId); //Get the unique ID
 
   Wire.begin(); //Start I2C
+
+  //Verify connection to quad relay board
+  if(quadRelay.begin())
+    online.quadRelay = true;
 
   beginLoRa(); //Start radio
 
