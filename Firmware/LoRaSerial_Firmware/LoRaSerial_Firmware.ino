@@ -727,5 +727,7 @@ void loop()
 
   updateLeds(); //Update the LEDs on the board
 
+  updateZones(); //Turn on or off the sprinkler zones
+
   updateHopISR(); //Clear hop ISR as needed
 }
