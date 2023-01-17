@@ -3154,7 +3154,7 @@ bool getTxTime(bool (*transmitFrame)(), uint32_t * txFrameUsec, const char * fra
     systemPrint("TX ");
     systemPrint(frameName);
     systemPrint(": ");
-    systemPrint(*txFrameUsec);
+    systemPrint(((float)*txFrameUsec) / 1000., 5);
     systemPrintln(" mSec");
     outputSerialData(true);
   }
