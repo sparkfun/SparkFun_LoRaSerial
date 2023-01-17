@@ -172,8 +172,8 @@ int processData()
     timeout.tv_usec = 1000;
 
     //Wait for receive data or timeout
-    FD_SET(tty, &readfds);
-    status = select(tty + 1, &readfds, &writefds, &exceptfds, &timeout);
+    FD_SET(radio, &readfds);
+    status = select(radio + 1, &readfds, &writefds, &exceptfds, &timeout);
 
     //Update the milliseconds since started
     gettimeofday(&stop, NULL);

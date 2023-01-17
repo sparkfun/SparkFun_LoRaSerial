@@ -2,6 +2,7 @@
 #include "settings.h"
 
 #define BUFFER_SIZE           2048
+#define INPUT_BUFFER_SIZE     BUFFER_SIZE
 #define MAX_MESSAGE_SIZE      32
 #define STDIN                 0
 #define STDOUT                1
@@ -29,7 +30,7 @@ typedef struct _VIRTUAL_CIRCUIT
 bool findMyVc;
 int myVc = VC_UNASSIGNED;
 int remoteVc;
-uint8_t inputBuffer[BUFFER_SIZE];
+uint8_t inputBuffer[INPUT_BUFFER_SIZE];
 uint8_t outputBuffer[VC_SERIAL_HEADER_BYTES + BUFFER_SIZE];
 int timeoutCount;
 VIRTUAL_CIRCUIT virtualCircuitList[MAX_VC];
@@ -56,7 +57,7 @@ int cmdToRadio(uint8_t * buffer, int length)
     printf("Sending LoRaSerial command: %s\n", buffer);
 
   //Send the header
-  bytesWritten = write(tty, (uint8_t *)&header, VC_SERIAL_HEADER_BYTES);
+  bytesWritten = write(radio, (uint8_t *)&header, VC_SERIAL_HEADER_BYTES);
   if (bytesWritten < (int)VC_SERIAL_HEADER_BYTES)
   {
     perror("ERROR: Write of header to radio failed!");
@@ -67,7 +68,7 @@ int cmdToRadio(uint8_t * buffer, int length)
   bytesSent = 0;
   while (bytesSent < length)
   {
-    bytesWritten = write(tty, buffer, length);
+    bytesWritten = write(radio, buffer, length);
     if (bytesWritten < 0)
     {
       perror("ERROR: Write of data to radio failed!");
@@ -100,7 +101,7 @@ int hostToRadio(uint8_t destVc, uint8_t * buffer, int length)
   }
 
   //Send the header
-  bytesWritten = write(tty, (uint8_t *)&header, VC_SERIAL_HEADER_BYTES);
+  bytesWritten = write(radio, (uint8_t *)&header, VC_SERIAL_HEADER_BYTES);
   if (bytesWritten < (int)VC_SERIAL_HEADER_BYTES)
   {
     perror("ERROR: Write of header to radio failed!");
@@ -111,7 +112,7 @@ int hostToRadio(uint8_t destVc, uint8_t * buffer, int length)
   bytesSent = 0;
   while (bytesSent < length)
   {
-    bytesWritten = write(tty, buffer, length);
+    bytesWritten = write(radio, buffer, length);
     if (bytesWritten < 0)
     {
       perror("ERROR: Write of data to radio failed!");
@@ -139,7 +140,7 @@ int stdinToRadio()
   do
   {
     //Read the console input data into the local buffer.
-    bytesRead = read(STDIN, inputBuffer, BUFFER_SIZE);
+    bytesRead = read(STDIN, inputBuffer, INPUT_BUFFER_SIZE);
     if (bytesRead < 0)
     {
       perror("ERROR: Read from stdin failed!");
@@ -371,7 +372,7 @@ int radioToHost()
   {
     //Read the virtual circuit header into the local buffer.
     bytesToRead = &outputBuffer[sizeof(outputBuffer)] - dataEnd;
-    bytesRead = read(tty, dataEnd, bytesToRead);
+    bytesRead = read(radio, dataEnd, bytesToRead);
     if (bytesRead == 0)
       break;
     if (bytesRead < 0)
@@ -484,12 +485,13 @@ main (
 )
 {
   bool breakLinks;
+  fd_set currentfds;
   int maxfds;
+  int numfds;
   bool reset;
   int status;
   char * terminal;
   struct timeval timeout;
-  uint8_t * vcData;
 
   maxfds = STDIN;
   status = 0;
@@ -536,8 +538,6 @@ main (
     status = openLoRaSerial(terminal);
     if (status)
       break;
-    if (maxfds < tty)
-      maxfds = tty;
 
     //Determine the options
     reset = false;
@@ -558,7 +558,7 @@ main (
       cmdToRadio((uint8_t *)LINK_RESET_COMMAND, strlen(LINK_RESET_COMMAND));
 
       //Allow the device to reset
-      close(tty);
+      close(radio);
       do
       {
         sleep(1);
@@ -577,11 +577,11 @@ main (
       cmdToRadio((uint8_t *)BREAK_LINKS_COMMAND, strlen(BREAK_LINKS_COMMAND));
 
     //Initialize the fd_sets
-    if (maxfds < tty)
-      maxfds = tty;
-    FD_ZERO(&exceptfds);
+    if (maxfds < radio)
+      maxfds = radio;
     FD_ZERO(&readfds);
-    FD_ZERO(&writefds);
+    FD_SET(STDIN, &readfds);
+    FD_SET(radio, &readfds);
 
     while (1)
     {
@@ -590,12 +590,17 @@ main (
       timeout.tv_usec = 1000;
 
       //Wait for receive data or timeout
-      FD_SET(STDIN, &readfds);
-      FD_SET(tty, &readfds);
-      status = select(maxfds + 1, &readfds, &writefds, &exceptfds, &timeout);
+      memcpy((void *)&currentfds, (void *)&readfds, sizeof(readfds));
+      numfds = select(maxfds + 1, &currentfds, NULL, NULL, &timeout);
+      if (numfds < 0)
+      {
+        perror("ERROR: select call failed!");
+        status = errno;
+        break;
+      }
 
       //Check for timeout
-      if ((status == 0) && (timeoutCount++ >= 1000))
+      if ((numfds == 0) && (timeoutCount++ >= 1000))
       {
         timeoutCount = 0;
         if (myVc == VC_UNASSIGNED)
@@ -607,7 +612,7 @@ main (
       }
 
       //Determine if console input is available
-      if (FD_ISSET(STDIN, &readfds))
+      if (FD_ISSET(STDIN, &currentfds))
       {
         //Send the console input to the radio
         status = stdinToRadio();
@@ -615,7 +620,7 @@ main (
           break;
       }
 
-      if (FD_ISSET(tty, &readfds))
+      if (FD_ISSET(radio, &currentfds))
       {
         //Process the incoming data from the radio
         status = radioToHost();

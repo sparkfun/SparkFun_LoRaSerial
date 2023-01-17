@@ -81,6 +81,7 @@ int8_t destAddr;
 fd_set exceptfds;
 int8_t myAddr;
 uint8_t myUniqueId[UNIQUE_ID_BYTES];
+int radio;
 fd_set readfds;
 uint8_t rxBuffer[255];
 int rxBytes;
@@ -92,7 +93,6 @@ bool transactionComplete;
 uint8_t txBuffer[255];
 int txBytes;
 uint8_t * txData;
-int tty;
 bool usingTerminal;
 fd_set writefds;
 

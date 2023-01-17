@@ -1,18 +1,18 @@
 #include "settings.h"
 
-int openLoRaSerial(const char *ttyName)
+int openLoRaSerial(const char *terminal)
 {
   struct termios params;
   int status;
 
-  tty = open (ttyName, O_RDWR);
-  if (tty < 0)
+  radio = open (terminal, O_RDWR);
+  if (radio < 0)
   {
-    perror ("ERROR: Failed to open the tty");
+    perror ("ERROR: Failed to open the terminal");
     return errno;
   }
 
-  if (tcgetattr(tty, &params) != 0) {
+  if (tcgetattr(radio, &params) != 0) {
       perror("ERROR: tcgetattr failed!");
       return errno;
   }
@@ -30,7 +30,7 @@ int openLoRaSerial(const char *ttyName)
   cfsetispeed(&params, B57600);
   cfsetospeed(&params, B57600);
 
-  if (tcsetattr(tty, TCSANOW, &params) != 0) {
+  if (tcsetattr(radio, TCSANOW, &params) != 0) {
       perror("ERROR: tcsetattr failed!");
       return errno;
   }
@@ -45,7 +45,7 @@ int readLoRaSerial(uint8_t * buffer, int bufferLength)
   int length;
 
   //Read the frame type
-  bytes = read(tty, buffer, 1);
+  bytes = read(radio, buffer, 1);
   if (bytes < 0)
   {
     perror("Failed to read frame type!");
@@ -54,7 +54,7 @@ int readLoRaSerial(uint8_t * buffer, int bufferLength)
   rxBytes = bytes;
 
   //Read the length in bytes
-  bytes = read(tty, &buffer[rxBytes], 1);
+  bytes = read(radio, &buffer[rxBytes], 1);
   if (bytes < 0)
   {
     perror("Failed to read length byte!");
@@ -68,7 +68,7 @@ int readLoRaSerial(uint8_t * buffer, int bufferLength)
   //Read the length in bytes
   while (length - rxBytes)
   {
-    bytes = read(tty, &buffer[rxBytes], length - rxBytes);
+    bytes = read(radio, &buffer[rxBytes], length - rxBytes);
     if (bytes < 0)
     {
       perror("Failed to read remaining data!");
