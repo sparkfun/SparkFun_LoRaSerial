@@ -2683,6 +2683,8 @@ bool transmitDatagram()
         hopChannel();
     }
   }
+  else
+    txSetChannelTimerMicros = micros();
 
   /*
                           Header ------.           endOfTxData ---.
