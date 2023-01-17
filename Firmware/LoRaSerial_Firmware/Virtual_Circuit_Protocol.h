@@ -16,6 +16,8 @@
 //address spaces:
 //
 //    0 - Data communications
+//    1 - Remote commands
+//    6 - Remote responses
 //    7 - Special virtual circuits
 
 //The following addresses are reserved for data communications: 0 - VCAB_NUMBER_MASK
@@ -37,7 +39,7 @@
 #define PC_DATA_NACK        (PC_DATA_ACK + 1)   //Indicate data delivery failure
 #define PC_SERIAL_RECONNECT (PC_DATA_NACK + 1)  //Disconnect/reconnect the serial port over LoRaSerial CPU reset
 
-//Address space 1 and 2 are reserved for the host PC interface to support remote
+//Address space 1 and 6 are reserved for the host PC interface to support remote
 //command processing.  The radio removes these bits and converts them to the
 //appropriate datagram type.  Upon reception of one of these messages the bit is
 //added back into the VC header and the message is delivered to the host PC.
