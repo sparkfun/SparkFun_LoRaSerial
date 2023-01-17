@@ -833,7 +833,10 @@ void checkCommand()
   if (success)
     reportOK();
   else
+  {
+    systemPrintln(commandString);
     systemPrintln("ERROR");
+  }
   outputSerialData(true);
   petWDT();
 
