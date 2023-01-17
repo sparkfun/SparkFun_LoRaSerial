@@ -717,6 +717,8 @@ void loop()
 {
   petWDT();
 
+  updateTimeOfDay();
+
   updateButton(); //Check if train button is pressed
 
   updateSerial(); //Store incoming and print outgoing
