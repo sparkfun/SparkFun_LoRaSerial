@@ -7,8 +7,8 @@ int openSocket()
   int status;
 
   //Open the socket
-  tty = socket(AF_INET, SOCK_DGRAM, 0);
-  if (tty < 0)
+  radio = socket(AF_INET, SOCK_DGRAM, 0);
+  if (radio < 0)
   {
     status = errno;
     perror("Failed to open the socket!");
@@ -28,7 +28,7 @@ int openSocket()
   localAddr.sin_port = htons(PORT);
 
   // Bind the socket with the server address
-  status = bind(tty, (const struct sockaddr *)&localAddr, sizeof(localAddr));
+  status = bind(radio, (const struct sockaddr *)&localAddr, sizeof(localAddr));
   if (status < 0 )
   {
     perror("Failed to bind the socket!");
@@ -36,20 +36,20 @@ int openSocket()
   }
 
   //Support broadcasting
-  status = setsockopt (tty, SOL_SOCKET, SO_BROADCAST, &broadcastEnable, sizeof(broadcastEnable));
+  status = setsockopt (radio, SOL_SOCKET, SO_BROADCAST, &broadcastEnable, sizeof(broadcastEnable));
   if (status < 0)
   {
     perror("setsockopt failed");
-    close(tty);
+    close(radio);
     return status;
   }
 
   //Set the socket to non-blocking
-  status = ioctl(tty, FIONBIO, (char *)&non_blocking);
+  status = ioctl(radio, FIONBIO, (char *)&non_blocking);
   if (status < 0)
   {
     perror("ioctl failed");
-    close(tty);
+    close(radio);
     return status;
   }
   return 0;

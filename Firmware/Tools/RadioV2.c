@@ -42,7 +42,7 @@ FRAME_TYPE rcvDatagram()
   {
     remoteAddrLength = sizeof(remoteAddr);
     memset(&remoteAddr, 0, remoteAddrLength);
-    rxBytes = recvfrom(tty, rxBuffer, sizeof(rxBuffer), MSG_WAITALL,
+    rxBytes = recvfrom(radio, rxBuffer, sizeof(rxBuffer), MSG_WAITALL,
                        (struct sockaddr *) &remoteAddr, &remoteAddrLength);
     if (rxBytes < 0)
     {
@@ -110,9 +110,9 @@ void transmitDatagram(const struct sockaddr * addr, int addrLen)
 
   //Send this datagram
   if (usingTerminal)
-    bytesSent = write(tty, (const void *)txBuffer, txBytes);
+    bytesSent = write(radio, (const void *)txBuffer, txBytes);
   else
-    bytesSent = sendto(tty, (const char *)txBuffer, txBytes, MSG_CONFIRM,
+    bytesSent = sendto(radio, (const char *)txBuffer, txBytes, MSG_CONFIRM,
                      addr, addrLen);
   if (bytesSent < 0)
     perror("Failed to send datagram!");
