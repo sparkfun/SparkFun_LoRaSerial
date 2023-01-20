@@ -1457,7 +1457,7 @@ void updateRadioState()
         }
       }
 
-      //Determine if a receive is in progress
+      //Determine if a receive is in process
       else if (receiveInProcess())
       {
         if (!trainingPreviousRxInProgress)
@@ -1600,7 +1600,7 @@ void updateRadioState()
         }
       }
 
-      //Determine if a receive is in progress
+      //Determine if a receive is in process
       else if (receiveInProcess())
         if (!trainingPreviousRxInProgress)
         {

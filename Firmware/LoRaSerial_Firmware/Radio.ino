@@ -67,6 +67,11 @@ bool configureRadio()
   systemDescriptionAirTime = calcAirTimeMsec(headerBytes + P2P_SYNC_CLOCKS_BYTES + trailerBytes); //Used for response timeout during 3-way handshake
   maxPacketAirTime = calcAirTimeMsec(MAX_PACKET_SIZE);
 
+  //Babysit the radio's receive in process bits
+  maxRIPBit0 = (calcSymbolTimeUsec() * settings.radioPreambleLength) / 1000; //In ms
+  maxRIPBit1 = (calcSymbolTimeUsec() * settings.radioPreambleLength) / 1000; //In ms
+  maxRIPBit3 = maxPacketAirTime; //In ms
+
   if ((settings.debug == true) || (settings.debugRadio == true))
   {
     systemPrint("Freq: ");
@@ -581,14 +586,48 @@ unsigned long mSecToChannelZero()
 //Returns true if the radio indicates we have an ongoing reception
 bool receiveInProcess()
 {
-  //triggerEvent(TRIGGER_RECEIVE_IN_PROCESS_START);
-
   uint8_t radioStatus = radio.getModemStatus();
   if (radioStatus & RECEIVE_IN_PROCESS_MASK)
   {
-    //If any bits are set there is a receive in progress
+    //If any bits are set there is a receive in process
     if ((lastModemStatus & RECEIVE_IN_PROCESS_MASK) == 0)
       lastReceiveInProcessTrue = millis();
+
+    triggerEvent(TRIGGER_RECEIVE_IN_PROCESS);
+
+    //Determine which phase we are in, 0b1011 0b0011 or 0b0001
+    if (radioStatus & 0b1011)
+    {
+      //All bits are set
+      if (lastRIPBit3 == 0)
+        lastRIPBit3 = millis();
+      else if (millis() - lastRIPBit3 > maxRIPBit3)
+      {
+        triggerEvent(TRIGGER_RECEIVE_IN_PROCESS_BIT3);
+        return (false); //We received valid header, with a packet that never completed
+      }
+    }
+    else if (radioStatus & 0b0011)
+    {
+      if (lastRIPBit1 == 0)
+        lastRIPBit1 = millis();
+      else if (millis() - lastRIPBit1 > maxRIPBit1)
+      {
+        triggerEvent(TRIGGER_RECEIVE_IN_PROCESS_BIT1);
+        return (false); //We received a preamble that ended, with a packet that never completed
+      }
+    }
+    else
+    {
+      if (lastRIPBit0 == 0)
+        lastRIPBit0 = millis();
+      else if (millis() - lastRIPBit0 > maxRIPBit0)
+      {
+        triggerEvent(TRIGGER_RECEIVE_IN_PROCESS_BIT0);
+        return (false); //We received the start of a preamble that never ended
+      }
+    }
+
     return (true);
   }
   lastModemStatus = radioStatus;
@@ -1668,6 +1707,11 @@ PacketType rcvDatagram()
   //Get the received datagram
   framesReceived++;
   int state = radio.readData(incomingBuffer, MAX_PACKET_SIZE);
+
+  //Reset receiveInProcess Babysitter
+  lastRIPBit0 = 0;
+  lastRIPBit1 = 0;
+  lastRIPBit3 = 0;
 
   printPacketQuality(); //Display the RSSI, SNR and frequency error values
 
