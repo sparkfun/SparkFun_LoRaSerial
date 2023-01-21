@@ -463,11 +463,21 @@ int radioToHost()
       radioDataNack(data, length);
 
     //Display received messages
+    else if ((header->radio.destVc == myVc) || (header->radio.destVc == VC_BROADCAST))
+    {
+      //Output this message
+      status = hostToStdout(data, length);
+    }
+
+    //Unknown messages
     else
     {
-      if ((header->radio.destVc == myVc) || (header->radio.destVc == VC_BROADCAST))
-        //Output this message
-        status = hostToStdout(data, length);
+      printf("Unknown message, VC Header:\n");
+      printf("    length: %d\n", header->radio.length);
+      printf("    destVc: %d\n", header->radio.destVc);
+      printf("    srcVc: %d\n", header->radio.srcVc);
+      if (length > 0)
+        dumpBuffer(data, length);
     }
 
     //Continue processing the rest of the data in the buffer
