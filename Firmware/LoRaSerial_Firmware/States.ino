@@ -20,7 +20,7 @@
   {                                                                             \
     /*Compute the frequency correction*/                                        \
     frequencyCorrection += radio.getFrequencyError() / 1000000.0;               \
-                                                                                \
+    \
     /*Send the ACK to the remote system*/                                       \
     triggerEvent(trigger);                                                      \
     if (xmitDatagramP2PAck() == true)                                           \
@@ -35,7 +35,7 @@
   {                                                                             \
     /*Start the ACK timer*/                                                     \
     ackTimer = datagramTimer;                                                   \
-                                                                                \
+    \
     /*Since ackTimer is off when equal to zero, force it to a non-zero value*/  \
     /*Subtract one so that the comparisons result in a small number*/           \
     if (!ackTimer)                                                              \
@@ -192,7 +192,7 @@ void updateRadioState()
       else
         //Start receiving
         returnToReceiving();
-        changeState(RADIO_DISCOVER_BEGIN);
+      changeState(RADIO_DISCOVER_BEGIN);
       break;
 
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -209,7 +209,7 @@ void updateRadioState()
                        |                         |                             |
              Channel 0 |                         | Channel 0                   |
         Stop HOP Timer |                         | Stop HOP Timer              |
-     clockSyncReceiver | = true                  | clockSyncReceiver = true    |
+      clockSyncReceiver | = true                  | clockSyncReceiver = true    |
                        |                         |                             |
                        V                         V                             |
            .----> P2P_NO_LINK               P2P_NO_LINK <------------------.   |
@@ -974,43 +974,43 @@ void updateRadioState()
                             |                                       |
                             |                                       |
                             V                                       V
-    .--------------> RADIO_MP_STANDBY                      RADIO_DISCOVER_BEGIN
-    |                       |                                       |
-    |  No TX                |                                       |
-    |  Do ???      RX other V                                       |
-    +<--------+<------------+                                       V
-    ^         |             |                 .--------> RADIO_DISCOVER_SCANNING
-    |         | TX Resp     |                 | TX done             |
-    |         |             |                 |                     |
-    |         |             |     WAIT_TX_FIND_PARTNER_DONE         |
-    |     .---'             |                 ^                     |
-    |     |              RX |                 |                     |
-    |     |    FIND_PARTNER |  < - - - - - -  | TX FIND_PARTNER     |
-    |     |                 |                 |                     |
-    |     |                 |                 |       Delay         |
-    |     |                 |                 |       10 Sec        |
-    |     |                 |                 +<----------.         |
-    |     |                 |                 ^           |         |
-    |     |                 |                 |  Yes      | No      |
-    |     |                 |                 + <---- Loops < 10    |
-    |     |                 |                 ^           ^         |
-    |     |                 |              No |      Yes  |         |
-    |     |                 |             Channel 0 ------'         |
-    |     |                 |                 ^                     |
-    |     |                 |                 | Hop reverse         |
-    |     |                 |                 | RX timeout          V
-    |     |                 |                 '---------------------+
-    |     |                 |                                       |
-    |     |                 |                                       |
-    |     |              TX |                                       |
-    |     |     SYNC_CLOCKS |  - - - - - - - - - - - - - - - - - >  | RX SYNC_CLOCKS
-    |     |                 |                                       |
-    |     |                 |                                       | Sync clocks
-    |     |                 v                                       | Update channel #
-    |     '-----> RADIO_MP_WAIT_TX_DONE                             |
-    |                       |                                       |
-    |                       v                                       |
-    `-----------------------+<--------------------------------------'
+      .--------------> RADIO_MP_STANDBY                      RADIO_DISCOVER_BEGIN
+      |                       |                                       |
+      |  No TX                |                                       |
+      |  Do ???      RX other V                                       |
+      +<--------+<------------+                                       V
+      ^         |             |                 .--------> RADIO_DISCOVER_SCANNING
+      |         | TX Resp     |                 | TX done             |
+      |         |             |                 |                     |
+      |         |             |     WAIT_TX_FIND_PARTNER_DONE         |
+      |     .---'             |                 ^                     |
+      |     |              RX |                 |                     |
+      |     |    FIND_PARTNER |  < - - - - - -  | TX FIND_PARTNER     |
+      |     |                 |                 |                     |
+      |     |                 |                 |       Delay         |
+      |     |                 |                 |       10 Sec        |
+      |     |                 |                 +<----------.         |
+      |     |                 |                 ^           |         |
+      |     |                 |                 |  Yes      | No      |
+      |     |                 |                 + <---- Loops < 10    |
+      |     |                 |                 ^           ^         |
+      |     |                 |              No |      Yes  |         |
+      |     |                 |             Channel 0 ------'         |
+      |     |                 |                 ^                     |
+      |     |                 |                 | Hop reverse         |
+      |     |                 |                 | RX timeout          V
+      |     |                 |                 '---------------------+
+      |     |                 |                                       |
+      |     |                 |                                       |
+      |     |              TX |                                       |
+      |     |     SYNC_CLOCKS |  - - - - - - - - - - - - - - - - - >  | RX SYNC_CLOCKS
+      |     |                 |                                       |
+      |     |                 |                                       | Sync clocks
+      |     |                 v                                       | Update channel #
+      |     '-----> RADIO_MP_WAIT_TX_DONE                             |
+      |                       |                                       |
+      |                       v                                       |
+      `-----------------------+<--------------------------------------'
 
     */
 
@@ -2818,7 +2818,7 @@ void vcChangeState(int8_t vcIndex, uint8_t state)
     //Determine if the VC is connecting
     vcBit = 1 << vcIndex;
     if (((state > VC_STATE_LINK_ALIVE) && (state < VC_STATE_CONNECTED))
-      || (vc->flags.wasConnected && (vc->vcState == VC_STATE_LINK_ALIVE)))
+        || (vc->flags.wasConnected && (vc->vcState == VC_STATE_LINK_ALIVE)))
       vcConnecting |= vcBit;
     else
       vcConnecting &= ~vcBit;

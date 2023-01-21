@@ -2708,7 +2708,7 @@ bool transmitDatagram()
             systemPrint("TX msToNextHop: ");
             systemPrint(msToNextHop);
             systemPrintln(" mSec");
-          break;
+            break;
         }
       }
     } //ENABLE_DEVELOPER
@@ -3139,7 +3139,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   //Compute the interval before a retransmission occurs in milliseconds,
   //this value increases with each transmission
   retransmitTimeout = random(ackAirTime, frameAirTime + ackAirTime)
-                    * (frameSentCount + 1) * 3 / 2;
+                      * (frameSentCount + 1) * 3 / 2;
 
   //BLink the TX LED
   blinkRadioTxLed(true);
@@ -3453,7 +3453,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
   clockSyncData[clockSyncIndex].lclHopTimeMsec = lclHopTimeMsec;
   clockSyncData[clockSyncIndex].timeToHop = timeToHop;
   clockSyncIndex += 1;
-  if(clockSyncIndex >= (sizeof(clockSyncData) / sizeof(CLOCK_SYNC_DATA)) ) clockSyncIndex = 0;
+  if (clockSyncIndex >= (sizeof(clockSyncData) / sizeof(CLOCK_SYNC_DATA)) ) clockSyncIndex = 0;
 
   //Restart the channel timer
   timeToHop = false;
