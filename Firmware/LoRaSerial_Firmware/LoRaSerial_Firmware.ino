@@ -422,12 +422,6 @@ unsigned long startReceiveFailureMillis;
 int startReceiveFailureState;
 unsigned long lastReceiveInProcessTrue;
 uint8_t lastModemStatus;
-unsigned long lastRIPBit0 = 0;
-unsigned long lastRIPBit1 = 0;
-unsigned long lastRIPBit3 = 0;
-uint16_t maxRIPBit0;
-uint16_t maxRIPBit1;
-uint16_t maxRIPBit3;
 
 unsigned long txSuccessMillis;
 unsigned long txFailureMillis;
