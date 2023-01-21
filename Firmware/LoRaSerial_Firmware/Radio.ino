@@ -3064,7 +3064,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
         //then return false. This will cause the radio to transmit, then a transactionComplete ISR will trigger.
         //The state machine will then process what the radio receives. The received datagram will be corrupt,
         //or it will be successful. Either way, the read will clear the RxDone bit within the SX1276.
-        triggerEvent(TRIGGER_DOUBLE_INTERRUPT);
+        triggerEvent(TRIGGER_RECEIVE_IN_PROCESS);
         return (false);
       }
 
