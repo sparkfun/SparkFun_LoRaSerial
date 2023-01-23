@@ -3506,6 +3506,7 @@ void setHeartbeatLong()
 }
 
 //Only the server sends heartbeats in multipoint mode
+//But the clients still need to update their timeout
 //Not random, just the straight timeout
 void setHeartbeatMultipoint()
 {
