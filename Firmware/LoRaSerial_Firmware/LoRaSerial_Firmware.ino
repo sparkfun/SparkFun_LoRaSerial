@@ -64,7 +64,7 @@ const int FIRMWARE_VERSION_MINOR = 0;
 #define UNIQUE_ID_BYTES 16  //Number of bytes in the unique ID
 
 //Frame lengths
-#define MP_HEARTBEAT_BYTES      1 //Number of data bytes in the MP_HEARTBEAT frame
+#define MP_HEARTBEAT_BYTES      0 //Number of data bytes in the MP_HEARTBEAT frame
 #define P2P_FIND_PARTNER_BYTES  sizeof(unsigned long) //Number of data bytes in the FIND_PARTNER frame
 #define P2P_SYNC_CLOCKS_BYTES   (sizeof(uint8_t) + sizeof(unsigned long)) //Number of data bytes in the SYNC_CLOCKS frame
 #define P2P_ZERO_ACKS_BYTES     sizeof(unsigned long) //Number of data bytes in the ZERO_ACKS frame

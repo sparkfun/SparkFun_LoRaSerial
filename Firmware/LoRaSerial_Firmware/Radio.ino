@@ -1124,9 +1124,6 @@ bool xmitDatagramMpHeartbeat()
 
   startOfData = endOfTxData;
 
-  memcpy(endOfTxData, &channelNumber, sizeof(channelNumber));
-  endOfTxData += sizeof(channelNumber);
-
   /*
                                     endOfTxData ---.
                                                    |

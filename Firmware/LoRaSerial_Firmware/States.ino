@@ -1089,7 +1089,8 @@ void updateRadioState()
             if (!settings.server)
             {
               //Change to the server's channel number
-              channelNumber = rxVcData[0];
+              channelNumber = rxData[0];
+              setRadioFrequency(false);
 
               //Update the timestamp
               COMPUTE_TIMESTAMP_OFFSET(rxData + 1, 0, txSyncClocksUsec);
