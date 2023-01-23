@@ -312,17 +312,14 @@ void systemReset()
 }
 
 //Display any debug serial data and then loop forever
-void waitForever()
+void waitForever(const char * errorMessage)
 {
-  //Output the remaining serial data
-  outputSerialData(true);
-
-  //Empty the USB serial device
-  systemFlush();
-
   //Wait forever
   while (1)
+  {
     petWDT();
+    blinkErrorLed(errorMessage);
+  }
 }
 
 //Encrypt a given array in place
@@ -886,6 +883,38 @@ void blinkChannelHopLed(bool on)
   }
 }
 
+//Blink the error LED
+void blinkErrorLed(const char * errorMessage)
+{
+  uint32_t currentMillis;
+  static uint32_t lastToggleMillis;
+  static uint8_t flashCount;
+
+#define ERROR_FLASHS_PER_SECOND       10
+#define DELAY_BETWEEN_MESSAGES_SECS   15
+
+  //Ouptut the error message on a regular interval
+  if (!flashCount)
+  {
+    flashCount = DELAY_BETWEEN_MESSAGES_SECS * (ERROR_FLASHS_PER_SECOND << 1);
+    if (errorMessage)
+    {
+      systemPrintln(errorMessage);
+      outputSerialData(true);
+    }
+  }
+
+  //Determine if it is time to toggle the error LED
+  currentMillis = millis();
+  if ((currentMillis - lastToggleMillis) >= (1000 / (ERROR_FLASHS_PER_SECOND << 1)))
+  {
+    //Toggle the error LED
+    lastToggleMillis = currentMillis;
+    digitalWrite(YELLOW_LED, !digitalRead(YELLOW_LED));
+    flashCount -= 1;
+  }
+}
+
 //Display the multi-point LED pattern
 void multiPointLeds()
 {
@@ -1173,39 +1202,44 @@ int16_t getReceiveCompletionOffset()
 }
 
 //Verify the VC_STATE_TYPE enums against the vcStateNames table
-bool verifyVcStateNames()
+const char * verifyVcStateNames()
 {
   bool valid;
 
   //Verify the length of the vcStateNames table
   valid = (VC_STATE_MAX == (sizeof(vcStateNames) / sizeof(vcStateNames[0])));
   if (!valid)
-    systemPrintln("ERROR: Fix difference between VC_STATE_TYPE and vcStateNames");
-  return valid;
+    return "ERROR: Fix difference between VC_STATE_TYPE and vcStateNames";
+  return NULL;
 }
 
 //Verify the enums .vs. name tables, stop on failure to force software fix
 void verifyTables()
 {
-  bool valid;
+  const char * errorMessage;
 
-  valid = true;
-
-  //Verify that the state table contains all of the states in increasing order
-  valid &= verifyRadioStateTable();
-
-  //Verify that the datagram type table contains all of the datagram types
-  valid &= verifyRadioDatagramType();
-
-  //Verify the VC state name table
-  valid &= verifyVcStateNames();
-
-  //Verify the RADIO_CALLS enum against the radioCallName
-  valid &= verifyRadioCallNames();
-
-  if (!valid)
+  do
   {
-    outputSerialData(true);
-    waitForever();
-  }
+    //Verify that the state table contains all of the states in increasing order
+    errorMessage = verifyRadioStateTable();
+    if (errorMessage)
+      break;
+
+    //Verify that the datagram type table contains all of the datagram types
+    errorMessage = verifyRadioDatagramType();
+    if (errorMessage)
+      break;
+
+    //Verify the VC state name table
+    errorMessage = verifyVcStateNames();
+    if (errorMessage)
+      break;
+
+    //Verify the RADIO_CALLS enum against the radioCallName
+    errorMessage = verifyRadioCallNames();
+  } while (0);
+
+  //Handle the error
+  if (errorMessage)
+    waitForever(errorMessage);
 }

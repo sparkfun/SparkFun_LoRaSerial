@@ -459,7 +459,7 @@ void generateHopTable()
   {
     systemPrint("ERROR - Wrong AES IV size in bytes, please set AES_IV_BYTES = ");
     systemPrintln(gcm.ivSize());
-    waitForever();
+    waitForever("ERROR - Fix the AES_IV_BYTES value!");
   }
 
   //Verify the AES key length
@@ -467,7 +467,7 @@ void generateHopTable()
   {
     systemPrint("ERROR - Wrong AES key size in bytes, please set AES_KEY_BYTES = ");
     systemPrintln(gcm.keySize());
-    waitForever();
+    waitForever("ERROR - Fix the AES_KEY_BYTES value!");
   }
 
   //Set new initial values for AES using settings based random seed
@@ -861,11 +861,7 @@ bool xmitDatagramP2PFindPartner()
 
   //Verify the data length
   if ((endOfTxData - startOfData) != P2P_FIND_PARTNER_BYTES)
-  {
-    systemPrintln("ERROR - Fix the P2P_FIND_PARTNER_BYTES value!");
-    outputSerialData(true);
-    waitForever();
-  }
+    waitForever("ERROR - Fix the P2P_FIND_PARTNER_BYTES value!");
 
   txControl.datagramType = DATAGRAM_FIND_PARTNER;
   return (transmitDatagram());
@@ -903,11 +899,7 @@ bool xmitDatagramP2PSyncClocks()
 
   //Verify the data length
   if ((endOfTxData - startOfData) != P2P_SYNC_CLOCKS_BYTES)
-  {
-    systemPrintln("ERROR - Fix the P2P_SYNC_CLOCKS_BYTES value!");
-    outputSerialData(true);
-    waitForever();
-  }
+    waitForever("ERROR - Fix the P2P_SYNC_CLOCKS_BYTES value!");
 
   txControl.datagramType = DATAGRAM_SYNC_CLOCKS;
   return (transmitDatagram());
@@ -938,11 +930,7 @@ bool xmitDatagramP2PZeroAcks()
 
   //Verify the data length
   if ((endOfTxData - startOfData) != P2P_ZERO_ACKS_BYTES)
-  {
-    systemPrintln("ERROR - Fix the P2P_ZERO_ACKS_BYTES value!");
-    outputSerialData(true);
-    waitForever();
-  }
+    waitForever("ERROR - Fix the P2P_ZERO_ACKS_BYTES value!");
 
   txControl.datagramType = DATAGRAM_ZERO_ACKS;
   return (transmitDatagram());
@@ -1037,11 +1025,7 @@ bool xmitDatagramP2PHeartbeat()
 
   //Verify the data length
   if ((endOfTxData - startOfData) != P2P_HEARTBEAT_BYTES)
-  {
-    systemPrintln("ERROR - Fix the P2P_HEARTBEAT_BYTES value!");
-    outputSerialData(true);
-    waitForever();
-  }
+    waitForever("ERROR - Fix the P2P_HEARTBEAT_BYTES value!");
 
   txControl.datagramType = DATAGRAM_HEARTBEAT;
   return (transmitDatagram());
@@ -1072,11 +1056,7 @@ bool xmitDatagramP2PAck()
 
   //Verify the data length
   if ((endOfTxData - startOfData) != P2P_ACK_BYTES)
-  {
-    systemPrintln("ERROR - Fix the P2P_ACK_BYTES value!");
-    outputSerialData(true);
-    waitForever();
-  }
+    waitForever("ERROR - Fix the P2P_ACK_BYTES value!");
 
   txControl.datagramType = DATAGRAM_DATA_ACK;
   return (transmitDatagram());
@@ -1128,11 +1108,7 @@ bool xmitDatagramMpHeartbeat()
 
   //Verify the data length
   if ((endOfTxData - startOfData) != MP_HEARTBEAT_BYTES)
-  {
-    systemPrintln("ERROR - Fix the MP_HEARTBEAT_BYTES value!");
-    outputSerialData(true);
-    waitForever();
-  }
+    waitForever("ERROR - Fix the MP_HEARTBEAT_BYTES value!");
 
   txControl.datagramType = DATAGRAM_HEARTBEAT;
   return (transmitDatagram());
@@ -1402,11 +1378,7 @@ bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
 
   //Verify the data length
   if ((endOfTxData - startOfData) != VC_HEARTBEAT_BYTES)
-  {
-    systemPrintln("ERROR - Fix the VC_HEARTBEAT_BYTES value!");
-    outputSerialData(true);
-    waitForever();
-  }
+    waitForever("ERROR - Fix the VC_HEARTBEAT_BYTES value!");
 
   txControl.datagramType = DATAGRAM_VC_HEARTBEAT;
   txControl.ackNumber = 0;
@@ -3641,14 +3613,14 @@ const I16_TO_STRING radioCallName[] =
 };
 
 //Verify the RADIO_CALLS enum against the radioCallName
-bool verifyRadioCallNames()
+const char * verifyRadioCallNames()
 {
   bool valid;
 
   valid = ((sizeof(radioCallName) / sizeof(radioCallName[0])) == RADIO_CALL_MAX);
   if (!valid)
-    systemPrintln("ERROR - Please update the radioCallName");
-  return valid;
+    return "ERROR - Please update the radioCallName";
+  return NULL;
 }
 
 //Convert a radio call value into a string, return NULL if not found

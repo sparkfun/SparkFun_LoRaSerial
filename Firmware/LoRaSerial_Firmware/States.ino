@@ -79,7 +79,7 @@ void updateRadioState()
       {
         systemPrint("Unknown state: ");
         systemPrintln(radioState);
-        waitForever();
+        waitForever("ERROR - Unknown radio state!");
       }
       break;
 
@@ -2364,7 +2364,7 @@ bool isMultiPointSync()
 }
 
 //Verify the radio state definitions against the radioStateTable
-bool verifyRadioStateTable()
+const char * verifyRadioStateTable()
 {
   int expectedState;
   unsigned int i;
@@ -2375,10 +2375,8 @@ bool verifyRadioStateTable()
   int * order;
   unsigned int tableEntries;
   int temp;
-  int valid;
 
   //Verify that all the entries are in the state table
-  valid = true;
   tableEntries = sizeof(radioStateTable) / sizeof(radioStateTable[0]);
   for (index = 0; index < tableEntries; index++)
   {
@@ -2394,10 +2392,7 @@ bool verifyRadioStateTable()
     //Try to build a valid table
     order = (int *)malloc(tableEntries * sizeof(*order));
     if (!order)
-    {
-      systemPrintln("ERROR - Failed to allocate the order table from the heap!");
-      waitForever();
-    }
+      waitForever("ERROR - Failed to allocate the order table from the heap!");
 
     //Assume the table is in the correct order
     maxDescriptionLength = 0;
@@ -2532,20 +2527,20 @@ bool verifyRadioStateTable()
       systemPrintln(expectedState++);
     }
     systemPrintln("};");
-    valid = false;
+    return "ERROR - Please update the radioStateTable";
   }
-  return valid;
+  return NULL;
 }
 
 //Verify the PacketType enums against the radioDatagramType
-bool verifyRadioDatagramType()
+const char * verifyRadioDatagramType()
 {
   bool valid;
 
   valid = ((sizeof(radioDatagramType) / sizeof(radioDatagramType[0])) == MAX_DATAGRAM_TYPE);
   if (!valid)
-    systemPrintln("ERROR - Please update the radioDatagramTable");
-  return valid;
+    return "ERROR - Please update the radioDatagramTable";
+  return NULL;
 }
 
 //Change states and print the new state
