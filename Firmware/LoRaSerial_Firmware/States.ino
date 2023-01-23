@@ -1278,6 +1278,8 @@ void updateRadioState()
 
             lastPacketReceived = millis(); //Update timestamp for Link LED
 
+            setHeartbeatMultipoint(); //We're sync'd so reset heartbeat timer
+
             blinkHeartbeatLed(true);
             changeState(RADIO_MP_STANDBY);
             break;
