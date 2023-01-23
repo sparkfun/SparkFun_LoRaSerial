@@ -1269,9 +1269,6 @@ void updateRadioState()
                 systemPrint("HEARTBEAT TX mSec: ");
                 systemPrintln(frameAirTime);
               }
-
-              //Move to this new channel
-              channelNumber = rxData[0];
             }
 
             //Received heartbeat - do not ack.
