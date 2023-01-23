@@ -1339,8 +1339,8 @@ void updateRadioState()
             {
               systemPrintln("HEARTBEAT Timeout");
               outputSerialData(true);
+              dumpClockSynchronization();
             }
-            dumpClockSynchronization();
             changeState(RADIO_DISCOVER_BEGIN);
           }
         }
