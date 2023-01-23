@@ -74,7 +74,7 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   //    State                           RX      Name                              Description
   {RADIO_DISCOVER_BEGIN,                 0, "DISCOVER_BEGIN",                 "Disc: Setup for scanning"},                  // 9
   {RADIO_DISCOVER_SCANNING,              0, "DISCOVER_SCANNING",              "Disc: Scanning for servers"},                //10
-  {RADIO_DISCOVER_WAIT_TX_FIND_PARTNER_DONE,0,"DISCOVER_WAIT_TX_FIND_PARTNER_DONE","Disc: Wait for FIND_PARTNER to xmit"},  //11
+  {RADIO_DISCOVER_WAIT_TX_FIND_PARTNER_DONE, 0, "DISCOVER_WAIT_TX_FIND_PARTNER_DONE", "Disc: Wait for FIND_PARTNER to xmit"}, //11
 
   //Multi-Point data exchange
   //    State                           RX      Name                              Description
@@ -83,14 +83,14 @@ const RADIO_STATE_ENTRY radioStateTable[] =
 
   //Training client states
   //    State                           RX      Name                              Description
-  {RADIO_TRAIN_WAIT_TX_FIND_PARTNER_DONE,0, "TRAIN_WAIT_TX_FIND_PARTNER_DONE","Train: Wait TX training FIND_PARTNER done"}, //14
+  {RADIO_TRAIN_WAIT_TX_FIND_PARTNER_DONE, 0, "TRAIN_WAIT_TX_FIND_PARTNER_DONE", "Train: Wait TX training FIND_PARTNER done"}, //14
   {RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS, 1, "TRAIN_WAIT_RX_RADIO_PARAMETERS", "Train: Wait for radio parameters"},          //15
   {RADIO_TRAIN_WAIT_TX_PARAM_ACK_DONE,   0, "TRAIN_WAIT_TX_PARAM_ACK_DONE",   "Train: Wait for TX param ACK done"},         //16
 
   //Training server states
   //    State                           RX      Name                              Description
   {RADIO_TRAIN_WAIT_FOR_FIND_PARTNER,    1, "TRAIN_WAIT_FOR_FIND_PARTNER",    "Train: Wait for training FIND_PARTNER"}, //17
-  {RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,0, "TRAIN_WAIT_TX_RADIO_PARAMS_DONE","Train: Wait for TX params done"},        //18
+  {RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE, 0, "TRAIN_WAIT_TX_RADIO_PARAMS_DONE", "Train: Wait for TX params done"},      //18
 
   //Virtual circuit states
   //    State                           RX      Name                              Description
@@ -242,6 +242,8 @@ enum
   TRIGGER_BAD_PACKET,
   TRIGGER_CHANNEL_TIMER_ISR,
   TRIGGER_CRC_ERROR,
+  TRIGGER_RECEIVE_IN_PROCESS,
+  TRIGGER_DUMMY_READ,
   TRIGGER_FREQ_CHANGE,
   TRIGGER_HANDSHAKE_COMPLETE,
   TRIGGER_HANDSHAKE_SEND_FIND_PARTNER_COMPLETE,
@@ -347,12 +349,12 @@ typedef struct _COMMAND_ENTRY
 typedef enum
 {
   LEDS_MULTIPOINT = 0,  // 0: Green1: RX, Green2: Sync, Green3: RSSI, Green4: TX
-                        //    Blue: Hop, Yellow: HEARTBEAT RX/TX
+  //    Blue: Hop, Yellow: HEARTBEAT RX/TX
   LEDS_P2P,         // 1: Green: RSSI, Blue: Serial TX, Yellow: Serial RX
   LEDS_VC,          // 2; Green1: RX, Green2: Sync, Green3: RSSI, Green4: TX
-                    //    Blue: Hop, Yellow: HEARTBEAT RX/TX
+  //    Blue: Hop, Yellow: HEARTBEAT RX/TX
   LEDS_RADIO_USE,   // 3: Green1: RX, Green2: Link, Green3: RSSI, Green4: TX
-                    //    Blue: Bad frames, Yellow: Bad CRC
+  //    Blue: Bad frames, Yellow: Bad CRC
   LEDS_RSSI,        // 4: Green: RSSI, Blue: Serial TX, Yellow: Serial RX
   LEDS_RESERVED_1,  // 5
   LEDS_RESERVED_2,  // 6

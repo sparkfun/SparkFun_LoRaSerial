@@ -581,18 +581,31 @@ unsigned long mSecToChannelZero()
 //Returns true if the radio indicates we have an ongoing reception
 bool receiveInProcess()
 {
-  //triggerEvent(TRIGGER_RECEIVE_IN_PROCESS_START);
-
   uint8_t radioStatus = radio.getModemStatus();
-  if (radioStatus & RECEIVE_IN_PROCESS_MASK)
-  {
-    //If any bits are set there is a receive in progress
-    if ((lastModemStatus & RECEIVE_IN_PROCESS_MASK) == 0)
-      lastReceiveInProcessTrue = millis();
+  radioStatus &= 0b11011; //Get bits 0, 1, 3, and 4
+
+  //Known states where a reception is in progress
+  if (radioStatus == 0b00001)
     return (true);
-  }
-  lastModemStatus = radioStatus;
-  return (false); //No receive in process
+  else if (radioStatus == 0b00011)
+    return (true);
+  else if (radioStatus == 0b01011)
+    return (true);
+
+//  switch (radioStatus)
+//  {
+//    default:
+//      Serial.print("Unknown status: 0b");
+//      Serial.println(radioStatus, BIN);
+//      break;
+//    case (0b00000):
+//      //No receive in process
+//    case (0b10000):
+//      //Modem clear. No receive in process
+//      break;
+//  }
+
+  return (false);
 }
 
 //Convert the user's requested dBm to what the radio should be set to, to hit that power level
@@ -1486,7 +1499,7 @@ bool xmitVcSyncAcks(int8_t destVc)
   vcHeader->srcVc = myVc;
   endOfTxData += VC_RADIO_HEADER_BYTES;
 
-  if(settings.debugSync)
+  if (settings.debugSync)
   {
     systemPrint("    channelNumber: ");
     systemPrintln(channelNumber);
@@ -2664,7 +2677,7 @@ bool transmitDatagram()
             systemPrint("TX msToNextHop: ");
             systemPrint(msToNextHop);
             systemPrintln(" mSec");
-          break;
+            break;
         }
       }
     } //ENABLE_DEVELOPER
@@ -3049,6 +3062,16 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
 
     if (state == RADIOLIB_ERR_NONE)
     {
+      if (receiveInProcess() == true)
+      {
+        //Edge case: if we have started TX, but during the SPI transaction a preamble was detected
+        //then return false. This will cause the radio to transmit, then a transactionComplete ISR will trigger.
+        //The state machine will then process what the radio receives. The received datagram will be corrupt,
+        //or it will be successful. Either way, the read will clear the RxDone bit within the SX1276.
+        triggerEvent(TRIGGER_RECEIVE_IN_PROCESS);
+        return (false);
+      }
+
       xmitTimeMillis = millis();
       triggerEvent(TRIGGER_TX_SPI_DONE);
       txSuccessMillis = xmitTimeMillis;
@@ -3095,7 +3118,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   //Compute the interval before a retransmission occurs in milliseconds,
   //this value increases with each transmission
   retransmitTimeout = random(ackAirTime, frameAirTime + ackAirTime)
-                    * (frameSentCount + 1) * 3 / 2;
+                      * (frameSentCount + 1) * 3 / 2;
 
   //BLink the TX LED
   blinkRadioTxLed(true);
@@ -3409,7 +3432,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
   clockSyncData[clockSyncIndex].lclHopTimeMsec = lclHopTimeMsec;
   clockSyncData[clockSyncIndex].timeToHop = timeToHop;
   clockSyncIndex += 1;
-  if(clockSyncIndex >= (sizeof(clockSyncData) / sizeof(CLOCK_SYNC_DATA)) ) clockSyncIndex = 0;
+  if (clockSyncIndex >= (sizeof(clockSyncData) / sizeof(CLOCK_SYNC_DATA)) ) clockSyncIndex = 0;
 
   //Restart the channel timer
   timeToHop = false;
@@ -3483,6 +3506,7 @@ void setHeartbeatLong()
 }
 
 //Only the server sends heartbeats in multipoint mode
+//But the clients still need to update their timeout
 //Not random, just the straight timeout
 void setHeartbeatMultipoint()
 {
@@ -3700,4 +3724,23 @@ void displayRadioCallHistory()
       systemPrintln();
     }
   petWDT();
+}
+
+//Read from radio to clear receiveInProcess bits
+void dummyRead()
+{
+  triggerEvent(TRIGGER_DUMMY_READ);
+  systemPrintln("Dummy read");
+
+  int state = radio.readData(incomingBuffer, MAX_PACKET_SIZE);
+
+  if (state != RADIOLIB_ERR_NONE)
+  {
+    if (settings.debug || settings.debugDatagrams || settings.debugReceive)
+    {
+      systemPrint("Receive error: ");
+      systemPrintln(state);
+      outputSerialData(true);
+    }
+  }
 }
