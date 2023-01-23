@@ -89,7 +89,7 @@ void petWDT()
 void beginChannelTimer()
 {
   if (channelTimer.attachInterruptInterval_MS(settings.maxDwellTime, channelTimerHandler) == false)
-    Serial.println("Error starting ChannelTimer!");
+    systemPrintln("Error starting ChannelTimer!");
 
   stopChannelTimer(); //Start timer in state machine - beginChannelTimer
 }
