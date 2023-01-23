@@ -582,11 +582,30 @@ unsigned long mSecToChannelZero()
 bool receiveInProcess()
 {
   uint8_t radioStatus = radio.getModemStatus();
+  radioStatus &= 0b11011; //Get bits 0, 1, 3, and 4
 
-  //If Modem Clear or RX On-going are set, no receive in process
-  if (radioStatus & 0b10100) //Check Modem Clear and RX On-going bits
-    return (false); //No receive in process
-  return (true);
+  //Known states where a reception is in progress
+  if (radioStatus == 0b00001)
+    return (true);
+  else if (radioStatus == 0b00011)
+    return (true);
+  else if (radioStatus == 0b01011)
+    return (true);
+
+//  switch (radioStatus)
+//  {
+//    default:
+//      Serial.print("Unknown status: 0b");
+//      Serial.println(radioStatus, BIN);
+//      break;
+//    case (0b00000):
+//      //No receive in process
+//    case (0b10000):
+//      //Modem clear. No receive in process
+//      break;
+//  }
+
+  return (false);
 }
 
 //Convert the user's requested dBm to what the radio should be set to, to hit that power level
