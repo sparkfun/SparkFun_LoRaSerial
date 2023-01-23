@@ -1263,8 +1263,11 @@ void updateRadioState()
 
               //Adjust freq hop ISR based on server's remaining clock
               syncChannelTimer(txHeartbeatUsec);
-              systemPrint("HEARTBEAT TX mSec: ");
-              systemPrintln(frameAirTime);
+              if (settings.debugSync)
+              {
+                systemPrint("HEARTBEAT TX mSec: ");
+                systemPrintln(frameAirTime);
+              }
 
               //Move to this new channel
               channelNumber = rxData[0];
