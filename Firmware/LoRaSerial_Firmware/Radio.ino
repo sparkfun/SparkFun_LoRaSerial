@@ -583,25 +583,10 @@ bool receiveInProcess()
 {
   uint8_t radioStatus = radio.getModemStatus();
 
-  //If any bits are set there is a receive in process
-  if (radioStatus & RECEIVE_IN_PROCESS_MASK)
-  {
-    if ((lastModemStatus & RECEIVE_IN_PROCESS_MASK) == 0)
-      lastReceiveInProcessTrue = millis();
-
-    if (millis() - lastReceiveInProcessTrue > maxPacketAirTime)
-    {
-      //We received valid header, with a packet that never completed
-      //or we received a preamble that ended, with a packet that never completed
-      //or we received the start of a preamble that never ended
-      dummyRead();
-    }
-
-    return (true);
-  }
-
-  lastModemStatus = radioStatus;
-  return (false); //No receive in process
+  //If Modem Clear or RX On-going are set, no receive in process
+  if (radioStatus & 0b10100) //Check Modem Clear and RX On-going bits
+    return (false); //No receive in process
+  return (true);
 }
 
 //Convert the user's requested dBm to what the radio should be set to, to hit that power level
