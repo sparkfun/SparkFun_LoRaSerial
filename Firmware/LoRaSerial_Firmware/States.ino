@@ -2587,7 +2587,7 @@ void displayState(RadioStates newState)
       systemPrint(radioStateTable[radioState].name);
   }
 
-  if (newState == RADIO_P2P_LINK_UP)
+  if (newState == RADIO_P2P_LINK_UP || newState == RADIO_MP_STANDBY)
   {
     unsigned int seconds = (millis() - lastLinkUpTime) / 1000;
     unsigned int minutes = seconds / 60;
