@@ -17,6 +17,10 @@
 //
 //    0 - Data communications
 //    1 - Remote commands
+//    2 - 3rd party commands
+//    3 - Reserved
+//    4 - Reserved
+//    5 - 3rd Party PC responses
 //    6 - Remote responses
 //    7 - Special virtual circuits
 
@@ -46,8 +50,10 @@
 //As a result, any host may send commands to any other host!
 #define MIN_RX_NOT_ALLOWED  VC_RSVD_SPECIAL_VCS
 #define PC_REMOTE_RESPONSE  ((int8_t)(6 << VCAB_NUMBER_BITS))
-//Address spaces 2 - 5 are not currently defined
-#define MIN_TX_NOT_ALLOWED  ((int8_t)(2 << VCAB_NUMBER_BITS)) //Marker only
+#define THIRD_PARTY_RESP    ((int8_t)(5 << VCAB_NUMBER_BITS))
+//Address spaces 3 - 4 are not currently defined
+#define MIN_TX_NOT_ALLOWED  ((int8_t)(3 << VCAB_NUMBER_BITS)) //Marker only
+#define THIRD_PARTY_COMMAND ((int8_t)(2 << VCAB_NUMBER_BITS))
 #define PC_REMOTE_COMMAND   ((int8_t)(1 << VCAB_NUMBER_BITS))
 
 //Field offsets in the VC HEARTBEAT frame
