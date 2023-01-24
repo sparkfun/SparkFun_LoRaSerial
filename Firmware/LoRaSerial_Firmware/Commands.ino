@@ -113,6 +113,7 @@ bool commandAT(const char * commandString)
         timer = millis();
         while ((millis() - timer) < ((VC_LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout))
           petWDT();
+        changeState(RADIO_RESET);
 
         //Display the end of the delay
         systemPrintln("Delay done");
