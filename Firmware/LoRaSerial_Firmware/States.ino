@@ -1259,17 +1259,8 @@ void updateRadioState()
           case DATAGRAM_HEARTBEAT:
             //Sync clock if server sent the heartbeat
             if (settings.server == false)
-            {
-              uint16_t frameAirTimeMsec;
-
               //Adjust freq hop ISR based on server's remaining clock
               syncChannelTimer(txHeartbeatUsec);
-              if (settings.debugSync)
-              {
-                systemPrint("HEARTBEAT TX mSec: ");
-                systemPrintln(frameAirTime);
-              }
-            }
 
             //Received heartbeat - do not ack.
             triggerEvent(TRIGGER_RX_HEARTBEAT);
