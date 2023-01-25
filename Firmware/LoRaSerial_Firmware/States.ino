@@ -1027,6 +1027,9 @@ void updateRadioState()
       multipointChannelLoops = 0;
       multipointAttempts = 0;
 
+      //Mark start time for uptime calculation
+      lastLinkUpTime = millis();
+
       triggerEvent(TRIGGER_MP_SCAN);
       changeState(RADIO_DISCOVER_SCANNING);
       break;
