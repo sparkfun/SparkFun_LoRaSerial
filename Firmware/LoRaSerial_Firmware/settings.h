@@ -396,7 +396,7 @@ typedef struct struct_settings {
   bool encryptData = true; //AES encrypt each packet
   uint8_t encryptionKey[AES_KEY_BYTES] = { 0x37, 0x78, 0x21, 0x41, 0xA6, 0x65, 0x73, 0x4E, 0x44, 0x75, 0x67, 0x2A, 0xE6, 0x30, 0x83, 0x08 };
   bool dataScrambling = false; //Use IBM Data Whitening to reduce DC bias
-#if defined(ENABLE_DEVELOPER)
+#if (ENABLE_DEVELOPER == true)
 #define TX_POWER_DB     14
 #else   //ENABLE_DEVELOPER
 #define TX_POWER_DB     30
@@ -424,7 +424,7 @@ typedef struct struct_settings {
   bool debugRadio = false; //Print radio info
   bool debugStates = false; //Print state changes
   bool debugTraining = false; //Print training info
-#if defined(ENABLE_DEVELOPER)
+#if (ENABLE_DEVELOPER == true)
 #define WAIT_SERIAL_DEFAULT     true
 #else   //ENABLE_DEVELOPER
 #define WAIT_SERIAL_DEFAULT     false
