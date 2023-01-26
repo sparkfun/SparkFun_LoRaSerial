@@ -1179,6 +1179,7 @@ int16_t getReceiveCompletionOffset()
   switch (settings.airSpeed)
   {
     default:
+      return (0);
       break;
     case (40):
       return (26); //Tsym: 32. Measured: 26 ms between a TX complete and the RX complete
