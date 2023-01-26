@@ -592,18 +592,18 @@ bool receiveInProcess()
   else if (radioStatus == 0b01011)
     return (true);
 
-//  switch (radioStatus)
-//  {
-//    default:
-//      Serial.print("Unknown status: 0b");
-//      Serial.println(radioStatus, BIN);
-//      break;
-//    case (0b00000):
-//      //No receive in process
-//    case (0b10000):
-//      //Modem clear. No receive in process
-//      break;
-//  }
+  //  switch (radioStatus)
+  //  {
+  //    default:
+  //      Serial.print("Unknown status: 0b");
+  //      Serial.println(radioStatus, BIN);
+  //      break;
+  //    case (0b00000):
+  //      //No receive in process
+  //    case (0b10000):
+  //      //Modem clear. No receive in process
+  //      break;
+  //  }
 
   return (false);
 }
@@ -3462,7 +3462,7 @@ void setHeartbeatShort()
 
   //Slow datarates can have significant ack transmission times
   //Add the amount of time it takes to send an ack
-  heartbeatRandomTime += frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset();
+  heartbeatRandomTime += (txHeartbeatUsec / 1000) + (txDataAckUsec / 1000) + settings.overheadTime + getReceiveCompletionOffset();
 }
 
 void setHeartbeatLong()
@@ -3474,7 +3474,7 @@ void setHeartbeatLong()
 
   //Slow datarates can have significant ack transmission times
   //Add the amount of time it takes to send an ack
-  heartbeatRandomTime += frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset();
+  heartbeatRandomTime += (txHeartbeatUsec / 1000) + (txDataAckUsec / 1000) + settings.overheadTime + getReceiveCompletionOffset();
 }
 
 //Only the server sends heartbeats in multipoint mode
@@ -3487,9 +3487,8 @@ void setHeartbeatMultipoint()
 
   heartbeatRandomTime = settings.heartbeatTimeout;
 
-  //Slow datarates can have significant ack transmission times
-  //Add the amount of time it takes to send an ack
-  heartbeatRandomTime += frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset();
+  //MP does not use acks
+  heartbeatRandomTime += (txHeartbeatUsec / 1000) + settings.overheadTime + getReceiveCompletionOffset();
 }
 
 //Determine the delay for the next VC HEARTBEAT
