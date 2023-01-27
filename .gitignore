@@ -8,6 +8,7 @@ ehthumbs.db
 *.l#?
 *.lck
 .vscode/*
+/Firmware/LoRaSerial_Firmware/.vscode/*
 /Firmware/build/*
 
 # Folder config file
