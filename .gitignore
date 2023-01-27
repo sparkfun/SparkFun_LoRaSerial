@@ -7,6 +7,8 @@ ehthumbs.db
 *.b#?
 *.l#?
 *.lck
+.vscode/*
+/Firmware/build/*
 
 # Folder config file
 Desktop.ini
