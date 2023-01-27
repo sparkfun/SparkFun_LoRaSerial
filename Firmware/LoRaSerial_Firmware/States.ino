@@ -2646,36 +2646,39 @@ void displayRadioStateHistory()
 //Dump the clock synchronization data
 void dumpClockSynchronization()
 {
-  //Dump the clock sync data
-  petWDT();
-  for (uint8_t x = 0; x < (sizeof(clockSyncData) / sizeof(clockSyncData[0])); x++)
+  if (settings.debugSync)
   {
-    uint8_t index = (x + clockSyncIndex) % (sizeof(clockSyncData) / sizeof(clockSyncData[0]));
-    if (clockSyncData[index].frameAirTimeMsec)
+    //Dump the clock sync data
+    petWDT();
+    for (uint8_t x = 0; x < (sizeof(clockSyncData) / sizeof(clockSyncData[0])); x++)
     {
-      systemPrint("Lcl: ");
-      systemPrint(clockSyncData[index].lclHopTimeMsec);
-      systemPrint(", Rmt: ");
-      systemPrint(clockSyncData[index].msToNextHopRemote);
-      systemPrint(" - ");
-      systemPrint(clockSyncData[index].frameAirTimeMsec);
-      systemPrint(" = ");
-      systemPrint(clockSyncData[index].msToNextHopRemote - clockSyncData[index].frameAirTimeMsec);
-      systemPrint(" + ");
-      systemPrint(clockSyncData[index].adjustment);
-      systemPrint(" = ");
-      systemPrint(clockSyncData[index].msToNextHop);
-      systemPrint(" msToNextHop");
-      if (clockSyncData[index].delayedHopCount)
+      uint8_t index = (x + clockSyncIndex) % (sizeof(clockSyncData) / sizeof(clockSyncData[0]));
+      if (clockSyncData[index].frameAirTimeMsec)
       {
-        systemPrint(", timeToHop: ");
-        systemPrint(clockSyncData[index].timeToHop);
-        systemPrint(", Hops: ");
-        systemPrint(clockSyncData[index].delayedHopCount);
+        systemPrint("Lcl: ");
+        systemPrint(clockSyncData[index].lclHopTimeMsec);
+        systemPrint(", Rmt: ");
+        systemPrint(clockSyncData[index].msToNextHopRemote);
+        systemPrint(" - ");
+        systemPrint(clockSyncData[index].frameAirTimeMsec);
+        systemPrint(" = ");
+        systemPrint(clockSyncData[index].msToNextHopRemote - clockSyncData[index].frameAirTimeMsec);
+        systemPrint(" + ");
+        systemPrint(clockSyncData[index].adjustment);
+        systemPrint(" = ");
+        systemPrint(clockSyncData[index].msToNextHop);
+        systemPrint(" msToNextHop");
+        if (clockSyncData[index].delayedHopCount)
+        {
+          systemPrint(", timeToHop: ");
+          systemPrint(clockSyncData[index].timeToHop);
+          systemPrint(", Hops: ");
+          systemPrint(clockSyncData[index].delayedHopCount);
+        }
+        systemPrintln();
+        outputSerialData(true);
+        petWDT();
       }
-      systemPrintln();
-      outputSerialData(true);
-      petWDT();
     }
   }
 }
