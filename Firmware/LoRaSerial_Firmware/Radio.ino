@@ -3218,7 +3218,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
   int8_t delayedHopCount;
   uint16_t frameAirTimeMsec;
   int16_t lclHopTimeMsec;
-  uint16_t msToNextHop;
+  int16_t msToNextHop;
   int16_t rmtHopTimeMsec;
 
   currentMillis = millis();
