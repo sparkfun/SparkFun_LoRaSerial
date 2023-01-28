@@ -259,6 +259,7 @@ void returnToReceiving()
 }
 
 //Given spread factor, bandwidth, coding rate and number of bytes, return total Air Time in ms for packet
+//See datasheet for the nPayload formula / section 4.1.1.6
 float calcAirTimeUsec(uint8_t bytesToSend)
 {
   radioCallHistory[RADIO_CALL_calcAirTimeUsec] = millis();
@@ -268,9 +269,20 @@ float calcAirTimeUsec(uint8_t bytesToSend)
   //See Synchronization section
   float tPreambleUsec = (settings.radioPreambleLength + 2 + 2.25) * tSymUsec;
 
-  // Rb = SF * (1 / ((2^SF) / B) = (SF * B) / 2^SF bit rate
-  //
-  float p1 = (8 * bytesToSend - 4 * settings.radioSpreadFactor + 28 + 16 * 1 - 20 * 0) / (4.0 * (settings.radioSpreadFactor - 2 * 0));
+  const uint8_t useHardwareCRC = 1; //0 to disable
+
+  //With SF = 6 selected, implicit header mode is the only mode of operation possible.
+  uint8_t explicitHeader = 0; //1 for implicit header
+  if(settings.radioSpreadFactor == 6) explicitHeader = 1;
+  
+  //LowDataRateOptimize increases the robustness of the LoRa link at low effective data rates. Its use is mandated when the symbol duration exceeds 16ms.
+  uint8_t useLowDataRateOptimization = 0; //0 to disable.
+
+  //We choose to enable LDRO for airSpeed of 400 even though TSym is 8.2ms.
+  if(settings.airSpeed <= 400 && settings.airSpeed >= 40) useLowDataRateOptimization = 1;
+  if(tSymUsec > 16000) useLowDataRateOptimization = 1; //Catch custom bandwidth/spread/coding setups
+  
+  float p1 = (8 * bytesToSend - 4 * settings.radioSpreadFactor + 28 + 16 * useHardwareCRC - 20 * explicitHeader) / (4.0 * (settings.radioSpreadFactor - 2 * useLowDataRateOptimization));
   p1 = ceil(p1) * settings.radioCodingRate;
   if (p1 < 0) p1 = 0;
   uint16_t payloadBytes = 8 + p1;
