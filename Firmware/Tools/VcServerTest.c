@@ -139,44 +139,74 @@ int stdinToRadio()
   int maxfds;
   int status;
   struct timeval timeout;
+  static int index;
 
   status = 0;
-  do
+  if (!waitingForCommandComplete)
   {
-    //Read the console input data into the local buffer.
-    bytesRead = read(STDIN, inputBuffer, INPUT_BUFFER_SIZE);
-    if (bytesRead < 0)
+    if (remoteVc == VC_COMMAND)
     {
-      perror("ERROR: Read from stdin failed!");
-      status = bytesRead;
-      break;
-    }
-
-    //Send this data over the VC
-    bytesSent = 0;
-    while (bytesSent < bytesRead)
-    {
-      //Break up the data if necessary
-      bytesToSend = bytesRead - bytesSent;
-      if (bytesToSend > MAX_MESSAGE_SIZE)
-        bytesToSend = MAX_MESSAGE_SIZE;
-
-      //Send the data
-      if (remoteVc == VC_COMMAND)
-        bytesWritten = cmdToRadio(&inputBuffer[bytesSent], bytesToSend);
-      else
-        bytesWritten = hostToRadio(remoteVc, &inputBuffer[bytesSent], bytesToSend);
-      if (bytesWritten < 0)
+      do
       {
-        perror("ERROR: Write to radio failed!");
-        status = bytesWritten;
-        break;
-      }
+        do
+        {
+          //Read the console input data into the local buffer.
+          bytesRead = read(STDIN, &inputBuffer[index], 1);
+          if (bytesRead < 0)
+          {
+            perror("ERROR: Read from stdin failed!");
+            status = bytesRead;
+            break;
+          }
+          index += bytesRead;
+        } while (bytesRead && (inputBuffer[index - bytesRead] != '\n'));
 
-      //Account for the bytes written
-      bytesSent += bytesWritten;
+        //Check for end of data
+        if (!bytesRead)
+          break;
+
+        //Send this command the VC
+        bytesWritten = cmdToRadio(inputBuffer, index);
+        waitingForCommandComplete = true;
+        remoteCommandVc = myVc;
+        index = 0;
+      } while (0);
     }
-  } while (0);
+    else
+      do
+      {
+        //Read the console input data into the local buffer.
+        bytesRead = read(STDIN, inputBuffer, BUFFER_SIZE);
+        if (bytesRead < 0)
+        {
+          perror("ERROR: Read from stdin failed!");
+          status = bytesRead;
+          break;
+        }
+
+        //Send this data over the VC
+        bytesSent = 0;
+        while (bytesSent < bytesRead)
+        {
+          //Break up the data if necessary
+          bytesToSend = bytesRead - bytesSent;
+          if (bytesToSend > MAX_MESSAGE_SIZE)
+            bytesToSend = MAX_MESSAGE_SIZE;
+
+          //Send the data
+          bytesWritten = hostToRadio(remoteVc, &inputBuffer[bytesSent], bytesToSend);
+          if (bytesWritten < 0)
+          {
+            perror("ERROR: Write to radio failed!");
+            status = bytesWritten;
+            break;
+          }
+
+          //Account for the bytes written
+          bytesSent += bytesWritten;
+        }
+      } while (0);
+  }
   return status;
 }
 
