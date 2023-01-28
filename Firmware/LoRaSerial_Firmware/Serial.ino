@@ -17,6 +17,8 @@ bool isCTS()
   return (digitalRead(pin_cts) == HIGH) ^ settings.invertCts;
 }
 
+#define NEXT_RX_TAIL(n)   ((rxTail + n) % sizeof(serialReceiveBuffer))
+
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Serial TX - Data being sent to the USB or serial port
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -73,6 +75,8 @@ uint16_t availableRadioTXBytes()
   if (radioTxHead >= radioTxTail) return (radioTxHead - radioTxTail);
   return (sizeof(radioTxBuffer) - radioTxTail + radioTxHead);
 }
+
+#define NEXT_RADIO_TX_HEAD(n)   ((radioTxHead + n) % sizeof(radioTxBuffer))
 
 //If we have data to send, get the packet ready
 //Return true if new data is ready to be sent
@@ -692,10 +696,10 @@ void vcProcessSerialInput()
     if (timeToHop == true) hopChannel();
 
     //Skip any garbage in the input stream
-    data = serialReceiveBuffer[rxTail++];
-    rxTail %= sizeof(radioTxBuffer);
+    data = serialReceiveBuffer[rxTail];
     if (data != START_OF_VC_SERIAL)
     {
+      rxTail = NEXT_RX_TAIL(1);
       if (settings.debugSerial)
       {
         systemPrint("vcProcessSerialInput discarding 0x");
@@ -711,8 +715,8 @@ void vcProcessSerialInput()
 
     //Get the virtual circuit header
     //The start byte has already been removed
-    length = serialReceiveBuffer[rxTail];
-    if (length <= VC_SERIAL_HEADER_BYTES)
+    length = serialReceiveBuffer[NEXT_RX_TAIL(1)];
+    if (length < VC_SERIAL_HEADER_BYTES)
     {
       if (settings.debugSerial)
       {
@@ -729,26 +733,17 @@ void vcProcessSerialInput()
       continue;
     }
 
-    //Skip if there is not enough data
-    if (dataBytes < length)
-    {
-      if (settings.debugSerial)
-      {
-        systemPrint("ERROR - Invalid length ");
-        systemPrint(length);
-        systemPrint(", discarding 0x");
-        systemPrint(data, HEX);
-        systemPrintln();
-        outputSerialData(true);
-      }
-      dataBytes = availableRXBytes();
-      continue;
-    }
+    //Skip if there is not enough data in the buffer
+    if (dataBytes < (length + 1))
+      break;
+
+    //Remove the START_OF_VC_SERIAL byte
+    rxTail = NEXT_RX_TAIL(1);
 
     //Get the source and destination virtual circuits
-    index = (rxTail + 1) % sizeof(serialReceiveBuffer);
+    index = NEXT_RX_TAIL(1);
     vcDest = serialReceiveBuffer[index];
-    index = (rxTail + 2) % sizeof(serialReceiveBuffer);
+    index = NEXT_RX_TAIL(2);
     vcSrc = serialReceiveBuffer[index];
 
     //Process this message
@@ -769,7 +764,7 @@ void vcProcessSerialInput()
           }
 
           //Discard this message
-          rxTail = (rxTail + length) % sizeof(radioTxBuffer);
+          rxTail = NEXT_RX_TAIL(length);
           break;
         }
 
@@ -785,7 +780,7 @@ void vcProcessSerialInput()
           }
 
           //Discard this message
-          rxTail = (rxTail + length) % sizeof(radioTxBuffer);
+          rxTail = NEXT_RX_TAIL(length + 1);
           break;
         }
 
@@ -801,9 +796,9 @@ void vcProcessSerialInput()
         //Place the data in radioTxBuffer
         for (; length > 0; length--)
         {
-          radioTxBuffer[radioTxHead++] = serialReceiveBuffer[rxTail++];
-          radioTxHead %= sizeof(radioTxBuffer);
-          rxTail %= sizeof(serialReceiveBuffer);
+          radioTxBuffer[radioTxHead] = serialReceiveBuffer[rxTail];
+          rxTail = NEXT_RX_TAIL(1);
+          radioTxHead = NEXT_RADIO_TX_HEAD(1);
         }
         break;
 
@@ -821,19 +816,19 @@ void vcProcessSerialInput()
           }
 
           //Discard this message
-          rxTail = (rxTail + length) % sizeof(radioTxBuffer);
+          rxTail = NEXT_RX_TAIL(length);
           break;
         }
 
         //Discard the VC header
         length -= VC_RADIO_HEADER_BYTES;
-        rxTail = (rxTail + VC_RADIO_HEADER_BYTES) % sizeof(radioTxBuffer);
+        rxTail = NEXT_RX_TAIL(VC_RADIO_HEADER_BYTES);
 
         //Move this message into the command buffer
         for (cmd = commandBuffer; length > 0; length--)
         {
-          *cmd++ = toupper(serialReceiveBuffer[rxTail++]);
-          rxTail %= sizeof(serialReceiveBuffer);
+          *cmd++ = toupper(serialReceiveBuffer[rxTail]);
+          rxTail = NEXT_RX_TAIL(1);
         }
         commandLength = cmd - commandBuffer;
 
