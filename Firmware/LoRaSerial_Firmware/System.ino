@@ -4,20 +4,8 @@ void systemPrint(const char* string)
   uint16_t length;
 
   length = strlen(string);
-  if (printerEndpoint == PRINT_TO_SERIAL)
-  {
-    for (uint16_t x = 0 ; x < length ; x++)
-      serialOutputByte(string[x]);
-  }
-  else if (printerEndpoint == PRINT_TO_RF)
-  {
-    //Move these characters into the transmit buffer
-    for (uint16_t x = 0 ; x < length ; x++)
-    {
-      commandTXBuffer[commandTXHead++] = string[x];
-      commandTXHead %= sizeof(commandTXBuffer);
-    }
-  }
+  for (uint16_t x = 0 ; x < length ; x++)
+    serialOutputByte(string[x]);
 }
 
 //Print a string with a carriage return and linefeed
