@@ -2731,6 +2731,10 @@ void enterLinkUp()
 
   //Bring up the link
   triggerEvent(TRIGGER_HANDSHAKE_COMPLETE);
+
+  //For very low airspeeds (150 and below) the hop timer will expire during the during handshake.
+  //Reset channel number to insure both radios are on same channel.
+  channelNumber = 0;
   hopChannel(); //Leave home
 
   //Synchronize the ACK numbers
