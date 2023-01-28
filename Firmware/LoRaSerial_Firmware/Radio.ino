@@ -3404,6 +3404,9 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
   //Compute the next hop time
   msToNextHop = rmtHopTimeMsec + adjustment;
 
+  //For low airspeeds multiple hops may occur resulting in a negative value
+  while(msToNextHop < 0) msToNextHop += settings.maxDwellTime;
+
   //When the ISR fires, reload the channel timer with settings.maxDwellTime
   reloadChannelTimer = true;
 
