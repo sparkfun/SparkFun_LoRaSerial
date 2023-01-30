@@ -64,7 +64,6 @@ bool configureRadio()
 
   //Precalculate the packet times
   ackAirTime = calcAirTimeMsec(headerBytes + CHANNEL_TIMER_BYTES + trailerBytes); //Used for response timeout during ACK
-  systemDescriptionAirTime = calcAirTimeMsec(headerBytes + P2P_SYNC_CLOCKS_BYTES + trailerBytes); //Used for response timeout during 3-way handshake
   maxPacketAirTime = calcAirTimeMsec(MAX_PACKET_SIZE);
 
   if ((settings.debug == true) || (settings.debugRadio == true))
