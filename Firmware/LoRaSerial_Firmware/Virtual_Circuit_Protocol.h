@@ -42,6 +42,7 @@
 #define PC_DATA_ACK         (PC_LINK_STATUS + 1)//Indicate data delivery success
 #define PC_DATA_NACK        (PC_DATA_ACK + 1)   //Indicate data delivery failure
 #define PC_SERIAL_RECONNECT (PC_DATA_NACK + 1)  //Disconnect/reconnect the serial port over LoRaSerial CPU reset
+#define PC_COMMAND_COMPLETE (PC_SERIAL_RECONNECT + 1)//Command complete
 
 //Address space 1 and 6 are reserved for the host PC interface to support remote
 //command processing.  The radio removes these bits and converts them to the
@@ -162,8 +163,16 @@ typedef enum
 
 typedef struct _VC_DATA_ACK_NACK_MESSAGE
 {
-  uint8_t msgDestVc;      //message destination VC
+  uint8_t msgDestVc;      //Message destination VC
 } VC_DATA_ACK_NACK_MESSAGE;
+
+#define VC_CMD_SUCCESS        0
+#define VC_CMD_ERROR          1
+
+typedef struct _VC_COMMAND_COMPLETE_MESSAGE
+{
+  uint8_t cmdStatus;      //Command status
+} VC_COMMAND_COMPLETE_MESSAGE;
 
 //------------------------------------------------------------------------------
 // Macros

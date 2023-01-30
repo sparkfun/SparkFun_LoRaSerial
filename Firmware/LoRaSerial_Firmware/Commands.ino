@@ -808,6 +808,9 @@ void checkCommand()
   for (index = 0; index < commandLength; index++)
     commandString[index] = toupper(commandString[index]);
 
+  //Echo the command
+  systemPrintln(commandString);
+
   //Verify the command length
   if (commandLength >= 2)
   {
@@ -835,8 +838,8 @@ void checkCommand()
     reportOK();
   else
   {
-    systemPrintln(commandString);
     systemPrintln("ERROR");
+    commandComplete(false);
   }
   outputSerialData(true);
   petWDT();
@@ -848,6 +851,22 @@ void checkCommand()
 void reportOK()
 {
   systemPrintln("OK");
+  commandComplete(true);
+}
+
+void commandComplete(bool success)
+{
+  if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+  {
+    //Output the serial message header
+    systemWrite(START_OF_VC_SERIAL);
+    systemWrite(sizeof(VC_RADIO_MESSAGE_HEADER) + sizeof(VC_COMMAND_COMPLETE_MESSAGE));
+    systemWrite(PC_COMMAND_COMPLETE);
+    systemWrite(myVc);
+
+    //Output the command complete message
+    systemWrite(success ? VC_CMD_SUCCESS : VC_CMD_ERROR);
+  }
 }
 
 //Remove any preceeding or following whitespace chars
