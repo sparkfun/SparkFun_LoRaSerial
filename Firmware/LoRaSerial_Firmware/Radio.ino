@@ -100,12 +100,12 @@ bool configureRadio()
 }
 
 //Update the settings based upon the airSpeed value
-void convertAirSpeedToSettings()
+void convertAirSpeedToSettings(uint16_t airSpeed)
 {
   //Determine if we are using AirSpeed or custom settings
-  if (settings.airSpeed != 0)
+  if (airSpeed != 0)
   {
-    switch (settings.airSpeed)
+    switch (airSpeed)
     {
       case (0):
         //Custom settings - use settings without modification
@@ -164,7 +164,7 @@ void convertAirSpeedToSettings()
         if ((settings.debug == true) || (settings.debugRadio == true))
         {
           systemPrint("Unknown airSpeed: ");
-          systemPrintln(settings.airSpeed);
+          systemPrintln(airSpeed);
           outputSerialData(true);
         }
         break;

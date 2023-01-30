@@ -107,8 +107,6 @@ void updateRadioState()
         outputSerialData(true);
       }
 
-      convertAirSpeedToSettings(); //Update the settings based upon the air speed
-
       generateHopTable(); //Generate frequency table based on user settings.
 
       selectHeaderAndTrailerBytes(); //Determine the components of the frame header and trailer

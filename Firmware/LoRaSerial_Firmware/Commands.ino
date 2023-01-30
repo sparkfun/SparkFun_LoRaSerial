@@ -1082,8 +1082,13 @@ bool valSpeedAir (void * value, uint32_t valMin, uint32_t valMax)
            || (settingValue == 19200)
            || (settingValue == 28800)
            || (settingValue == 38400));
+  if (valid)
+  {
+    //Adjust the settings to match the requested airSpeed
+    convertAirSpeedToSettings(settingValue);
+  }
   if (valid && (settings.airSpeed == 0) && (settingValue != 0))
-    systemPrintln("Warning: AirSpeed override of bandwidth, spread factor, and coding rate");
+    systemPrintln("Warning: AirSpeed overrides bandwidth, spread factor, and coding rate");
   return valid;
 }
 
