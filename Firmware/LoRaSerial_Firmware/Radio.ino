@@ -64,7 +64,6 @@ bool configureRadio()
 
   //Precalculate the packet times
   ackAirTime = calcAirTimeMsec(headerBytes + CHANNEL_TIMER_BYTES + trailerBytes); //Used for response timeout during ACK
-  maxPacketAirTime = calcAirTimeMsec(MAX_PACKET_SIZE);
 
   if ((settings.debug == true) || (settings.debugRadio == true))
   {
@@ -421,7 +420,7 @@ float calcSymbolTimeMsec()
 //Given spread factor, bandwidth, coding rate and frame size, return most bytes we can push per second
 uint16_t calcMaxThroughput()
 {
-  uint8_t mostFramesPerSecond = 1000 / maxPacketAirTime;
+  uint8_t mostFramesPerSecond = 1000 / maxFrameAirTimeMsec;
   uint16_t mostBytesPerSecond = maxDatagramSize * mostFramesPerSecond;
 
   return (mostBytesPerSecond);
