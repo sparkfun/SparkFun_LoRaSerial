@@ -2916,9 +2916,6 @@ bool transmitDatagram()
   //Reset the buffer data pointer for the next transmit operation
   endOfTxData = &outgoingPacket[headerBytes];
 
-  //Compute the time needed for this frame. Part of ACK timeout.
-  frameAirTime = calcAirTimeMsec(txDatagramSize);
-
   //Transmit this datagram
   frameSentCount = 0; //This is the first time this frame is being sent
   return (retransmitDatagram(vc));
