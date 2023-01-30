@@ -1159,14 +1159,6 @@ void triggerFrequency(uint16_t frequency)
   digitalWrite(pin_trigger, HIGH);
 }
 
-//The difference between when a transmitter is finished and when the receiver is finished
-//is different between airSpeeds and affects things like ACK timeouts at lower airSpeeds
-//Offsets were found using a logic analyzer but it looks like (1 * Tsym) or calcSymbolTime()
-int16_t getReceiveCompletionOffset()
-{
-  return settings.txToRxUsec / 1000;
-}
-
 //Verify the VC_STATE_TYPE enums against the vcStateNames table
 const char * verifyVcStateNames()
 {
