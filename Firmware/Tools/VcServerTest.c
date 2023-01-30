@@ -16,6 +16,7 @@
 #define DEBUG_LOCAL_COMMANDS      0
 #define DEBUG_PC_TO_RADIO         0
 #define DEBUG_RADIO_TO_PC         0
+#define DISPLAY_COMMAND_COMPLETE  0
 #define DISPLAY_DATA_ACK          0
 #define DISPLAY_DATA_NACK         1
 #define DISPLAY_VC_STATE          0
@@ -27,6 +28,7 @@ typedef struct _VIRTUAL_CIRCUIT
   int vcState;
 } VIRTUAL_CIRCUIT;
 
+bool commandStatus;
 bool findMyVc;
 int myVc = VC_UNASSIGNED;
 int remoteVc;
@@ -34,6 +36,8 @@ uint8_t inputBuffer[INPUT_BUFFER_SIZE];
 uint8_t outputBuffer[VC_SERIAL_HEADER_BYTES + BUFFER_SIZE];
 int timeoutCount;
 VIRTUAL_CIRCUIT virtualCircuitList[MAX_VC];
+volatile bool waitingForCommandComplete;
+uint8_t remoteCommandVc;
 
 int cmdToRadio(uint8_t * buffer, int length)
 {
@@ -135,44 +139,74 @@ int stdinToRadio()
   int maxfds;
   int status;
   struct timeval timeout;
+  static int index;
 
   status = 0;
-  do
+  if (!waitingForCommandComplete)
   {
-    //Read the console input data into the local buffer.
-    bytesRead = read(STDIN, inputBuffer, INPUT_BUFFER_SIZE);
-    if (bytesRead < 0)
+    if (remoteVc == VC_COMMAND)
     {
-      perror("ERROR: Read from stdin failed!");
-      status = bytesRead;
-      break;
-    }
-
-    //Send this data over the VC
-    bytesSent = 0;
-    while (bytesSent < bytesRead)
-    {
-      //Break up the data if necessary
-      bytesToSend = bytesRead - bytesSent;
-      if (bytesToSend > MAX_MESSAGE_SIZE)
-        bytesToSend = MAX_MESSAGE_SIZE;
-
-      //Send the data
-      if (remoteVc == VC_COMMAND)
-        bytesWritten = cmdToRadio(&inputBuffer[bytesSent], bytesToSend);
-      else
-        bytesWritten = hostToRadio(remoteVc, &inputBuffer[bytesSent], bytesToSend);
-      if (bytesWritten < 0)
+      do
       {
-        perror("ERROR: Write to radio failed!");
-        status = bytesWritten;
-        break;
-      }
+        do
+        {
+          //Read the console input data into the local buffer.
+          bytesRead = read(STDIN, &inputBuffer[index], 1);
+          if (bytesRead < 0)
+          {
+            perror("ERROR: Read from stdin failed!");
+            status = bytesRead;
+            break;
+          }
+          index += bytesRead;
+        } while (bytesRead && (inputBuffer[index - bytesRead] != '\n'));
 
-      //Account for the bytes written
-      bytesSent += bytesWritten;
+        //Check for end of data
+        if (!bytesRead)
+          break;
+
+        //Send this command the VC
+        bytesWritten = cmdToRadio(inputBuffer, index);
+        waitingForCommandComplete = true;
+        remoteCommandVc = myVc;
+        index = 0;
+      } while (0);
     }
-  } while (0);
+    else
+      do
+      {
+        //Read the console input data into the local buffer.
+        bytesRead = read(STDIN, inputBuffer, BUFFER_SIZE);
+        if (bytesRead < 0)
+        {
+          perror("ERROR: Read from stdin failed!");
+          status = bytesRead;
+          break;
+        }
+
+        //Send this data over the VC
+        bytesSent = 0;
+        while (bytesSent < bytesRead)
+        {
+          //Break up the data if necessary
+          bytesToSend = bytesRead - bytesSent;
+          if (bytesToSend > MAX_MESSAGE_SIZE)
+            bytesToSend = MAX_MESSAGE_SIZE;
+
+          //Send the data
+          bytesWritten = hostToRadio(remoteVc, &inputBuffer[bytesSent], bytesToSend);
+          if (bytesWritten < 0)
+          {
+            perror("ERROR: Write to radio failed!");
+            status = bytesWritten;
+            break;
+          }
+
+          //Account for the bytes written
+          bytesSent += bytesWritten;
+        }
+      } while (0);
+  }
   return status;
 }
 
@@ -330,6 +364,14 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t length)
       printf("======= VC %d CONNECTED ======\n", srcVc);
     break;
   }
+
+  //Clear the waiting for command complete if the link fails
+  if (waitingForCommandComplete && (newState != VC_STATE_CONNECTED)
+    && (srcVc == remoteCommandVc))
+  {
+    commandStatus = VC_CMD_ERROR;
+    waitingForCommandComplete = false;
+  }
 }
 
 void radioDataAck(uint8_t * data, uint8_t length)
@@ -348,6 +390,18 @@ void radioDataNack(uint8_t * data, uint8_t length)
   vcMsg = (VC_DATA_ACK_NACK_MESSAGE *)data;
   if (DISPLAY_DATA_NACK)
     printf("NACK from VC %d\n", vcMsg->msgDestVc);
+}
+
+void radioCommandComplete(uint8_t srcVc, uint8_t * data, uint8_t length)
+{
+  VC_COMMAND_COMPLETE_MESSAGE * vcMsg;
+
+  vcMsg = (VC_COMMAND_COMPLETE_MESSAGE *)data;
+  if (DISPLAY_COMMAND_COMPLETE)
+    printf("Command complete from VC %d: %s\n", srcVc,
+           (vcMsg->cmdStatus == VC_CMD_SUCCESS) ? "OK" : "ERROR");
+  commandStatus = vcMsg->cmdStatus;
+  waitingForCommandComplete = false;
 }
 
 int radioToHost()
@@ -453,6 +507,10 @@ int radioToHost()
     //Display remote command response
     else if (header->radio.destVc == (PC_REMOTE_RESPONSE | myVc))
       status = hostToStdout(data, length);
+
+    //Display command completion status
+    else if (header->radio.destVc == PC_COMMAND_COMPLETE)
+      radioCommandComplete(header->radio.srcVc, data, length);
 
     //Display ACKs for transmitted messages
     else if (header->radio.destVc == PC_DATA_ACK)
