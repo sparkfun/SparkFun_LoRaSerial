@@ -888,13 +888,9 @@ void resetSerial()
   outputSerialData(true);
 
   //Determine the amount of time needed to receive a character
-  delayTime = 200;
-  if (settings.airSpeed)
-  {
-    delayTime = (1000 * 8 * 2) / settings.airSpeed;
-    if (delayTime < 200)
-      delayTime = 200;
-  }
+  delayTime = (1000 * 8 * 2) / settings.serialSpeed;
+  if (delayTime < 200)
+    delayTime = 200;
 
   //Enable RTS
   updateRTS(true);

@@ -1164,30 +1164,7 @@ void triggerFrequency(uint16_t frequency)
 //Offsets were found using a logic analyzer but it looks like (1 * Tsym) or calcSymbolTime()
 int16_t getReceiveCompletionOffset()
 {
-  switch (settings.airSpeed)
-  {
-    default:
-      return (0);
-      break;
-    case (40):
-      return (26); //Tsym: 32. Measured: 26 ms between a TX complete and the RX complete
-      break;
-    case (150):
-      return (12); //Tsym: 16
-      break;
-    case (400):
-      return (6); //Tsym: 8
-      break;
-    case (1200):
-      return (3); //Tsym: 4
-      break;
-    case (2400):
-      return (1); //Tsym: 2
-      break;
-    case (4800):
-      return (0); //Tsym: 1
-      break;
-  }
+  return settings.txToRxUsec / 1000;
 }
 
 //Verify the VC_STATE_TYPE enums against the vcStateNames table

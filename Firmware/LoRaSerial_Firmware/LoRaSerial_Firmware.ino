@@ -144,6 +144,8 @@ SX1276 radio = NULL; //We can't instantiate here because we don't yet know what 
 
 float *channels;
 uint8_t channelNumber = 0;
+uint32_t airSpeed;
+
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Encryption
