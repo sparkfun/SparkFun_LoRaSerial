@@ -3484,11 +3484,13 @@ void setHeartbeatShort()
   heartbeatTimer = millis();
   radioCallHistory[RADIO_CALL_setHeartbeatShort] = heartbeatTimer;
 
-  heartbeatRandomTime = random(settings.heartbeatTimeout * 2 / 10, settings.heartbeatTimeout / 2); //20-50%
+  //Ensure that the heartbeat can be received within the specified time
+  heartbeatRandomTime = settings.heartbeatTimeout;
+  heartbeatRandomTime -= (txHeartbeatUsec + txDataAckUsec + (2 * settings.txToRxUsec)) / 1000;
+  heartbeatRandomTime -= 2 * settings.overheadTime;
 
-  //Slow datarates can have significant ack transmission times
-  //Add the amount of time it takes to send an ack
-  heartbeatRandomTime += (txHeartbeatUsec / 1000) + (txDataAckUsec / 1000) + settings.overheadTime + getReceiveCompletionOffset();
+  //Determine the transmit interval
+  heartbeatRandomTime = random(heartbeatRandomTime * 2 / 10, heartbeatRandomTime / 2); //20-50%
 }
 
 void setHeartbeatLong()
@@ -3496,11 +3498,12 @@ void setHeartbeatLong()
   heartbeatTimer = millis();
   radioCallHistory[RADIO_CALL_setHeartbeatLong] = heartbeatTimer;
 
-  heartbeatRandomTime = random(settings.heartbeatTimeout * 8 / 10, settings.heartbeatTimeout); //80-100%
+  //Ensure that the heartbeat can be received within the specified time
+  heartbeatRandomTime = settings.heartbeatTimeout;
+  heartbeatRandomTime -= (txHeartbeatUsec + txDataAckUsec + (2 * settings.txToRxUsec)) / 1000;
+  heartbeatRandomTime -= 2 * settings.overheadTime;
 
-  //Slow datarates can have significant ack transmission times
-  //Add the amount of time it takes to send an ack
-  heartbeatRandomTime += (txHeartbeatUsec / 1000) + (txDataAckUsec / 1000) + settings.overheadTime + getReceiveCompletionOffset();
+  heartbeatRandomTime = random(heartbeatRandomTime * 8 / 10, heartbeatRandomTime); //80-100%
 }
 
 //Only the server sends heartbeats in multipoint mode
@@ -3511,10 +3514,11 @@ void setHeartbeatMultipoint()
   heartbeatTimer = millis();
   radioCallHistory[RADIO_CALL_setHeartbeatMultipoint] = heartbeatTimer;
 
-  heartbeatRandomTime = settings.heartbeatTimeout;
-
+  //Ensure that the heartbeat can be received within the specified time
   //MP does not use acks
-  heartbeatRandomTime += (txHeartbeatUsec / 1000) + settings.overheadTime + getReceiveCompletionOffset();
+  heartbeatRandomTime = settings.heartbeatTimeout;
+  heartbeatRandomTime -= (txHeartbeatUsec + settings.txToRxUsec) / 1000;
+  heartbeatRandomTime -= settings.overheadTime;
 }
 
 //Determine the delay for the next VC HEARTBEAT
