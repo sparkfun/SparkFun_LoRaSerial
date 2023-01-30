@@ -114,51 +114,71 @@ void convertAirSpeedToSettings(uint16_t airSpeed)
         settings.radioSpreadFactor = 11;
         settings.radioBandwidth = 62.5;
         settings.radioCodingRate = 8;
+        //uSec: 26018 26026 26026 26025 26020 26038 ==> ~26026
+        settings.txToRxUsec = 26026;
         break;
       case (150):
         settings.radioSpreadFactor = 10;
         settings.radioBandwidth = 62.5;
         settings.radioCodingRate = 8;
+        //uSec: 12187 12188 12189 12190 12191 12194 ==> ~12190
+        settings.txToRxUsec = 12190;
         break;
       case (400):
         settings.radioSpreadFactor = 10;
         settings.radioBandwidth = 125;
         settings.radioCodingRate = 8;
+        //uSec: 6072 6070 6072 6070 6069 6067 ==> ~6070
+        settings.txToRxUsec = 6070;
         break;
       case (1200):
         settings.radioSpreadFactor = 9;
         settings.radioBandwidth = 125;
         settings.radioCodingRate = 8;
+        //uSec: 2770 2777 2772 2773 2771 2773 ==> ~2773
+        settings.txToRxUsec = 2773;
         break;
       case (2400):
         settings.radioSpreadFactor = 10;
         settings.radioBandwidth = 500;
         settings.radioCodingRate = 8;
+        //uSec: 1495 1481 1482 1481 1482 1481 ==> ~1484
+        settings.txToRxUsec = 1484;
         break;
       case (4800):
         settings.radioSpreadFactor = 9;
         settings.radioBandwidth = 500;
         settings.radioCodingRate = 8;
+        //uSec: 657 657 657 658 657 657 ==> ~657
+        settings.txToRxUsec = 657;
         break;
       case (9600):
         settings.radioSpreadFactor = 8;
         settings.radioBandwidth = 500;
         settings.radioCodingRate = 7;
+        //uSec: 279 279 281 280 280 279 ==> ~280
+        settings.txToRxUsec = 280;
         break;
       case (19200):
         settings.radioSpreadFactor = 7;
         settings.radioBandwidth = 500;
         settings.radioCodingRate = 7;
+        //uSec: 119 118 118 119 120 119 ==> ~119
+        settings.txToRxUsec = 119;
         break;
       case (28800):
         settings.radioSpreadFactor = 6;
         settings.radioBandwidth = 500;
         settings.radioCodingRate = 6;
+        //uSec: ???
+        settings.txToRxUsec = 0;
         break;
       case (38400):
         settings.radioSpreadFactor = 6;
         settings.radioBandwidth = 500;
         settings.radioCodingRate = 5;
+        //uSec: ???
+        settings.txToRxUsec = 0;
         break;
       default:
         if ((settings.debug == true) || (settings.debugRadio == true))
