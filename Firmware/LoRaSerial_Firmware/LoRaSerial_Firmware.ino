@@ -377,7 +377,6 @@ bool cylonPatternGoingLeft;
 uint16_t radioBand = 0; //In MHz. Detected radio module type. Sets the upper/lower frequency bounds.
 uint8_t outgoingPacket[MAX_PACKET_SIZE]; //Contains the current data in route to receiver
 uint16_t frameAirTime = 0; //Recalc'd with each new packet transmission
-uint16_t ackAirTime = 0; //Recalc'd with each change of settings
 uint8_t frameSentCount = 0; //Increases each time a frame is sent
 
 unsigned long lastPacketReceived = 0; //Controls link LED in broadcast mode

@@ -120,8 +120,6 @@ void updateRadioState()
       //Determine the maximum frame air time
       maxFrameAirTimeMsec = (calcAirTimeUsec(MAX_PACKET_SIZE) + 500) / 1000;
 
-      randomTime = random(ackAirTime, ackAirTime * 2); //Fast FIND_PARTNER
-
       sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive FIND_PARTNER packet
 
       petWDT();
@@ -138,6 +136,8 @@ void updateRadioState()
         getTxTime(xmitDatagramP2PHeartbeat, &txHeartbeatUsec, "HEARTBEAT");
         getTxTime(xmitDatagramP2PAck, &txDataAckUsec, "ACK");
         setHeartbeatShort(); //Both radios start with short heartbeat period
+
+        randomTime = random(txDataAckUsec, txDataAckUsec * 2) / 1000; //Fast FIND_PARTNER
 
         //Start receiving
         returnToReceiving();
@@ -447,10 +447,10 @@ void updateRadioState()
           setHeartbeatShort();
 
           //Slow down FIND_PARTNERs
-          if (ackAirTime < settings.maxDwellTime)
+          if ((txDataAckUsec / 1000) < settings.maxDwellTime)
             randomTime = random(settings.maxDwellTime * 2, settings.maxDwellTime * 4);
           else
-            randomTime = random(ackAirTime * 4, ackAirTime * 8);
+            randomTime = random(txDataAckUsec * 4, txDataAckUsec * 8) / 1000;
 
           sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive FIND_PARTNER packet
           returnToReceiving();
@@ -514,7 +514,7 @@ void updateRadioState()
       else
       {
         //If we timeout during handshake, return to link down
-        timeoutMsec = frameAirTime +  ackAirTime + settings.overheadTime + (settings.txToRxUsec / 1000);
+        timeoutMsec = frameAirTime + settings.overheadTime + ((txDataAckUsec + settings.txToRxUsec) / 1000);
         if ((millis() - datagramTimer) >= timeoutMsec)
         {
           if (settings.debugDatagrams)
@@ -533,10 +533,10 @@ void updateRadioState()
           setHeartbeatShort();
 
           //Slow down FIND_PARTNERs
-          if (ackAirTime < settings.maxDwellTime)
+          if ((txDataAckUsec / 1000) < settings.maxDwellTime)
             randomTime = random(settings.maxDwellTime * 2, settings.maxDwellTime * 4);
           else
-            randomTime = random(ackAirTime * 4, ackAirTime * 8);
+            randomTime = random(txDataAckUsec * 4, txDataAckUsec * 8) / 1000;
 
           sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive FIND_PARTNER packet
           returnToReceiving();
@@ -1132,7 +1132,7 @@ void updateRadioState()
       else if (receiveInProcess() == false)
       {
         //Check for a receive timeout
-        timeoutMsec = frameAirTime + ackAirTime + settings.overheadTime + (settings.txToRxUsec / 1000);
+        timeoutMsec = frameAirTime + settings.overheadTime + ((txDataAckUsec + settings.txToRxUsec) / 1000);
         if ((millis() - datagramTimer) >= timeoutMsec)
         {
           if (settings.debugDatagrams)
@@ -2016,7 +2016,7 @@ void updateRadioState()
         {
           //Verify that the link is still up
           txDestVc = rexmtTxDestVc;
-          timeoutMsec = frameAirTime + ackAirTime + settings.overheadTime + (settings.txToRxUsec / 1000);
+          timeoutMsec = frameAirTime + settings.overheadTime + ((txDataAckUsec + settings.txToRxUsec) / 1000);
           if ((txDestVc != VC_BROADCAST)
               && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].vcState == VC_STATE_LINK_DOWN))
           {
@@ -2122,7 +2122,7 @@ void updateRadioState()
             if (vcConnecting & (1 << index))
             {
               //Determine if UNKNOWN_ACKS needs to be sent
-              timeoutMsec = frameAirTime + ackAirTime + settings.overheadTime + (settings.txToRxUsec / 1000);
+              timeoutMsec = frameAirTime + settings.overheadTime + ((txDataAckUsec + settings.txToRxUsec) / 1000);
               if (virtualCircuitList[index].vcState <= VC_STATE_SEND_UNKNOWN_ACKS)
               {
                 //Send the UNKNOWN_ACKS datagram, first part of the 3-way handshake

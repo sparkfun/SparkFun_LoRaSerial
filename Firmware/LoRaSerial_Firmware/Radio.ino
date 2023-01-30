@@ -62,9 +62,6 @@ bool configureRadio()
   if (radio.setFHSSHoppingPeriod(hoppingPeriod) != RADIOLIB_ERR_NONE)
     success = false;
 
-  //Precalculate the packet times
-  ackAirTime = calcAirTimeMsec(headerBytes + CHANNEL_TIMER_BYTES + trailerBytes); //Used for response timeout during ACK
-
   if ((settings.debug == true) || (settings.debugRadio == true))
   {
     systemPrint("Freq: ");
@@ -84,8 +81,6 @@ bool configureRadio()
     systemPrintln(" mSec");
     systemPrint("HoppingPeriod: ");
     systemPrintln(hoppingPeriod);
-    systemPrint("ackAirTime: ");
-    systemPrintln(ackAirTime);
     outputSerialData(true);
   }
 
@@ -3107,7 +3102,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
 
   //Compute the interval before a retransmission occurs in milliseconds,
   //this value increases with each transmission
-  retransmitTimeout = random(ackAirTime, frameAirTime + ackAirTime)
+  retransmitTimeout = random(txDataAckUsec / 1000, frameAirTime + (txDataAckUsec / 1000))
                       * (frameSentCount + 1) * 3 / 2;
 
   //BLink the TX LED
