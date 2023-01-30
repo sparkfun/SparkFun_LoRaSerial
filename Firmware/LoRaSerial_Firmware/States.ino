@@ -431,7 +431,7 @@ void updateRadioState()
       else
       {
         //If we timeout during handshake, return to link down
-        timeoutMsec = frameAirTime + systemDescriptionAirTime + settings.overheadTime + getReceiveCompletionOffset();
+        timeoutMsec = frameAirTime + (txSyncClocksUsec / 1000) + settings.overheadTime + getReceiveCompletionOffset();
         if ((millis() - datagramTimer) >= timeoutMsec)
         {
           if (settings.debugDatagrams)
