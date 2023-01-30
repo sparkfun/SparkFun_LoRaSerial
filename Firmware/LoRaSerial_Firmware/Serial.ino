@@ -70,9 +70,9 @@ void serialOutputByte(uint8_t data)
 //Update the output of the RTS pin (host says it's ok to send data when assertRTS = true)
 void updateRTS(bool assertRTS)
 {
-    rtsAsserted = assertRTS;
-    if (settings.flowControl && (pin_rts != PIN_UNDEFINED))
-      digitalWrite(pin_rts, assertRTS ^ settings.invertRts);
+  rtsAsserted = assertRTS;
+  if (settings.flowControl && (pin_rts != PIN_UNDEFINED))
+    digitalWrite(pin_rts, assertRTS ^ settings.invertRts);
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -209,7 +209,7 @@ uint8_t readyOutgoingCommandPacket(uint16_t offset)
   //Determine the amount of data in the buffer
   bytesToSend = availableTXCommandBytes();
   if ((settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
-    && (commandTXBuffer[commandTXTail] != START_OF_VC_SERIAL))
+      && (commandTXBuffer[commandTXTail] != START_OF_VC_SERIAL))
     bytesToSend -= VC_SERIAL_HEADER_BYTES + sizeof(VC_COMMAND_COMPLETE_MESSAGE);
 
   //Limit the length to the frame size
@@ -258,7 +258,7 @@ void updateSerial()
 
   //Assert RTS when there is enough space in the receive buffer
   if ((!rtsAsserted) && (availableRXBytes() < (sizeof(serialReceiveBuffer) / 2))
-    && (availableTXBytes() < (sizeof(serialTransmitBuffer) / 4)))
+      && (availableTXBytes() < (sizeof(serialTransmitBuffer) / 4)))
     updateRTS(true);
 
   //Attempt to empty the serialTransmitBuffer
@@ -347,8 +347,8 @@ void processSerialInput()
   //Process the serial data
   radioHead = radioTxHead;
   while (availableRXBytes()
-    && (availableRadioTXBytes() < (sizeof(radioTxBuffer) - maxEscapeCharacters))
-    && (transactionComplete == false))
+         && (availableRadioTXBytes() < (sizeof(radioTxBuffer) - maxEscapeCharacters))
+         && (transactionComplete == false))
   {
     //Take a break if there are ISRs to attend to
     petWDT();
@@ -406,8 +406,8 @@ void processSerialInput()
       //Ignore escape characters received within 2 seconds of serial traffic
       //Allow escape characters received within first 2 seconds of power on
       if ((incoming == escapeCharacter)
-        && ((millis() - lastByteReceived_ms > minEscapeTime_ms)
-          || (millis() < minEscapeTime_ms)))
+          && ((millis() - lastByteReceived_ms > minEscapeTime_ms)
+              || (millis() < minEscapeTime_ms)))
       {
         escapeCharsReceived++;
         lastEscapeCharEnteredMillis = millis();
@@ -454,7 +454,7 @@ void processSerialInput()
   //command mode.  The escape characters must be part of the input stream but were
   //the last characters entered.  Send these characters over the long range radio.
   if (escapeCharsReceived && (millis() - lastEscapeCharEnteredMillis > minEscapeTime_ms)
-     && (availableRXBytes() < (sizeof(radioTxBuffer) - maxEscapeCharacters)))
+      && (availableRXBytes() < (sizeof(radioTxBuffer) - maxEscapeCharacters)))
   {
     //Replay the escape characters
     while (escapeCharsReceived)
@@ -621,7 +621,7 @@ bool vcSerialMessageReceived()
 
     //Verify that the destination link is connected
     if ((vcDest != VC_BROADCAST)
-      && (virtualCircuitList[vcIndex].vcState < VC_STATE_CONNECTED))
+        && (virtualCircuitList[vcIndex].vcState < VC_STATE_CONNECTED))
     {
       if (settings.debugSerial || settings.debugTransmit)
       {
@@ -655,7 +655,7 @@ bool vcSerialMessageReceived()
     readyOutgoingPacket(msgLength);
     channel = GET_CHANNEL_NUMBER(vcDest);
     if ((vcDest != VC_BROADCAST) && ((vcDest & VCAB_NUMBER_MASK) == myVc)
-      && (channel == 0))
+        && (channel == 0))
     {
       if (settings.debugSerial)
         systemPrintln("VC: Sending data to ourself");
@@ -676,20 +676,20 @@ bool vcSerialMessageReceived()
 //Notify the PC of the message delivery failure
 void vcSendPcAckNack(int8_t vcIndex, bool ackMsg)
 {
-    //Build the VC state message
-    VC_DATA_ACK_NACK_MESSAGE message;
-    message.msgDestVc = vcIndex;
+  //Build the VC state message
+  VC_DATA_ACK_NACK_MESSAGE message;
+  message.msgDestVc = vcIndex;
 
-    //Build the message header
-    VC_SERIAL_MESSAGE_HEADER header;
-    header.start = START_OF_VC_SERIAL;
-    header.radio.length = VC_RADIO_HEADER_BYTES + sizeof(message);
-    header.radio.destVc = ackMsg ? PC_DATA_ACK : PC_DATA_NACK;
-    header.radio.srcVc = myVc;
+  //Build the message header
+  VC_SERIAL_MESSAGE_HEADER header;
+  header.start = START_OF_VC_SERIAL;
+  header.radio.length = VC_RADIO_HEADER_BYTES + sizeof(message);
+  header.radio.destVc = ackMsg ? PC_DATA_ACK : PC_DATA_NACK;
+  header.radio.srcVc = myVc;
 
-    //Send the VC state message
-    systemWrite((uint8_t *)&header, sizeof(header));
-    systemWrite((uint8_t *)&message, sizeof(message));
+  //Send the VC state message
+  systemWrite((uint8_t *)&header, sizeof(header));
+  systemWrite((uint8_t *)&message, sizeof(message));
 }
 
 //Process serial input when running in MODE_VIRTUAL_CIRCUIT
@@ -706,7 +706,7 @@ void vcProcessSerialInput()
   //Process the serial data while there is space in radioTxBuffer
   dataBytes = availableRXBytes();
   while (dataBytes && (availableRadioTXBytes() < (sizeof(radioTxBuffer) - 256))
-    && (transactionComplete == false))
+         && (transactionComplete == false))
   {
     //Take a break if there are ISRs to attend to
     petWDT();

@@ -231,7 +231,7 @@ void samdSystemReset()
 //Get the CPU's unique ID value
 void samdUniqueID(uint8_t * unique128_BitID)
 {
-  uint32_t id[UNIQUE_ID_BYTES/4];
+  uint32_t id[UNIQUE_ID_BYTES / 4];
 
   //Read the CPU's unique ID value
   id[0] = *(uint32_t *)0x0080a00c;

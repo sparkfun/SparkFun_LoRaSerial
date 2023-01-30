@@ -276,15 +276,15 @@ float calcAirTimeUsec(uint8_t bytesToSend)
 
   //With SF = 6 selected, implicit header mode is the only mode of operation possible.
   uint8_t explicitHeader = 0; //1 for implicit header
-  if(settings.radioSpreadFactor == 6) explicitHeader = 1;
+  if (settings.radioSpreadFactor == 6) explicitHeader = 1;
 
   //LowDataRateOptimize increases the robustness of the LoRa link at low effective data
   //rates. Its use is mandated when the symbol duration exceeds 16ms.
   //We choose to enable LDRO for airSpeed of 400 even though TSym is 8.2ms.
   uint8_t useLowDataRateOptimization = (tSymUsec >= 8192);
   float p1 = ((8 * bytesToSend) - (4 * settings.radioSpreadFactor) + 28
-           + (16 * useHardwareCRC) - (20 * explicitHeader))
-           / (4.0 * (settings.radioSpreadFactor - (2 * useLowDataRateOptimization)));
+              + (16 * useHardwareCRC) - (20 * explicitHeader))
+             / (4.0 * (settings.radioSpreadFactor - (2 * useLowDataRateOptimization)));
   p1 = ceil(p1) * settings.radioCodingRate;
   if (p1 < 0) p1 = 0;
   uint16_t payloadBytes = 8 + p1;
@@ -3007,6 +3007,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
     hopChannel();
 
   frameAirTimeUsec = calcAirTimeUsec(txDatagramSize); //Calculate frame air size while we're transmitting in the background
+
   uint16_t responseDelay = frameAirTimeUsec / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
 
   //Drop this datagram if the receiver is active
@@ -3406,7 +3407,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
   msToNextHop = rmtHopTimeMsec + adjustment;
 
   //For low airspeeds multiple hops may occur resulting in a negative value
-  while(msToNextHop < 0) msToNextHop += settings.maxDwellTime;
+  while (msToNextHop < 0) msToNextHop += settings.maxDwellTime;
 
   //When the ISR fires, reload the channel timer with settings.maxDwellTime
   reloadChannelTimer = true;

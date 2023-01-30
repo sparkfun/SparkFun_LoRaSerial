@@ -622,23 +622,23 @@ void blinkRadioRssiLed()
       {
         lastCylonBlink = currentMillis;
 
-	//The following shows the cylon pattern in four LEDs
-	//
-	//	LED3  LED2  LED1  LED0
-	//                         X
-	//		      X
-	//		X
-	//	  X
-	//		X
-	//		      X
-	//                         X
-	//		      X
-	//		...
-	//
+        //The following shows the cylon pattern in four LEDs
+        //
+        //	LED3  LED2  LED1  LED0
+        //                         X
+        //		      X
+        //		X
+        //	  X
+        //		X
+        //		      X
+        //                         X
+        //		      X
+        //		...
+        //
         //Cylon the RSSI LEDs
         setRSSI(cylonLedPattern);
 
-	//Determine if a change in direction is necessary
+        //Determine if a change in direction is necessary
         if ((cylonLedPattern == 0b1000) || (cylonLedPattern == 0b0001))
           cylonPatternGoingLeft = cylonPatternGoingLeft ? false : true;
 
@@ -714,14 +714,14 @@ void blinkSerialRxLed(bool illuminate)
         digitalWrite(pin_rxLED, HIGH);
       else
         digitalWrite(pin_rxLED, LOW);
-    break;
+      break;
 
     case LEDS_VC:
       if (illuminate == true)
         digitalWrite(RADIO_USE_LINK_LED, HIGH);
       else
         digitalWrite(RADIO_USE_LINK_LED, LOW);
-    break;
+      break;
   }
 }
 
@@ -968,13 +968,13 @@ void vcLeds()
 
   //Turn on the RSSI LED
   else if (((currentMillis - blinkSyncMillis) >= (VC_SYNC_BLINK_RATE >> 1))
-          && (digitalRead(RADIO_USE_RSSI_LED) == LED_OFF))
+           && (digitalRead(RADIO_USE_RSSI_LED) == LED_OFF))
     digitalWrite(RADIO_USE_RSSI_LED, LED_ON);
 
   //Turn off the RSSI LED
   else if ((!virtualCircuitList[VC_SERVER].vcState)
-          && (((currentMillis - blinkSyncMillis) >= VC_SYNC_BLINK_RATE))
-             && (digitalRead(RADIO_USE_RSSI_LED) == LED_ON))
+           && (((currentMillis - blinkSyncMillis) >= VC_SYNC_BLINK_RATE))
+           && (digitalRead(RADIO_USE_RSSI_LED) == LED_ON))
   {
     digitalWrite(RADIO_USE_RSSI_LED, LED_OFF);
     blinkSyncMillis = currentMillis;

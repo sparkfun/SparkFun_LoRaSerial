@@ -73,11 +73,11 @@
 // Protocol Exchanges
 //------------------------------------------------------------------------------
 /*
-Host Interaction using Virtual-Circuits
+  Host Interaction using Virtual-Circuits
 
        Host A                   LoRa A      LoRa B               Host B
 
-All output goes to serial                                           .
+  All output goes to serial                                           .
                                                                     .
               +++ ---->                                             .
                   <---- OK
