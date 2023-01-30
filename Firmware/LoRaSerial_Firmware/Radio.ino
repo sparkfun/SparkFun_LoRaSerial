@@ -441,6 +441,7 @@ void generateHopTable()
   //Use settings that must be identical to have a functioning link.
   //For example, we do not use coding rate because two radios can communicate with different coding rate values
   myRandSeed = settings.airSpeed
+               + settings.txToRxUsec
                + settings.netID
                + settings.operatingMode
                + settings.encryptData
@@ -1218,6 +1219,7 @@ void updateRadioParameters(uint8_t * rxData)
   tempSettings.radioPreambleLength = params.radioPreambleLength;
   tempSettings.radioSpreadFactor = params.radioSpreadFactor;
   tempSettings.radioSyncWord = params.radioSyncWord;
+  tempSettings.txToRxUsec = params.txToRxUsec;
 
   //Update the radio protocol parameters
   tempSettings.dataScrambling = params.dataScrambling;
@@ -3298,7 +3300,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
   //Compute the remote system's channel timer firing time offset in milliseconds
   //using the channel timer value and the adjustments for transmit and receive
   //time (time of flight)
-  frameAirTimeMsec = (frameAirTimeUsec + TX_TO_RX_USEC + micros() - transactionCompleteMicros) / 1000;
+  frameAirTimeMsec = (frameAirTimeUsec + settings.txToRxUsec + micros() - transactionCompleteMicros) / 1000;
   rmtHopTimeMsec = msToNextHopRemote - frameAirTimeMsec;
 
   //Compute the when the local system last hopped

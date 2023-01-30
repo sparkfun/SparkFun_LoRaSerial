@@ -1151,6 +1151,7 @@ const COMMAND_ENTRY commands[] =
   {'R',   0,   1,    6,  12,    0, TYPE_U8,           valOverride,    "SpreadFactor",         &tempSettings.radioSpreadFactor},
   {'R',   0,   1,    0, 255,    0, TYPE_U8,           valInt,         "SyncWord",             &tempSettings.radioSyncWord},
   {'R',   0,   1,   14,  30,    0, TYPE_U8,           valInt,         "TxPower",              &tempSettings.radioBroadcastPower_dbm},
+  {'R',   0,   1,    0, 999999, 0, TYPE_U32,          valInt,         "TxToRxUsec",           &tempSettings.txToRxUsec},
 
   /*Radio protocol parameters
     Ltr, All, reset, min, max, digits,    type,         validation,     name,                   setting addr */

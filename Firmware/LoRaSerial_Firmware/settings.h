@@ -397,6 +397,7 @@ typedef struct struct_settings {
   float frequencyMin = 902.0; //MHz
   float frequencyMax = 928.0; //MHz
   float radioBandwidth = 500.0; //kHz 125/250/500 generally. We need 500kHz for higher data.
+  uint32_t txToRxUsec = 657; //TX transactionComplete to RX transactionComplete in microseconds
 
   bool frequencyHop = true; //Hop between frequencies to avoid dwelling on any one channel for too long
   uint8_t numberOfChannels = 50; //Divide the min/max freq band into this number of channels and hop between.
