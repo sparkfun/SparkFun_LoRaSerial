@@ -442,6 +442,9 @@ void updateRadioState()
             outputSerialData(true);
           }
 
+          stopChannelTimer(); //Stop channel timer if no response received
+          startChannelTimerPending = false;
+
           //Start the TX timer: time to delay before transmitting the FIND_PARTNER
           triggerEvent(TRIGGER_HANDSHAKE_SYNC_CLOCKS_TIMEOUT);
           setHeartbeatShort();

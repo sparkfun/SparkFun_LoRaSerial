@@ -2610,7 +2610,7 @@ bool transmitDatagram()
   //Add the clock sync information
   if (settings.frequencyHop == true)
   {
-    //Hake sure that the transmitted msToNextHop is in the range 0 - maxDwellTime
+    //Make sure that the transmitted msToNextHop is in the range 0 - maxDwellTime
     if (timeToHop)
       hopChannel();
 
