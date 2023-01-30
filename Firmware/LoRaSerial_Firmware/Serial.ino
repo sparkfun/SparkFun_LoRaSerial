@@ -202,15 +202,22 @@ void readyLocalCommandPacket()
 //Send a portion of the commandTXBuffer to outgoingPacket
 uint8_t readyOutgoingCommandPacket(uint16_t offset)
 {
-  uint16_t bytesToSend = availableTXCommandBytes();
+  uint16_t bytesToSend;
   uint16_t length;
   uint16_t maxLength;
 
-  maxLength = maxDatagramSize - offset;
+  //Determine the amount of data in the buffer
   bytesToSend = availableTXCommandBytes();
+  if ((settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+    && (commandTXBuffer[commandTXTail] != START_OF_VC_SERIAL))
+    bytesToSend -= VC_SERIAL_HEADER_BYTES + sizeof(VC_COMMAND_COMPLETE_MESSAGE);
+
+  //Limit the length to the frame size
+  maxLength = maxDatagramSize - offset;
   if (bytesToSend > maxLength)
     bytesToSend = maxLength;
 
+  //Display the amount of data being sent
   if (settings.debugSerial)
   {
     systemPrint("Moving ");
@@ -219,7 +226,7 @@ uint8_t readyOutgoingCommandPacket(uint16_t offset)
     outputSerialData(true);
   }
 
-  //Determine the number of bytes to send
+  //Determine if the data wraps around to the beginning of the buffer
   length = 0;
   if ((commandTXTail + bytesToSend) > sizeof(commandTXBuffer))
   {

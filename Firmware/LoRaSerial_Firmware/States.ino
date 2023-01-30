@@ -1935,7 +1935,7 @@ void updateRadioState()
             if (settings.debugSerial)
             {
               systemPrint("RX: checkCommand placed ");
-              systemPrint(commandLength);
+              systemPrint(length);
               systemPrintln(" bytes into commandTXBuffer");
               dumpCircularBuffer(commandTXBuffer, commandTXTail, sizeof(commandTXBuffer), length);
               outputSerialData(true);
@@ -1946,11 +1946,22 @@ void updateRadioState()
           case DATAGRAM_REMOTE_COMMAND_RESPONSE:
             triggerEvent(TRIGGER_RX_COMMAND_RESPONSE);
 
+            //Determine if this is the VC_COMMAND_COMPLETE_MESSAGE
+            length = rxDataBytes;
+            if (*rxVcData == START_OF_VC_SERIAL)
+            {
+              //Remove the VC_RADIO_MESSAGE_HEADER and START_OF_VC_SERIAL byte
+              length -= VC_RADIO_HEADER_BYTES + 1;
+              rxData += VC_RADIO_HEADER_BYTES + 1;
+            }
+            else
+              vcHeader->destVc |= PC_REMOTE_RESPONSE;
+
             //Debug the serial path
             if (settings.debugSerial)
             {
               systemPrint("Moving ");
-              systemPrint(rxDataBytes);
+              systemPrint(length);
               systemPrintln(" from incomingBuffer to serialTransmitBuffer");
               dumpBuffer(rxData, rxDataBytes);
               outputSerialData(true);
@@ -1958,8 +1969,7 @@ void updateRadioState()
 
             //Place the data in to the serialTransmitBuffer
             serialOutputByte(START_OF_VC_SERIAL);
-            vcHeader->destVc |= PC_REMOTE_RESPONSE;
-            serialBufferOutput(rxData, rxDataBytes);
+            serialBufferOutput(rxData, length);
 
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
