@@ -120,8 +120,6 @@ void updateRadioState()
       //Determine the maximum frame air time
       maxFrameAirTimeMsec = (calcAirTimeUsec(MAX_PACKET_SIZE) + 500) / 1000;
 
-      //Start the TX timer: time to delay before transmitting the FIND_PARTNER
-      setHeartbeatShort(); //Both radios start with short heartbeat period
       randomTime = random(ackAirTime, ackAirTime * 2); //Fast FIND_PARTNER
 
       sf6ExpectedSize = headerBytes + CLOCK_MILLIS_BYTES + trailerBytes; //Tell SF6 to receive FIND_PARTNER packet
@@ -139,6 +137,7 @@ void updateRadioState()
         getTxTime(xmitDatagramP2PSyncClocks, &txSyncClocksUsec, "SYNC_CLOCKS");
         getTxTime(xmitDatagramP2PHeartbeat, &txHeartbeatUsec, "HEARTBEAT");
         getTxTime(xmitDatagramP2PAck, &txDataAckUsec, "ACK");
+        setHeartbeatShort(); //Both radios start with short heartbeat period
 
         //Start receiving
         returnToReceiving();
@@ -151,6 +150,7 @@ void updateRadioState()
       {
         //Determine transmit frame time for HEARTBEAT
         getTxTime(xmitVcHeartbeat, &txHeartbeatUsec, "HEARTBEAT");
+        setVcHeartbeatTimer();
         if (settings.server)
         {
           //Reserve the server's address (0)
@@ -175,6 +175,7 @@ void updateRadioState()
       getTxTime(xmitDatagramP2PSyncClocks, &txSyncClocksUsec, "SYNC_CLOCKS");
       getTxTime(xmitDatagramMpHeartbeat, &txHeartbeatUsec, "HEARTBEAT");
       getTxTime(xmitDatagramP2PAck, &txDataAckUsec, "ACK");
+      setHeartbeatMultipoint();
 
       //Start receiving
       returnToReceiving();
