@@ -118,7 +118,7 @@ void updateRadioState()
       configureRadio(); //Setup radio, set freq to channel 0, calculate air times
 
       //Determine the maximum frame air time
-      maxFrameAirTime = calcAirTimeMsec(MAX_PACKET_SIZE);
+      maxFrameAirTimeMsec = (calcAirTimeUsec(MAX_PACKET_SIZE) + 500) / 1000;
 
       //Start the TX timer: time to delay before transmitting the FIND_PARTNER
       setHeartbeatShort(); //Both radios start with short heartbeat period
@@ -931,7 +931,7 @@ void updateRadioState()
         {
           //Check if we are yielding for 2-way comm
           if (requestYield == false ||
-              (requestYield == true && (millis() - yieldTimerStart > (settings.framesToYield * maxPacketAirTime)))
+              (requestYield == true && (millis() - yieldTimerStart > (settings.framesToYield * maxFrameAirTimeMsec)))
              )
           {
             //Yield has expired, allow transmit.

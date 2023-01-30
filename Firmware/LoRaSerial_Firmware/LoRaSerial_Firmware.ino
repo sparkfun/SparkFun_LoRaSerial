@@ -378,7 +378,6 @@ uint16_t radioBand = 0; //In MHz. Detected radio module type. Sets the upper/low
 uint8_t outgoingPacket[MAX_PACKET_SIZE]; //Contains the current data in route to receiver
 uint16_t frameAirTime = 0; //Recalc'd with each new packet transmission
 uint16_t ackAirTime = 0; //Recalc'd with each change of settings
-uint16_t maxPacketAirTime = 0; //Recalc'd with each change of settings
 uint8_t frameSentCount = 0; //Increases each time a frame is sent
 
 unsigned long lastPacketReceived = 0; //Controls link LED in broadcast mode
@@ -589,7 +588,7 @@ uint32_t txFindPartnerUsec; //Time in microseconds to transmit the FIND_PARTNER 
 uint32_t txHeartbeatUsec; //Time in microseconds to transmit the HEARTBEAT frame
 uint32_t txSyncClocksUsec; //Time in microseconds to transmit the SYNC_CLOCKS frame
 uint32_t txDatagramMicros; //Timestamp at the beginning of the transmitDatagram routine
-uint16_t maxFrameAirTime; //Air time of the maximum sized message
+uint32_t maxFrameAirTimeMsec; //Air time of the maximum sized message
 unsigned long remoteSystemMillis; //Millis value contained in the received message
 
 #define VC_DELAY_HEARTBEAT_MSEC     5
