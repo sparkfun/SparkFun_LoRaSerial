@@ -3006,8 +3006,8 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   if (timeToHop == true) //If the channelTimer has expired, move to next frequency
     hopChannel();
 
-  frameAirTime = calcAirTimeMsec(txDatagramSize); //Calculate frame air size while we're transmitting in the background
-  uint16_t responseDelay = frameAirTime / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
+  frameAirTimeUsec = calcAirTimeUsec(txDatagramSize); //Calculate frame air size while we're transmitting in the background
+  uint16_t responseDelay = frameAirTimeUsec / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
 
   //Drop this datagram if the receiver is active
   if (
@@ -3068,8 +3068,8 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
       {
         systemPrintTimestamp();
         systemPrint("TX: frameAirTime ");
-        systemPrint(frameAirTime);
-        systemPrintln(" mSec");
+        systemPrint(frameAirTimeUsec);
+        systemPrintln(" uSec");
         outputSerialData(true);
         if (timeToHop == true) //If the channelTimer has expired, move to next frequency
           hopChannel();
@@ -3097,12 +3097,12 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
     }
   }
 
-  frameAirTime += responseDelay;
+  frameAirTimeUsec += responseDelay;
   datagramTimer = millis(); //Move timestamp even if error
 
   //Compute the interval before a retransmission occurs in milliseconds,
   //this value increases with each transmission
-  retransmitTimeout = random(txDataAckUsec / 1000, frameAirTime + (txDataAckUsec / 1000))
+  retransmitTimeout = random(txDataAckUsec / 1000, ((frameAirTimeUsec + txDataAckUsec) / 1000))
                       * (frameSentCount + 1) * 3 / 2;
 
   //BLink the TX LED
