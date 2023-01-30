@@ -274,14 +274,14 @@ float calcAirTimeUsec(uint8_t bytesToSend)
   //With SF = 6 selected, implicit header mode is the only mode of operation possible.
   uint8_t explicitHeader = 0; //1 for implicit header
   if(settings.radioSpreadFactor == 6) explicitHeader = 1;
-  
+
   //LowDataRateOptimize increases the robustness of the LoRa link at low effective data rates. Its use is mandated when the symbol duration exceeds 16ms.
   uint8_t useLowDataRateOptimization = 0; //0 to disable.
 
   //We choose to enable LDRO for airSpeed of 400 even though TSym is 8.2ms.
   if(settings.airSpeed <= 400 && settings.airSpeed >= 40) useLowDataRateOptimization = 1;
   if(tSymUsec > 16000) useLowDataRateOptimization = 1; //Catch custom bandwidth/spread/coding setups
-  
+
   float p1 = (8 * bytesToSend - 4 * settings.radioSpreadFactor + 28 + 16 * useHardwareCRC - 20 * explicitHeader) / (4.0 * (settings.radioSpreadFactor - 2 * useLowDataRateOptimization));
   p1 = ceil(p1) * settings.radioCodingRate;
   if (p1 < 0) p1 = 0;
@@ -441,6 +441,7 @@ void generateHopTable()
   //Use settings that must be identical to have a functioning link.
   //For example, we do not use coding rate because two radios can communicate with different coding rate values
   myRandSeed = settings.airSpeed
+               + settings.txToRxUsec
                + settings.netID
                + settings.operatingMode
                + settings.encryptData
@@ -1207,37 +1208,37 @@ void updateRadioParameters(uint8_t * rxData)
   //Update the radio parameters
   tempSettings.airSpeed = params.airSpeed;
   tempSettings.autoTuneFrequency = params.autoTuneFrequency;
-  tempSettings.radioBandwidth = params.radioBandwidth;
-  tempSettings.radioCodingRate = params.radioCodingRate;
   tempSettings.frequencyHop = params.frequencyHop;
   tempSettings.frequencyMax = params.frequencyMax;
   tempSettings.frequencyMin = params.frequencyMin;
   tempSettings.maxDwellTime = params.maxDwellTime;
   tempSettings.numberOfChannels = params.numberOfChannels;
+  tempSettings.radioBandwidth = params.radioBandwidth;
+  tempSettings.radioBroadcastPower_dbm = params.radioBroadcastPower_dbm;
+  tempSettings.radioCodingRate = params.radioCodingRate;
   tempSettings.radioPreambleLength = params.radioPreambleLength;
   tempSettings.radioSpreadFactor = params.radioSpreadFactor;
   tempSettings.radioSyncWord = params.radioSyncWord;
-  tempSettings.radioBroadcastPower_dbm = params.radioBroadcastPower_dbm;
+  tempSettings.txToRxUsec = params.txToRxUsec;
 
   //Update the radio protocol parameters
   tempSettings.dataScrambling = params.dataScrambling;
   tempSettings.enableCRC16 = params.enableCRC16;
   tempSettings.encryptData = params.encryptData;
   memcpy(tempSettings.encryptionKey, params.encryptionKey, sizeof(tempSettings.encryptionKey));
-  tempSettings.serialTimeoutBeforeSendingFrame_ms = params.serialTimeoutBeforeSendingFrame_ms;
+  tempSettings.framesToYield = params.framesToYield;
   tempSettings.heartbeatTimeout = params.heartbeatTimeout;
   tempSettings.maxResends = params.maxResends;
   tempSettings.netID = params.netID;
   tempSettings.operatingMode = params.operatingMode;
   tempSettings.overheadTime = params.overheadTime;
+  tempSettings.selectLedUse = params.selectLedUse;
   tempSettings.server = params.server;
   tempSettings.verifyRxNetID = params.verifyRxNetID;
-  tempSettings.framesToYield = params.framesToYield;
 
   //Update the debug parameters
   if (params.copyDebug)
   {
-    tempSettings.debug = params.debug;
     tempSettings.copyDebug = params.copyDebug;
     tempSettings.debug = params.debug;
     tempSettings.debugDatagrams = params.debugDatagrams;
@@ -1245,21 +1246,21 @@ void updateRadioParameters(uint8_t * rxData)
     tempSettings.debugNvm = params.debugNvm;
     tempSettings.debugRadio = params.debugRadio;
     tempSettings.debugReceive = params.debugReceive;
+    tempSettings.debugSerial = params.debugSerial;
     tempSettings.debugStates = params.debugStates;
     tempSettings.debugSync = params.debugSync;
     tempSettings.debugTraining = params.debugTraining;
     tempSettings.debugTransmit = params.debugTransmit;
-    tempSettings.debugSerial = params.debugSerial;
-    tempSettings.printPacketQuality = params.printPacketQuality;
     tempSettings.displayRealMillis = params.displayRealMillis;
     tempSettings.printAckNumbers = params.printAckNumbers;
+    tempSettings.printChannel = params.printChannel;
     tempSettings.printFrequency = params.printFrequency;
     tempSettings.printLinkUpDown = params.printLinkUpDown;
+    tempSettings.printPacketQuality = params.printPacketQuality;
     tempSettings.printPktData = params.printPktData;
     tempSettings.printRfData = params.printRfData;
     tempSettings.printTimestamp = params.printTimestamp;
     tempSettings.printTxErrors = params.printTxErrors;
-    tempSettings.selectLedUse = params.selectLedUse;
   }
 
   //Update the serial parameters
@@ -1271,6 +1272,7 @@ void updateRadioParameters(uint8_t * rxData)
     tempSettings.invertCts = params.invertCts;
     tempSettings.invertRts = params.invertRts;
     tempSettings.serialSpeed = params.serialSpeed;
+    tempSettings.serialTimeoutBeforeSendingFrame_ms = params.serialTimeoutBeforeSendingFrame_ms;
     tempSettings.usbSerialWait = params.usbSerialWait;
   }
 
@@ -3298,7 +3300,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
   //Compute the remote system's channel timer firing time offset in milliseconds
   //using the channel timer value and the adjustments for transmit and receive
   //time (time of flight)
-  frameAirTimeMsec = (frameAirTimeUsec + TX_TO_RX_USEC + micros() - transactionCompleteMicros) / 1000;
+  frameAirTimeMsec = (frameAirTimeUsec + settings.txToRxUsec + micros() - transactionCompleteMicros) / 1000;
   rmtHopTimeMsec = msToNextHopRemote - frameAirTimeMsec;
 
   //Compute the when the local system last hopped

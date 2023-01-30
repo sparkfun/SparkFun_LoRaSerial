@@ -118,13 +118,14 @@ void commonTrainingInitialization()
   settings.dataScrambling = true;           //Scramble the data
   settings.enableCRC16 = true;              //Use CRC-16
   settings.encryptData = true;              //Enable packet encryption
+  memcpy(&settings.encryptionKey, &tempSettings.trainingKey, AES_KEY_BYTES); //Common encryption key
   settings.frequencyHop = false;            //Stay on the training frequency
+  settings.maxResends = 1;                  //Don't waste time retransmitting
   settings.netID = 'T';                     //NetID for training
   settings.operatingMode = MODE_MULTIPOINT; //Use datagrams
   settings.radioBroadcastPower_dbm = 14;    //Minimum, assume radios are near each other
   settings.selectLedUse = LEDS_CYLON;       //Display the CYLON pattern on the LEDs
   settings.verifyRxNetID = true;            //Disable netID checking
-  memcpy(&settings.trainingKey, &tempSettings.trainingKey, AES_KEY_BYTES); //56: Common training key
 
   //Determine the components of the frame header and trailer
   selectHeaderAndTrailerBytes();
@@ -136,18 +137,21 @@ void commonTrainingInitialization()
     //Ignore copyDebug
     settings.debug = tempSettings.debug;
     settings.debugDatagrams = tempSettings.debugDatagrams;
+    settings.debugHeartbeat = tempSettings.debugHeartbeat;
     settings.debugNvm = tempSettings.debugNvm;
     settings.debugRadio = tempSettings.debugRadio;
     settings.debugReceive = tempSettings.debugReceive;
     settings.debugSerial = tempSettings.debugSerial;
     settings.debugStates = tempSettings.debugStates;
+    settings.debugSync = tempSettings.debugSync;
     settings.debugTraining = tempSettings.debugTraining;
     settings.debugTransmit = tempSettings.debugTransmit;
-    settings.printPacketQuality = tempSettings.printPacketQuality;
     settings.displayRealMillis = tempSettings.displayRealMillis;
     settings.printAckNumbers = tempSettings.printAckNumbers;
+    settings.printChannel = tempSettings.printChannel;
     settings.printFrequency = tempSettings.printFrequency;
     settings.printLinkUpDown = tempSettings.printLinkUpDown;
+    settings.printPacketQuality = tempSettings.printPacketQuality;
     settings.printPktData = tempSettings.printPktData;
     settings.printRfData = tempSettings.printRfData;
     settings.printTimestamp = tempSettings.printTimestamp;

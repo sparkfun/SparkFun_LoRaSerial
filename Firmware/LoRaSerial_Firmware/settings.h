@@ -389,80 +389,129 @@ typedef struct struct_settings {
   uint16_t sizeOfSettings = 0; //sizeOfSettings **must** be the first entry and must be int
   uint16_t strIdentifier = LRS_IDENTIFIER; // strIdentifier **must** be the second entry
 
-  uint32_t serialSpeed = 57600; //Default to 57600bps to match RTK Surveyor default firmware
+  //----------------------------------------
+  //Radio parameters
+  //----------------------------------------
+
   uint32_t airSpeed = 4800; //Default to ~523 bytes per second to support RTCM. Overrides spread, bandwidth, and coding
-  uint8_t netID = 192; //Both radios must share a network ID
-  uint8_t operatingMode = MODE_POINT_TO_POINT; //Receiving unit will check netID and ACK. If set to false, receiving unit doesn't check netID or ACK.
-  bool encryptData = true; //AES encrypt each packet
-  uint8_t encryptionKey[AES_KEY_BYTES] = { 0x37, 0x78, 0x21, 0x41, 0xA6, 0x65, 0x73, 0x4E, 0x44, 0x75, 0x67, 0x2A, 0xE6, 0x30, 0x83, 0x08 };
-  bool dataScrambling = false; //Use IBM Data Whitening to reduce DC bias
+  float frequencyMin = 902.0; //MHz
+  float frequencyMax = 928.0; //MHz
+  float radioBandwidth = 500.0; //kHz 125/250/500 generally. We need 500kHz for higher data.
+  uint32_t txToRxUsec = 657; //TX transactionComplete to RX transactionComplete in microseconds
+
+  bool frequencyHop = true; //Hop between frequencies to avoid dwelling on any one channel for too long
+  uint8_t numberOfChannels = 50; //Divide the min/max freq band into this number of channels and hop between.
+  uint16_t maxDwellTime = 400; //Max number of ms before hopping (if enabled). Useful for configuring radio to be within regulator limits (FCC = 400ms max)
+
 #if (ENABLE_DEVELOPER == true)
 #define TX_POWER_DB     14
 #else   //ENABLE_DEVELOPER
 #define TX_POWER_DB     30
 #endif  //ENABLE_DEVELOPER
   uint8_t radioBroadcastPower_dbm = TX_POWER_DB; //Transmit power in dBm. Max is 30dBm (1W), min is 14dBm (25mW).
-  float frequencyMin = 902.0; //MHz
-  float frequencyMax = 928.0; //MHz
-  uint8_t numberOfChannels = 50; //Divide the min/max freq band into this number of channels and hop between.
-  bool frequencyHop = true; //Hop between frequencies to avoid dwelling on any one channel for too long
-  uint16_t maxDwellTime = 400; //Max number of ms before hopping (if enabled). Useful for configuring radio to be within regulator limits (FCC = 400ms max)
-  float radioBandwidth = 500.0; //kHz 125/250/500 generally. We need 500kHz for higher data.
-  uint8_t radioSpreadFactor = 9; //6 to 12. Use higher factor for longer range.
   uint8_t radioCodingRate = 8; //5 to 8. Higher coding rates ensure less packets dropped.
+  uint8_t radioSpreadFactor = 9; //6 to 12. Use higher factor for longer range.
   uint8_t radioSyncWord = 18; //18 = 0x12 is default for custom/private networks. Different sync words does *not* guarantee a remote radio will not get packet.
+
   uint16_t radioPreambleLength = 8; //Number of symbols. Different lengths does *not* guarantee a remote radio privacy. 8 to 11 works. 8 to 15 drops some. 8 to 20 is silent.
-  uint16_t serialTimeoutBeforeSendingFrame_ms = 50; //Send partial buffer if time expires
-  bool debug = false; //Print basic events: ie, radio state changes
-  bool echo = false; //Print locally inputted serial
-  uint16_t heartbeatTimeout = 5000; //ms before sending HEARTBEAT to see if link is active
-  bool flowControl = false; //Enable the use of CTS/RTS flow control signals
   bool autoTuneFrequency = false; //Based on the last packets frequency error, adjust our next transaction frequency
-  bool printPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
+
+  //----------------------------------------
+  //Radio protocol parameters
+  //----------------------------------------
+
+  uint8_t operatingMode = MODE_POINT_TO_POINT; //Receiving unit will check netID and ACK. If set to false, receiving unit doesn't check netID or ACK.
+
+  uint8_t selectLedUse = LEDS_RSSI; //Select LED use
+  bool server = false; //Default to being a client, enable server for multipoint, VC and training
+  uint8_t netID = 192; //Both radios must share a network ID
+  bool verifyRxNetID = true; //Verify RX netID value when not operating in point-to-point mode
+
+  uint8_t encryptionKey[AES_KEY_BYTES] = { 0x37, 0x78, 0x21, 0x41, 0xA6, 0x65, 0x73, 0x4E, 0x44, 0x75, 0x67, 0x2A, 0xE6, 0x30, 0x83, 0x08 };
+
+  bool encryptData = true; //AES encrypt each packet
+  bool dataScrambling = false; //Use IBM Data Whitening to reduce DC bias
+  bool enableCRC16 = false; //Append CRC-16 to packet, check CRC-16 upon receive
+  uint8_t framesToYield = 3; //If remote requests it, supress transmission for this number of max packet frames
+
+  uint16_t heartbeatTimeout = 5000; //ms before sending HEARTBEAT to see if link is active
+  uint16_t overheadTime = 10; //ms added to ack and datagram times before ACK timeout occurs
+
   uint8_t maxResends = 0; //Attempt resends up to this number, 0 = infinite retries
-  bool printFrequency = false; //Print the updated frequency
-  bool debugRadio = false; //Print radio info
-  bool debugStates = false; //Print state changes
-  bool debugTraining = false; //Print training info
+
+  //----------------------------------------
+  //Serial parameters
+  //----------------------------------------
+
+  bool copySerial = false; //Copy the serial parameters to the training client
+  bool invertCts = false; //Invert the input of CTS
+  bool invertRts = false; //Invert the output of RTS
+
+  uint32_t serialSpeed = 57600; //Default to 57600bps to match RTK Surveyor default firmware
+
+  uint16_t serialTimeoutBeforeSendingFrame_ms = 50; //Send partial buffer if time expires
+  bool echo = false; //Print locally inputted serial
+  bool flowControl = false; //Enable the use of CTS/RTS flow control signals
 #if (ENABLE_DEVELOPER == true)
 #define WAIT_SERIAL_DEFAULT     true
 #else   //ENABLE_DEVELOPER
 #define WAIT_SERIAL_DEFAULT     false
 #endif  //ENABLE_DEVELOPER
   bool usbSerialWait = WAIT_SERIAL_DEFAULT; //Wait for USB serial initialization
-  bool printRfData = false; //Print RX and TX data
-  bool printPktData = false; //Print data, before encryption and after decryption
-  bool verifyRxNetID = true; //Verify RX netID value when not operating in point-to-point mode
+
+  //----------------------------------------
+  //Training parameters
+  //----------------------------------------
+
+  uint8_t clientFindPartnerRetryInterval = 3; //Number of seconds before retransmiting the client FIND_PARTNER
+
+  uint8_t trainingKey[AES_KEY_BYTES] = { 0x53, 0x70, 0x61, 0x72, 0x6b, 0x46, 0x75, 0x6E, 0x54, 0x72, 0x61, 0x69, 0x6e, 0x69, 0x6e, 0x67 };
+
+  uint8_t trainingTimeout = 1; //Timeout in minutes to complete the training
+
+  //----------------------------------------
+  //Trigger parameters
+  //----------------------------------------
+
+  bool copyTriggers = false; //Copy the trigger parameters to the training client
   uint8_t triggerWidth = 25; //Trigger width in microSeconds or multipler for trigger width
   bool triggerWidthIsMultiplier = true; //Use the trigger width as a multiplier
+
   uint32_t triggerEnable = 0; //Determine which triggers are enabled: 31 - 0
   uint32_t triggerEnable2 = 0; //Determine which triggers are enabled: 63 - 32
-  bool debugReceive = false; //Print receive processing
-  bool debugTransmit = false; //Print transmit processing
-  bool printTxErrors = false; //Print any transmit errors
-  bool printTimestamp = false; //Print a timestamp: days hours:minutes:seconds.milliseconds
-  bool debugDatagrams = false; //Print the datagrams
-  uint16_t overheadTime = 10; //ms added to ack and datagram times before ACK timeout occurs
-  bool enableCRC16 = false; //Append CRC-16 to packet, check CRC-16 upon receive
-  bool displayRealMillis = false; //true = Display the millis value without offset, false = use offset
-  bool server = false; //Default to being a client, enable server for multipoint, VC and training
-  uint8_t clientFindPartnerRetryInterval = 3; //Number of seconds before retransmiting the client FIND_PARTNER
+
+
+  //----------------------------------------
+  //Debug parameters
+  //----------------------------------------
+
   bool copyDebug = false; //Copy the debug parameters to the training client
-  bool copySerial = false; //Copy the serial parameters to the training client
-  bool copyTriggers = false; //Copy the trigger parameters to the training client
-  uint8_t trainingKey[AES_KEY_BYTES] = { 0x53, 0x70, 0x61, 0x72, 0x6b, 0x46, 0x75, 0x6E, 0x54, 0x72, 0x61, 0x69, 0x6e, 0x69, 0x6e, 0x67 };
-  bool printLinkUpDown = false; //Print the link up and link down messages
-  bool invertCts = false; //Invert the input of CTS
-  bool invertRts = false; //Invert the output of RTS
-  uint8_t selectLedUse = LEDS_RSSI; //Select LED use
-  uint8_t trainingTimeout = 1; //Timeout in minutes to complete the training
-  bool debugSerial = false; //Debug the serial input
-  bool debugSync = false; //Print clock sync processing
-  bool debugNvm = false; //Debug NVM operation
-  bool printAckNumbers = false; //Print the ACK numbers
+  bool debug = false; //Print basic events: ie, radio state changes
+  bool debugDatagrams = false; //Print the datagrams
   bool debugHeartbeat = false; //Print the HEARTBEAT timing values
-  uint8_t framesToYield = 3; //If remote requests it, supress transmission for this number of max packet frames
+
+  bool debugNvm = false; //Debug NVM operation
+  bool debugRadio = false; //Print radio info
+  bool debugReceive = false; //Print receive processing
+  bool debugSerial = false; //Debug the serial input
+
+  bool debugStates = false; //Print state changes
+  bool debugSync = false; //Print clock sync processing
+  bool debugTraining = false; //Print training info
+  bool debugTransmit = false; //Print transmit processing
+
+  bool displayRealMillis = false; //true = Display the millis value without offset, false = use offset
+  bool printAckNumbers = false; //Print the ACK numbers
   bool printChannel = false; //Print the channel number
+  bool printFrequency = false; //Print the updated frequency
+
+  bool printLinkUpDown = false; //Print the link up and link down messages
+  bool printPacketQuality = false; //Print RSSI, SNR, and freqError for received packets
+  bool printPktData = false; //Print data, before encryption and after decryption
+  bool printRfData = false; //Print RX and TX data
+
+  bool printTimestamp = false; //Print a timestamp: days hours:minutes:seconds.milliseconds
+  bool printTxErrors = false; //Print any transmit errors
 
   //Add new parameters immediately before this line
   //-- Add commands to set the parameters
