@@ -393,7 +393,6 @@ typedef struct struct_settings {
   //Radio parameters
   //----------------------------------------
 
-  uint32_t airSpeed = 4800; //Default to ~523 bytes per second to support RTCM. Overrides spread, bandwidth, and coding
   float frequencyMin = 902.0; //MHz
   float frequencyMax = 928.0; //MHz
   float radioBandwidth = 500.0; //kHz 125/250/500 generally. We need 500kHz for higher data.

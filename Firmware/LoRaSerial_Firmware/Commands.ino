@@ -946,15 +946,8 @@ bool valBandwidth (void * value, uint32_t valMin, uint32_t valMax)
   UNUSED(valMin);
   UNUSED(valMax);
 
-  if ((settings.airSpeed != 0) && (doubleSettingValue != 0))
-  {
-    systemPrintln("AirSpeed is overriding");
-    return false;
-  }
-
   //Some doubles get rounded incorrectly
-  return ((settings.airSpeed != 0)
-          || ((doubleSettingValue * 100) == 1040)
+  return (((doubleSettingValue * 100) == 1040)
           || (doubleSettingValue == 15.6)
           || ((doubleSettingValue * 100) == 2080)
           || (doubleSettingValue == 31.25)
@@ -1024,20 +1017,6 @@ bool valKey (void * value, uint32_t valMin, uint32_t valMax)
   return false;
 }
 
-//Determine if the AirSpeed value is overriding the parameter value
-bool valOverride (void * value, uint32_t valMin, uint32_t valMax)
-{
-  uint32_t settingValue = *(uint32_t *)value;
-
-  if (settings.airSpeed != 0)
-  {
-    systemPrintln("AirSpeed is overriding");
-    return false;
-  }
-
-  return ((settingValue >= valMin) && (settingValue <= valMax));
-}
-
 //Validate the server value
 bool valServer (void * value, uint32_t valMin, uint32_t valMax)
 {
@@ -1071,8 +1050,7 @@ bool valSpeedAir (void * value, uint32_t valMin, uint32_t valMax)
   UNUSED(valMin);
   UNUSED(valMax);
 
-  valid = ((settingValue == 0)
-           || (settingValue == 40)
+  valid = ((settingValue == 40)
            || (settingValue == 150)
            || (settingValue == 400)
            || (settingValue == 1200)
@@ -1086,9 +1064,9 @@ bool valSpeedAir (void * value, uint32_t valMin, uint32_t valMax)
   {
     //Adjust the settings to match the requested airSpeed
     convertAirSpeedToSettings(settingValue);
-  }
-  if (valid && (settings.airSpeed == 0) && (settingValue != 0))
+    airSpeed = 0;
     systemPrintln("Warning: AirSpeed overrides bandwidth, spread factor, and coding rate");
+  }
   return valid;
 }
 
@@ -1143,17 +1121,17 @@ const COMMAND_ENTRY commands[] =
 
   /*Radio parameters
     Ltr, All, reset, min, max, digits,    type,         validation,     name,                   setting addr */
-  {'R',   0,   1,    0,   0,    0, TYPE_SPEED_AIR,    valSpeedAir,    "AirSpeed",             &tempSettings.airSpeed},
+  {'R',   0,   1,    0,   0,    0, TYPE_SPEED_AIR,    valSpeedAir,    "AirSpeed",             &airSpeed},
   {'R',   0,   1,    0,   1,    0, TYPE_BOOL,         valInt,         "AutoTune",             &tempSettings.autoTuneFrequency},
   {'R',   0,   1,    0,   0,    2, TYPE_FLOAT,        valBandwidth,   "Bandwidth",            &tempSettings.radioBandwidth},
-  {'R',   0,   1,    5,   8,    0, TYPE_U8,           valOverride,    "CodingRate",           &tempSettings.radioCodingRate},
+  {'R',   0,   1,    5,   8,    0, TYPE_U8,           valInt,         "CodingRate",           &tempSettings.radioCodingRate},
   {'R',   0,   1,    0,   1,    0, TYPE_BOOL,         valInt,         "FrequencyHop",         &tempSettings.frequencyHop},
   {'R',   0,   1,    0, 931,    3, TYPE_FLOAT,        valFreqMax,     "FrequencyMax",         &tempSettings.frequencyMax},
   {'R',   0,   1,  900,   0,    3, TYPE_FLOAT,        valFreqMin,     "FrequencyMin",         &tempSettings.frequencyMin},
   {'R',   0,   1,   10, 65535,  0, TYPE_U16,          valInt,         "MaxDwellTime",         &tempSettings.maxDwellTime},
   {'R',   0,   1,    1, 255,    0, TYPE_U8,           valInt,         "NumberOfChannels",     &tempSettings.numberOfChannels},
   {'R',   0,   1,    6, 65535,  0, TYPE_U16,          valInt,         "PreambleLength",       &tempSettings.radioPreambleLength},
-  {'R',   0,   1,    6,  12,    0, TYPE_U8,           valOverride,    "SpreadFactor",         &tempSettings.radioSpreadFactor},
+  {'R',   0,   1,    6,  12,    0, TYPE_U8,           valInt,         "SpreadFactor",         &tempSettings.radioSpreadFactor},
   {'R',   0,   1,    0, 255,    0, TYPE_U8,           valInt,         "SyncWord",             &tempSettings.radioSyncWord},
   {'R',   0,   1,   14,  30,    0, TYPE_U8,           valInt,         "TxPower",              &tempSettings.radioBroadcastPower_dbm},
   {'R',   0,   1,    0, 999999, 0, TYPE_U32,          valInt,         "TxToRxUsec",           &tempSettings.txToRxUsec},

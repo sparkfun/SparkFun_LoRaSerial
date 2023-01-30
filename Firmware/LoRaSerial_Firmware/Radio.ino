@@ -102,93 +102,83 @@ bool configureRadio()
 //Update the settings based upon the airSpeed value
 void convertAirSpeedToSettings(uint16_t airSpeed)
 {
-  //Determine if we are using AirSpeed or custom settings
-  if (airSpeed != 0)
+  switch (airSpeed)
   {
-    switch (airSpeed)
-    {
-      case (0):
-        //Custom settings - use settings without modification
-        break;
-      case (40):
-        settings.radioSpreadFactor = 11;
-        settings.radioBandwidth = 62.5;
-        settings.radioCodingRate = 8;
-        //uSec: 26018 26026 26026 26025 26020 26038 ==> ~26026
-        settings.txToRxUsec = 26026;
-        break;
-      case (150):
-        settings.radioSpreadFactor = 10;
-        settings.radioBandwidth = 62.5;
-        settings.radioCodingRate = 8;
-        //uSec: 12187 12188 12189 12190 12191 12194 ==> ~12190
-        settings.txToRxUsec = 12190;
-        break;
-      case (400):
-        settings.radioSpreadFactor = 10;
-        settings.radioBandwidth = 125;
-        settings.radioCodingRate = 8;
-        //uSec: 6072 6070 6072 6070 6069 6067 ==> ~6070
-        settings.txToRxUsec = 6070;
-        break;
-      case (1200):
-        settings.radioSpreadFactor = 9;
-        settings.radioBandwidth = 125;
-        settings.radioCodingRate = 8;
-        //uSec: 2770 2777 2772 2773 2771 2773 ==> ~2773
-        settings.txToRxUsec = 2773;
-        break;
-      case (2400):
-        settings.radioSpreadFactor = 10;
-        settings.radioBandwidth = 500;
-        settings.radioCodingRate = 8;
-        //uSec: 1495 1481 1482 1481 1482 1481 ==> ~1484
-        settings.txToRxUsec = 1484;
-        break;
-      case (4800):
-        settings.radioSpreadFactor = 9;
-        settings.radioBandwidth = 500;
-        settings.radioCodingRate = 8;
-        //uSec: 657 657 657 658 657 657 ==> ~657
-        settings.txToRxUsec = 657;
-        break;
-      case (9600):
-        settings.radioSpreadFactor = 8;
-        settings.radioBandwidth = 500;
-        settings.radioCodingRate = 7;
-        //uSec: 279 279 281 280 280 279 ==> ~280
-        settings.txToRxUsec = 280;
-        break;
-      case (19200):
-        settings.radioSpreadFactor = 7;
-        settings.radioBandwidth = 500;
-        settings.radioCodingRate = 7;
-        //uSec: 119 118 118 119 120 119 ==> ~119
-        settings.txToRxUsec = 119;
-        break;
-      case (28800):
-        settings.radioSpreadFactor = 6;
-        settings.radioBandwidth = 500;
-        settings.radioCodingRate = 6;
-        //uSec: ???
-        settings.txToRxUsec = 0;
-        break;
-      case (38400):
-        settings.radioSpreadFactor = 6;
-        settings.radioBandwidth = 500;
-        settings.radioCodingRate = 5;
-        //uSec: ???
-        settings.txToRxUsec = 0;
-        break;
-      default:
-        if ((settings.debug == true) || (settings.debugRadio == true))
-        {
-          systemPrint("Unknown airSpeed: ");
-          systemPrintln(airSpeed);
-          outputSerialData(true);
-        }
-        break;
-    }
+    default:
+      systemPrint("Unknown airSpeed: ");
+      systemPrintln(airSpeed);
+      waitForever("ERROR - Invalid airSpeed value");
+      break;
+    case (40):
+      settings.radioSpreadFactor = 11;
+      settings.radioBandwidth = 62.5;
+      settings.radioCodingRate = 8;
+      //uSec: 26018 26026 26026 26025 26020 26038 ==> ~26026
+      settings.txToRxUsec = 26026;
+      break;
+    case (150):
+      settings.radioSpreadFactor = 10;
+      settings.radioBandwidth = 62.5;
+      settings.radioCodingRate = 8;
+      //uSec: 12187 12188 12189 12190 12191 12194 ==> ~12190
+      settings.txToRxUsec = 12190;
+      break;
+    case (400):
+      settings.radioSpreadFactor = 10;
+      settings.radioBandwidth = 125;
+      settings.radioCodingRate = 8;
+      //uSec: 6072 6070 6072 6070 6069 6067 ==> ~6070
+      settings.txToRxUsec = 6070;
+      break;
+    case (1200):
+      settings.radioSpreadFactor = 9;
+      settings.radioBandwidth = 125;
+      settings.radioCodingRate = 8;
+      //uSec: 2770 2777 2772 2773 2771 2773 ==> ~2773
+      settings.txToRxUsec = 2773;
+      break;
+    case (2400):
+      settings.radioSpreadFactor = 10;
+      settings.radioBandwidth = 500;
+      settings.radioCodingRate = 8;
+      //uSec: 1495 1481 1482 1481 1482 1481 ==> ~1484
+      settings.txToRxUsec = 1484;
+      break;
+    case (4800):
+      settings.radioSpreadFactor = 9;
+      settings.radioBandwidth = 500;
+      settings.radioCodingRate = 8;
+      //uSec: 657 657 657 658 657 657 ==> ~657
+      settings.txToRxUsec = 657;
+      break;
+    case (9600):
+      settings.radioSpreadFactor = 8;
+      settings.radioBandwidth = 500;
+      settings.radioCodingRate = 7;
+      //uSec: 279 279 281 280 280 279 ==> ~280
+      settings.txToRxUsec = 280;
+      break;
+    case (19200):
+      settings.radioSpreadFactor = 7;
+      settings.radioBandwidth = 500;
+      settings.radioCodingRate = 7;
+      //uSec: 119 118 118 119 120 119 ==> ~119
+      settings.txToRxUsec = 119;
+      break;
+    case (28800):
+      settings.radioSpreadFactor = 6;
+      settings.radioBandwidth = 500;
+      settings.radioCodingRate = 6;
+      //uSec: ???
+      settings.txToRxUsec = 0;
+      break;
+    case (38400):
+      settings.radioSpreadFactor = 6;
+      settings.radioBandwidth = 500;
+      settings.radioCodingRate = 5;
+      //uSec: ???
+      settings.txToRxUsec = 0;
+      break;
   }
 }
 
@@ -295,14 +285,13 @@ float calcAirTimeUsec(uint8_t bytesToSend)
   uint8_t explicitHeader = 0; //1 for implicit header
   if(settings.radioSpreadFactor == 6) explicitHeader = 1;
 
-  //LowDataRateOptimize increases the robustness of the LoRa link at low effective data rates. Its use is mandated when the symbol duration exceeds 16ms.
-  uint8_t useLowDataRateOptimization = 0; //0 to disable.
-
+  //LowDataRateOptimize increases the robustness of the LoRa link at low effective data
+  //rates. Its use is mandated when the symbol duration exceeds 16ms.
   //We choose to enable LDRO for airSpeed of 400 even though TSym is 8.2ms.
-  if(settings.airSpeed <= 400 && settings.airSpeed >= 40) useLowDataRateOptimization = 1;
-  if(tSymUsec > 16000) useLowDataRateOptimization = 1; //Catch custom bandwidth/spread/coding setups
-
-  float p1 = (8 * bytesToSend - 4 * settings.radioSpreadFactor + 28 + 16 * useHardwareCRC - 20 * explicitHeader) / (4.0 * (settings.radioSpreadFactor - 2 * useLowDataRateOptimization));
+  uint8_t useLowDataRateOptimization = (tSymUsec >= 8192);
+  float p1 = ((8 * bytesToSend) - (4 * settings.radioSpreadFactor) + 28
+           + (16 * useHardwareCRC) - (20 * explicitHeader))
+           / (4.0 * (settings.radioSpreadFactor - (2 * useLowDataRateOptimization)));
   p1 = ceil(p1) * settings.radioCodingRate;
   if (p1 < 0) p1 = 0;
   uint16_t payloadBytes = 8 + p1;
@@ -460,7 +449,9 @@ void generateHopTable()
   //Feed random number generator with our specific platform settings
   //Use settings that must be identical to have a functioning link.
   //For example, we do not use coding rate because two radios can communicate with different coding rate values
-  myRandSeed = settings.airSpeed
+  myRandSeed = (uint16_t)settings.radioBandwidth
+               + settings.radioSpreadFactor //Radio settings
+               + settings.radioCodingRate
                + settings.txToRxUsec
                + settings.netID
                + settings.operatingMode
@@ -471,8 +462,6 @@ void generateHopTable()
                + settings.numberOfChannels
                + settings.frequencyHop
                + settings.maxDwellTime
-               + (uint16_t)settings.radioBandwidth
-               + settings.radioSpreadFactor
                + settings.verifyRxNetID
                + settings.overheadTime
                + settings.enableCRC16
@@ -1226,7 +1215,6 @@ void updateRadioParameters(uint8_t * rxData)
   memcpy(&params, rxData, sizeof(params));
 
   //Update the radio parameters
-  tempSettings.airSpeed = params.airSpeed;
   tempSettings.autoTuneFrequency = params.autoTuneFrequency;
   tempSettings.frequencyHop = params.frequencyHop;
   tempSettings.frequencyMax = params.frequencyMax;
@@ -2920,8 +2908,9 @@ bool transmitDatagram()
     outputSerialData(true);
   }
 
-  //If we are trainsmitting at high data rates the receiver is often not ready for new data. Pause for a few ms (measured with logic analyzer).
-  if (settings.airSpeed == 28800 || settings.airSpeed == 38400)
+  //If we are trainsmitting at high data rates the receiver is often not ready
+  //for new data. Pause for a few ms (measured with logic analyzer).
+  if (settings.txToRxUsec < 100)
     delay(2);
 
   //Reset the buffer data pointer for the next transmit operation
