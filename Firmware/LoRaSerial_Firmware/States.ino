@@ -70,6 +70,7 @@ void updateRadioState()
   uint16_t length;
   uint8_t radioSeed;
   bool serverLinkBroken;
+  unsigned long timeoutMsec;
   VIRTUAL_CIRCUIT * vc;
   VC_RADIO_MESSAGE_HEADER * vcHeader;
 
@@ -430,7 +431,8 @@ void updateRadioState()
       else
       {
         //If we timeout during handshake, return to link down
-        if ((millis() - datagramTimer) >= (frameAirTime + systemDescriptionAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+        timeoutMsec = frameAirTime + systemDescriptionAirTime + settings.overheadTime + getReceiveCompletionOffset();
+        if ((millis() - datagramTimer) >= timeoutMsec)
         {
           if (settings.debugDatagrams)
           {
@@ -511,7 +513,8 @@ void updateRadioState()
       else
       {
         //If we timeout during handshake, return to link down
-        if ((millis() - datagramTimer) >= (frameAirTime +  ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+        timeoutMsec = frameAirTime +  ackAirTime + settings.overheadTime + getReceiveCompletionOffset();
+        if ((millis() - datagramTimer) >= timeoutMsec)
         {
           if (settings.debugDatagrams)
           {
@@ -1128,7 +1131,8 @@ void updateRadioState()
       else if (receiveInProcess() == false)
       {
         //Check for a receive timeout
-        if ((millis() - datagramTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+        timeoutMsec = frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset();
+        if ((millis() - datagramTimer) >= timeoutMsec)
         {
           if (settings.debugDatagrams)
           {
@@ -2011,6 +2015,7 @@ void updateRadioState()
         {
           //Verify that the link is still up
           txDestVc = rexmtTxDestVc;
+          timeoutMsec = frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset();
           if ((txDestVc != VC_BROADCAST)
               && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].vcState == VC_STATE_LINK_DOWN))
           {
@@ -2019,7 +2024,7 @@ void updateRadioState()
           }
 
           //Check for retransmit needed
-          else if ((currentMillis - ackTimer) >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+          else if ((currentMillis - ackTimer) >= timeoutMsec)
           {
             //Determine if another retransmit is allowed
             if ((!settings.maxResends) || (rexmtFrameSentCount < settings.maxResends))
@@ -2116,6 +2121,7 @@ void updateRadioState()
             if (vcConnecting & (1 << index))
             {
               //Determine if UNKNOWN_ACKS needs to be sent
+              timeoutMsec = frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset();
               if (virtualCircuitList[index].vcState <= VC_STATE_SEND_UNKNOWN_ACKS)
               {
                 //Send the UNKNOWN_ACKS datagram, first part of the 3-way handshake
@@ -2132,8 +2138,7 @@ void updateRadioState()
               //Check for a timeout waiting for the SYNC_ACKS
               else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_SYNC_ACKS)
               {
-                if ((currentMillis - virtualCircuitList[index].timerMillis)
-                    >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+                if ((currentMillis - virtualCircuitList[index].timerMillis) >= timeoutMsec)
                 {
                   //Retransmit the UNKNOWN_ACKS
                   if (xmitVcUnknownAcks(index))
@@ -2149,8 +2154,7 @@ void updateRadioState()
               //Check for a timeout waiting for the ZERO_ACKS
               else if (virtualCircuitList[index].vcState == VC_STATE_WAIT_ZERO_ACKS)
               {
-                if ((currentMillis - virtualCircuitList[index].timerMillis)
-                    >= (frameAirTime + ackAirTime + settings.overheadTime + getReceiveCompletionOffset()))
+                if ((currentMillis - virtualCircuitList[index].timerMillis) >= timeoutMsec)
                 {
                   //Retransmit the SYNC_CLOCKS
                   if (xmitVcSyncAcks(index))
