@@ -53,8 +53,18 @@ void serialBufferOutput(uint8_t * data, uint16_t dataLength)
 //Add a single byte to the output buffer
 void serialOutputByte(uint8_t data)
 {
-  serialTransmitBuffer[txHead++] = data;
-  txHead %= sizeof(serialTransmitBuffer);
+  if (printerEndpoint == PRINT_TO_SERIAL)
+  {
+    //Add this byte to the serial output buffer
+    serialTransmitBuffer[txHead++] = data;
+    txHead %= sizeof(serialTransmitBuffer);
+  }
+  else
+  {
+    //Add this byte to the command response buffer
+    commandTXBuffer[commandTXHead++] = data;
+    commandTXHead %= sizeof(commandTXBuffer);
+  }
 }
 
 //Update the output of the RTS pin (host says it's ok to send data when assertRTS = true)
