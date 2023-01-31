@@ -160,6 +160,8 @@ uint16_t availableTXCommandBytes()
   return (sizeof(commandTXBuffer) - commandTXTail + commandTXHead);
 }
 
+#define NEXT_COMMAND_TX_TAIL(n)     ((commandTXTail + n) % sizeof(commandTXBuffer))
+
 //Send a portion of the commandTXBuffer to serialTransmitBuffer
 void readyLocalCommandPacket()
 {
@@ -194,8 +196,8 @@ void readyLocalCommandPacket()
   }
   for (length = 0; length < bytesToSend; length++)
   {
-    serialOutputByte(commandTXBuffer[commandTXTail++]);
-    commandTXTail %= sizeof(commandTXBuffer);
+    serialOutputByte(commandTXBuffer[commandTXTail]);
+    commandTXTail = NEXT_COMMAND_TX_TAIL(1);
   }
 }
 
@@ -238,8 +240,7 @@ uint8_t readyOutgoingCommandPacket(uint16_t offset)
 
   //Copy the remaining portion of the buffer
   memcpy(&outgoingPacket[headerBytes + offset + length], &commandTXBuffer[commandTXTail], bytesToSend - length);
-  commandTXTail += bytesToSend - length;
-  commandTXTail %= sizeof(commandTXBuffer);
+  commandTXTail = NEXT_COMMAND_TX_TAIL(bytesToSend - length);
   endOfTxData += bytesToSend;
   return (uint8_t)bytesToSend;
 }
