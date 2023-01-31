@@ -631,7 +631,7 @@ bool vcSerialMessageReceived()
       systemPrint("Readying ");
       systemPrint(msgLength);
       systemPrintln(" byte for transmission");
-      outputSerialData(true);
+      dumpCircularBuffer(radioTxBuffer, radioTxTail, sizeof(radioTxBuffer), msgLength);
     }
 
     //If sending to ourself, just place the data in the serial output buffer
