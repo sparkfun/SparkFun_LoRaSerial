@@ -17,14 +17,6 @@ enum {
   TYPE_U8,
   TYPE_U16,
   TYPE_U32,
-
-  //Sprinkler Controller types
-  TYPE_DAY,
-  TYPE_DURATION,
-  TYPE_START,
-  TYPE_TIME,
-  TYPE_ZONE,
-  TYPE_ZONE_MASK,
 };
 
 typedef bool (* COMMAND_ROUTINE)(const char * commandString);
@@ -42,22 +34,13 @@ typedef struct
 //Process the AT commands
 bool commandAT(const char * commandString)
 {
-  uint32_t currentTime;
-  int days;
   uint32_t delayMillis;
   long deltaMillis;
-  uint32_t hours;
   uint8_t id[UNIQUE_ID_BYTES];
-  uint32_t minutes;
-  bool printStartTime;
-  uint32_t seconds;
   const char * string;
   unsigned long timer;
-  char timeString[16];
-  uint32_t value;
   VIRTUAL_CIRCUIT * vc = &virtualCircuitList[cmdVc];
   uint8_t vcIndex;
-  int zone;
 
   //'AT'
   if (commandLength == 2)
@@ -80,7 +63,6 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATD - Display the debug settings");
         systemPrintln("  ATF - Restore factory settings");
         systemPrintln("  ATG - Generate new netID and encryption key");
-        systemPrintln("  ATH - Clear watering schedule");
         systemPrintln("  ATI - Display the radio version");
         systemPrintln("  ATI? - Display the information commands");
         systemPrintln("  ATIn - Display system information");
@@ -91,7 +73,6 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATT - Enter training mode");
         systemPrintln("  ATV - Display virtual circuit settings");
         systemPrintln("  ATW - Save current settings to NVM");
-        systemPrintln("  ATY - Display the sprinkler controller settings");
         systemPrintln("  ATZ - Reboot the radio");
         systemPrintln("  AT-Param=xxx - Set parameter's value to xxx by name (Param)");
         systemPrintln("  AT-Param? - Print parameter's current value by name (Param)");
@@ -166,13 +147,6 @@ bool commandAT(const char * commandString)
       case ('G'): //ATG - Generate a new netID and encryption key
         generateRandomKeysID();
         return true;
-
-      case ('H'): //Clear the watering schedule
-        memset(&week, 0, sizeof(week));
-        enableSprinklerController = false;
-        scheduleCopied = false;
-        return true;
-        break;
 
       case ('I'): //ATI
         //Shows the radio version
@@ -267,8 +241,6 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI13 - Display the SX1276 registers");
         systemPrintln("  ATI14 - Dump the radioTxBuffer");
         systemPrintln("  ATI15 - Dump the NVM unique ID table");
-        systemPrintln("  ATI88 - Display the sprinkler schedule");
-        systemPrintln("  ATI89 - Display current time and date");
         return true;
 
       case ('0'): //ATI0 - Show user settable parameters
@@ -318,8 +290,6 @@ bool commandAT(const char * commandString)
         return true;
     }
   }
-
-  //ATI1x
   if ((commandString[2] == 'I') && (commandString[3] == '1') && (commandLength == 5))
   {
     switch (commandString[4])
@@ -779,151 +749,6 @@ bool commandAT(const char * commandString)
     }
   }
 
-  //ATI8x
-  if ((commandString[2] == 'I') && (commandString[3] == '8') && (commandLength == 5))
-  {
-    switch (commandString[4])
-    {
-      default:
-        return false;
-
-      case ('8'): //ATI88 - Display the sprinkler schedule
-        //Determine if the controller is enabled
-        systemPrint("Controller: ");
-        if (!online.quadRelay)
-          systemPrintln("Broken - Quad relay offline!");
-        else
-          systemPrintln(enableSprinklerController ? "Enabled" : "Off - Disabled");
-
-        //Determine if any of the zones are enabled
-        systemPrintln("Schedule");
-        for (int index = 0; index < 7; index++)
-        {
-          for (zone = 0; zone < ZONE_NUMBER_MAX; zone++)
-            if (week[index].zoneScheduleDuration[zone])
-              break;
-          if (zone < ZONE_NUMBER_MAX)
-            break;
-        }
-        if (zone >= ZONE_NUMBER_MAX)
-          systemPrintln("    Controller Off: No schedule programmed");
-        else
-        {
-          //Display the schedule
-          for (int index = 0; index < 7; index++)
-          {
-            //Determine if any of the zones are enabled
-            for (zone = 0; zone < ZONE_NUMBER_MAX; zone++)
-              if (week[index].zoneScheduleDuration[zone])
-                break;
-
-            //Display the day of the week
-            if (zone < ZONE_NUMBER_MAX)
-            {
-              systemPrint("    ");
-              systemPrint(dayName[index]);
-
-              //Display the starting time
-              systemPrint(" starting at ");
-              seconds = week[index].scheduleStartTime;
-              hours = seconds / (60 * 60 * 1000);
-              if ((hours % 12) == 0)
-                systemPrint(12);
-              else if ((hours % 12) < 10)
-              {
-                systemPrint("0");
-                systemPrint(hours % 12);
-              }
-              else
-                systemPrint(hours % 12);
-              seconds -= hours * 60 * 60 * 1000;
-              minutes = seconds / (60 * 1000);
-              systemPrint(":");
-              if (minutes < 10)
-                systemPrint("0");
-              systemPrint(minutes);
-              seconds -= minutes * 60 * 1000;
-              seconds /= 1000;
-              systemPrint(":");
-              if (seconds < 10)
-                systemPrint("0");
-              systemPrint(seconds);
-              systemPrintln(hours < 12 ? " AM" : " PM");
-
-              //Display the zones
-              for (zone=0; zone < ZONE_NUMBER_MAX; zone++)
-              {
-                seconds = week[index].zoneScheduleDuration[zone];
-                if (seconds)
-                {
-                  systemPrint("        Zone ");
-                  systemPrint(zone + 1);
-                  systemPrint(": ");
-                  hours = seconds / (60 * 60 * 1000);
-                  if (hours < 10)
-                    systemPrint("0");
-                  systemPrint(hours);
-                  seconds -= hours * 60 * 60 * 1000;
-                  minutes = seconds / (60 * 1000);
-                  systemPrint(":");
-                  if (minutes < 10)
-                    systemPrint("0");
-                  systemPrint(minutes);
-                  seconds -= minutes * 60 * 1000;
-                  seconds /= 1000;
-                  systemPrint(":");
-                  if (seconds < 10)
-                    systemPrint("0");
-                  systemPrintln(seconds);
-                }
-              }
-            }
-          }
-        }
-
-        //Display the zone configuration
-        systemPrintln("Zones");
-        for (zone=0; zone < ZONE_NUMBER_MAX; zone++)
-        {
-          systemPrint("    ");
-          systemPrint(zone + 1);
-          systemPrint(": ");
-          systemPrint((latchingSolenoid & (1 << zone)) ? "Latching" : "AC");
-          systemPrintln(" solenoid");
-        }
-        return true;
-
-      case ('9'): //ATI89 - Display current time and date
-        systemPrint(dayName[dayOfWeek]);
-        systemPrint(", ");
-        seconds = (timeOfDay + timestampOffset) % (24 * 60 * 60 * 1000);
-        hours = seconds / (60 * 60 * 1000);
-        if ((hours % 12) == 0)
-          systemPrint(12);
-        else if ((hours % 12) < 10)
-        {
-          systemPrint("0");
-          systemPrint(hours % 12);
-        }
-        else
-          systemPrint(hours % 12);
-        seconds -= hours * 60 * 60 * 1000;
-        minutes = seconds / (60 * 1000);
-        systemPrint(":");
-        if (minutes < 10)
-          systemPrint("0");
-        systemPrint(minutes);
-        seconds -= minutes * 60 * 1000;
-        seconds /= 1000;
-        systemPrint(":");
-        if (seconds < 10)
-          systemPrint("0");
-        systemPrint(seconds);
-        systemPrintln(hours < 12 ? " AM" : " PM");
-        return true;
-    }
-  }
-
   //Invalid command
   return false;
 }
@@ -955,7 +780,6 @@ const COMMAND_PREFIX prefixTable[] = {
   {"ATR",  1, commandDisplayRadio},
   {"ATS",  1, commandDisplaySerial},
   {"ATV",  1, commandDisplayVirtualCircuit},
-  {"ATY",  1, commandDisplaySprinklerController},
   {"AT-?", 1, commandDisplayAll},
   {"AT-",  1, commandSetByName},
   {"AT",   1, commandAT},
@@ -1100,13 +924,6 @@ bool commandDisplayRadio(const char * commandString)
 bool commandDisplaySerial(const char * commandString)
 {
   displayParameters('S', false);
-  return true;
-}
-
-//Display only the sprinkler controller commands
-bool commandDisplaySprinklerController(const char * commandString)
-{
-  displayParameters('Y', false);
   return true;
 }
 
@@ -1362,26 +1179,7 @@ const COMMAND_ENTRY commands[] =
 
   /*Virtual circuit parameters
     Ltr, All, reset, min, max, digits,    type,         validation,     name,                   setting addr */
-  {'V',   0,   0,    0, MAX_VC - 1, 0, TYPE_U8,         valInt,       "CmdVC",                &cmdVc},
-
-  //Define any user parameters
-
-  /*Sprinkler Controller parameters
-    Ltr, All, reset, min, max, digits,    type,         validation,     name,                   setting addr */
-  {'Y',   0,   0,    0,   6,    0, TYPE_DAY,          valInt,         "CommandDay",           &commandDay},
-  {'Y',   0,   0,    0, ZONE_NUMBER_MAX, 0, TYPE_U8,  valInt,         "CommandZone",          &commandZone},
-  {'Y',   0,   0,    0,   6,    0, TYPE_DAY,          valInt,         "DayOfWeek",            &dayOfWeek},
-  {'Y',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugSprinklers",      &settings.debugSprinklers},
-  {'Y',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DisplayMilliseconds",  &settings.displayMilliseconds},
-  {'Y',   0,   0,   50,  1000,  0, TYPE_U16,          valInt,         "DisplayUpdate",        &settings.displayUpdate},
-  {'Y',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "EnableController",     &enableSprinklerController},
-  {'Y',   0,   0,    0,   1,    0, TYPE_ZONE_MASK,    valInt,         "LatchingSolenoid",     &latchingSolenoid},
-  {'Y',   0,   0,  100,  1000,  0, TYPE_U16,          valInt,         "PulseDuration",        &settings.pulseDuration},
-  {'Y',   0,   0,    0, 15000,  0, TYPE_U16,          valInt,         "SplashScreenDelay",    &settings.splashScreenDelay},
-  {'Y',   0,   0,    0, 86399999, 0, TYPE_START,      valInt,         "StartTime",            &week},
-  {'Y',   0,   0,    0, 86399999, 0, TYPE_TIME,       valInt,         "TimeOfDay",            &timeOfDay},
-  {'Y',   0,   0,    0,  7200000, 0, TYPE_DURATION,   valInt,         "ZoneDuration",         &week},
-  {'Y',   0,   0,    0,   1,    0, TYPE_ZONE_MASK,    valInt,         "ZoneManualOn",         &zoneManualOn},
+  {'V',   0,   0,    0, MAX_VC - 1, 0, TYPE_U8,         valInt,         "CmdVC",                &cmdVc},
 };
 
 const int commandCount = sizeof(commands) / sizeof(commands[0]);
@@ -1393,56 +1191,11 @@ const int commandCount = sizeof(commands) / sizeof(commands[0]);
 //Display a command
 void commandDisplay(const COMMAND_ENTRY * command)
 {
-  uint32_t hours;
-  uint32_t minutes;
-  CONTROLLER_SCHEDULE * schedule;
-  uint32_t seconds;
-  char * string;
-  char timeString[12];
-  uint32_t value;
-
   //Print the setting value
   switch (command->type)
   {
     case TYPE_BOOL:
       systemPrint((uint8_t)(*(bool *)(command->setting)));
-      break;
-    case TYPE_DURATION:
-      if (!commandZone)
-        break;
-      schedule = (CONTROLLER_SCHEDULE *)command->setting;
-      value = schedule[commandDay].zoneScheduleDuration[commandZone-1];
-
-      //Compute the time
-      seconds = value;
-      hours = seconds / MILLISECONDS_IN_AN_HOUR;
-      seconds -= hours * MILLISECONDS_IN_AN_HOUR;
-      minutes = seconds / MILLISECONDS_IN_A_MINUTE;
-      seconds -= minutes * MILLISECONDS_IN_A_MINUTE;
-      seconds /= MILLISECONDS_IN_A_SECOND;
-
-      //Build the string
-      string = timeString;
-      if (hours > 9)
-        *string++ = '0' + (hours / 10);
-      *string++ = '0' + (hours % 10);
-      *string++ = ':';
-      *string++ = '0' + (minutes / 10);
-      *string++ = '0' + (minutes % 10);
-      *string++ = ':';
-      *string++ = '0' + (seconds / 10);
-      *string++ = '0' + (seconds % 10);
-      *string++ = 0;
-
-      //Display the time
-      systemPrint(value);
-      systemPrint(" (");
-      systemPrint(dayName[commandDay]);
-      systemPrint(" zone ");
-      systemPrint(commandZone);
-      systemPrint(" ");
-      systemPrint(timeString);
-      systemPrint(")");
       break;
     case TYPE_FLOAT:
       systemPrint(*((float *)(command->setting)), command->digits);
@@ -1460,78 +1213,6 @@ void commandDisplay(const COMMAND_ENTRY * command)
     case TYPE_SPEED_SERIAL:
     case TYPE_U32:
       systemPrint(*(uint32_t *)(command->setting));
-      break;
-    case TYPE_START:
-      schedule = (CONTROLLER_SCHEDULE *)command->setting;
-      value = schedule[commandDay].scheduleStartTime;
-
-      //Compute the time
-      seconds = value;
-      hours = seconds / MILLISECONDS_IN_AN_HOUR;
-      seconds -= hours * MILLISECONDS_IN_AN_HOUR;
-      minutes = seconds / MILLISECONDS_IN_A_MINUTE;
-      seconds -= minutes * MILLISECONDS_IN_A_MINUTE;
-      seconds /= MILLISECONDS_IN_A_SECOND;
-
-      //Build the string
-      string = timeString;
-      if (hours > 9)
-        *string++ = '0' + (hours / 10);
-      *string++ = '0' + (hours % 10);
-      *string++ = ':';
-      *string++ = '0' + (minutes / 10);
-      *string++ = '0' + (minutes % 10);
-      *string++ = ':';
-      *string++ = '0' + (seconds / 10);
-      *string++ = '0' + (seconds % 10);
-      *string++ = 0;
-
-      //Display the time
-      systemPrint(value);
-      systemPrint(" (");
-      systemPrint(dayName[commandDay]);
-      systemPrint(" @ ");
-      systemPrint(timeString);
-      systemPrint(")");
-      break;
-    case TYPE_TIME:
-      //Compute the time
-      seconds = *(uint32_t *)(command->setting) - startOfDay;
-      hours = seconds / MILLISECONDS_IN_AN_HOUR;
-      seconds -= hours * MILLISECONDS_IN_AN_HOUR;
-      minutes = seconds / MILLISECONDS_IN_A_MINUTE;
-      seconds -= minutes * MILLISECONDS_IN_A_MINUTE;
-      seconds /= MILLISECONDS_IN_A_SECOND;
-
-      //Build the string
-      string = timeString;
-      if (hours > 9)
-        *string++ = '0' + (hours / 10);
-      *string++ = '0' + (hours % 10);
-      *string++ = ':';
-      *string++ = '0' + (minutes / 10);
-      *string++ = '0' + (minutes % 10);
-      *string++ = ':';
-      *string++ = '0' + (seconds / 10);
-      *string++ = '0' + (seconds % 10);
-      *string++ = 0;
-
-      //Display the time
-      systemPrint((uint32_t)(*(uint32_t *)(command->setting)));
-      systemPrint(" (");
-      systemPrint(timeString);
-      systemPrint(")");
-      break;
-    case TYPE_DAY:
-      systemPrint(*(uint8_t *)(command->setting));
-      systemPrint(" (");
-      systemWrite(dayLetter[*(uint8_t *)(command->setting)]);
-      systemPrint(", ");
-      systemPrint(dayName[*(uint8_t *)(command->setting)]);
-      systemPrint(")");
-      break;
-    case TYPE_ZONE_MASK:
-      systemPrintln(((*(ZONE_MASK *)(command->setting)) >> commandZone) & 1);
       break;
   }
   systemPrintln();
@@ -1588,9 +1269,6 @@ bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer
 {
   const char * digit;
   double doubleSettingValue;
-  int index;
-  uint32_t number;
-  CONTROLLER_SCHEDULE * schedule;
   uint32_t settingValue;
   bool valid;
 
@@ -1636,15 +1314,6 @@ bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer
         if (valid)
           *(bool *)(command->setting) = (bool)settingValue;
         break;
-      case TYPE_DURATION:
-        valid = command->validate((void *)&settingValue, command->minValue, command->maxValue)
-              && commandZone;
-        if (valid)
-        {
-          schedule = (CONTROLLER_SCHEDULE *)command->setting;
-          schedule[commandDay].zoneScheduleDuration[commandZone- 1] = settingValue;
-        }
-        break;
       case TYPE_FLOAT:
         valid = command->validate((void *)&doubleSettingValue, command->minValue, command->maxValue);
         if (valid)
@@ -1658,21 +1327,11 @@ bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer
         break;
       case TYPE_SPEED_AIR:
       case TYPE_SPEED_SERIAL:
-      case TYPE_TIME:
       case TYPE_U32:
         valid = command->validate((void *)&settingValue, command->minValue, command->maxValue);
         if (valid)
           *(uint32_t *)(command->setting) = settingValue;
         break;
-      case TYPE_START:
-        valid = command->validate((void *)&settingValue, command->minValue, command->maxValue);
-        if (valid)
-        {
-          schedule = (CONTROLLER_SCHEDULE *)command->setting;
-          schedule[commandDay].scheduleStartTime = settingValue;
-        }
-        break;
-      case TYPE_DAY:
       case TYPE_U8:
         valid = command->validate((void *)&settingValue, command->minValue, command->maxValue);
         if (valid)
@@ -1682,14 +1341,6 @@ bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer
         valid = command->validate((void *)&settingValue, command->minValue, command->maxValue);
         if (valid)
           *(uint16_t *)(command->setting) = (uint16_t)settingValue;
-        break;
-      case TYPE_ZONE_MASK:
-        valid = command->validate((void *)&settingValue, command->minValue, command->maxValue);
-        if (valid)
-        {
-          *(ZONE_MASK *)(command->setting) &= ~(1 << (commandZone- 1));
-          *(ZONE_MASK *)(command->setting) |= settingValue << (commandZone - 1);
-        }
         break;
     }
     if (valid == false)
