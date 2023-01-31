@@ -514,16 +514,6 @@ bool vcSerialMsgGetLengthByte(uint8_t * msgLength)
   return true;
 }
 
-//Get the destination virtual circuit byte from the serial buffer
-uint8_t vcSerialMsgGetVcDest()
-{
-  uint16_t index;
-
-  //Get the destination address byte
-  index = NEXT_RADIO_TX_TAIL(1);
-  return radioTxBuffer[index];
-}
-
 //Determine if received serial data may be sent to the remote system
 bool vcSerialMessageReceived()
 {
@@ -573,7 +563,7 @@ bool vcSerialMessageReceived()
     //vcProcessSerialInput validates the vcDest value, this check validates
     //that internally generated traffic uses valid vcDest values.  Only messages
     //enabled for receive on a remote radio may be transmitted.
-    vcDest = vcSerialMsgGetVcDest();
+    vcDest = radioTxBuffer[NEXT_RADIO_TX_TAIL(1)];
     vcIndex = -1;
     if ((uint8_t)vcDest < (uint8_t)MIN_RX_NOT_ALLOWED)
       vcIndex = vcDest & VCAB_NUMBER_MASK;
