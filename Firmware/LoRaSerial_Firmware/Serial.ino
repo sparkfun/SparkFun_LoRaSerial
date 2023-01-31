@@ -87,6 +87,7 @@ uint16_t availableRadioTXBytes()
 }
 
 #define NEXT_RADIO_TX_HEAD(n)   ((radioTxHead + n) % sizeof(radioTxBuffer))
+#define NEXT_RADIO_TX_TAIL(n)   ((radioTxTail + n) % sizeof(radioTxBuffer))
 
 //If we have data to send, get the packet ready
 //Return true if new data is ready to be sent
@@ -133,8 +134,7 @@ void readyOutgoingPacket(uint16_t bytesToSend)
 
   //Copy the remaining portion of the buffer
   memcpy(&outgoingPacket[headerBytes + length], &radioTxBuffer[radioTxTail], bytesToSend - length);
-  radioTxTail += bytesToSend - length;
-  radioTxTail %= sizeof(radioTxBuffer);
+  radioTxTail = NEXT_RADIO_TX_TAIL(bytesToSend - length);
   endOfTxData += bytesToSend;
 }
 
@@ -159,6 +159,8 @@ uint16_t availableTXCommandBytes()
   if (commandTXHead >= commandTXTail) return (commandTXHead - commandTXTail);
   return (sizeof(commandTXBuffer) - commandTXTail + commandTXHead);
 }
+
+#define NEXT_COMMAND_TX_TAIL(n)     ((commandTXTail + n) % sizeof(commandTXBuffer))
 
 //Send a portion of the commandTXBuffer to serialTransmitBuffer
 void readyLocalCommandPacket()
@@ -194,8 +196,8 @@ void readyLocalCommandPacket()
   }
   for (length = 0; length < bytesToSend; length++)
   {
-    serialOutputByte(commandTXBuffer[commandTXTail++]);
-    commandTXTail %= sizeof(commandTXBuffer);
+    serialOutputByte(commandTXBuffer[commandTXTail]);
+    commandTXTail = NEXT_COMMAND_TX_TAIL(1);
   }
 }
 
@@ -206,16 +208,45 @@ uint8_t readyOutgoingCommandPacket(uint16_t offset)
   uint16_t length;
   uint16_t maxLength;
 
-  //Determine the amount of data in the buffer
-  bytesToSend = availableTXCommandBytes();
-  if ((settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
-      && (commandTXBuffer[commandTXTail] != START_OF_VC_SERIAL))
-    bytesToSend -= VC_SERIAL_HEADER_BYTES + sizeof(VC_COMMAND_COMPLETE_MESSAGE);
-
   //Limit the length to the frame size
   maxLength = maxDatagramSize - offset;
+  bytesToSend = availableTXCommandBytes();
   if (bytesToSend > maxLength)
+  {
     bytesToSend = maxLength;
+
+    //checkCommand delivers the entire command response to the commandTXBuffer.
+    //The response to be broken into multiple frames for transmission to the remote
+    //radio and host.  The code below separates the commnad response from the
+    //VC_COMMAND_COMPLETE_MESSAGE which follows the response.  This separation
+    //ensures that the entire VC_COMMAND_COMPLETE_MESSAGE is delivered within a
+    //single frame.  The result enables easy detection by the remote radio.
+    //
+    //Determine the number of command response bytes to send
+    if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+    {
+      //Reserve the bytes for the VC heeader
+      bytesToSend -= VC_SERIAL_HEADER_BYTES;
+
+      //Determine if the VC_COMMAND_COMPLETE_MESSAGE is split across two buffers
+
+      if (commandTXBuffer[commandTXTail] != START_OF_VC_SERIAL)
+      {
+        //OK if the entire VC_COMMAND_COMPLETE_MESSAGE is in the buffer.  Start
+        //the search one byte into the VC_COMMAND_COMPLETE_MESSAGE position.
+        for (length = bytesToSend - VC_SERIAL_HEADER_BYTES
+                    - sizeof(VC_COMMAND_COMPLETE_MESSAGE) + 1;
+             length < bytesToSend; length++)
+          if (commandTXBuffer[NEXT_COMMAND_TX_TAIL(length)] == START_OF_VC_SERIAL)
+          {
+            //Exclude the partial piece of the VC_COMMAND_COMPLETE_MESSAGE from
+            //this command response frame.
+            bytesToSend = length;
+            break;
+          }
+      }
+    }
+  }
 
   //Display the amount of data being sent
   if (settings.debugSerial)
@@ -223,7 +254,7 @@ uint8_t readyOutgoingCommandPacket(uint16_t offset)
     systemPrint("Moving ");
     systemPrint(bytesToSend);
     systemPrintln(" bytes from commandTXBuffer into outgoingPacket");
-    outputSerialData(true);
+    dumpCircularBuffer(commandTXBuffer, commandTXTail, sizeof(commandTXBuffer), bytesToSend);
   }
 
   //Determine if the data wraps around to the beginning of the buffer
@@ -238,8 +269,7 @@ uint8_t readyOutgoingCommandPacket(uint16_t offset)
 
   //Copy the remaining portion of the buffer
   memcpy(&outgoingPacket[headerBytes + offset + length], &commandTXBuffer[commandTXTail], bytesToSend - length);
-  commandTXTail += bytesToSend - length;
-  commandTXTail %= sizeof(commandTXBuffer);
+  commandTXTail = NEXT_COMMAND_TX_TAIL(bytesToSend - length);
   endOfTxData += bytesToSend;
   return (uint8_t)bytesToSend;
 }
@@ -513,18 +543,6 @@ bool vcSerialMsgGetLengthByte(uint8_t * msgLength)
   return true;
 }
 
-//Get the destination virtual circuit byte from the serial buffer
-uint8_t vcSerialMsgGetVcDest()
-{
-  uint16_t index;
-
-  //Get the destination address byte
-  index = radioTxTail + 1;
-  if (index >= sizeof(radioTxBuffer))
-    index -= sizeof(radioTxBuffer);
-  return radioTxBuffer[index];
-}
-
 //Determine if received serial data may be sent to the remote system
 bool vcSerialMessageReceived()
 {
@@ -574,7 +592,7 @@ bool vcSerialMessageReceived()
     //vcProcessSerialInput validates the vcDest value, this check validates
     //that internally generated traffic uses valid vcDest values.  Only messages
     //enabled for receive on a remote radio may be transmitted.
-    vcDest = vcSerialMsgGetVcDest();
+    vcDest = radioTxBuffer[NEXT_RADIO_TX_TAIL(1)];
     vcIndex = -1;
     if ((uint8_t)vcDest < (uint8_t)MIN_RX_NOT_ALLOWED)
       vcIndex = vcDest & VCAB_NUMBER_MASK;
@@ -589,9 +607,7 @@ bool vcSerialMessageReceived()
       }
 
       //Discard this message
-      radioTxTail += msgLength;
-      if (radioTxTail >= sizeof(radioTxBuffer))
-        radioTxTail -= sizeof(radioTxBuffer);
+      radioTxTail = NEXT_RADIO_TX_TAIL(msgLength);
       break;
     }
 
@@ -605,9 +621,7 @@ bool vcSerialMessageReceived()
       }
 
       //Discard this message, it is too long to transmit over the radio link
-      radioTxTail += msgLength;
-      if (radioTxTail >= sizeof(radioTxBuffer))
-        radioTxTail -= sizeof(radioTxBuffer);
+      radioTxTail = NEXT_RADIO_TX_TAIL(msgLength);
 
       //Nothing to do for invalid addresses or the broadcast address
       if (((uint8_t)vcDest >= (uint8_t)MIN_TX_NOT_ALLOWED) && (vcDest != VC_BROADCAST))
@@ -632,9 +646,7 @@ bool vcSerialMessageReceived()
       }
 
       //Discard this message
-      radioTxTail += msgLength;
-      if (radioTxTail >= sizeof(radioTxBuffer))
-        radioTxTail -= sizeof(radioTxBuffer);
+      radioTxTail = NEXT_RADIO_TX_TAIL(msgLength);
 
       //If the PC is trying to send this message then notify the PC of the delivery failure
       if ((uint8_t)vcDest < (uint8_t)MIN_TX_NOT_ALLOWED)
@@ -648,7 +660,7 @@ bool vcSerialMessageReceived()
       systemPrint("Readying ");
       systemPrint(msgLength);
       systemPrintln(" byte for transmission");
-      outputSerialData(true);
+      dumpCircularBuffer(radioTxBuffer, radioTxTail, sizeof(radioTxBuffer), msgLength);
     }
 
     //If sending to ourself, just place the data in the serial output buffer
@@ -797,7 +809,7 @@ void vcProcessSerialInput()
           }
 
           //Discard this message
-          rxTail = NEXT_RX_TAIL(length + 1);
+          rxTail = NEXT_RX_TAIL(length);
           break;
         }
 

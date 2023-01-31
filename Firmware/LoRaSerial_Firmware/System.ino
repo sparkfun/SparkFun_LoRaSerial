@@ -517,11 +517,6 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
     systemPrint((uint16_t)(offset % bufferLength), HEX);
     systemPrint(": ");
 
-    //Determine the number of bytes to display
-    bytes = length;
-    if (bytes > displayWidth)
-      bytes = displayWidth;
-
     //Adjust for the offset
     delta = offset % displayWidth;
     if (delta)
@@ -535,6 +530,11 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
         petWDT();
       }
     }
+
+    //Determine the number of bytes to display
+    bytes = length;
+    if (bytes > (displayWidth - delta))
+      bytes = displayWidth - delta;
 
     //Display the data bytes in hex
     for (index = 0; index < bytes; index++)
@@ -568,6 +568,7 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
     if (timeToHop == true) //If the channelTimer has expired, move to next frequency
       hopChannel();
     petWDT();
+    outputSerialData(true);
     offset += bytes;
     length -= bytes;
   }
