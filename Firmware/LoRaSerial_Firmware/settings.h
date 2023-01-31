@@ -419,9 +419,9 @@ typedef struct struct_settings {
   //Radio protocol parameters
   //----------------------------------------
 
-  uint8_t operatingMode = MODE_POINT_TO_POINT; //Receiving unit will check netID and ACK. If set to false, receiving unit doesn't check netID or ACK.
+  uint8_t operatingMode = MODE_VIRTUAL_CIRCUIT; //Receiving unit will check netID and ACK. If set to false, receiving unit doesn't check netID or ACK.
 
-  uint8_t selectLedUse = LEDS_RSSI; //Select LED use
+  uint8_t selectLedUse = LEDS_VC; //Select LED use
   bool server = false; //Default to being a client, enable server for multipoint, VC and training
   uint8_t netID = 192; //Both radios must share a network ID
   bool verifyRxNetID = true; //Verify RX netID value when not operating in point-to-point mode
@@ -429,8 +429,8 @@ typedef struct struct_settings {
   uint8_t encryptionKey[AES_KEY_BYTES] = { 0x37, 0x78, 0x21, 0x41, 0xA6, 0x65, 0x73, 0x4E, 0x44, 0x75, 0x67, 0x2A, 0xE6, 0x30, 0x83, 0x08 };
 
   bool encryptData = true; //AES encrypt each packet
-  bool dataScrambling = false; //Use IBM Data Whitening to reduce DC bias
-  bool enableCRC16 = false; //Append CRC-16 to packet, check CRC-16 upon receive
+  bool dataScrambling = true; //Use IBM Data Whitening to reduce DC bias
+  bool enableCRC16 = true; //Append CRC-16 to packet, check CRC-16 upon receive
   uint8_t framesToYield = 3; //If remote requests it, supress transmission for this number of max packet frames
 
   uint16_t heartbeatTimeout = 5000; //ms before sending HEARTBEAT to see if link is active
@@ -473,7 +473,7 @@ typedef struct struct_settings {
   //----------------------------------------
 
   bool copyTriggers = false; //Copy the trigger parameters to the training client
-  uint8_t triggerWidth = 25; //Trigger width in microSeconds or multipler for trigger width
+  uint8_t triggerWidth = 10; //Trigger width in microSeconds or multipler for trigger width
   bool triggerWidthIsMultiplier = true; //Use the trigger width as a multiplier
 
   uint32_t triggerEnable = 0; //Determine which triggers are enabled: 31 - 0
