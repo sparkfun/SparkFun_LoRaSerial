@@ -780,7 +780,7 @@ void vcProcessSerialInput()
           }
 
           //Discard this message
-          rxTail = NEXT_RX_TAIL(length + 1);
+          rxTail = NEXT_RX_TAIL(length);
           break;
         }
 
