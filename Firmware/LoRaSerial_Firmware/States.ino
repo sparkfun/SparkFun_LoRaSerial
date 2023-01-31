@@ -1949,30 +1949,57 @@ void updateRadioState()
           case DATAGRAM_REMOTE_COMMAND_RESPONSE:
             triggerEvent(TRIGGER_RX_COMMAND_RESPONSE);
 
-            //Determine if this is the VC_COMMAND_COMPLETE_MESSAGE
-            length = rxDataBytes;
-            if (*rxVcData == START_OF_VC_SERIAL)
+            //The VC_COMMAND_COMPLETE_MESSAGE is located at the end of the command
+            //response.  This method of splitting the message works because the
+            //VC_COMMAND_COMPLETE_MESSAGE is delivered via a separate frame.  As
+            //such, the reception is transactional, the frame is either present or
+            //it is not. Determine if the VC_COMMAND_COMPLETE_MESSAGE is contained
+            //in this response.
+            length = rxDataBytes - VC_SERIAL_HEADER_BYTES - sizeof(VC_COMMAND_COMPLETE_MESSAGE);
+            if ((length > rxDataBytes) || (rxData[length] != START_OF_VC_SERIAL))
+              //The VC_COMMAND_COMPLETE_MESSAGE is not in this portion of the response
+              length = rxDataBytes;
+
+            //Transfer the response data to the host
+            if (length)
             {
-              //Remove the VC_RADIO_MESSAGE_HEADER and START_OF_VC_SERIAL byte
-              length -= VC_RADIO_HEADER_BYTES + 1;
-              rxData += VC_RADIO_HEADER_BYTES + 1;
-            }
-            else
               vcHeader->destVc |= PC_REMOTE_RESPONSE;
+              vcHeader->length = length;
 
-            //Debug the serial path
-            if (settings.debugSerial)
-            {
-              systemPrint("Moving ");
-              systemPrint(length);
-              systemPrintln(" from incomingBuffer to serialTransmitBuffer");
-              dumpBuffer(rxData, rxDataBytes);
-              outputSerialData(true);
+              //Debug the serial path
+              if (settings.debugSerial)
+              {
+                systemPrint("Moving ");
+                systemPrint(length);
+                systemPrintln(" from incomingBuffer to serialTransmitBuffer");
+                dumpBuffer(rxData, length);
+                outputSerialData(true);
+              }
+
+              //Place the data in to the serialTransmitBuffer
+              serialOutputByte(START_OF_VC_SERIAL);
+              serialBufferOutput(rxData, length);
             }
 
-            //Place the data in to the serialTransmitBuffer
-            serialOutputByte(START_OF_VC_SERIAL);
-            serialBufferOutput(rxData, length);
+            //Transfer the VC_COMMAND_COMPLETE_MESSAGE
+            if (length < rxDataBytes)
+            {
+              index = length;
+              length = rxDataBytes - length;
+
+              //Debug the serial path
+              if (settings.debugSerial)
+              {
+                systemPrint("Moving ");
+                systemPrint(length);
+                systemPrintln(" from incomingBuffer to serialTransmitBuffer");
+                dumpBuffer(&rxData[index], length);
+                outputSerialData(true);
+              }
+
+              //Place the data in to the serialTransmitBuffer
+              serialBufferOutput(&rxData[index], length);
+            }
 
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
