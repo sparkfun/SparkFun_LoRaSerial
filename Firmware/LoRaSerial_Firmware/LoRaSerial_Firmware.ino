@@ -43,7 +43,7 @@ const int FIRMWARE_VERSION_MAJOR = 2;
 const int FIRMWARE_VERSION_MINOR = 0;
 
 #define RADIOLIB_LOW_LEVEL  //Enable access to the module functions
-#define ENABLE_DEVELOPER true //Uncomment this line to enable special developer modes
+//#define ENABLE_DEVELOPER true //Uncomment this line to enable special developer modes
 
 #define UNUSED(x) (void)(x)
 
@@ -179,24 +179,6 @@ volatile bool reloadChannelTimer = false; //When set channel timer interval need
 uint16_t petTimeout = 0; //A reduced amount of time before WDT triggers. Helps reduce amount of time spent petting.
 unsigned long lastPet = 0; //Remebers time of last WDT pet.
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-//I2C
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-#include <Wire.h>
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-//External Display
-//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#include <SparkFun_Qwiic_OLED.h> //http://librarymanager/All#SparkFun_Qwiic_Graphic_OLED
-//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-//Quad Relay Board
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-#include <SparkFun_Qwiic_Relay.h>
-
-Qwiic_Relay quadRelay(0x6d);
-
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables - Serial
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -692,14 +674,6 @@ void setup()
 
   arch.uniqueID(myUniqueId); //Get the unique ID
 
-  Wire.begin(); //Start I2C
-
-  //Verify connection to quad relay board
-  if(quadRelay.begin())
-    online.quadRelay = true;
-
-  beginDisplay(); //Start display first to be able to display any errors
-
   beginLoRa(); //Start radio
 
   beginButton(); //Start watching the train button
@@ -724,8 +698,6 @@ void loop()
 {
   petWDT();
 
-  updateTimeOfDay();
-
   updateButton(); //Check if train button is pressed
 
   updateSerial(); //Store incoming and print outgoing
@@ -733,10 +705,6 @@ void loop()
   updateRadioState(); //Send packets as needed for handshake, data, remote commands
 
   updateLeds(); //Update the LEDs on the board
-
-  updateZones(); //Turn on or off the sprinkler zones
-
-  updateDisplay();
 
   updateHopISR(); //Clear hop ISR as needed
 }
