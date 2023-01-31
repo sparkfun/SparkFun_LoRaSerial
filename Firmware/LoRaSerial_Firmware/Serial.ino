@@ -87,6 +87,7 @@ uint16_t availableRadioTXBytes()
 }
 
 #define NEXT_RADIO_TX_HEAD(n)   ((radioTxHead + n) % sizeof(radioTxBuffer))
+#define NEXT_RADIO_TX_TAIL(n)   ((radioTxTail + n) % sizeof(radioTxBuffer))
 
 //If we have data to send, get the packet ready
 //Return true if new data is ready to be sent
@@ -133,8 +134,7 @@ void readyOutgoingPacket(uint16_t bytesToSend)
 
   //Copy the remaining portion of the buffer
   memcpy(&outgoingPacket[headerBytes + length], &radioTxBuffer[radioTxTail], bytesToSend - length);
-  radioTxTail += bytesToSend - length;
-  radioTxTail %= sizeof(radioTxBuffer);
+  radioTxTail = NEXT_RADIO_TX_TAIL(bytesToSend - length);
   endOfTxData += bytesToSend;
 }
 
@@ -520,9 +520,7 @@ uint8_t vcSerialMsgGetVcDest()
   uint16_t index;
 
   //Get the destination address byte
-  index = radioTxTail + 1;
-  if (index >= sizeof(radioTxBuffer))
-    index -= sizeof(radioTxBuffer);
+  index = NEXT_RADIO_TX_TAIL(1);
   return radioTxBuffer[index];
 }
 
@@ -590,9 +588,7 @@ bool vcSerialMessageReceived()
       }
 
       //Discard this message
-      radioTxTail += msgLength;
-      if (radioTxTail >= sizeof(radioTxBuffer))
-        radioTxTail -= sizeof(radioTxBuffer);
+      radioTxTail = NEXT_RADIO_TX_TAIL(msgLength);
       break;
     }
 
@@ -606,9 +602,7 @@ bool vcSerialMessageReceived()
       }
 
       //Discard this message, it is too long to transmit over the radio link
-      radioTxTail += msgLength;
-      if (radioTxTail >= sizeof(radioTxBuffer))
-        radioTxTail -= sizeof(radioTxBuffer);
+      radioTxTail = NEXT_RADIO_TX_TAIL(msgLength);
 
       //Nothing to do for invalid addresses or the broadcast address
       if (((uint8_t)vcDest >= (uint8_t)MIN_TX_NOT_ALLOWED) && (vcDest != VC_BROADCAST))
@@ -633,9 +627,7 @@ bool vcSerialMessageReceived()
       }
 
       //Discard this message
-      radioTxTail += msgLength;
-      if (radioTxTail >= sizeof(radioTxBuffer))
-        radioTxTail -= sizeof(radioTxBuffer);
+      radioTxTail = NEXT_RADIO_TX_TAIL(msgLength);
 
       //If the PC is trying to send this message then notify the PC of the delivery failure
       if ((uint8_t)vcDest < (uint8_t)MIN_TX_NOT_ALLOWED)
