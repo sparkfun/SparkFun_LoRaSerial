@@ -3303,7 +3303,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
   frameAirTimeMsec = (frameAirTimeUsec + settings.txToRxUsec + micros() - transactionCompleteMicros) / 1000;
   rmtHopTimeMsec = msToNextHopRemote - frameAirTimeMsec;
 
-  //Compute the when the local system last hopped
+  //Compute when the local system last hopped
   lclHopTimeMsec = currentMillis - channelTimerStart;
   adjustment = 0;
 
