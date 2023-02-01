@@ -184,13 +184,6 @@ int stdinToRadio()
           break;
         }
 
-        //Determine if this is a remote command
-        if ((remoteVc >= PC_REMOTE_COMMAND) && (remoteVc < THIRD_PARTY_COMMAND))
-        {
-          remoteCommandVc = remoteVc & VCAB_NUMBER_MASK;
-          waitingForCommandComplete = true;
-        }
-
         //Send this data over the VC
         bytesSent = 0;
         while (bytesSent < bytesRead)

@@ -21,10 +21,8 @@ WDTZero myWatchDog;
                    +--------------+                                |
                    |     SAMD     |                                |
                    |              |                                |
-                   |  Sprinkler   |                                |
-                   |  Controller  |                                |
-                   |              |       +--------------+         V
-        Debug      |          SPI |<----->| SX1276 Radio |<---> Antenna
+    TTL Serial <-->| Serial1      |       +--------------+         V
+                   |          SPI |<----->| SX1276 Radio |<---> Antenna
     USB Serial <-->| Serial       |       +--------------+
                    +--------------+
 
@@ -158,6 +156,8 @@ void samdBeginSerial(uint16_t serialSpeed)
   if (settings.usbSerialWait)
     //Wait for serial to come online for debug printing
     while (!Serial);
+
+  Serial1.begin(serialSpeed);
 }
 
 //Initialize the watch dog timer
@@ -194,13 +194,14 @@ Module * samdRadio()
 //Determine if serial input data is available
 bool samdSerialAvailable()
 {
-  return (Serial.available());
+  return (Serial.available() || Serial1.available());
 }
 
 //Ensure that all serial output data has been sent over USB and via the UART
 void samdSerialFlush()
 {
   Serial.flush();
+  Serial1.flush();
 }
 
 //Read in the serial input data
@@ -209,6 +210,8 @@ uint8_t samdSerialRead()
   byte incoming = 0;
   if (Serial.available())
     incoming = Serial.read();
+  else if (Serial1.available())
+    incoming = Serial1.read();
   return (incoming);
 }
 
@@ -216,6 +219,7 @@ uint8_t samdSerialRead()
 void samdSerialWrite(uint8_t value)
 {
   Serial.write(value);
+  Serial1.write(value);
 }
 
 //Reset the CPU
