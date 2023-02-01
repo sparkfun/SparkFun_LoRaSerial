@@ -1288,8 +1288,6 @@ void updateRadioState()
             //Received data - do not ack.
             triggerEvent(TRIGGER_RX_DATA);
 
-            setHeartbeatMultipoint(); //We're sync'd so reset heartbeat timer
-
             //Place any available data in the serial output buffer
             serialBufferOutput(rxData, rxDataBytes);
 
@@ -1325,7 +1323,6 @@ void updateRadioState()
           if (xmitDatagramMpData() == true)
           {
             triggerEvent(TRIGGER_MP_TX_DATA);
-            setHeartbeatMultipoint(); //We're sending something with clock data so reset heartbeat timer
             changeState(RADIO_MP_WAIT_TX_DONE);
           }
         }
