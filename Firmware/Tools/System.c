@@ -173,7 +173,7 @@ int processData()
 
     //Wait for receive data or timeout
     FD_SET(radio, &readfds);
-    status = select(radio + 1, &readfds, &writefds, &exceptfds, &timeout);
+    status = systemSelect(radio + 1, &readfds, &writefds, &exceptfds, &timeout);
 
     //Update the milliseconds since started
     gettimeofday(&stop, NULL);

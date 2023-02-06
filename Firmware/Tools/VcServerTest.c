@@ -1,6 +1,8 @@
 #define ADD_VC_STATE_NAMES_TABLE
 #include "settings.h"
 
+#include "Terminal.c"
+
 #define BUFFER_SIZE           2048
 #define INPUT_BUFFER_SIZE     BUFFER_SIZE
 #define MAX_MESSAGE_SIZE      32
@@ -40,6 +42,31 @@ VIRTUAL_CIRCUIT virtualCircuitList[MAX_VC];
 volatile bool waitingForCommandComplete;
 uint8_t remoteCommandVc;
 
+//Platform agnostic write to radio
+int radioWrite(int radio, uint8_t * buffer, int bufferLength)
+{
+  int bytes;
+
+#if defined(_WIN32) || defined(_WIN64)
+  DWORD bytesWritten = 0;
+  WriteFile(radioHandle, buffer, bufferLength, &bytesWritten, NULL);
+  bytes = (int)bytesWritten;
+#elif defined(__linux__)
+  bytes = radioWrite(radio, buffer, bufferLength);
+#endif
+
+  return (bytes);
+}
+
+void radioClose(int radio)
+{
+#if defined(_WIN32) || defined(_WIN64)
+  CloseHandle(radioHandle);
+#elif defined(__linux__)
+  close(radio);
+#endif
+}
+
 int cmdToRadio(uint8_t * buffer, int length)
 {
   int bytesSent;
@@ -62,7 +89,7 @@ int cmdToRadio(uint8_t * buffer, int length)
     printf("Sending LoRaSerial command: %s\n", buffer);
 
   //Send the header
-  bytesWritten = write(radio, (uint8_t *)&header, VC_SERIAL_HEADER_BYTES);
+  bytesWritten = radioWrite(radio, (uint8_t *)&header, VC_SERIAL_HEADER_BYTES);
   if (bytesWritten < (int)VC_SERIAL_HEADER_BYTES)
   {
     perror("ERROR: Write of header to radio failed!");
@@ -73,7 +100,7 @@ int cmdToRadio(uint8_t * buffer, int length)
   bytesSent = 0;
   while (bytesSent < length)
   {
-    bytesWritten = write(radio, buffer, length);
+    bytesWritten = radioWrite(radio, buffer, length);
     if (bytesWritten < 0)
     {
       perror("ERROR: Write of data to radio failed!");
@@ -106,7 +133,7 @@ int hostToRadio(uint8_t destVc, uint8_t * buffer, int length)
   }
 
   //Send the header
-  bytesWritten = write(radio, (uint8_t *)&header, VC_SERIAL_HEADER_BYTES);
+  bytesWritten = radioWrite(radio, (uint8_t *)&header, VC_SERIAL_HEADER_BYTES);
   if (bytesWritten < (int)VC_SERIAL_HEADER_BYTES)
   {
     perror("ERROR: Write of header to radio failed!");
@@ -117,7 +144,7 @@ int hostToRadio(uint8_t destVc, uint8_t * buffer, int length)
   bytesSent = 0;
   while (bytesSent < length)
   {
-    bytesWritten = write(radio, buffer, length);
+    bytesWritten = radioWrite(radio, buffer, length);
     if (bytesWritten < 0)
     {
       perror("ERROR: Write of data to radio failed!");
@@ -128,6 +155,18 @@ int hostToRadio(uint8_t destVc, uint8_t * buffer, int length)
 
   //Return the amount of the buffer that was sent
   return length;
+}
+
+//Platform agnostic console read
+int consoleRead(uint8_t * buffer, int bufferLength)
+{
+  int bytes = 0;
+#if defined(_WIN32) || defined(_WIN64)
+//TODO
+#elif defined(__linux__)
+  bytes = read(STDIN, buffer, bufferLength);
+#endif
+  return bytes;
 }
 
 int stdinToRadio()
@@ -152,7 +191,7 @@ int stdinToRadio()
         do
         {
           //Read the console input data into the local buffer.
-          bytesRead = read(STDIN, &inputBuffer[index], 1);
+          bytesRead = consoleRead(&inputBuffer[index], 1);
           if (bytesRead < 0)
           {
             perror("ERROR: Read from stdin failed!");
@@ -177,7 +216,7 @@ int stdinToRadio()
       do
       {
         //Read the console input data into the local buffer.
-        bytesRead = read(STDIN, inputBuffer, BUFFER_SIZE);
+        bytesRead = consoleRead(inputBuffer, BUFFER_SIZE);
         if (bytesRead < 0)
         {
           perror("ERROR: Read from stdin failed!");
@@ -283,7 +322,7 @@ int hostToStdout(uint8_t * data, uint8_t bytesToSend)
   status = 0;
   while (bytesSent < bytesToSend)
   {
-    bytesWritten = write(STDOUT, &data[bytesSent], bytesToSend - bytesSent);
+    bytesWritten = radioWrite(STDOUT, &data[bytesSent], bytesToSend - bytesSent);
     if (bytesWritten < 0)
     {
       perror("ERROR: Write to stdout!");
@@ -434,7 +473,7 @@ int radioToHost()
   {
     //Read the virtual circuit header into the local buffer.
     bytesToRead = &outputBuffer[sizeof(outputBuffer)] - dataEnd;
-    bytesRead = read(radio, dataEnd, bytesToRead);
+    bytesRead = radioRead(radio, dataEnd, bytesToRead);
     if (bytesRead == 0)
       break;
     if (bytesRead < 0)
@@ -557,6 +596,30 @@ int radioToHost()
   return status;
 }
 
+//Platform agnostic sleep
+void systemSleep(uint32_t sleepAmt)
+{
+#if defined(_WIN32) || defined(_WIN64)
+  Sleep(sleepAmt);
+#elif defined(__linux__)
+  sleet(sleepAmt);
+#endif
+}
+
+//Platform agnostic select
+int systemSelect(int maxfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout)
+{
+  int numfds;
+
+#if defined(_WIN32) || defined(_WIN64)
+  numfds = select(0, readfds, writefds, exceptfds, timeout);
+#elif defined(__linux__)
+  numfds = select(maxfds, &readfds, &writefds, &exceptfds, &timeout);
+#endif
+
+  return numfds;
+}
+
 int
 main (
   int argc,
@@ -631,23 +694,23 @@ main (
     if (reset)
     {
       //Delay a while to let the radio complete its reset operation
-      sleep(2);
+      systemSleep(2);
 
       //Break the links to this node
       cmdToRadio((uint8_t *)LINK_RESET_COMMAND, strlen(LINK_RESET_COMMAND));
 
       //Allow the device to reset
-      close(radio);
+      radioClose(radio);
       do
       {
-        sleep(1);
+        systemSleep(1);
 
         //Open the terminal
         status = openLoRaSerial(terminal);
       } while (status);
 
       //Delay a while to let the radio complete its reset operation
-      sleep(2);
+      systemSleep(2);
     }
 
     //Break the links if requested
@@ -670,7 +733,7 @@ main (
 
       //Wait for receive data or timeout
       memcpy((void *)&currentfds, (void *)&readfds, sizeof(readfds));
-      numfds = select(maxfds + 1, &currentfds, NULL, NULL, &timeout);
+      numfds = systemSelect(maxfds + 1, &currentfds, NULL, NULL, &timeout);
       if (numfds < 0)
       {
         perror("ERROR: select call failed!");

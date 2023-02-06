@@ -1,14 +1,21 @@
 #ifndef __settings_h__
 #define __settings_h__
 
-#include <arpa/inet.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <netinet/in.h>
-#include <stdbool.h>
+#if defined(_WIN32) || defined(_WIN64)
+   
+#include <winsock2.h>
+#include <Windows.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <ws2tcpip.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+HANDLE radioHandle;
+
+#elif defined(__linux__)
+
+#include <arpa/inet.h>
+#include <netinet/in.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/socket.h>
@@ -16,6 +23,11 @@
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+
+#endif
 
 #include "../LoRaSerial_Firmware/Virtual_Circuit_Protocol.h"
 
@@ -138,6 +150,6 @@ int processData();
 //Terminal
 int openLoRaSerial(const char *ttyName);
 int readLoRaSerial(uint8_t * buffer, int bufferLength);
-int updateTerm(int fd);
+//int updateTerm(int fd);
 
 #endif  // __settings_h__
