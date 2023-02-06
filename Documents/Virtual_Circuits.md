@@ -68,3 +68,7 @@ One pair of virtual circuit numbers allows the local host to communicate with th
 ## Remote Command Support
 
 The VC number range from 32 to 63 is reserved for remote command execution. The VC number equals the target radio number (0 - 31) or-ed with PC_REMOTE_COMMAND. This VC number is placed in the destination VC field and the local radio VC number is placed in the source VC field.
+
+## Example Program
+
+The [VcServerTest.c](https://github.com/sparkfun/SparkFun_LoRaSerial/blob/release_candidate/Firmware/Tools/VcServerTest.c) is an example C program that communicates with the VC server using the virtual circuit serial interface.  The first parameter is the device path to the local LoRaSerial radio.  The second parameter specifies the destination VC number to send commands or data.
