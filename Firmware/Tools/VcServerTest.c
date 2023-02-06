@@ -19,6 +19,7 @@
 #define DISPLAY_COMMAND_COMPLETE  0
 #define DISPLAY_DATA_ACK          0
 #define DISPLAY_DATA_NACK         1
+#define DISPLAY_UNKNOWN_COMMANDS  0
 #define DISPLAY_VC_STATE          0
 #define SEND_ATC_COMMAND          1
 #define DISPLAY_STATE_TRANSITION  0
@@ -537,12 +538,15 @@ int radioToHost()
     //Unknown messages
     else
     {
-      printf("Unknown message, VC Header:\n");
-      printf("    length: %d\n", header->radio.length);
-      printf("    destVc: %d\n", header->radio.destVc);
-      printf("    srcVc: %d\n", header->radio.srcVc);
-      if (length > 0)
-        dumpBuffer(data, length);
+      if (DISPLAY_UNKNOWN_COMMANDS)
+      {
+        printf("Unknown message, VC Header:\n");
+        printf("    length: %d\n", header->radio.length);
+        printf("    destVc: %d\n", header->radio.destVc);
+        printf("    srcVc: %d\n", header->radio.srcVc);
+        if (length > 0)
+          dumpBuffer(data, length);
+      }
     }
 
     //Continue processing the rest of the data in the buffer

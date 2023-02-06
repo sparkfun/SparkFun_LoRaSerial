@@ -9,7 +9,10 @@ The available airspeeds (40 to 38400) used in LoRaSerial were picked to, as clos
 
 Additionally, this folder contains the various datasheets for the SX1276 IC, common to all LoRaSerial modules, as well as the individual datasheets for the different module types (915, 868, 433, etc).
 
+[Atmel SAM D21G Datasheet](https://cdn.sparkfun.com/datasheets/Dev/Arduino/Boards/Atmel-42181-SAM-D21_Datasheet.pdf)
+
 ## Modes of Operation
+=======
 
 The LoRaSerial radio operates in one of three modes:
 * Point-to-Point (default)
