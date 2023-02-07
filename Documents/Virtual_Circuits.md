@@ -51,6 +51,14 @@ In virtual circuit mode all communications over the serial port must be proceede
 
 The server radio is identified by VC_SERVER (0) and client radios have VC numbers between 1 and MAX_VC.  A data message sent from the server to client 2 would have the source VC set to VC_SERVER (0) and the destination VC set to 2.
 
+### Radio Responses
+
+The LoRaSerial radio will return the following responses:
+
+* Data - Returns VC_DATA_ACK_NACK_MESSAGE.  The response is sent to PC_DATA_ACK when the data is acknowledged by the remote radio.  A response of PC_DATA_NACKis returned when the link is broken.
+* Local Command - A response is sent to PC_COMMAND_COMPLETE upon command completion with the status VC_CMD_SUCCESS or VC_CMD_ERROR.
+* Remote Command - The command is acknowledged with a VC_DATA_ACK_NACK_MESSAGE sent to the PC_DATA_ACK or PC_DATA_NACK destination port.  The actual command response is sent to the local radio's VC ored with PC_REMOTE_RESPONSE.  After the command response text is delivered, the command status is returned to the destination VC of PC_COMMAND_COMPLETE with the status of VC_CMD_SUCCESS or VC_CMD_ERROR.
+
 ## Local Command Support
 
 One pair of virtual circuit numbers allows the local host to communicate with the command interface on the local radio.  The data portion of the message contains the command to be executed.
