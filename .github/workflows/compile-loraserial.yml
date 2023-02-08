@@ -1,0 +1,110 @@
+name: Build LoRaSerial
+on: 
+  workflow_dispatch:
+    branches: 
+
+env:
+  FILENAME_PREFIX: SparkFun_LoRaSerial
+  VERSION_MAJOR: 2
+  VERSION_MINOR: 0
+
+jobs:
+  build:
+    
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v1
+
+      - name: Start config file
+        run: arduino-cli config init --additional-urls "https://raw.githubusercontent.com/sparkfun/Arduino_Boards/main/IDE_Board_Manager/package_sparkfun_index.json"
+
+      - name: Update index
+        run: arduino-cli core update-index
+
+      - name: Install Arduino SAMD platform
+        run: arduino-cli core install arduino:samd
+
+      - name: Install SparkFun SAMD platforms
+        run: arduino-cli core install SparkFun:samd@1.8.9
+
+      - name: Enable external libs
+        run: arduino-cli config set library.enable_unsafe_install true
+
+      - name: Get Libraries
+        run: arduino-cli lib install --git-url 
+          https://github.com/jgromes/RadioLib.git
+          https://github.com/OperatorFoundation/Crypto.git
+          https://github.com/JChristensen/JC_Button.git
+          https://github.com/khoih-prog/SAMD_TimerInterrupt.git
+          https://github.com/khoih-prog/FlashStorage_SAMD.git
+          https://github.com/javos65/WDTZero.git
+
+        #Original Crypto library: https://github.com/rweather/arduinolibs.git
+
+      - name: Compile Sketch
+        run: arduino-cli compile --fqbn SparkFun:samd:LoRaSerial ./Firmware/LoRaSerial/LoRaSerial.ino --export-binaries
+
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%b_%d_%Y')" >> $GITHUB_OUTPUT
+
+      - name: Get current date
+        id: dateNoScores
+        run: echo "dateNoScores=$(date +'%b %d %Y')" >> $GITHUB_OUTPUT
+
+      - name: Extract branch name
+        run: echo "BRANCH=${{github.ref_name}}" >> $GITHUB_ENV
+
+      #File_Name_v3_1.bin
+      #File_Name_RC-Jan_26_2023.bin
+      - name: Create file ending based on branch
+        run: |
+          if [[ $BRANCH == 'main' ]]; then
+              echo "FILE_ENDING_UNDERSCORE=_v${{ env.VERSION_MAJOR }}_${{ env.VERSION_MINOR }}" >> "$GITHUB_ENV"
+              echo "FILE_ENDING_NOUNDERSCORE=_v${{ env.VERSION_MAJOR }}.${{ env.VERSION_MINOR }}" >> "$GITHUB_ENV"
+          else
+              echo "FILE_ENDING_UNDERSCORE=_RC-${{ steps.date.outputs.date }}" >> "$GITHUB_ENV"
+              echo "FILE_ENDING_NOUNDERSCORE=_RC-${{ steps.dateNoScores.outputs.dateNoScores }}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Rename binary
+        run: |
+          cd Firmware/LoRaSerial/build/SparkFun.samd.LoRaSerial/
+          mv LoRaSerial.ino.bin ${{ env.FILENAME_PREFIX }}${{ env.FILE_ENDING_UNDERSCORE }}.bin
+          mv LoRaSerial.ino.with_bootloader.bin ${{ env.FILENAME_PREFIX }}${{ env.FILE_ENDING_UNDERSCORE }}_with_bootloader.bin
+
+      - name: Upload binary to action
+        uses: actions/upload-artifact@v3
+        with: 
+          name: ${{ env.FILENAME_PREFIX }}${{ env.FILE_ENDING_UNDERSCORE }}
+          path: ./Firmware/LoRaSerial/build/SparkFun.samd.LoRaSerial/${{ env.FILENAME_PREFIX }}${{ env.FILE_ENDING_UNDERSCORE }}.bin    
+
+      - name: Push Firmware Update Binary to repo
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_GITHUB_LORASERIAL_FILE_TOKEN }}
+        with:
+          source_file: ./Firmware/LoRaSerial/build/SparkFun.samd.LoRaSerial/${{ env.FILENAME_PREFIX }}${{ env.FILE_ENDING_UNDERSCORE }}.bin
+          destination_repo: 'sparkfun/SparkFun_LoRaSerial/Binaries'
+          destination_folder: ''
+          user_email: 'nathan@sparkfun.com'
+          user_name: 'nseidle'
+          commit_message: 'Github Action - Updating Binary ${{ steps.dateNoScores.outputs.dateNoScores }}'
+
+      - name: Push Production Firmware Binary to repo
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_GITHUB_LORASERIAL_FILE_TOKEN }}
+        with:
+          source_file: ./Firmware/LoRaSerial/build/SparkFun.samd.LoRaSerial/${{ env.FILENAME_PREFIX }}${{ env.FILE_ENDING_UNDERSCORE }}_with_bootloader.bin
+          destination_repo: 'sparkfun/SparkFun_LoRaSerial/Binaries'
+          destination_folder: ''
+          user_email: 'nathan@sparkfun.com'
+          user_name: 'nseidle'
+          commit_message: 'Github Action - Updating Binary ${{ steps.dateNoScores.outputs.dateNoScores }}'
