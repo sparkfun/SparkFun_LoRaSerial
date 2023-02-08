@@ -1477,7 +1477,7 @@ void updateRadioState()
         //Automatically switch to server
         if (trainViaButton
             && tempSettings.operatingMode == MODE_POINT_TO_POINT
-            && originalServer == false)
+            && tempSettings.server == false)
         {
           //Give up and change to Server automatically
 
@@ -1590,14 +1590,9 @@ void updateRadioState()
               //If we are training via button, and in point to point mode, and the user has not manually set the server
               //then reboot with current settings after a single client acks
               if (trainViaButton
-                  && tempSettings.operatingMode == MODE_POINT_TO_POINT
-                  && originalServer == false)
-              {
+                  && tempSettings.operatingMode == MODE_POINT_TO_POINT)
                 //Reboot the radio with the newly generated random netID/Key parameters
-                petWDT();
-                systemFlush();
-                systemReset();
-              }
+                endClientServerTraining(TRIGGER_TRAINING_DONE);
             }
             break;
         }

@@ -275,21 +275,7 @@ void updateButton()
       trainState = TRAIN_IN_PROCESS;
     }
     else if (trainState == TRAIN_IN_PROCESS && trainBtn->wasReleased())
-    {
-      settings = tempSettings; //Return to original radio settings
-
-      //Return to original keys, ID, and server state
-      memcpy(&settings.encryptionKey, &originalEncryptionKey, AES_KEY_BYTES);
-      settings.netID = originalNetID;
-      settings.server = originalServer;
-
-      recordSystemSettings(); //Record original settings
-
-      //Reboot the radio
-      petWDT();
-      systemFlush();
-      systemReset();
-    }
+      endClientServerTraining(TRIGGER_TRAINING_DONE);
   }
 }
 
