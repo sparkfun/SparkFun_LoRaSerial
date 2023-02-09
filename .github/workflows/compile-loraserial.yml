@@ -92,7 +92,7 @@ jobs:
         with:
           source_file: ./Firmware/LoRaSerial/build/SparkFun.samd.LoRaSerial/${{ env.FILENAME_PREFIX }}${{ env.FILE_ENDING_UNDERSCORE }}.bin
           destination_repo: 'sparkfun/SparkFun_LoRaSerial'
-          destination_folder: '/Binaries'
+          destination_folder: '/Binaries/'
           user_email: 'nathan@sparkfun.com'
           user_name: 'nseidle'
           commit_message: 'Github Action - Updating Binary ${{ steps.dateNoScores.outputs.dateNoScores }}'
@@ -104,7 +104,7 @@ jobs:
         with:
           source_file: ./Firmware/LoRaSerial/build/SparkFun.samd.LoRaSerial/${{ env.FILENAME_PREFIX }}${{ env.FILE_ENDING_UNDERSCORE }}_with_bootloader.bin
           destination_repo: 'sparkfun/SparkFun_LoRaSerial'
-          destination_folder: '/Binaries'
+          destination_folder: '/Binaries/'
           user_email: 'nathan@sparkfun.com'
           user_name: 'nseidle'
           commit_message: 'Github Action - Updating Binary ${{ steps.dateNoScores.outputs.dateNoScores }}'
