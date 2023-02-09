@@ -19,10 +19,11 @@
 #define DISPLAY_COMMAND_COMPLETE  0
 #define DISPLAY_DATA_ACK          0
 #define DISPLAY_DATA_NACK         1
+#define DISPLAY_STATE_TRANSITION  0
 #define DISPLAY_UNKNOWN_COMMANDS  0
 #define DISPLAY_VC_STATE          0
+#define DUMP_RADIO_TO_PC          0
 #define SEND_ATC_COMMAND          1
-#define DISPLAY_STATE_TRANSITION  0
 
 typedef struct _VIRTUAL_CIRCUIT
 {
@@ -446,7 +447,9 @@ int radioToHost()
     dataEnd += bytesRead;
 
     //Display the data received from the radio
-//    if (bytesRead) dumpBuffer(dataStart, dataEnd - dataStart);
+    if (DUMP_RADIO_TO_PC)
+      if (bytesRead)
+        dumpBuffer(dataStart, dataEnd - dataStart);
 
     //The data read is a mix of debug serial output and virtual circuit messages
     //Any data before the VC_SERIAL_MESSAGE_HEADER is considered debug serial output
