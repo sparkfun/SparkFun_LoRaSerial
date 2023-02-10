@@ -602,7 +602,7 @@ void setRSSI(uint8_t ledBits)
 void startCylonLEDs()
 {
   cylonLedPattern = 0b0001;
-  cylonPatternGoingLeft = true;
+  cylonPatternGoingLeft = false;
 }
 
 //Update the RSSI LED or LEDs
@@ -625,16 +625,16 @@ void blinkRadioRssiLed()
 
         //The following shows the cylon pattern in four LEDs
         //
-        //	LED3  LED2  LED1  LED0
+        //     LED3  LED2  LED1  LED0
         //                         X
-        //		      X
-        //		X
-        //	  X
-        //		X
-        //		      X
+        //                   X
+        //             X
+        //       X
+        //             X
+        //                   X
         //                         X
-        //		      X
-        //		...
+        //                   X
+        //            ...
         //
         //Cylon the RSSI LEDs
         setRSSI(cylonLedPattern);
