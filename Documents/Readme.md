@@ -17,9 +17,12 @@ The LoRaSerial radio operates in one of three modes:
 * Point-to-Point (default)
 * Multipoint
 * Virtual Circuit
+* Training
 
 Point-to-Point mode provides guaranteed message delivery or the link breaks.  The radio performs data retransmission if either the data frame was lost or its acknowledgement was lost.  This can continue indefinitely if MaxResends equals zero (default) or for a limited number of retries in the range of (1 - 255).
 
 Multipoint mode provides a datagram service.  The LoRaSerial radios will send the data frame without a guarantee that the frame will be received by the remote radio. Lost frames are lost, the radio does no perform retransmission.  If the application is not able to tolerate the lost frames then another protocol layer needs to be implemented on the host computer between the radio and the application that provides the necessary services to the application.
 
 Virtual circuit mode enables a group of radios to communicate with each other. The radio links provide guaranteed message delivery or the link is broken. One radio in the group is designated as the server and provides the channel timer synchronization for the client radios, think of a star configuration with the server at the center.  Data communications with the virtual circuit mode is all point-to-point.  Communications between the radio and the host CPU use a special virtual circuit header to identify where to send the host to radio data, or where to deliver the radio to host data.  More information is available [here](https://github.com/sparkfun/SparkFun_LoRaSerial/blob/release_candidate/Documents/Virtual_Circuits.md).
+
+Training is a temporary mode of operation to initialize a set of radios for one of the other modes of operation.  There are one or more clients and a single server during training.  The mode specific parameters for the other mode of operation are passed from the server to each of the clients.  Upon completion all of the radios in the set will be able to communicate with one another.  More information on training is available [here](https://github.com/sparkfun/SparkFun_LoRaSerial/blob/release_candidate/Documents/Training.md).
