@@ -15,4 +15,4 @@ The line of LoRaSerial products offered by SparkFun all run identical firmware. 
   </tr>
 </table>
 
-If you have an issue, feature request, bug report, or a general question about the RTK firmware specifically we encourage you to post your comments on the [firmware's repository](https://github.com/sparkfun/SparkFun_LoRaSerial/issues).
+If you have an issue, feature request, bug report, or a general question about the LoRaSerial firmware specifically we encourage you to post your comments on the [firmware's repository](https://github.com/sparkfun/SparkFun_LoRaSerial/issues).

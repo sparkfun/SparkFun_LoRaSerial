@@ -1,6 +1,6 @@
 # AT Commands
 
-LoRaSerial radios are very flexible. By default the radio is looking for serial communication at 57600bps. Open the terminal of your choice and enter +++ and wait for an OK. The radio is now ready for an AT command.
+LoRaSerial radios are very flexible. By default, the radio is looking for serial communication at 57600bps. Open the terminal of your choice and enter +++ and wait for an OK. The radio is now ready for an AT command.
 
 Below is a brief list of commands:
 

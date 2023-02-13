@@ -23,14 +23,4 @@ Serial can be passed into the unit either through the USB port, or over the seri
 
 <sup>1</sup> The radios default to a published encryption key. For maximum security, we recommend changing the key using the training process.
 
-Use cases:
-
-* P2P data from a sensor
-* P2P high data rate
-* P2P maximum Distance
-* Multipoint for GNSS RTK
-* Virtual Circuit for 
-
-### Data From A Sensor
-
-LoRaSerial is designed to get small amounts of data from point A to point B as easily as possible. If you've got a sensor, or Arduino, or any device that can output serial, it can transmit data 
+LoRaSerial is designed to get small amounts of data from point A to point B as easily as possible. If you've got a sensor, or Arduino, or any device that can output serial, then it can transmit data over long distances. LoRaSerial has been used to send data over 9 miles (14km) line-of-sight.

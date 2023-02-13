@@ -1,6 +1,6 @@
 # Updating LoRaSerial Firmware
 
-From time to time SparkFun will release new firmware for the LoRaSerial product line to add and improve functionality. Firmware can be upgraded using the SparkFun BOSSA GUI
+From time to time SparkFun will release new firmware for the LoRaSerial product line to add and improve functionality. Firmware can be upgraded using the SparkFun BOSSA GUI.
 
 ## BOSSA GUI
 
@@ -14,4 +14,4 @@ Next, get the latest LoRaSerial Firmware binary located in [LoRaSerial Binaries 
 
 *SAMD21 reset button*
 
-Open the LoRaSerial enclosure to expose the reset button. Double-tap the reset button to enter bootloader mode. Now open the BOSSA GUI, select the Binary file you downloaded, select the COM port of the LoRaSerial device, and finally click 'Upload Binary'.
+Open the LoRaSerial enclosure to expose the reset button. Connect the LoRaSerial to the computer over USB. Double-tap the reset button to enter bootloader mode. Now open the BOSSA GUI, select the Binary file you downloaded, select the COM port of the LoRaSerial device, and finally click 'Upload Binary'.
