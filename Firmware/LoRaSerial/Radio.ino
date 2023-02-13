@@ -3541,9 +3541,8 @@ void setHeartbeatMultipoint()
 
   //Ensure that the heartbeat can be received within the specified time
   //MP does not use acks
-  heartbeatRandomTime = settings.heartbeatTimeout;
-  heartbeatRandomTime -= (txHeartbeatUsec + settings.txToRxUsec) / 1000;
-  heartbeatRandomTime -= settings.overheadTime;
+  //MP Linkup requires a HB on channel 0 so we leverage the VC technique
+  setVcHeartbeatTimer();
 }
 
 //Determine the delay for the next VC HEARTBEAT
