@@ -2,9 +2,9 @@
 
 LoRaSerial radios can operate in one of three modes.
 
-* Point to Point
-* Multipoint
-* Virtual Circuit
+* [Point to Point](https://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/#point_to_point)
+* [Multipoint](https://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/#MultiPoint)
+* [Virtual Circuits](https://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/#Virtual_Circuits)
 
 ## Point to Point
 
@@ -35,7 +35,7 @@ Benefits of Multipoint:
 * Similar to P2P, simple to setup and use. Whatever serial comes in gets broadcast.
 * Data can be broadcast/shared between multiple receivers. This is helpful in setups such as GNSS RTK where a Base receiver broadcasts correction data to multiple Rovers simultaneously.
 * A larger continuous data stream can be transmitted. This assumes the user's application layer can handle lost packets graciously.
-* Most friendly to very long distance transmissions where an ACK may not be possible.
+* This mode is most friendly to very long distance transmissions where an ACK may not be possible.
 
 Disadvantages of Multipoint:
 * Data is not retransmitted if lost.
@@ -45,9 +45,7 @@ Disadvantages of Multipoint:
 
 Virtual Circuit mode combines the data guarantee of P2P but allows multiple radios to coexist. 
 
-VC mode is ideal for small amounts of data (tens of bytes) to be delivered to a given recipient in the network. It's 
-
-Because of the nature of VC more radio overhead means there is less usable bandwidth for user data. VC mode should not be used to transmit long streams of data.
+VC mode is ideal for small amounts of data (tens of bytes) to be delivered to a given recipient in the network. Because of the nature of VC more radio overhead means there is less usable bandwidth for user data. VC mode should not be used to transmit long streams of data.
 
 Benefits of Virtual Circuits:
 * Guaranteed delivery of a given data packet to a specific host (broadcast also supported).

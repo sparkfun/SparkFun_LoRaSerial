@@ -1,25 +1,17 @@
-# Updating RTK Firmware
+# Updating LoRaSerial Firmware
 
-Surveyor: ![Feature Supported](img/GreenDot.png) / Express: ![Feature Supported](img/GreenDot.png) / Express Plus: ![Feature Supported](img/GreenDot.png) / Facet: ![Feature Supported](img/GreenDot.png) / Facet L-Band: ![Feature Supported](img/GreenDot.png)
+From time to time SparkFun will release new firmware for the LoRaSerial product line to add and improve functionality. Firmware can be upgraded using the SparkFun BOSSA GUI
 
-The device has two primary firmwares:
+## BOSSA GUI
 
-* Firmware on the ESP32 microcontroller. Keep reading.
-* Firmware on the u-blox ZED-F9P, ZED-F9P, or NEO-D9S Receiver. [See below](https://docs.sparkfun.com/SparkFun_RTK_Firmware/firmware_update/#updating-u-blox-firmware).
+![SparkFun BOSSA GUI](https://github.com/sparkfun/SparkFun_BOSSA_GUI/raw/main/img/BOSSA_GUI.png)
 
-The device firmware is displayed in a variety of places:
-* Power On
-* Serial Config Menu
-* WiFi Config
+The LoRaSerial utilizes a SAMD21 microcontroller. To update the firmware, obtain the SparkFun BOSSA GUI from [this repo](https://github.com/sparkfun/SparkFun_BOSSA_GUI). The GUI is a Qt5 based python script that can be run from the command line. Alternatively, Windows-compatible executables are available in the [release section](https://github.com/sparkfun/SparkFun_BOSSA_GUI/releases).
 
-![RTK Express with firmware v3.0](img/SparkFun%20RTK%20Boot%20Screen%20Version%20Number.png)
+Next, get the latest LoRaSerial Firmware binary located in [LoRaSerial Binaries folder](https://github.com/sparkfun/SparkFun_LoRaSerial/tree/main/Binaries). Note: There are two types of firmware files, one 'with_bootloader' and one without. You can ignore the 'with_bootloader' type file.
 
-*RTK Express with firmware v3.0*
+![SAMD21 reset button](Original/SparkFun_LoRaSerial_-_Reset.png)
 
-During power-on, the display will show the current device Firmware.
+*SAMD21 reset button*
 
-![Main Menu showing RTK Firmware v3.0-Jan 19 2023](img/SparkFun%20RTK%20Main%20Menu.png)
-
-*Main Menu showing RTK Firmware v3.0-Jan 19 2023*
-
-The firmware is displayed when the main menu is opened over a serial connection.
+Open the LoRaSerial enclosure to expose the reset button. Double-tap the reset button to enter bootloader mode. Now open the BOSSA GUI, select the Binary file you downloaded, select the COM port of the LoRaSerial device, and finally click 'Upload Binary'.

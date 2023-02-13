@@ -76,5 +76,9 @@ extra:
 nav:
   - Software Specifics:
     - intro.md
+    - quick_start.md
+    - at_commands.md
+    - operating_modes.md
     - firmware_update.md
+    - hardware_overview.md
 

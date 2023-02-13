@@ -99,6 +99,8 @@ For security reasons, the radios are both set to the lowest transmission power t
 
 The firmware on the LoRaSerial can be upgraded from a computer without ever having to open the unit. In the rare case that the SAMD21 needs to be forced into bootloader mode the reset button should be quickly double-tapped. The unit will then enter bootloader mode and wait for new firmware or for a reset event (button is pressed or power is cycled).
 
+Please see [Updating LoRaSerial Firmware](docs\firmware_update.md) for more information.
+
 ### GPIO
 
 ![GPIOs on SAMD21](Original/SparkFun_LoRaSerial_-_GPIO.png)
