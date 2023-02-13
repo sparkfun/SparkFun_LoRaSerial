@@ -1023,20 +1023,37 @@ void updateRadioState()
     //Start searching for other radios
     //====================
     case RADIO_DISCOVER_BEGIN:
-      if (settings.debugSync)
+      if (settings.server)
       {
-        systemPrintln("Start scanning");
-        outputSerialData(true);
+        changeState(RADIO_MP_STANDBY);
+        break;
       }
 
-      multipointChannelLoops = 0;
-      multipointAttempts = 0;
+      //If our airspeed is so low that a FindPartner packet will take more than half a dwell time
+      //then skip active discovery and go to standby
+      if (((frameAirTimeUsec + txDataAckUsec + settings.txToRxUsec) / 1000) > (settings.maxDwellTime / 2))
+      {
+        stopChannelTimer();
+        channelNumber = 0;
+        setRadioFrequency(false);
+        changeState(RADIO_DISCOVER_STANDBY);
+      }
+      else
+      {
+        if (settings.debugSync)
+        {
+          systemPrintln("Start scanning");
+          outputSerialData(true);
+        }
 
-      //Mark start time for uptime calculation
-      lastLinkUpTime = millis();
+        multipointChannelLoops = 0;
 
-      triggerEvent(TRIGGER_MP_SCAN);
-      changeState(RADIO_DISCOVER_SCANNING);
+        //Mark start time for uptime calculation
+        lastLinkUpTime = millis();
+
+        triggerEvent(TRIGGER_MP_SCAN);
+        changeState(RADIO_DISCOVER_SCANNING);
+      }
       break;
 
     //====================
