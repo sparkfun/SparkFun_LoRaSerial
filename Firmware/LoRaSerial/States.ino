@@ -1158,18 +1158,14 @@ void updateRadioState()
           {
             multipointChannelLoops = 0;
 
-            multipointAttempts++;
-            //Throttle the scanning. Stop transmitting for 60s times the number of attempts.
-            unsigned long startTime = millis();
-            while ((millis() - startTime) < (60 * 1000 * multipointAttempts))
-            {
-              delay(10);
-              petWDT();
-            }
+            //Give up, return to channel 0, and wait in Standby for Server to Xmit HB
+            channelNumber = 0;
+            setRadioFrequency(false);
+            changeState(RADIO_DISCOVER_STANDBY);
           }
 
           //Send FIND_PARTNER
-          if (xmitDatagramP2PFindPartner() == true)
+          else if (xmitDatagramP2PFindPartner() == true)
           {
             triggerEvent(TRIGGER_TX_FIND_PARTNER);
             changeState(RADIO_DISCOVER_WAIT_TX_FIND_PARTNER_DONE);
