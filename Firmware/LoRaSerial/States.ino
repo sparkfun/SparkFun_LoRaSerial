@@ -1150,7 +1150,11 @@ void updateRadioState()
 
           if (channelNumber == 0) multipointChannelLoops++;
 
-          if (multipointChannelLoops > 10)
+          //Limit agressive discovery mode to 10s. After that, move to passive and wait for HB.
+          unsigned long multipointTimeForOneScan = ((frameAirTimeUsec + txDataAckUsec + settings.txToRxUsec) / 1000) * settings.numberOfChannels;
+          int multipointMaxLoops = 10000 / multipointTimeForOneScan;
+
+          if (multipointChannelLoops >= multipointMaxLoops)
           {
             multipointChannelLoops = 0;
 
