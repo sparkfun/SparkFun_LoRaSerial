@@ -139,7 +139,7 @@ uint8_t pin_hop_timer = PIN_UNDEFINED;
 
 //Radio Library
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-#include <RadioLib.h> //Click here to get the library: http://librarymanager/All#RadioLib v5.1.2
+#include <RadioLib.h> //Click here to get the library: http://librarymanager/All#RadioLib v5.6.0
 SX1276 radio = NULL; //We can't instantiate here because we don't yet know what pin numbers to use
 
 float *channels;
@@ -160,7 +160,7 @@ uint8_t AESiv[AES_IV_BYTES] = {0}; //Set during hop table generation
 
 //Buttons - Interrupt driven and debounce
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-#include <JC_Button.h> // http://librarymanager/All#JC_Button
+#include <JC_Button.h> // http://librarymanager/All#JC_Button //v2.1.2
 Button *trainBtn = NULL; //We can't instantiate the button here because we don't yet know what pin number to use
 
 const int trainButtonTime = 2000; //ms press and hold before entering training
@@ -169,7 +169,7 @@ bool trainViaButton = false; //Allows auto-creation of server if client times ou
 
 //Hardware Timers
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#include "SAMDTimerInterrupt.h" //http://librarymanager/All#SAMD_TimerInterrupt v1.9.0 (currently) by Koi Hang
+#include "SAMDTimerInterrupt.h" //http://librarymanager/All#SAMD_TimerInterrupt v1.10.1 by Koi Hang
 SAMDTimer channelTimer(TIMER_TCC); //Available: TC3, TC4, TC5, TCC, TCC1 or TCC2
 volatile uint16_t channelTimerMsec; //Last value programmed into the channel timer
 volatile unsigned long channelTimerStart = 0; //Tracks how long our timer has been running since last hop

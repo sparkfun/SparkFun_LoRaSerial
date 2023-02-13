@@ -1,7 +1,7 @@
 #if defined(ARDUINO_ARCH_SAMD)
 #ifndef __SAMD_H__
 
-#include <FlashAsEEPROM_SAMD.h> //Click here to get the library: http://librarymanager/All#FlashStorage_SAMD21 v1.2.1 by Khoi Hoang
+#include <FlashAsEEPROM_SAMD.h> //Click here to get the library: http://librarymanager/All#FlashStorage_SAMD21 v1.3.2 by Khoi Hoang
 #include <WDTZero.h> //https://github.com/javos65/WDTZero
 WDTZero myWatchDog;
 
