@@ -1384,20 +1384,20 @@ void updateRadioState()
           case DATAGRAM_HEARTBEAT:
             //Sync clock if server sent the heartbeat
             if (settings.server == false)
+            {
               //Adjust freq hop ISR based on server's remaining clock
               syncChannelTimer(txHeartbeatUsec);
 
-            //Received heartbeat - do not ack.
-            triggerEvent(TRIGGER_RX_HEARTBEAT);
+              //Received heartbeat - do not ack.
+              triggerEvent(TRIGGER_RX_HEARTBEAT);
 
-            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+              frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
-            lastPacketReceived = millis(); //Update timestamp for Link LED
+              lastPacketReceived = millis(); //Update timestamp for Link LED
 
-            setHeartbeatMultipoint(); //We're sync'd so reset heartbeat timer
-
-            blinkHeartbeatLed(true);
-            changeState(RADIO_MP_STANDBY);
+              blinkHeartbeatLed(true);
+              changeState(RADIO_MP_STANDBY);
+            }
             break;
 
           case DATAGRAM_DATA:
