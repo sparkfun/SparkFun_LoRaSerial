@@ -1,0 +1,1 @@
+This folder contains the markdown files for the [LoRaSerial documents](https://sparkfun.github.io/SparkFun_LoRaSerial/intro/) that are rendered by [mkdocs](https://www.mkdocs.org/).
