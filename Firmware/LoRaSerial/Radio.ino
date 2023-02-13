@@ -1137,24 +1137,30 @@ bool xmitDatagramMpData()
   return (transmitDatagram());
 }
 
-//Heartbeat packet to sync other units in multipoint mode
+//Heartbeat packet sent by server in Multipoint mode, includes the
+//channel number. During discovery scanning, it's possible for the client to
+//get the HeartBeat but be on an adjacent channel. The channel number
+//ensures that the client gets the next hop correct.
 bool xmitDatagramMpHeartbeat()
 {
   uint8_t * startOfData;
 
+  unsigned long currentMillis = millis();
   radioCallHistory[RADIO_CALL_xmitDatagramMpHeartbeat] = millis();
 
   startOfData = endOfTxData;
+  memcpy(endOfTxData, &channelNumber, sizeof(channelNumber));
+  endOfTxData += sizeof(channelNumber);
 
   /*
-                                    endOfTxData ---.
-                                                   |
-                                                   V
-      +----------+---------+----------+------------+----------+
-      | Optional |         | Optional | Optional   | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | n Bytes  |
-      +----------+---------+----------+------------+----------+
+                                              endOfTxData ---.
+                                                             |
+                                                             V
+      +----------+---------+----------+------------+---------+----------+
+      | Optional |         | Optional | Optional   | Channel |          |
+      | NET ID   | Control | C-Timer  | SF6 Length | Number  | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 1 byte  | n Bytes  |
+      +----------+---------+----------+------------+---------+----------+
   */
 
   //Verify the data length
