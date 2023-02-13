@@ -430,7 +430,7 @@ typedef struct struct_settings {
 
   bool encryptData = true; //AES encrypt each packet
   bool dataScrambling = false; //Use IBM Data Whitening to reduce DC bias
-  bool enableCRC16 = false; //Append CRC-16 to packet, check CRC-16 upon receive
+  bool enableCRC16 = true; //Append CRC-16 to packet, check CRC-16 upon receive
   uint8_t framesToYield = 3; //If remote requests it, supress transmission for this number of max packet frames
 
   uint16_t heartbeatTimeout = 5000; //ms before sending HEARTBEAT to see if link is active
