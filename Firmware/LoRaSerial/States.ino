@@ -1189,6 +1189,108 @@ void updateRadioState()
       break;
 
     //====================
+    //Wait for the Server to transmit a HB on Channel 0
+    //====================
+    case RADIO_DISCOVER_STANDBY:
+
+      //Process the receive packet
+      if (transactionComplete == true)
+      {
+        triggerEvent(TRIGGER_MP_PACKET_RECEIVED);
+
+        //Decode the received datagram
+        PacketType packetType = rcvDatagram();
+
+        //Process the received datagram
+        switch (packetType)
+        {
+          default:
+            triggerEvent(TRIGGER_UNKNOWN_PACKET);
+            if (settings.debugDatagrams)
+            {
+              systemPrintTimestamp();
+              systemPrint("MP Standby: Unhandled packet type ");
+              systemPrint(radioDatagramType[packetType]);
+              systemPrintln();
+              outputSerialData(true);
+            }
+            break;
+
+          case DATAGRAM_BAD:
+            triggerEvent(TRIGGER_BAD_PACKET);
+            break;
+
+          case DATAGRAM_CRC_ERROR:
+            triggerEvent(TRIGGER_CRC_ERROR);
+            break;
+
+          case DATAGRAM_NETID_MISMATCH:
+            triggerEvent(TRIGGER_NETID_MISMATCH);
+            break;
+
+          case DATAGRAM_SYNC_CLOCKS:
+          case DATAGRAM_ZERO_ACKS:
+          case DATAGRAM_DATAGRAM:
+          case DATAGRAM_DATA_ACK:
+          case DATAGRAM_REMOTE_COMMAND:
+          case DATAGRAM_REMOTE_COMMAND_RESPONSE:
+            //We should not be receiving these datagrams, but if we do, just ignore
+            triggerEvent(TRIGGER_BAD_PACKET);
+            break;
+
+          case DATAGRAM_FIND_PARTNER:
+            triggerEvent(TRIGGER_RX_FIND_PARTNER);
+            break;
+
+          case DATAGRAM_HEARTBEAT:
+            //Sync clock if server sent the heartbeat
+            if (settings.server == false)
+            {
+              //Change to the server's channel number
+              channelNumber = rxData[0];
+              setRadioFrequency(false);
+
+              //Start and adjust freq hop ISR based on remote's remaining clock
+              startChannelTimer();
+              channelTimerStart -= settings.maxDwellTime;
+              syncChannelTimer(txSyncClocksUsec);
+              triggerEvent(TRIGGER_RX_SYNC_CLOCKS);
+
+              if (settings.debugSync)
+              {
+                systemPrint("    Channel Number: ");
+                systemPrintln(channelNumber);
+                outputSerialData(true);
+                if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+                  hopChannel();
+              }
+
+              frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+
+              lastPacketReceived = millis(); //Update timestamp for Link LED
+
+              //Received heartbeat - do not ack.
+              triggerEvent(TRIGGER_RX_HEARTBEAT);
+
+              blinkHeartbeatLed(true);
+
+              if (settings.debugSync)
+                systemPrintln("Received HB, leaving DISCOVER standby");
+
+              changeState(RADIO_MP_STANDBY);
+            }
+
+            break;
+
+          case DATAGRAM_DATA:
+            //Don't deal with data until we are sync'd with server
+            triggerEvent(TRIGGER_RX_DATA);
+            break;
+        }
+      }
+      break;
+
+    //====================
     //Wait for the next operation (listed in priority order):
     // * Frame received
     // * Data to send
