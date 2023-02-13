@@ -1057,7 +1057,7 @@ void updateRadioState()
       break;
 
     //====================
-    //Walk through channel table backwards, transmitting a FIND_PARTNER and looking for an SYNC_CLOCKS
+    //Walk through channel table backwards, transmitting a FIND_PARTNER and looking for a SYNC_CLOCKS
     //====================
     case RADIO_DISCOVER_SCANNING:
       if (settings.server)
@@ -1126,9 +1126,6 @@ void updateRadioState()
               channelTimerStart -= settings.maxDwellTime;
               syncChannelTimer(txSyncClocksUsec);
               triggerEvent(TRIGGER_RX_SYNC_CLOCKS);
-
-              //Switch to the proper frequency for the channel
-              setRadioFrequency(false);
 
               if (settings.debugSync)
               {
