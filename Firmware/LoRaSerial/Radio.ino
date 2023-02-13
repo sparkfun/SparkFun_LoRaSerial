@@ -3430,7 +3430,12 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
   msToNextHop = rmtHopTimeMsec + adjustment;
 
   //For low airspeeds multiple hops may occur resulting in a negative value
-  while (msToNextHop < 0) msToNextHop += settings.maxDwellTime;
+  while (msToNextHop <= 0)
+    msToNextHop += settings.maxDwellTime;
+
+  //If our next hop is very nearly a dwell time, remote has hopped. Add local hop.
+  if (abs(settings.maxDwellTime - msToNextHop) <= 3)
+    delayedHopCount++;
 
   //When the ISR fires, reload the channel timer with settings.maxDwellTime
   reloadChannelTimer = true;
