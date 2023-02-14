@@ -235,7 +235,7 @@ uint8_t readyOutgoingCommandPacket(uint16_t offset)
         //OK if the entire VC_COMMAND_COMPLETE_MESSAGE is in the buffer.  Start
         //the search one byte into the VC_COMMAND_COMPLETE_MESSAGE position.
         for (length = bytesToSend - VC_SERIAL_HEADER_BYTES
-                    - sizeof(VC_COMMAND_COMPLETE_MESSAGE) + 1;
+                      - sizeof(VC_COMMAND_COMPLETE_MESSAGE) + 1;
              length < bytesToSend; length++)
           if (commandTXBuffer[NEXT_COMMAND_TX_TAIL(length)] == START_OF_VC_SERIAL)
           {
@@ -319,7 +319,10 @@ void updateSerial()
   if (settings.debugSerial && (rxHead - previousHead))
   {
     systemPrint("updateSerial moved ");
-    systemPrint(rxHead - previousHead);
+    if (rxHead > previousHead)
+      systemPrint(rxHead - previousHead);
+    else
+      systemPrint(sizeof(serialReceiveBuffer) - previousHead + rxHead);
     systemPrintln(" bytes into serialReceiveBuffer");
     outputSerialData(true);
     petWDT();
@@ -501,7 +504,10 @@ void processSerialInput()
   if (settings.debugSerial && (radioTxHead != radioHead))
   {
     systemPrint("processSerialInput moved ");
-    systemPrint((radioTxHead - radioHead) % sizeof(radioTxBuffer));
+    if (radioTxHead > radioHead)
+      systemPrint(radioTxHead - radioHead);
+    else
+      systemPrint(sizeof(radioTxBuffer) - radioHead + radioTxHead);
     systemPrintln(" bytes from serialReceiveBuffer into radioTxBuffer");
     outputSerialData(true);
   }
