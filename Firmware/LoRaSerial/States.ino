@@ -1483,33 +1483,45 @@ void updateRadioState()
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     /*
-       beginTrainingClient
+
+      2 Second Button Press                             ATT Command
+                |                                            |
+                |                                            |
+                +--------------------------------------------'
                 |
-                | Save current settings
+                V
+       commandSaveSettings
+                |
+                V
+       beginTrainingClient
                 |
                 V
                 +<--------------------------------.
                 |                                 |
                 | Send FIND_PARTNER               |
-                |                                 |
+                |                                 | Timeout
                 V                                 |
         RADIO_TRAIN_WAIT_TX_FIND_PARTNER_DONE     |
                 |                                 |
-                V                                 | Timeout
-        RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS -----'
-                |
-                | Save settings
-                | Send ACK
-                |
-                V
-        RADIO_TRAIN_WAIT_TX_ACK_DONE
-                |
-                V
-      endTrainingClientServer
-                |
-                | Reboot
-                |
-                V
+                V                                 |
+        RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS ---->+------------------------.
+                |                                 |                        |
+                | RX RADIO_PARAMETERS             | Timeout                |
+                |                                 | && P2P Mode            |
+                | Send ACK                        V                        |
+                V                       generateRandomKeysID               |
+        RADIO_TRAIN_WAIT_TX_ACK_DONE              |               2 Second | or ATO
+                |                                 |            Button Push | or ATZ
+                V                                 |      && ! Command Mode |
+      endTrainingClientServer                     V                        |
+                |                         beginTrainingServer              |
+                |                                                          |
+                | commandRestoreSettings(true)                             V
+                V                                     commandRestoreSettings(writeOnCommandExit)
+             Reboot                                                        |
+                                                                           V
+                                                                       Return to
+                                                                     Previous mode
     */
 
     //====================
@@ -1629,9 +1641,21 @@ void updateRadioState()
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     /*
-               beginTrainingServer
+
+               beginTrainingClient         Command Mode       5 second button press
+                        |                        |                      |
+          P2P & Timeout |                        | ATT                  |
+                        |                        |                      |
+           tempSettings |                        V                      |
+            already set |                        +<---------------------'
+                        |                        |
+                        |                        V
+                        |               commandSaveSettings
+                        |                        |
+                        +<-----------------------'
                         |
-                        | Save current settings
+                        V
+               beginTrainingServer
                         |
                         V
                         +<--------------------------------.
@@ -1645,12 +1669,21 @@ void updateRadioState()
         |      RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE -----'
         |
         |
+        | ATO, ATZ or (2 second training button press && ! command mode)
+        |
         `---------------.
-                        | ATZ command
-                        |
-                        | Reboot
                         |
                         V
+   commandRestoreSettings(writeOnCommandExit)
+                        |
+                        V
+                        +----------------------------.
+                        |                            |
+                        | ATZ command                | ATO command
+                        |                            |
+                        V                            V
+                     Reboot                      Return to
+                                               Previous Mode
     */
 
     //====================
