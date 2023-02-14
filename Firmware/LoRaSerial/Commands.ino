@@ -869,6 +869,29 @@ void commandComplete(bool success)
   }
 }
 
+//Save the settings
+void commandSaveSettings()
+{
+  //Save the current settings
+  tempSettings = settings;
+  originalSettings = settings;
+  writeOnCommandExit = false;
+}
+
+//Restore the settings
+void commandRestoreSettings(bool writeNvm)
+{
+  //Determine if a write to NVM was requested
+  if (writeNvm)
+  {
+    settings = tempSettings;
+    recordSystemSettings()
+  }
+  else
+    //Restore original settings just in case something was changed
+    settings = originalSettings;
+}
+
 //Remove any preceeding or following whitespace chars
 char * trimCommand()
 {
