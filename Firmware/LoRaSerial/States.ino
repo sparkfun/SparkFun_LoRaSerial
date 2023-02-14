@@ -1483,33 +1483,43 @@ void updateRadioState()
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     /*
+
+      2 Second Button Press                             ATT Command
+                |                                            |
+                |                                            |
+                +--------------------------------------------'
+                |
+                V
+       commandSaveSettings
+                |
+                V
        beginTrainingClient
                 |
-                | Save current settings
-                |
                 V
-                +<--------------------------------.
-                |                                 |
-                | Send FIND_PARTNER               |
-                |                                 |
-                V                                 |
-        RADIO_TRAIN_WAIT_TX_FIND_PARTNER_DONE     |
-                |                                 |
-                V                                 | Timeout
-        RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS -----'
-                |
-                | Save settings
-                | Send ACK
-                |
-                V
-        RADIO_TRAIN_WAIT_TX_ACK_DONE
-                |
-                V
-      endTrainingClientServer
-                |
-                | Reboot
-                |
-                V
+                +<--------------------------------------.
+                |                                       |
+                | Send FIND_PARTNER                     |
+                |                                       | Timeout
+                V                                       |
+        RADIO_TRAIN_WAIT_TX_FIND_PARTNER_DONE           |
+                |                                       |
+                V                                       |
+        RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS ---------->+
+                |                                       |
+                | RX RADIO_PARAMETERS                   |
+                |                                   ATO | or 2 Second
+                | Send ACK                          ATZ | Button Push
+                V                                       | && (! Command Mode)
+        RADIO_TRAIN_WAIT_TX_ACK_DONE                    |
+                |                                       V
+                V                  commandRestoreSettings(writeOnCommandExit)
+      endTrainingClientServer                           |
+                |                                       |
+                |                                       |
+                | commandRestoreSettings(true)          |
+                V                                       V
+             Reboot                                Return to
+                                                 Previous mode
     */
 
     //====================
@@ -1629,9 +1639,19 @@ void updateRadioState()
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     /*
-               beginTrainingServer
+
+                  Command Mode       5 second button press
+                        |                      |
+                        | ATT                  |
+                        |                      |
+                        V                      |
+                        +<---------------------'
                         |
-                        | Save current settings
+                        V
+               commandSaveSettings
+                        |
+                        V
+               beginTrainingServer
                         |
                         V
                         +<--------------------------------.
@@ -1645,12 +1665,21 @@ void updateRadioState()
         |      RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE -----'
         |
         |
+        | ATO, ATZ or (2 second training button press && ! command mode)
+        |
         `---------------.
-                        | ATZ command
-                        |
-                        | Reboot
                         |
                         V
+   commandRestoreSettings(writeOnCommandExit)
+                        |
+                        V
+                        +----------------------------.
+                        |                            |
+                        | ATZ command                | ATO command
+                        |                            |
+                        V                            V
+                     Reboot                      Return to
+                                               Previous Mode
     */
 
     //====================
