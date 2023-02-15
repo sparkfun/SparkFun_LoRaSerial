@@ -36,13 +36,16 @@ jobs:
       - name: Enable external libs
         run: arduino-cli config set library.enable_unsafe_install true
 
-      - name: Get Libraries
+      - name: Get Known Libraries
+        run: arduino-cli lib install
+          RadioLib@5.6.0
+          Crypto@0.4.0
+          JC_Button@2.1.2
+          SAMD_TimerInterrupt@1.9.0
+          FlashStorage_SAMD@1.3.2
+
+      - name: Get Git Libraries
         run: arduino-cli lib install --git-url 
-          https://github.com/jgromes/RadioLib.git
-          https://github.com/OperatorFoundation/Crypto.git
-          https://github.com/JChristensen/JC_Button.git
-          https://github.com/khoih-prog/SAMD_TimerInterrupt.git
-          https://github.com/khoih-prog/FlashStorage_SAMD.git
           https://github.com/javos65/WDTZero.git
 
         #Original Crypto library: https://github.com/rweather/arduinolibs.git
