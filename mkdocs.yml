@@ -81,7 +81,6 @@ nav:
     - led_states.md
     - training.md
     - operating_modes.md
-      - virtual_circuit_mode.md
     - firmware_update.md
     - hardware_overview.md
 
