@@ -2,6 +2,8 @@
 
 LoRaSerial radios are very flexible. By default, the radio is looking for serial communication at 57600bps. Open the terminal of your choice and enter +++ and wait for an OK. The radio is now ready for an AT command.
 
+A PDF of *all* AT commands is available [here](img/LoRaSerial%20AT%20Commands%20v2.0.pdf). 
+
 Below is a brief list of commands:
 
 | AT Command | Command Description                      |
@@ -32,17 +34,26 @@ Below is a brief list of commands:
 
 *Table of AT Commands*
 
-[![Table of common radio parameters](img/SparkFun_LoRaSerial_AT_Radio_Commands_v2.0.png)](img/LoRaSerial%20AT%20Radio%20Commands%20-%20v2.0.pdf)
+The commands are best discussed in groups:
 
-*Table of common radio link parameters*
-
-A PDF of *all* AT commands is available [here](img/LoRaSerial%20AT%20Commands%20v2.0.pdf). A table of the subset of the common Radio Link Parameters is available [here](img/LoRaSerial%20AT%20Commands%20v2.0.pdf) in PDF format.
+* [Radio Commands](http://docs.sparkfun.com/SparkFun_LoRaSerial/at_commands/#radio-commands)
+* [Serial Commands](http://docs.sparkfun.com/SparkFun_LoRaSerial/at_commands/#serial-commands)
+* [Info Commands](http://docs.sparkfun.com/SparkFun_LoRaSerial/at_commands/#info-commands)
+* Debug Commands
 
 A parameter is set using the **AT-** prefix, followed by the name of the command with an equals sign and the value to set. For example sending **AT-Echo=1** will enable serial echo. This setting can be stored in NVM (non-volatile memory) by sending the **ATW** command. To query a setting, sending the AT command without a value and the device will respond with the current value. For example sending **AT-FrequencyMax** will generate the response **928.000** followed by **OK**. 
 
 Remote configuration is supported. If two radios are linked, all AT commands can be sent to the remote radio using the RT equivalent (ie, RTZ will reboot the remote radio). **Be careful** as it is very possible to break the link. For example, setting the remote AES key should be done first before setting the local AES key.
 
 ## Radio Commands
+
+[![Table of common radio parameters](img/SparkFun_LoRaSerial_AT_Radio_Commands_v2.0.png)](img/LoRaSerial%20AT%20Radio%20Commands%20-%20v2.0.pdf)
+
+*Table of common radio link parameters*
+
+A table of the subset of the common Radio Link Parameters is available [here](img/LoRaSerial%20AT%20Commands%20v2.0.pdf) in PDF format.
+
+**Note:** Some settings must be identical on both radios for the link to be possible. These settings are used to generate the unique hop table. If settings are not compatible between radios, they will not be able to communicate.
 
 | AT Command | Command Description                      |
 |------------|------------------------------------------|
