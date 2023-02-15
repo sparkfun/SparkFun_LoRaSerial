@@ -17,7 +17,7 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include "../LoRaSerial_Firmware/Virtual_Circuit_Protocol.h"
+#include "../LoRaSerial/Virtual_Circuit_Protocol.h"
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 //Defines
