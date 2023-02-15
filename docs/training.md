@@ -144,4 +144,4 @@ Other optional sets of training parameters may be communicated between the radio
 * Debug parameters
 * Trigger parameters
 
-For more information about the various radio settings, please see [AT Commands]().
+For more information about the various radio settings, please see [AT Commands](http://docs.sparkfun.com/SparkFun_LoRaSerial/at_commands/).
