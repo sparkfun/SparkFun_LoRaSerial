@@ -32,17 +32,15 @@ Below is a brief list of commands:
 
 *Table of AT Commands*
 
-For a PDF of the AT commands, click [here](https://cdn.sparkfun.com/assets/learn_tutorials/2/6/1/7/LoRaSerial_Radio_Registers_-_AT_Commands.pdf).
+[![Table of common radio parameters](img/SparkFun_LoRaSerial_AT_Radio_Commands_v2.0.png)](img/LoRaSerial%20AT%20Radio%20Commands%20-%20v2.0.pdf)
 
-The main user settable parameters are listed below and available [here](https://cdn.sparkfun.com/assets/learn_tutorials/2/6/1/7/LoRaSerial_Radio_Registers_-_Parameters.pdf) in PDF format. A parameter is set using the ATSx command. For example sending ‘ATS21=1’ will enable debug printing. This setting can be stored in NVM (non-volatile memory) by sending the ‘ATW’ command.
+*Table of common radio link parameters*
+
+A PDF of *all* AT commands is available [here](img/LoRaSerial%20AT%20Commands%20v2.0.pdf). A table of the subset of the common Radio Link Parameters is available [here](img/LoRaSerial%20AT%20Commands%20v2.0.pdf) in PDF format.
+
+A parameter is set using the **AT-** prefix, followed by the name of the command with an equals sign and the value to set. For example sending **AT-Echo=1** will enable serial echo. This setting can be stored in NVM (non-volatile memory) by sending the **ATW** command. To query a setting, sending the AT command without a value and the device will respond with the current value. For example sending **AT-FrequencyMax** will generate the response **928.000** followed by **OK**. 
 
 Remote configuration is supported. If two radios are linked, all AT commands can be sent to the remote radio using the RT equivalent (ie, RTZ will reboot the remote radio). **Be careful** as it is very possible to break the link. For example, setting the remote AES key should be done first before setting the local AES key.
-
-[![Table of common parameters](https://cdn.sparkfun.com/r/600-600/assets/learn_tutorials/2/6/1/7/SparkFun_LoRaSerial_-_Parameters.png)](https://cdn.sparkfun.com/assets/learn_tutorials/2/6/1/7/LoRaSerial_Radio_Registers_-_Parameters.pdf)
-
-*Table of common parameters*
-
-The table of common parameters is available [here](https://cdn.sparkfun.com/assets/learn_tutorials/2/6/1/7/LoRaSerial_Radio_Registers_-_Parameters.pdf) in PDF format.
 
 ## Radio Commands
 
@@ -81,17 +79,16 @@ The table of common parameters is available [here](https://cdn.sparkfun.com/asse
 
 *Table of Radio Commands*
 
-* **AirSpeed** - This is the effective rate in bits-per-second at which data is sent over the air. In general, the lower the air speed, the greater the transmission distance. LoRaSerial uses buffers to receive and send serial over USB or UART at the *SerialSpeed* and begins sending that data in chunks over the air at the AirSpeed. The *AirSpeed* setting does not have to match the SerialSpeed. It is recommended to limit the total incoming data to match the AirSpeed. For example, regularly sending a group of 300 bytes with an air speed of 4800 bps (480 bytes per second) will allow the radio sufficient bandwidth. Sending 1,000 bytes per second with an air speed of 4800 bps (480 bytes per second) will within a few seconds overwhelm the link leading to buffer overflow and data loss. Default is 4800bps. Allowed values are 400, 1200, 2400, 4800, 9600, and 19200 bits per second. 
 
-Changing the AirSpeed value overwrites the following settings:
+* **AirSpeed** - This is the effective rate in bits-per-second at which data is sent over the air. In general, the lower the air speed, the greater the transmission distance. LoRaSerial uses buffers to receive and send serial over USB or UART at the *SerialSpeed* and begins sending that data in chunks over the air at the AirSpeed. The *AirSpeed* setting does not have to match the SerialSpeed. It is recommended to limit the total incoming data to match the AirSpeed. For example, regularly sending a group of 300 bytes with an air speed of 4800 bps (480 bytes per second) will allow the radio sufficient bandwidth. Sending 1,000 bytes per second with an air speed of 4800 bps (480 bytes per second) will within a few seconds overwhelm the link leading to buffer overflow and data loss. Default is 4800bps. Allowed values are 400, 1200, 2400, 4800, 9600, and 19200 bits per second. Changing the AirSpeed value overwrites the following 5 parameters: 
 
-* HeartbeatTimeout
-* RadioBandwidth
-* RadioCodingRate
-* RadioSpreadFactor
-* TxToRxUsec
-
-After AirSpeed is set, it is possible to modify any of the parameters above. Note that AirSpeed is just an easy way to set the parameters above to known value. AirSpeed is not a parameter that is transmitted during training, merely a convenient way to set the above parameters in one step.
+  + HeartbeatTimeout
+  + RadioBandwidth
+  + RadioCodingRate
+  + RadioSpreadFactor
+  + TxToRxUsec
+  
+  After AirSpeed is set, it is possible to modify any of the above five parameters. Note that AirSpeed is just an easy way to set the five parameters to known values. AirSpeed is not a parameter that is transmitted during training, merely a convenient way to set the five parameters in one step.
 
 * **AutoTune** - Enabling autotune will cause the radio to tune the receiver frequency based on the calculated frequency error. This is used for testing and is not recommended for general use.
 
@@ -231,4 +228,4 @@ After AirSpeed is set, it is possible to modify any of the parameters above. Not
 
 * **ATI14** - Displays the contents of the current transmit buffer.
 
-* **ATI15** - Displays a list of all the unique IDs of the Virtual Circuit known clients. 
+* **ATI15** - Displays a list of all the unique IDs of the known clients used in Virtual Circuit mode. 
