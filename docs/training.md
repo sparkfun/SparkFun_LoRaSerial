@@ -25,13 +25,13 @@ Press and hold the training button for 5 seconds. When the yellow LED flashes th
 
 This mode (Training as Server) is convenient when multiple clients need to be paired to a server. For example, when a device is configured to be a Server in Multipoint mode, putting it in *Training as Server* mode will allow a user to put another radio into *Training as Client*. The radios will communicate and the Server radio will configure the client radio. Any number of client radios can be quickly and conveniently configured this way.
 
-### Point-To-Point Training as Server
+## Simple Point-To-Point Training
 
-If a radio is set for P2P mode, entering training mode as a server will generate a new random NetID and AES key. This is helpful in the field if you need to put a pair of radios onto a different network and encryption key from other radios that may be nearby. Note: You can also return a radio to factory defaults using the **ATF** command.
+If a radio is set for P2P mode, entering training mode as a server will generate a new random NetID and AES key. In other words, holding the Train button for 5 seconds on one radio will cause that radio to generate new, unique/secure P2P settings. On the other radio, hold the Train button for 2 seconds. This is helpful in the field if you need to put a pair of radios onto a different network and encryption key from other radios that may be nearby. 
 
 ## Factory Reset
 
-Press and hold the training button for 15 seconds to enter Factory Reset mode. You know you've held the Training button long enough when the blue LED flashes 3 times. Releasing the button will then return LoRaSerial to factory settings and erase NVM.
+Press and hold the training button for 15 seconds to enter Factory Reset mode. You know you've held the Training button long enough when the blue LED flashes 3 times. Releasing the button will then return LoRaSerial to factory settings and erase NVM. Note: You can also return a radio to factory defaults using the **ATF** command.
 
 ## Temporary Training Server
 
