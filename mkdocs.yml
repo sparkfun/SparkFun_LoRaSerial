@@ -78,7 +78,10 @@ nav:
     - intro.md
     - quick_start.md
     - at_commands.md
+    - led_states.md
+    - training.md
     - operating_modes.md
+      - virtual_circuit_mode.md
     - firmware_update.md
     - hardware_overview.md
 
