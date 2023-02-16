@@ -51,6 +51,19 @@ The pinout is as follows:
 
 **GND** (Ground) - Connect this pin to the ground of your system.
 
+#### Flow Control
+
+Hardware flow control applies to both the UART connection and the USB connector but in slightly different ways. 
+
+If Flow Control is enabled, the UART will use standard CTS and RTS pins to control the flow. If LoRaSerial is running low on serial buffer space, and Flow Control is enabled, it will pull RTS low to indicate to the host to refrain from sending data to LoRaSerial. 
+
+The USB connection uses a concept called backpressure. It is not affected by the [FlowControl setting](http://docs.sparkfun.com/SparkFun_LoRaSerial/at_commands/#serial-commands) and cannot be disabled. If LoRaSerial is not able to read the incoming data fast enough, the USB driver will indicate to the host’s operating system that the data has not been consumed. Depending on the application, data will either be paused or lost. 
+
+
+![STRSVR Buffering Serial Data](img/RTKLIB%20STRSVR%20Buffering%20Data.png)
+
+This is most obvious in applications such as STRSVR (from [RTKLIB](https://rtklib.com/)). If STRSVR sends more data to the LoRaSerial than it can consume, STRSVR will begin to buffer the data until it can be sent. This is problematic for time-sensitive data, such as RTCM, where data, being delivered successfully but delayed but multiple seconds, can cause problems with RTK. If RTCM data is multiple seconds old, an RTK Fix will go to RTK Float, then fail because current RTCM data is not being delivered to the far end of the radio link. The easiest way to fix the problem is to increase the AirSpeed of the link.
+
 ### RSSI LEDs
 
 ![4 LEDs indicating signal strength](Original/SparkFun_LoRaSerial_-_RSSI_LEDs.png)
@@ -109,7 +122,7 @@ Please see [Updating LoRaSerial Firmware](docs\firmware_update.md) for more info
 
 Two GPIOs capable of ADC are broken out for potential future use.
 
-### UFL Connector
+### U.FL Connector
 
 ![Zero ohm jumper resistor and U.FL connector](Original/SparkFun_LoRaSerial_-_1W_LoRa_Module_UFL.png)
 
