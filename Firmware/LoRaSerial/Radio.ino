@@ -93,7 +93,7 @@ bool configureRadio()
 }
 
 //Update the settings based upon the airSpeed value
-void convertAirSpeedToSettings(uint16_t airSpeed)
+void convertAirSpeedToSettings(Settings *newSettings, uint16_t airSpeed)
 {
   switch (airSpeed)
   {
@@ -103,97 +103,97 @@ void convertAirSpeedToSettings(uint16_t airSpeed)
       waitForever("ERROR - Invalid airSpeed value");
       break;
     case (40):
-      settings.radioSpreadFactor = 11;
-      settings.radioBandwidth = 62.5;
-      settings.radioCodingRate = 8;
+      newSettings->radioSpreadFactor = 11;
+      newSettings->radioBandwidth = 62.5;
+      newSettings->radioCodingRate = 8;
       //HEARTBEAT bytes worst case
       //  P2P - 13,
       //  MP - 7,
       //  VC - 30,
-      if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
-        settings.heartbeatTimeout = 60 * 1000;
+      if (newSettings->operatingMode == MODE_VIRTUAL_CIRCUIT)
+        newSettings->heartbeatTimeout = 60 * 1000;
       else
-        settings.heartbeatTimeout = 25 * 1000;
+        newSettings->heartbeatTimeout = 25 * 1000;
       //uSec: 26018 26026 26026 26025 26020 26038 ==> ~26026
-      settings.txToRxUsec = 26026;
+      newSettings->txToRxUsec = 26026;
       break;
     case (150):
-      settings.radioSpreadFactor = 10;
-      settings.radioBandwidth = 62.5;
-      settings.radioCodingRate = 8;
-      if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
-        settings.heartbeatTimeout = 15 * 1000;
+      newSettings->radioSpreadFactor = 10;
+      newSettings->radioBandwidth = 62.5;
+      newSettings->radioCodingRate = 8;
+      if (newSettings->operatingMode == MODE_VIRTUAL_CIRCUIT)
+        newSettings->heartbeatTimeout = 15 * 1000;
       else
-        settings.heartbeatTimeout = 8 * 1000;
+        newSettings->heartbeatTimeout = 8 * 1000;
       //uSec: 12187 12188 12189 12190 12191 12194 ==> ~12190
-      settings.txToRxUsec = 12190;
+      newSettings->txToRxUsec = 12190;
       break;
     case (400):
-      settings.radioSpreadFactor = 10;
-      settings.radioBandwidth = 125;
-      settings.radioCodingRate = 8;
-      if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
-        settings.heartbeatTimeout = 9 * 1000;
+      newSettings->radioSpreadFactor = 10;
+      newSettings->radioBandwidth = 125;
+      newSettings->radioCodingRate = 8;
+      if (newSettings->operatingMode == MODE_VIRTUAL_CIRCUIT)
+        newSettings->heartbeatTimeout = 9 * 1000;
       else
-        settings.heartbeatTimeout = 5 * 1000;
+        newSettings->heartbeatTimeout = 5 * 1000;
       //uSec: 6072 6070 6072 6070 6069 6067 ==> ~6070
-      settings.txToRxUsec = 6070;
+      newSettings->txToRxUsec = 6070;
       break;
     case (1200):
-      settings.radioSpreadFactor = 9;
-      settings.radioBandwidth = 125;
-      settings.radioCodingRate = 8;
-      settings.heartbeatTimeout = 5 * 1000;
+      newSettings->radioSpreadFactor = 9;
+      newSettings->radioBandwidth = 125;
+      newSettings->radioCodingRate = 8;
+      newSettings->heartbeatTimeout = 5 * 1000;
       //uSec: 2770 2777 2772 2773 2771 2773 ==> ~2773
-      settings.txToRxUsec = 2773;
+      newSettings->txToRxUsec = 2773;
       break;
     case (2400):
-      settings.radioSpreadFactor = 10;
-      settings.radioBandwidth = 500;
-      settings.radioCodingRate = 8;
-      settings.heartbeatTimeout = 5 * 1000;
+      newSettings->radioSpreadFactor = 10;
+      newSettings->radioBandwidth = 500;
+      newSettings->radioCodingRate = 8;
+      newSettings->heartbeatTimeout = 5 * 1000;
       //uSec: 1495 1481 1482 1481 1482 1481 ==> ~1484
-      settings.txToRxUsec = 1484;
+      newSettings->txToRxUsec = 1484;
       break;
     case (4800):
-      settings.radioSpreadFactor = 9;
-      settings.radioBandwidth = 500;
-      settings.radioCodingRate = 8;
-      settings.heartbeatTimeout = 5 * 1000;
+      newSettings->radioSpreadFactor = 9;
+      newSettings->radioBandwidth = 500;
+      newSettings->radioCodingRate = 8;
+      newSettings->heartbeatTimeout = 5 * 1000;
       //uSec: 657 657 657 658 657 657 ==> ~657
-      settings.txToRxUsec = 657;
+      newSettings->txToRxUsec = 657;
       break;
     case (9600):
-      settings.radioSpreadFactor = 8;
-      settings.radioBandwidth = 500;
-      settings.radioCodingRate = 7;
-      settings.heartbeatTimeout = 5 * 1000;
+      newSettings->radioSpreadFactor = 8;
+      newSettings->radioBandwidth = 500;
+      newSettings->radioCodingRate = 7;
+      newSettings->heartbeatTimeout = 5 * 1000;
       //uSec: 279 279 281 280 280 279 ==> ~280
-      settings.txToRxUsec = 280;
+      newSettings->txToRxUsec = 280;
       break;
     case (19200):
-      settings.radioSpreadFactor = 7;
-      settings.radioBandwidth = 500;
-      settings.radioCodingRate = 7;
-      settings.heartbeatTimeout = 5 * 1000;
+      newSettings->radioSpreadFactor = 7;
+      newSettings->radioBandwidth = 500;
+      newSettings->radioCodingRate = 7;
+      newSettings->heartbeatTimeout = 5 * 1000;
       //uSec: 119 118 118 119 120 119 ==> ~119
-      settings.txToRxUsec = 119;
+      newSettings->txToRxUsec = 119;
       break;
     case (28800):
-      settings.radioSpreadFactor = 6;
-      settings.radioBandwidth = 500;
-      settings.radioCodingRate = 6;
-      settings.heartbeatTimeout = 5 * 1000;
+      newSettings->radioSpreadFactor = 6;
+      newSettings->radioBandwidth = 500;
+      newSettings->radioCodingRate = 6;
+      newSettings->heartbeatTimeout = 5 * 1000;
       //uSec: ???
-      settings.txToRxUsec = 0;
+      newSettings->txToRxUsec = 0;
       break;
     case (38400):
-      settings.radioSpreadFactor = 6;
-      settings.radioBandwidth = 500;
-      settings.radioCodingRate = 5;
-      settings.heartbeatTimeout = 5 * 1000;
+      newSettings->radioSpreadFactor = 6;
+      newSettings->radioBandwidth = 500;
+      newSettings->radioCodingRate = 5;
+      newSettings->heartbeatTimeout = 5 * 1000;
       //uSec: ???
-      settings.txToRxUsec = 0;
+      newSettings->txToRxUsec = 0;
       break;
   }
 }
