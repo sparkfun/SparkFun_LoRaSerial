@@ -1,12 +1,6 @@
 //Select the training protocol
 void selectTraining()
 {
-  //If we are training via button, and in P2P mode, and Server is not set
-  //we will need these settings if we exit training
-  memcpy(&originalEncryptionKey, &settings.encryptionKey, AES_KEY_BYTES);
-  originalNetID = settings.netID;
-  originalServer = settings.server;
-
   if (settings.server)
     beginTrainingServer();
   else

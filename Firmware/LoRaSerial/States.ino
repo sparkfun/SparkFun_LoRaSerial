@@ -1599,24 +1599,7 @@ void updateRadioState()
       //Check for a receive timeout
       else if ((millis() - datagramTimer) > (settings.clientFindPartnerRetryInterval * 1000))
       {
-        //If we are training with button, in P2P mode, and user has not set server mode
-        //Automatically switch to server
-        if (trainViaButton
-            && tempSettings.operatingMode == MODE_POINT_TO_POINT
-            && originalServer == false)
-        {
-          //Give up and change to Server automatically
-
-          settings = tempSettings; //Return to original radio settings
-
-          generateRandomKeysID(); //Generate random netID and AES key
-
-          beginTrainingServer(); //Change to server
-        }
-        else
-        {
-          xmitDatagramTrainingFindPartner(); //Continue retrying as client
-        }
+        xmitDatagramTrainingFindPartner();
       }
       break;
 
@@ -1736,7 +1719,7 @@ void updateRadioState()
               //then reboot with current settings after a single client acks
               if (trainViaButton
                   && tempSettings.operatingMode == MODE_POINT_TO_POINT
-                  && originalServer == false)
+                  && tempSettings.server == false)
               {
                 //Reboot the radio with the newly generated random netID/Key parameters
                 petWDT();
