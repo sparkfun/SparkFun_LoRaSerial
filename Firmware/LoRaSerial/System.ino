@@ -578,24 +578,24 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
 void setRSSI(uint8_t ledBits)
 {
   if (ledBits & 0b0001)
-    digitalWrite(pin_rssi1LED, HIGH);
+    digitalWrite(pin_green_1_LED, HIGH);
   else
-    digitalWrite(pin_rssi1LED, LOW);
+    digitalWrite(pin_green_1_LED, LOW);
 
   if (ledBits & 0b0010)
-    digitalWrite(pin_rssi2LED, HIGH);
+    digitalWrite(pin_green_2_LED, HIGH);
   else
-    digitalWrite(pin_rssi2LED, LOW);
+    digitalWrite(pin_green_2_LED, LOW);
 
   if (ledBits & 0b0100)
-    digitalWrite(pin_rssi3LED, HIGH);
+    digitalWrite(pin_green_3_LED, HIGH);
   else
-    digitalWrite(pin_rssi3LED, LOW);
+    digitalWrite(pin_green_3_LED, LOW);
 
   if (ledBits & 0b1000)
-    digitalWrite(pin_rssi4LED, HIGH);
+    digitalWrite(pin_green_4_LED, HIGH);
   else
-    digitalWrite(pin_rssi4LED, LOW);
+    digitalWrite(pin_green_4_LED, LOW);
 }
 
 //Start the cylon LEDs
@@ -694,12 +694,12 @@ void blinkSerialTxLed(bool illuminate)
   switch (settings.selectLedUse)
   {
     case LEDS_RSSI:
-      if (pin_txLED != PIN_UNDEFINED)
+      if (pin_blue_LED != PIN_UNDEFINED)
       {
         if (illuminate == true)
-          digitalWrite(pin_txLED, HIGH);
+          digitalWrite(pin_blue_LED, HIGH);
         else
-          digitalWrite(pin_txLED, LOW);
+          digitalWrite(pin_blue_LED, LOW);
       }
       break;
   }
@@ -712,9 +712,9 @@ void blinkSerialRxLed(bool illuminate)
   {
     case LEDS_RSSI:
       if (illuminate == true)
-        digitalWrite(pin_rxLED, HIGH);
+        digitalWrite(pin_yellow_LED, HIGH);
       else
-        digitalWrite(pin_rxLED, LOW);
+        digitalWrite(pin_yellow_LED, LOW);
       break;
 
     case LEDS_VC:

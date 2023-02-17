@@ -97,13 +97,13 @@ uint8_t pin_dio0 = PIN_UNDEFINED;
 uint8_t pin_dio1 = PIN_UNDEFINED;
 uint8_t pin_rts = PIN_UNDEFINED;
 uint8_t pin_cts = PIN_UNDEFINED;
-uint8_t pin_txLED = PIN_UNDEFINED;
-uint8_t pin_rxLED = PIN_UNDEFINED;
+uint8_t pin_blue_LED = PIN_UNDEFINED;
+uint8_t pin_yellow_LED = PIN_UNDEFINED;
 uint8_t pin_trainButton = PIN_UNDEFINED;
-uint8_t pin_rssi1LED = PIN_UNDEFINED;
-uint8_t pin_rssi2LED = PIN_UNDEFINED;
-uint8_t pin_rssi3LED = PIN_UNDEFINED;
-uint8_t pin_rssi4LED = PIN_UNDEFINED;
+uint8_t pin_green_1_LED = PIN_UNDEFINED;
+uint8_t pin_green_2_LED = PIN_UNDEFINED;
+uint8_t pin_green_3_LED = PIN_UNDEFINED;
+uint8_t pin_green_4_LED = PIN_UNDEFINED;
 uint8_t pin_boardID = PIN_UNDEFINED;
 
 uint8_t pin_trigger = PIN_UNDEFINED;
@@ -125,12 +125,12 @@ uint8_t pin_hop_timer = PIN_UNDEFINED;
         USB            Serial
 */
 
-#define GREEN_LED_1         pin_rssi1LED //Top right
-#define GREEN_LED_2         pin_rssi2LED
-#define GREEN_LED_3         pin_rssi3LED
-#define GREEN_LED_4         pin_rssi4LED //Top left
-#define BLUE_LED            pin_txLED
-#define YELLOW_LED          pin_rxLED //Bottom right
+#define GREEN_LED_1         pin_green_1_LED //Top right
+#define GREEN_LED_2         pin_green_2_LED
+#define GREEN_LED_3         pin_green_3_LED
+#define GREEN_LED_4         pin_green_4_LED //Top left
+#define BLUE_LED            pin_blue_LED
+#define YELLOW_LED          pin_yellow_LED //Bottom right
 
 #define RADIO_USE_BLINK_MILLIS    15
 
