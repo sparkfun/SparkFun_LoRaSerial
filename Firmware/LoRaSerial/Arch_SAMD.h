@@ -77,12 +77,12 @@ void samdBeginBoard()
   pin_rst = 6;
   pin_cts = 30;
   pin_rts = 38;
-  pin_txLED = 31;
-  pin_rxLED = A5;
-  pin_rssi1LED = A3;
-  pin_rssi2LED = A4;
-  pin_rssi3LED = 8;
-  pin_rssi4LED = 9;
+  pin_blue_LED = 31;
+  pin_yellow_LED = A5;
+  pin_green_1_LED = A3;
+  pin_green_2_LED = A4;
+  pin_green_3_LED = 8;
+  pin_green_4_LED = 9;
 
   pin_trainButton = 4;
 
@@ -96,19 +96,19 @@ void samdBeginBoard()
   pinMode(pin_cts, INPUT_PULLUP);
 
   //LEDs
-  pinMode(pin_rssi1LED, OUTPUT);
-  digitalWrite(pin_rssi1LED, LOW);
-  pinMode(pin_rssi2LED, OUTPUT);
-  digitalWrite(pin_rssi2LED, LOW);
-  pinMode(pin_rssi3LED, OUTPUT);
-  digitalWrite(pin_rssi3LED, LOW);
-  pinMode(pin_rssi4LED, OUTPUT);
-  digitalWrite(pin_rssi4LED, LOW);
+  pinMode(pin_green_1_LED, OUTPUT);
+  digitalWrite(pin_green_1_LED, LOW);
+  pinMode(pin_green_2_LED, OUTPUT);
+  digitalWrite(pin_green_2_LED, LOW);
+  pinMode(pin_green_3_LED, OUTPUT);
+  digitalWrite(pin_green_3_LED, LOW);
+  pinMode(pin_green_4_LED, OUTPUT);
+  digitalWrite(pin_green_4_LED, LOW);
 
-  pinMode(pin_txLED, OUTPUT);
-  digitalWrite(pin_txLED, LOW);
-  pinMode(pin_rxLED, OUTPUT);
-  digitalWrite(pin_rxLED, LOW);
+  pinMode(pin_blue_LED, OUTPUT);
+  digitalWrite(pin_blue_LED, LOW);
+  pinMode(pin_yellow_LED, OUTPUT);
+  digitalWrite(pin_yellow_LED, LOW);
 
   //Train button input
   pinMode(pin_trainButton, INPUT_PULLUP);
