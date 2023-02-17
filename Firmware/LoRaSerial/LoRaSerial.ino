@@ -109,27 +109,30 @@ uint8_t pin_boardID = PIN_UNDEFINED;
 uint8_t pin_trigger = PIN_UNDEFINED;
 uint8_t pin_hop_timer = PIN_UNDEFINED;
 
-#define GREEN_LED_1         pin_rssi1LED
+/*
+        Antenna         Qwiic
+    +---------------------------+
+    |                           |
+    |     G4   G3   G2   G1     |
+    |                           |
+    |                           |
+    |                       Red |
+    |                           |
+    |                           |
+    |            Blue    Yellow |
+    |                           |
+    +---------------------------+
+        USB            Serial
+*/
+
+#define GREEN_LED_1         pin_rssi1LED //Top right
 #define GREEN_LED_2         pin_rssi2LED
 #define GREEN_LED_3         pin_rssi3LED
-#define GREEN_LED_4         pin_rssi4LED
+#define GREEN_LED_4         pin_rssi4LED //Top left
 #define BLUE_LED            pin_txLED
-#define YELLOW_LED          pin_rxLED
+#define YELLOW_LED          pin_rxLED //Bottom right
 
 #define RADIO_USE_BLINK_MILLIS    15
-
-#define RADIO_USE_RX_DATA_LED     GREEN_LED_1 //Green
-#define RADIO_USE_LINK_LED        GREEN_LED_2 //Green
-#define RADIO_USE_RSSI_LED        GREEN_LED_3 //Green
-#define RADIO_USE_TX_DATA_LED     GREEN_LED_4 //Green
-#define RADIO_USE_BAD_FRAMES_LED  BLUE_LED    //Blue
-#define RADIO_USE_BAD_CRC_LED     YELLOW_LED  //Yellow
-
-#define LED_MP_HEARTBEAT          BLUE_LED
-#define LED_MP_HOP_CHANNEL        YELLOW_LED
-
-#define CYLON_TX_DATA_LED   BLUE_LED
-#define CYLON_RX_DATA_LED   YELLOW_LED
 
 #define LED_ON              HIGH
 #define LED_OFF             LOW
