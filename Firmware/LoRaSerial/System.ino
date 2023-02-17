@@ -664,12 +664,12 @@ void blinkRadioRssiLed()
         //The RSSI value ranges from -164 to 30 dB
         ledRssiPulseWidth = (150 + rssi) / 10;
         if (ledRssiPulseWidth > 0)
-          digitalWrite(RADIO_USE_RSSI_LED, LED_ON);
+          digitalWrite(GREEN_LED_3, LED_ON);
       }
 
       //Check for time to turn off the LED
       else if ((currentMillis - ledPreviousRssiMillis) >= ledRssiPulseWidth)
-        digitalWrite(RADIO_USE_RSSI_LED, LED_OFF);
+        digitalWrite(GREEN_LED_3, LED_OFF);
       break;
 
     //Update the 4 green LEDs based upon the RSSI value
@@ -719,9 +719,9 @@ void blinkSerialRxLed(bool illuminate)
 
     case LEDS_VC:
       if (illuminate == true)
-        digitalWrite(RADIO_USE_LINK_LED, HIGH);
+        digitalWrite(GREEN_LED_2, HIGH);
       else
-        digitalWrite(RADIO_USE_LINK_LED, LOW);
+        digitalWrite(GREEN_LED_2, LOW);
       break;
   }
 }
@@ -733,9 +733,9 @@ void blinkRadioRxLed(bool on)
   {
     case LEDS_CYLON:
       if (on)
-        digitalWrite(CYLON_RX_DATA_LED, LED_ON);
+        digitalWrite(YELLOW_LED, LED_ON);
       else if ((millis() - linkDownTimer) >= RADIO_USE_BLINK_MILLIS)
-        digitalWrite(CYLON_RX_DATA_LED, LED_OFF);
+        digitalWrite(YELLOW_LED, LED_OFF);
       break;
 
     case LEDS_MULTIPOINT:
@@ -743,9 +743,9 @@ void blinkRadioRxLed(bool on)
     case LEDS_RADIO_USE:
     case LEDS_VC:
       if (on)
-        digitalWrite(RADIO_USE_RX_DATA_LED, LED_ON);
+        digitalWrite(GREEN_LED_1, LED_ON);
       else if ((millis() - linkDownTimer) >= RADIO_USE_BLINK_MILLIS)
-        digitalWrite(RADIO_USE_RX_DATA_LED, LED_OFF);
+        digitalWrite(GREEN_LED_1, LED_OFF);
       break;
   }
 }
@@ -757,9 +757,9 @@ void blinkRadioTxLed(bool on)
   {
     case LEDS_CYLON:
       if (on)
-        digitalWrite(CYLON_TX_DATA_LED, LED_ON);
+        digitalWrite(BLUE_LED, LED_ON);
       else if ((millis() - datagramTimer) >= RADIO_USE_BLINK_MILLIS)
-        digitalWrite(CYLON_TX_DATA_LED, LED_OFF);
+        digitalWrite(BLUE_LED, LED_OFF);
       break;
 
     case LEDS_MULTIPOINT:
@@ -767,9 +767,9 @@ void blinkRadioTxLed(bool on)
     case LEDS_RADIO_USE:
     case LEDS_VC:
       if (on)
-        digitalWrite(RADIO_USE_TX_DATA_LED, LED_ON);
+        digitalWrite(GREEN_LED_4, LED_ON);
       else if ((millis() - datagramTimer) >= RADIO_USE_BLINK_MILLIS)
-        digitalWrite(RADIO_USE_TX_DATA_LED, LED_OFF);
+        digitalWrite(GREEN_LED_4, LED_OFF);
       break;
   }
 }
@@ -796,7 +796,7 @@ void radioLeds()
   blinkRadioTxLed(false);
 
   //Update the link LED
-  digitalWrite(RADIO_USE_LINK_LED, isLinked() ? LED_ON : LED_OFF);
+  digitalWrite(GREEN_LED_2, isLinked() ? LED_ON : LED_OFF);
 
   //Update the RSSI LED
   blinkRadioRssiLed();
@@ -807,12 +807,12 @@ void radioLeds()
   {
     previousBadFrames = badFrames;
     badFramesMillis = currentMillis;
-    digitalWrite(RADIO_USE_BAD_FRAMES_LED, LED_ON);
+    digitalWrite(BLUE_LED, LED_ON);
   }
   else if (badFramesMillis && ((currentMillis - badFramesMillis) >= RADIO_USE_BLINK_MILLIS))
   {
     badFramesMillis = 0;
-    digitalWrite(RADIO_USE_BAD_FRAMES_LED, LED_OFF);
+    digitalWrite(BLUE_LED, LED_OFF);
   }
 
   //Blink the bad CRC or duplicate frames LED
@@ -820,18 +820,18 @@ void radioLeds()
   {
     previousBadCrc = badCrc;
     badCrcMillis = currentMillis;
-    digitalWrite(RADIO_USE_BAD_CRC_LED, LED_ON);
+    digitalWrite(YELLOW_LED, LED_ON);
   }
   if ((!settings.enableCRC16) && (duplicateFrames != previousBadCrc))
   {
     previousBadCrc = duplicateFrames;
     badCrcMillis = currentMillis;
-    digitalWrite(RADIO_USE_BAD_CRC_LED, LED_ON);
+    digitalWrite(YELLOW_LED, LED_ON);
   }
   else if (badCrcMillis && ((currentMillis - badCrcMillis) >= RADIO_USE_BLINK_MILLIS))
   {
     badCrcMillis = 0;
-    digitalWrite(RADIO_USE_BAD_CRC_LED, LED_OFF);
+    digitalWrite(YELLOW_LED, LED_OFF);
   }
 }
 
@@ -847,11 +847,11 @@ void blinkHeartbeatLed(bool on)
     case LEDS_VC:
       if (on)
       {
-        digitalWrite(LED_MP_HEARTBEAT, LED_ON);
+        digitalWrite(BLUE_LED, LED_ON);
         ledHeartbeatMillis = millis();
       }
       else if ((millis() - ledHeartbeatMillis) > RADIO_USE_BLINK_MILLIS)
-        digitalWrite(LED_MP_HEARTBEAT, LED_OFF);
+        digitalWrite(BLUE_LED, LED_OFF);
       break;
   }
 }
@@ -865,9 +865,9 @@ void blinkChannelHopLed(bool on)
     case LEDS_P2P:
     case LEDS_VC:
       if (on)
-        digitalWrite(LED_MP_HOP_CHANNEL, LED_ON);
+        digitalWrite(YELLOW_LED, LED_ON);
       else if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
-        digitalWrite(LED_MP_HOP_CHANNEL, LED_OFF);
+        digitalWrite(YELLOW_LED, LED_OFF);
       break;
   }
 }
@@ -914,14 +914,14 @@ void multiPointLeds()
   blinkRadioTxLed(false);
 
   //Update the sync LED
-  digitalWrite(RADIO_USE_LINK_LED, isMultiPointSync() ? LED_ON : LED_OFF);
+  digitalWrite(GREEN_LED_2, isMultiPointSync() ? LED_ON : LED_OFF);
 
   //Update the RSSI LED
   blinkRadioRssiLed();
 
   //Update the hop LED
   if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
-    digitalWrite(LED_MP_HOP_CHANNEL, LED_OFF);
+    digitalWrite(YELLOW_LED, LED_OFF);
 
   //Update the HEARTBEAT LED
   blinkHeartbeatLed(false);
@@ -942,7 +942,7 @@ void p2pLeds()
 
   //Update the hop LED
   if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
-    digitalWrite(LED_MP_HOP_CHANNEL, LED_OFF);
+    digitalWrite(YELLOW_LED, LED_OFF);
 
   //Update the HEARTBEAT LED
   blinkHeartbeatLed(false);
@@ -969,15 +969,15 @@ void vcLeds()
 
   //Turn on the RSSI LED
   else if (((currentMillis - blinkSyncMillis) >= (VC_SYNC_BLINK_RATE >> 1))
-           && (digitalRead(RADIO_USE_RSSI_LED) == LED_OFF))
-    digitalWrite(RADIO_USE_RSSI_LED, LED_ON);
+           && (digitalRead(GREEN_LED_3) == LED_OFF))
+    digitalWrite(GREEN_LED_3, LED_ON);
 
   //Turn off the RSSI LED
   else if ((!virtualCircuitList[VC_SERVER].vcState)
            && (((currentMillis - blinkSyncMillis) >= VC_SYNC_BLINK_RATE))
-           && (digitalRead(RADIO_USE_RSSI_LED) == LED_ON))
+           && (digitalRead(GREEN_LED_3) == LED_ON))
   {
-    digitalWrite(RADIO_USE_RSSI_LED, LED_OFF);
+    digitalWrite(GREEN_LED_3, LED_OFF);
     blinkSyncMillis = currentMillis;
   }
 
@@ -985,7 +985,7 @@ void vcLeds()
 
   //Update the hop LED
   if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
-    digitalWrite(LED_MP_HOP_CHANNEL, LED_OFF);
+    digitalWrite(YELLOW_LED, LED_OFF);
 
   //Update the HEARTBEAT LED
   blinkHeartbeatLed(false);
