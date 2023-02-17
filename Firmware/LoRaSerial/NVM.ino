@@ -198,3 +198,29 @@ void nvmSaveVcUniqueId(int8_t vc)
   if (memcmp(id, virtualCircuitList[vc].uniqueId, sizeof(id)) != 0)
     nvmSaveUniqueId(vc, virtualCircuitList[vc].uniqueId);
 }
+
+//Erase the entire EEPROM
+void nvmErase()
+{
+  int address;
+  int length;
+  uint8_t value[64];
+
+  //Get the EEPROM length
+  length = EEPROM.length();
+
+  //Set the erase value
+  memset(&value, NVM_ERASE_VALUE, sizeof(value));
+
+  //Erase the EEPROM
+  address = 0;
+  while (address < length)
+  {
+    petWDT();
+    EEPROM.put(address, value);
+    address += sizeof(value);
+  }
+
+  //Finish the write
+  arch.eepromCommit();
+}
