@@ -3,20 +3,20 @@ void blinkStartup()
 {
   for (int x = 0 ; x < 3 ; x++)
   {
-    digitalWrite(pin_rssi1LED, HIGH);
-    digitalWrite(pin_rssi2LED, HIGH);
-    digitalWrite(pin_rssi3LED, HIGH);
-    digitalWrite(pin_rssi4LED, HIGH);
-    digitalWrite(pin_txLED, HIGH);
-    digitalWrite(pin_rxLED, HIGH);
+    digitalWrite(pin_green_1_LED, HIGH);
+    digitalWrite(pin_green_2_LED, HIGH);
+    digitalWrite(pin_green_3_LED, HIGH);
+    digitalWrite(pin_green_4_LED, HIGH);
+    digitalWrite(pin_blue_LED, HIGH);
+    digitalWrite(pin_yellow_LED, HIGH);
     delay(50);
 
-    digitalWrite(pin_rssi1LED, LOW);
-    digitalWrite(pin_rssi2LED, LOW);
-    digitalWrite(pin_rssi3LED, LOW);
-    digitalWrite(pin_rssi4LED, LOW);
-    digitalWrite(pin_txLED, LOW);
-    digitalWrite(pin_rxLED, LOW);
+    digitalWrite(pin_green_1_LED, LOW);
+    digitalWrite(pin_green_2_LED, LOW);
+    digitalWrite(pin_green_3_LED, LOW);
+    digitalWrite(pin_green_4_LED, LOW);
+    digitalWrite(pin_blue_LED, LOW);
+    digitalWrite(pin_yellow_LED, LOW);
     delay(50);
   }
 }
