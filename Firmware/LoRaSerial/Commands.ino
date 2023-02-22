@@ -183,8 +183,7 @@ bool commandAT(const char * commandString)
         return true;
 
       case ('T'): //ATT - Enter training mode
-        if (inCommandMode)
-          settings = tempSettings; //Apply user's modifications
+        settings = tempSettings; //Apply user's modifications
         selectTraining();
         return true;
 
@@ -195,8 +194,7 @@ bool commandAT(const char * commandString)
       case ('Z'): //ATZ - Reboots the system
         if (writeOnCommandExit)
         {
-          if (inCommandMode)
-            settings = tempSettings; //Apply user's modifications
+          settings = tempSettings; //Apply user's modifications
           recordSystemSettings();
         }
 
