@@ -73,7 +73,7 @@ extra:
       link: https://twitter.com/sparkfun
   
 nav:
-    - Introduction: intro.md
+    - Introduction: index.md
     - quick_start.md
     - at_commands.md
     - led_states.md

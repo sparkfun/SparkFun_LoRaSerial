@@ -7,7 +7,7 @@ The line of LoRaSerial products offered by SparkFun all run identical firmware. 
 <table class="table table-hover table-striped table-bordered">
   <tr align="center">
    <td><a href="https://www.sparkfun.com/products/19311"><img src="https://cdn.sparkfun.com//assets/parts/1/8/9/4/0/19311-SparkFun_LoRaSerial_Kit_-_915MHz-01.jpg"></a></td>
-   <td><a href="https://www.sparkfun.com/products/20029"><img src="https://cdn.sparkfun.com//assets/parts/1/8/9/4/0/19311-SparkFun_LoRaSerial_Kit_-_915MHz-01.jpg"></a></td>
+   <td><a href="https://www.sparkfun.com/products/20029"><img src="img/SparkFun%20LoRaSerial%20Enclosed%20-%2020029-1.jpg"></a></td>
   </tr>
   <tr align="center">
     <td><a href="https://www.sparkfun.com/products/19311">SparkFun LoRaSerial Kit - 915MHz (WRL-19311)</a></td>
