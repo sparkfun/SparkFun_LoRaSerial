@@ -69,7 +69,7 @@ The LED behavior may be changed by using the **AT-SelectLedUse** command and set
 This mode gives the user insight into when the link is hopping and when a heartbeat is transmitted/received. The mode number is 0.
 
     +++
-    AT-SelectLedUse=40
+    AT-SelectLedUse=0
     ATO
 
 * The G4 LED pulses when the radio transmits a frame.
