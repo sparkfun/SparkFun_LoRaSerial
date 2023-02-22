@@ -2,16 +2,20 @@
 
 Training is the process of passing a radio's set of parameters to other radios so that they can successfully communicate.
 
-There are two ways to initiate training:
-
 ![Training button on LoRaSerial](Original/SparkFun_LoRaSerial_-_Train.png)
+
+*The train button on the LoRaSerial*
+
+There are two ways to initiate training:
 
 * Pressing the **Train** button on the end of the LoRaSerial device
 * Entering the **ATT** command
 
 Training is performed by a server radio sending parameters to the client radio. Upon reception, the client radio saves the parameters in non-volatile memory and then reboots with the new parameters.
 
-Pressing and releasing the training button for different lengths of time initiates the following behaviors:
+Pressing and releasing the training button for different lengths of time initiates the following behaviors.
+
+A ball-point pen is best for pressing the training button. *Be gentle.* The training button can be damaged with too much force.
 
 ## Training as Client
 
