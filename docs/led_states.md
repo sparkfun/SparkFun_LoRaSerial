@@ -30,7 +30,7 @@ When the device is first powered on or is reset, all LEDs will blink quickly thr
 
 ## Training
 
-During Training, the green RSSI LEDs will cylon back and forth. One green LED is lit at a time and the lit LED moves from side to side.
+During [training](https://docs.sparkfun.com/SparkFun_LoRaSerial/training/), the green RSSI LEDs will cylon back and forth. One green LED is lit at a time and the lit LED moves from side to side.
 
     G4    G3    G2    G1
                        X
@@ -45,9 +45,9 @@ During Training, the green RSSI LEDs will cylon back and forth. One green LED is
 
 Once training is complete, the radio will reset causing all LEDS to blink.
 
-## LED Mode - LEDS_RSSI (4)
+## LED Mode - LEDS_RSSI
 
-This is the default mode. The RSSI LEDs will indicate the link's signal strength.
+This is the default mode. The RSSI LEDs will indicate the link's signal strength. The mode number is 4.
 
 The LED behavior may be changed by using the **AT-SelectLedUse** command and setting the value to one of the mode numbers described in the sections below. As an example, the following commands cause the LEDs to display different information about the radio's behavior.
 
@@ -64,9 +64,13 @@ The LED behavior may be changed by using the **AT-SelectLedUse** command and set
 * The blue TX LED indicates when serial data is received over the radio and sent to the host, either over USB or hardware serial.
 * The yellow RX LED indicates when serial data is received from the host and sent over the radio.
 
-## LED Mode - LEDS_MULTIPOINT (0)
+## LED Mode - LEDS_MULTIPOINT
 
-This mode gives the user insight into when the link is hopping and when a heartbeat is transmitted/received.
+This mode gives the user insight into when the link is hopping and when a heartbeat is transmitted/received. The mode number is 0.
+
+    +++
+    AT-SelectLedUse=40
+    ATO
 
 * The G4 LED pulses when the radio transmits a frame.
 * The G3 LED is pulse width modulated to indicate the last received RSSI level.
@@ -75,9 +79,13 @@ This mode gives the user insight into when the link is hopping and when a heartb
 * The blue LED pulses on the server radio when the server transmits a HEARTBEAT frame. The blue LED pulses on the client radio when the client successfully receives a HEARTBEAT frame from the server.
 * The yellow LED pulses each time a channel hop (frequency change) occurs.
 
-## LED Mode - LEDS_RADIO_USE (3)
+## LED Mode - LEDS_RADIO_USE
 
-This mode gives the user insight into when a bad or duplicate frame is detected.
+This mode gives the user insight into when a bad or duplicate frame is detected. The mode number is 3.
+
+    +++
+    AT-SelectLedUse=3
+    ATO
 
 * The G4 LED pulses when the radio transmits a frame.
 * The G3 LED is pulse width modulated to indicate the last received RSSI level.
