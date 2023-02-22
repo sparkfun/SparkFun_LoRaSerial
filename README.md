@@ -5,7 +5,7 @@ SparkFun LoRaSerial
 
 [*SparkFun GPS-RTK-SMA - ZED-F9P (GPS-19311)*](https://www.sparkfun.com/products/19311)
 
-Head to the [LoRaSerial Product Manual](http://docs.sparkfun.com/SparkFun_LoRaSerial/intro/) for technical documentation.
+Head to the [LoRaSerial Product Manual](http://docs.sparkfun.com/SparkFun_LoRaSerial/) for technical documentation.
 
 LoRaSerial is a pair of serial radio modems that simply passes serial back and forth. Do you have a system that needs to report data every few seconds? Is it located beyond WiFi or Bluetooth range? Do you need 9 mile/15 kilometer range? LoRaSerial transmits data over LoRa giving it incredible range compared to other methods. We’ve regularly transmitted over 9 miles/15km line-of-sight using two LoRaSerial radios, right out of the box.
 
@@ -28,7 +28,7 @@ Repository Contents
 Documentation
 --------------
 
-* **[LoRaSerial Product Manual](http://docs.sparkfun.com/SparkFun_LoRaSerial/intro/)** - Configuration guide for the SparkFun LoRaSerial.
+* **[LoRaSerial Product Manual](http://docs.sparkfun.com/SparkFun_LoRaSerial/)** - Configuration guide for the SparkFun LoRaSerial.
 
 License Information
 -------------------
