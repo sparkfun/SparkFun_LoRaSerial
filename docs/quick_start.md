@@ -29,18 +29,18 @@ LoRaSerial is designed to get small amounts of data from point A to point B as e
 
 ## Additional Documentation
 
-The LoRaSerial products are described in the [introduction](http://docs.sparkfun.com/SparkFun_LoRaSerial/intro/).  The [radios](http://docs.sparkfun.com/SparkFun_LoRaSerial/hardware_overview/) support several [operating modes](http://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/).
+The LoRaSerial products are described in the [introduction](http://docs.sparkfun.com/SparkFun_LoRaSerial/intro/). The [radios](http://docs.sparkfun.com/SparkFun_LoRaSerial/hardware_overview/) support several [operating modes](http://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/).
 
 * [Point-to-Point](https://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/#point-to-point) with guaranteed delivery or the link breaks
-* [Multipoint](https://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/#multipoint), two or more LoRaSerial radios, is best for realtime applications but uses broadcast datagrams that may be lost
-* [Virtual-Circuit](https://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/#virtual-circuits) supports multipoint with guaranteed delivery or the link breaks.  This mode uses a special serial interface.
+* [Multipoint](https://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/#multipoint), two or more LoRaSerial radios, is best for real-time applications but uses broadcast datagrams that may be lost
+* [Virtual-Circuit](https://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/#virtual-circuits) supports multipoint with guaranteed delivery or the link breaks. This mode uses a special serial interface.
 
-Enter [command mode](http://docs.sparkfun.com/SparkFun_LoRaSerial/at_commands/) to change modes and adjust the parameters for that mode of operation.  [Training ](http://docs.sparkfun.com/SparkFun_LoRaSerial/training/) is the process to distribute the set of parameters from a server radio (server=1) to the other client radios (server=0).  Training can be done one radio at a time or multiple radios at once.
+Enter [command mode](http://docs.sparkfun.com/SparkFun_LoRaSerial/at_commands/) to change modes and adjust the parameters for that mode of operation. [Training](http://docs.sparkfun.com/SparkFun_LoRaSerial/training/) is the process to distribute the set of parameters from a server radio (server=1) to the other client radios (server=0). Training can be done one radio at a time or multiple radios at once.
 
-The green LEDs by default display a received signal strength indication.  The more LEDs that are on the better the signal.  However other [LED patterns](http://docs.sparkfun.com/SparkFun_LoRaSerial/led_states/) are available to provide more data on the radio behavior.
+The green LEDs by default display a received signal strength indication. The more LEDs that are on the better the signal. However other [LED patterns](http://docs.sparkfun.com/SparkFun_LoRaSerial/led_states/) are available to provide more data on the radio behavior.
 
-Occasionally, SparkFun may release new firmware for LoRaSerial.  The
-[firmware update](http://docs.sparkfun.com/SparkFun_LoRaSerial/firmware_update/) procedure enables you to load the firmware into the LoRaSerial radio.  Advanced users may also want to [build](http://docs.sparkfun.com/SparkFun_LoRaSerial/firmware_build/) the [open source LoRaSerial firmware](https://github.com/sparkfun/SparkFun_LoRaSerial).
+Occasionally, SparkFun may release new firmware for LoRaSerial. The
+[firmware update](http://docs.sparkfun.com/SparkFun_LoRaSerial/firmware_update/) procedure enables you to load the firmware into the LoRaSerial radio. Advanced users may also want to [build](http://docs.sparkfun.com/SparkFun_LoRaSerial/firmware_build/) the [open source LoRaSerial firmware](https://github.com/sparkfun/SparkFun_LoRaSerial).
 
 ### Hardware Documentation
 

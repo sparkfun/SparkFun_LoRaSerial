@@ -31,7 +31,7 @@ This mode (Training as Server) is convenient when multiple clients need to be pa
 
 ## Simple Point-To-Point Training
 
-If a radio is set for P2P mode, entering training mode as a server will generate a new random NetID and AES key. In other words, holding the Train button for 5 seconds on one radio will cause that radio to generate new, unique/secure P2P settings. On the other radio, hold the Train button for 2 seconds. The radios will be trained to these new AES key and NetID, the radios will reset, and immediately link up. This is helpful in the field if you need to put a pair of radios onto a different network and encryption key from other radios that may be nearby. 
+If a radio is set for P2P mode, entering training mode as a server will generate a new random NetID and AES key. In other words, holding the Train button for 5 seconds on one radio will cause that radio to generate new, unique/secure P2P settings. On the other radio, hold the Train button for 2 seconds. The radios will be trained to the new AES key and NetID, and the radios will reset, then immediately link up. This is helpful in the field if you need to put a pair of radios onto a different network and encryption key from other radios that may be nearby. 
 
 ## Factory Reset
 
@@ -128,6 +128,7 @@ Client:
 * Reboots
 
 Client:
+
 * Connect to the LoRaSerial radio via USB or the serial port
 * Enter command mode using +++
 * Enter training using the ATT command

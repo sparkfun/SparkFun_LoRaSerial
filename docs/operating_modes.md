@@ -35,7 +35,7 @@ Radio Linkup is performed during a discovery phase: The Server radio immediately
 
 Benefits of Multipoint:
 
-* Similar to P2P, simple to setup and use. Whatever serial comes in gets broadcast.
+* Similar to P2P, simple to set up and use. Whatever serial comes in gets broadcast.
 * Supports up to 32 radios. Data can be broadcast/shared between multiple receivers. This is helpful in setups such as GNSS RTK where a Base receiver broadcasts correction data to multiple Rovers simultaneously.
 * A larger continuous data stream can be transmitted. This assumes the user's application layer can handle lost packets graciously.
 * This mode is most friendly to very long distance transmissions where an ACK may not be possible.
@@ -90,7 +90,7 @@ The following parameters should be set to enable virtual circuit mode:
 * AT-Server=1 - Define this radio as the virtual circuit server
 * ATW - Write the parameters to the non-volatile memory (NVM).
 
-Now enter training mode with the ATT command. The training enables the server to pass these parameters (except for server) to the client radios. On the client radios, with power applied, press the button at the top of the client radio to enter training mode. The radio will obtain the parameters from the server, write them to NVM and then reboot using the new parameters.
+Now enter training mode with the ATT command. The training enables the server to pass these parameters (excluding the AT-Server setting itself) to the client radios. On the client radios, with power applied, press the button at the top of the client radio to enter training mode. The radio will obtain the parameters from the server, write them to NVM and then reboot using the new parameters.
 
 After all of the client radios are trained, the ATZ command may be entered on the server radio to cause it to reboot.
 
