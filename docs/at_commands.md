@@ -43,8 +43,6 @@ The commands are best discussed in groups:
 
 A parameter is set using the **AT-** prefix, followed by the name of the command with an equals sign and the value to set. For example sending **AT-Echo=1** will enable serial echo. This setting can be stored in NVM (non-volatile memory) by sending the **ATW** command. To query a setting, sending the AT command without a value and the device will respond with the current value. For example sending **AT-FrequencyMax** will generate the response **928.000** followed by **OK**. 
 
-Remote configuration is supported. If two radios are linked, all AT commands can be sent to the remote radio using the RT equivalent (ie, RTZ will reboot the remote radio). **Be careful** as it is very possible to break the link. For example, setting the remote AES key should be done first before setting the local AES key.
-
 ## Radio Commands
 
 [![Table of common radio parameters](img/SparkFun_LoRaSerial_AT_Radio_Commands_v2.0.png)](img/LoRaSerial%20AT%20Radio%20Commands%20-%20v2.0.pdf)
