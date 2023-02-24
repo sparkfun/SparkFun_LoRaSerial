@@ -1722,9 +1722,7 @@ void updateRadioState()
                   && tempSettings.server == false)
               {
                 //Reboot the radio with the newly generated random netID/Key parameters
-                petWDT();
-                systemFlush();
-                systemReset();
+                commandReset;
               }
             }
             break;

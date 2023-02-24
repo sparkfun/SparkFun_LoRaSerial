@@ -199,17 +199,7 @@ bool commandAT(const char * commandString)
         }
 
         reportOK();
-        if (serialOperatingMode == MODE_VIRTUAL_CIRCUIT)
-        {
-          //Notify the PC of the serial port failure
-          serialOutputByte(START_OF_VC_SERIAL);
-          serialOutputByte(3);
-          serialOutputByte(PC_SERIAL_RECONNECT);
-          serialOutputByte(myVc);
-        }
-        outputSerialData(true);
-        systemFlush();
-        systemReset();
+        commandReset();
         return true;
     }
   }
@@ -852,6 +842,7 @@ void reportOK()
   commandComplete(true);
 }
 
+//Notify the host that the command is complete
 void commandComplete(bool success)
 {
   if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
@@ -865,6 +856,22 @@ void commandComplete(bool success)
     //Output the command complete message
     systemWrite(success ? VC_CMD_SUCCESS : VC_CMD_ERROR);
   }
+}
+
+//Notify the host of the reset then reboot the system
+void commandReset()
+{
+  if (serialOperatingMode == MODE_VIRTUAL_CIRCUIT)
+  {
+    //Notify the PC of the serial port failure
+    serialOutputByte(START_OF_VC_SERIAL);
+    serialOutputByte(3);
+    serialOutputByte(PC_SERIAL_RECONNECT);
+    serialOutputByte(myVc);
+  }
+  outputSerialData(true);
+  systemFlush();
+  systemReset();
 }
 
 //Remove any preceeding or following whitespace chars
