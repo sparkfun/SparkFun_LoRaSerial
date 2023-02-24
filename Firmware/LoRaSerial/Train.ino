@@ -103,9 +103,6 @@ void beginTrainingServer()
 //Perform the common training initialization
 void commonTrainingInitialization()
 {
-  //Save the current settings
-  trainingSettings = settings;
-
   //Use common radio settings between the client and server for training
   settings = defaultSettings;
   settings.dataScrambling = true;           //Scramble the data
