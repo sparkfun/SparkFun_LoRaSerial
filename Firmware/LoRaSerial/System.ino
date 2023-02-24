@@ -268,6 +268,7 @@ void updateButton()
       trainState = TRAIN_PRESSED;
 
       trainViaButton = true;
+      trainingSettings = settings;
       selectTraining();
     }
     else if (trainState == TRAIN_PRESSED && trainBtn->wasReleased())
@@ -276,7 +277,7 @@ void updateButton()
     }
     else if (trainState == TRAIN_IN_PROCESS && trainBtn->wasReleased())
     {
-      settings = tempSettings; //Return to original radio settings
+      settings = trainingSettings; //Return to original radio settings
 
       recordSystemSettings(); //Record original settings
 
