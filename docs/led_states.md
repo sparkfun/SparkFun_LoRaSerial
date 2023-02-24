@@ -43,7 +43,8 @@ During [training](https://docs.sparkfun.com/SparkFun_LoRaSerial/training/), the 
                  X
           ...
 
-Once training is complete, the radio will reset causing all LEDS to blink.
+The yellow LED will blink when radio traffic is received and the blue LED will blink
+when radio traffic is transmitted. Once training is complete, the radio will reset causing all LEDS to blink.
 
 ## LED Mode - LEDS_RSSI
 

@@ -19,27 +19,27 @@ A ball-point pen is best for pressing the training button. *Be gentle.* The trai
 
 ## Training as Client
 
-Press and hold the training button for 2 seconds. When the cylon pattern appears, release the button. The device is now ready to receive settings from a Server. Once settings are received from a server, the device saves the parameters to NVM and then reboots with the new settings.
+Press and hold the training button until the yellow LED starts to blink then release the button. The cylon pattern appears on the green LEDs. The device is now ready to receive settings from a Server. Once settings are received from a server, the device saves the parameters to NVM and then reboots with the new settings.
 
-If training needs to be canceled, press and hold the training button for 2 seconds to exit training mode. No settings will be modified. The radio will return to normal operation.
+If training needs to be canceled, press and release the training button before the yellow LED starts to blink to exit training mode. No settings will be modified. The radio will return to normal operation.
 
 ## Training as Server
 
-Press and hold the training button for 5 seconds. When the yellow LED flashes three times you know you've held the button long enough. In this mode, the radio will respond to any training client with its settings. The radio will not exit this mode unless it is powered cycled or the **ATZ** reset command is issued.
+Press and hold the training button until the blue LED starts to blink then release the button. The cylon pattern pattern appears on the green LEDs. In this mode, the radio will respond to any training client with its settings. The radio will not exit this mode unless it is powered cycled or the **ATZ** reset command is issued.
 
 This mode (Training as Server) is convenient when multiple clients need to be paired to a server. For example, when a device is configured to be a Server in Multipoint mode, putting it in *Training as Server* mode will allow a user to put another radio into *Training as Client*. The radios will communicate and the Server radio will configure the client radio. Any number of client radios can be quickly and conveniently configured this way.
 
 ## Simple Point-To-Point Training
 
-If a radio is set for P2P mode, entering training mode as a server will generate a new random NetID and AES key. In other words, holding the Train button for 5 seconds on one radio will cause that radio to generate new, unique/secure P2P settings. On the other radio, hold the Train button for 2 seconds. The radios will be trained to the new AES key and NetID, and the radios will reset, then immediately link up. This is helpful in the field if you need to put a pair of radios onto a different network and encryption key from other radios that may be nearby. 
+If a radio is set for P2P mode, entering training mode as a server will generate a new random NetID and AES key. In other words, pushing the Train button and releasing it after the blue LED flashes on one radio will cause that radio to generate new, unique/secure P2P settings. On the other radio, press the Train button and release it after the yellow LED flashes. The radios will be trained to the new AES key and NetID, and the radios will reset, then immediately link up. This is helpful in the field if you need to put a pair of radios onto a different network and encryption key from other radios that may be nearby.
 
 ## Factory Reset
 
-Press and hold the training button for 15 seconds to enter Factory Reset mode. You know you've held the Training button long enough when the blue LED flashes 3 times. Releasing the button will then return LoRaSerial to factory settings and erase NVM. Note: You can also return a radio to factory defaults using the **ATF** command.
+Press and hold the training button for 15 seconds to Factory Reset the radio. Release the button when all the LEDs blink quickly three times during the reset.  Just before reset the NVM is erased and LoRaSerial returns to factory settings. Note: You can also return a radio to factory defaults using the **ATF** command.
 
 ## Temporary Training Server
 
-It is possible to use temporary training servers for multipoint and virtual circuit modes. The only difference between a temporary server and a regular server is that the parameters are not saved to the non-volatile storage using the ATW command before exiting command mode.
+It is possible to use temporary training servers for multipoint mode. The only difference between a temporary server and a regular server is that the parameters are not saved to the non-volatile storage using the ATW command before exiting command mode.
 
 ## Example: Training a Batch of Radios
 
@@ -66,7 +66,7 @@ Clients can enter training via the **ATT** command:
 
 Alternatively, the Client can enter training via the button:
 
-* Hold the training button for 2 seconds
+* Press the training button and release it when the yellow LED
 * The client will now obtain settings from the Server
 * Settings saved to NVM
 * Radio reboots
@@ -82,59 +82,6 @@ A command script is simply a text file containing the AT commands the user would
     ATO
 
 Copying and pasting command scripts into a terminal program is an efficient way of configuring a radio.
-
-## Virtual Circuit Training
-
-It is recommended to use a command script to initialize the server radio when performing virtual-circuit training. The client radios can either use command mode or the training button to enter training mode.
-
-Temporary Server (Doesn't save settings):
-
-* If not already at factory reset, hold the training button down for 15 seconds
-* Connect to the LoRaSerial radio via USB or the serial port
-* Enter command mode with +++
-* Start from factory defaults by issuing the ATF command
-* Issue the following commands:
-  * AT-OperatingMode=2
-  * AT-Server=1
-  * AT-SelectLedUse=2
-  * ATG
-* Set any of the other parameters
-* Enter training mode with ATT command
-* Wait for clients to be trained
-* Exit command mode with ATO command or reboot with ATZ command
-
-Server (Saves settings):
-
-* If not already at factory reset, hold the training button down for 15 seconds
-* Connect to the LoRaSerial radio via USB or the serial port
-* Enter command mode with +++
-* Start from factory defaults by issuing the ATF command
-* Issue the following commands:
-  * AT-OperatingMode=2
-  * AT-Server=1
-  * AT-SelectLedUse=2
-  * ATG
-* Set any of the other parameters
-* Enter training mode with ATT command
-* Wait for clients to be trained
-* Save parameters with ATW command
-* Always reboot with ATZ command
-
-Client:
-
-* 2 second training button press
-* Receives training parameters from server
-* Saves new parameters
-* Reboots
-
-Client:
-
-* Connect to the LoRaSerial radio via USB or the serial port
-* Enter command mode using +++
-* Enter training using the ATT command
-* Receives training parameters from server
-* Saves new parameters
-* Reboots
 
 ## Training Parameters
 
