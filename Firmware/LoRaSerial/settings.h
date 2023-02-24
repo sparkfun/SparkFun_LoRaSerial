@@ -227,14 +227,6 @@ typedef struct _VIRTUAL_CIRCUIT
 #define ADD_VC_STATE_NAMES_TABLE
 #include "Virtual_Circuit_Protocol.h"
 
-//Train button states
-typedef enum
-{
-  TRAIN_NO_PRESS = 0,
-  TRAIN_PRESSED,
-  TRAIN_IN_PROCESS,
-} TrainStates;
-
 enum
 { //#, Width - Computed with:
   //        triggerWidth = 25
@@ -358,7 +350,7 @@ typedef enum
   LEDS_RADIO_USE,   // 3: Green1: RX, Green2: Link, Green3: RSSI, Green4: TX
   //    Blue: Bad frames, Yellow: Bad CRC
   LEDS_RSSI,        // 4: Green: RSSI, Blue: Serial TX, Yellow: Serial RX
-  LEDS_RESERVED_1,  // 5
+  LEDS_BUTTON_PRESS,// 5: Green: Seconds, Yellow: Client, Blue: Server
   LEDS_RESERVED_2,  // 6
   LEDS_CYLON,       // 7: Display the cylon pattern on the green LEDs, others off
 

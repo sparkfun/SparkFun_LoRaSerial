@@ -166,8 +166,11 @@ uint8_t AESiv[AES_IV_BYTES] = {0}; //Set during hop table generation
 #include <JC_Button.h> // http://librarymanager/All#JC_Button //v2.1.2
 Button *trainBtn = NULL; //We can't instantiate the button here because we don't yet know what pin number to use
 
-const int trainButtonTime = 2000; //ms press and hold before entering training
-bool trainViaButton = false; //Allows auto-creation of server if client times out
+const int trainButtonClientTime = 4 * 1000; //ms press and hold before entering client training
+const int trainButtonServerTime = 8 * 1000; //ms press and hold before entering server training
+const int trainButtonFactoryResetTime = 16 * 1000; //ms press and hold before reset
+
+bool inTraining; //True if training is in process
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Hardware Timers

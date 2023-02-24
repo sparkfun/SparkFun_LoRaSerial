@@ -1717,12 +1717,16 @@ void updateRadioState()
 
               //If we are training via button, and in point to point mode, and the user has not manually set the server
               //then reboot with current settings after a single client acks
-              if (trainViaButton
-                  && tempSettings.operatingMode == MODE_POINT_TO_POINT
-                  && tempSettings.server == false)
+              if (inTraining
+                  && (trainingSettings.operatingMode == MODE_POINT_TO_POINT)
+                  && (!trainingSettings.server))
               {
+                //Save the training parameters
+                settings = trainingSettings;
+                recordSystemSettings();
+
                 //Reboot the radio with the newly generated random netID/Key parameters
-                commandReset;
+                commandReset();
               }
             }
             break;

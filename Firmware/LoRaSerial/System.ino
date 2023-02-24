@@ -257,35 +257,97 @@ uint8_t systemRead()
 //Check the train button and change state accordingly
 void updateButton()
 {
-  static TrainStates trainState = TRAIN_NO_PRESS;
+  bool buttonPressed;
+  static bool buttonWasPressed;
+  uint32_t deltaTime;
+  static Settings originalSettings;
+  static uint32_t pressedTime;
 
   if (trainBtn != NULL)
   {
-    trainBtn->read();
+    //Determine the previous state of the button
+    buttonPressed = trainBtn->read();
 
-    if (trainState == TRAIN_NO_PRESS && trainBtn->pressedFor(trainButtonTime))
+    //Determine the current button state
+    if (buttonWasPressed)
     {
-      trainState = TRAIN_PRESSED;
+      //Update the LEDs
+      deltaTime = millis() - pressedTime;
+      buttonLeds(deltaTime);
+      if (!buttonPressed)
+      {
+        //Button just released
+        settings = originalSettings;
 
-      trainViaButton = true;
-      trainingSettings = settings;
-      selectTraining();
+        //Check for reset to factory settings
+        if (deltaTime >= trainButtonFactoryResetTime)
+        {
+          //Erase the EEPROM
+          nvmErase();
+
+          //Reboot the radio
+          commandReset();
+        }
+
+        //Starting training or exiting training via the button is only possible
+        //when the radio is not in command mode!
+        else if (!inCommandMode)
+        {
+          //Check for server training request
+          if (deltaTime >= trainButtonServerTime)
+          {
+            //Set the training settings
+            trainingSettings = settings;
+            inTraining = true;
+            if (settings.operatingMode == MODE_POINT_TO_POINT)
+            {
+              //Select a random netID and encryption key
+              generateRandomKeysID(&trainingSettings);
+            }
+            beginTrainingServer();
+          }
+
+          //Check for client training request
+          else if (deltaTime >= trainButtonClientTime)
+          {
+            trainingSettings = settings; //Set the training settings
+            inTraining = true;
+            beginTrainingClient();
+          }
+
+          //Exit training
+          else
+          {
+            //The user has stopped training with the button
+            //Restore the previous settings
+            settings = originalSettings;
+            if (inTraining)
+            {
+              inTraining = false;
+              changeState(RADIO_RESET);
+            }
+          }
+        }
+      }
     }
-    else if (trainState == TRAIN_PRESSED && trainBtn->wasReleased())
+
+    //The button was not previously pressed
+    else
     {
-      trainState = TRAIN_IN_PROCESS;
-    }
-    else if (trainState == TRAIN_IN_PROCESS && trainBtn->wasReleased())
-    {
-      settings = trainingSettings; //Return to original radio settings
+      //Determine if the button is pressed
+      if (buttonPressed)
+      {
+        //Button just pressed
+        pressedTime = millis();
 
-      recordSystemSettings(); //Record original settings
-
-      //Reboot the radio
-      petWDT();
-      systemFlush();
-      systemReset();
+        //Save the previous led state
+        if (!inTraining)
+            originalSettings = settings;
+      }
     }
+
+    //Save the current button state
+    buttonWasPressed = buttonPressed;
   }
 }
 
@@ -999,6 +1061,36 @@ void updateCylonLEDs()
 
   //Turn off the TX LED to end the blink
   blinkRadioTxLed(false);
+}
+
+//Acknowledge the button press
+void buttonLeds(uint32_t pressedMilliseconds)
+{
+  const uint32_t blinkTime = 1000 / 4;  //Blink 4 times per second
+  uint8_t on;
+  const uint32_t onTime = blinkTime / 2;
+  uint8_t seconds;
+
+  //Display the number of seconds the button has been pushed
+  seconds = pressedMilliseconds / 1000;
+  setRSSI((pressedMilliseconds >= trainButtonFactoryResetTime) ? 15 : seconds);
+
+  if (!inCommandMode)
+  {
+    //Determine the blink state
+    on = (pressedMilliseconds % blinkTime) >= onTime;
+
+    //Determine which LED to blink
+    if (pressedMilliseconds >= trainButtonServerTime)
+    {
+      //Blink the blue LED
+      digitalWrite(BLUE_LED, on);
+      digitalWrite(YELLOW_LED, 0);
+    }
+    else if (pressedMilliseconds >= trainButtonClientTime)
+      //Blink the yellow LED
+      digitalWrite(YELLOW_LED, on);
+  }
 }
 
 //Update the LED values depending upon the selected display
