@@ -205,7 +205,5 @@ void endClientServerTraining(uint8_t event)
   trainingServerRunning = false;
 
   //Reboot the radio with the new parameters
-  petWDT();
-  systemFlush();
-  systemReset();
+  commandReset();
 }
