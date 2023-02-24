@@ -10,7 +10,7 @@ void selectTraining()
 //Generate new netID/AES key to share
 //We assume the user needs to maintain their settings (airSpeed, numberOfChannels, freq min/max, bandwidth/spread/hop)
 //but need to be on a different netID/AES key.
-void generateRandomKeysID()
+void generateRandomKeysID(Settings * radioSettings)
 {
   if ((settings.debug == true) || (settings.debugTraining == true))
   {
@@ -22,24 +22,24 @@ void generateRandomKeysID()
   randomSeed(radio.randomByte());
 
   //Generate new NetID
-  settings.netID = random(0, 256); //Inclusive, exclusive
+  radioSettings->netID = random(0, 256); //Inclusive, exclusive
 
   //Generate new AES Key. User may not be using AES but we still need both radios to have the same key in case they do enable AES.
   for (int x = 0 ; x < 16 ; x++)
-    settings.encryptionKey[x] = random(0, 256); //Inclusive, exclusive
+    radioSettings->encryptionKey[x] = random(0, 256); //Inclusive, exclusive
 
   //We do not generate new AES Initial Values here. Those are generated during generateHopTable() based on the unit's settings.
 
   if ((settings.debug == true) || (settings.debugTraining == true))
   {
     systemPrint("Select new NetID: ");
-    systemPrintln(settings.netID);
+    systemPrintln(radioSettings->netID);
 
     systemPrint("Select new Encryption Key:");
     for (uint8_t i = 0 ; i < 16 ; i++)
     {
       systemPrint(" ");
-      systemPrint(settings.encryptionKey[i], HEX);
+      systemPrint(radioSettings->encryptionKey[i], HEX);
     }
     systemPrintln();
     outputSerialData(true);
