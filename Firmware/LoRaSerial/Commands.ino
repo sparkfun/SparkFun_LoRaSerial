@@ -145,7 +145,7 @@ bool commandAT(const char * commandString)
         return true;
 
       case ('G'): //ATG - Generate a new netID and encryption key
-        generateRandomKeysID();
+        generateRandomKeysID(&tempSettings);
         return true;
 
       case ('I'): //ATI
