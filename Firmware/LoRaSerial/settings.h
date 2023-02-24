@@ -19,7 +19,7 @@ typedef enum
   RADIO_DISCOVER_SCANNING,
   RADIO_DISCOVER_WAIT_TX_FIND_PARTNER_DONE,
   RADIO_DISCOVER_STANDBY,
-  
+
   //Multi-Point: Datagrams
   RADIO_MP_STANDBY,
   RADIO_MP_WAIT_TX_DONE,
@@ -518,7 +518,6 @@ typedef struct struct_settings {
   //-- Add commands to set the parameters
   //-- Add parameters to routine updateRadioParameters
 } Settings;
-Settings settings;
 
 //Monitor which devices on the device are on or offline.
 struct struct_online {
