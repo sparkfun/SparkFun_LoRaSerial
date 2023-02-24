@@ -62,7 +62,6 @@ void beginTrainingClient()
     changeState(RADIO_TRAIN_WAIT_TX_FIND_PARTNER_DONE);
   else
     changeState(RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS);
-  trainingTimer = millis();
 }
 
 //Start the training in server mode

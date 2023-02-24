@@ -487,7 +487,6 @@ bool trainingPreviousRxInProgress = false; //Previous RX status
 float originalChannel; //Original channel from HOP table while training is in progress
 uint8_t trainingPartnerID[UNIQUE_ID_BYTES]; //Unique ID of the training partner
 uint8_t myUniqueId[UNIQUE_ID_BYTES]; // Unique ID of this system
-unsigned long trainingTimer;
 
 //Virtual-Circuit
 int8_t cmdVc;   //VC index for ATI commands only
