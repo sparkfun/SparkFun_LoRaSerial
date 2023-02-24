@@ -67,11 +67,8 @@ void beginTrainingClient()
 //Start the training in server mode
 void beginTrainingServer()
 {
-  trainingServerRunning = true;
-
-  //Record the settings used for training
   petWDT();
-  recordSystemSettings();
+  trainingServerRunning = true;
 
   //Display the values to be used for the client/server training
   systemPrintln("Server training parameters");
