@@ -87,9 +87,9 @@ void beginTrainingServer()
 
   systemPrintln("Server radio protocol parameters");
   systemPrint("  netID: ");
-  systemPrintln(tempSettings.netID);
+  systemPrintln(trainingSettings.netID);
   systemPrint("  Encryption key: ");
-  displayEncryptionKey(tempSettings.encryptionKey);
+  displayEncryptionKey(trainingSettings.encryptionKey);
   systemPrintln();
   outputSerialData(true);
 
@@ -104,14 +104,14 @@ void beginTrainingServer()
 void commonTrainingInitialization()
 {
   //Save the current settings
-  tempSettings = settings;
+  trainingSettings = settings;
 
   //Use common radio settings between the client and server for training
   settings = defaultSettings;
   settings.dataScrambling = true;           //Scramble the data
   settings.enableCRC16 = true;              //Use CRC-16
   settings.encryptData = true;              //Enable packet encryption
-  memcpy(&settings.encryptionKey, &tempSettings.trainingKey, AES_KEY_BYTES); //Common encryption key
+  memcpy(&settings.encryptionKey, &trainingSettings.trainingKey, AES_KEY_BYTES); //Common encryption key
   settings.frequencyHop = false;            //Stay on the training frequency
   settings.maxResends = 1;                  //Don't waste time retransmitting
   settings.netID = 'T';                     //NetID for training
@@ -124,37 +124,37 @@ void commonTrainingInitialization()
   selectHeaderAndTrailerBytes();
 
   //Debug training if requested
-  if (tempSettings.debugTraining)
+  if (trainingSettings.debugTraining)
   {
-    settings.selectLedUse = tempSettings.selectLedUse;
+    settings.selectLedUse = trainingSettings.selectLedUse;
     //Ignore copyDebug
-    settings.debug = tempSettings.debug;
-    settings.debugDatagrams = tempSettings.debugDatagrams;
-    settings.debugHeartbeat = tempSettings.debugHeartbeat;
-    settings.debugNvm = tempSettings.debugNvm;
-    settings.debugRadio = tempSettings.debugRadio;
-    settings.debugReceive = tempSettings.debugReceive;
-    settings.debugSerial = tempSettings.debugSerial;
-    settings.debugStates = tempSettings.debugStates;
-    settings.debugSync = tempSettings.debugSync;
-    settings.debugTraining = tempSettings.debugTraining;
-    settings.debugTransmit = tempSettings.debugTransmit;
-    settings.displayRealMillis = tempSettings.displayRealMillis;
-    settings.printAckNumbers = tempSettings.printAckNumbers;
-    settings.printChannel = tempSettings.printChannel;
-    settings.printFrequency = tempSettings.printFrequency;
-    settings.printLinkUpDown = tempSettings.printLinkUpDown;
-    settings.printPacketQuality = tempSettings.printPacketQuality;
-    settings.printPktData = tempSettings.printPktData;
-    settings.printRfData = tempSettings.printRfData;
-    settings.printTimestamp = tempSettings.printTimestamp;
-    settings.printTxErrors = tempSettings.printTxErrors;
+    settings.debug = trainingSettings.debug;
+    settings.debugDatagrams = trainingSettings.debugDatagrams;
+    settings.debugHeartbeat = trainingSettings.debugHeartbeat;
+    settings.debugNvm = trainingSettings.debugNvm;
+    settings.debugRadio = trainingSettings.debugRadio;
+    settings.debugReceive = trainingSettings.debugReceive;
+    settings.debugSerial = trainingSettings.debugSerial;
+    settings.debugStates = trainingSettings.debugStates;
+    settings.debugSync = trainingSettings.debugSync;
+    settings.debugTraining = trainingSettings.debugTraining;
+    settings.debugTransmit = trainingSettings.debugTransmit;
+    settings.displayRealMillis = trainingSettings.displayRealMillis;
+    settings.printAckNumbers = trainingSettings.printAckNumbers;
+    settings.printChannel = trainingSettings.printChannel;
+    settings.printFrequency = trainingSettings.printFrequency;
+    settings.printLinkUpDown = trainingSettings.printLinkUpDown;
+    settings.printPacketQuality = trainingSettings.printPacketQuality;
+    settings.printPktData = trainingSettings.printPktData;
+    settings.printRfData = trainingSettings.printRfData;
+    settings.printTimestamp = trainingSettings.printTimestamp;
+    settings.printTxErrors = trainingSettings.printTxErrors;
 
     //Ignore copyTriggers
-    settings.triggerEnable = tempSettings.triggerEnable;
-    settings.triggerEnable2 = tempSettings.triggerEnable2;
-    settings.triggerWidth = tempSettings.triggerWidth;
-    settings.triggerWidthIsMultiplier = tempSettings.triggerWidthIsMultiplier;
+    settings.triggerEnable = trainingSettings.triggerEnable;
+    settings.triggerEnable2 = trainingSettings.triggerEnable2;
+    settings.triggerWidth = trainingSettings.triggerWidth;
+    settings.triggerWidthIsMultiplier = trainingSettings.triggerWidthIsMultiplier;
   }
 
   //Reset cylon variables
@@ -180,7 +180,7 @@ void commonTrainingInitialization()
 void endClientServerTraining(uint8_t event)
 {
   triggerEvent(event);
-  settings = tempSettings; //Return to original radio settings
+  settings = trainingSettings; //Return to original radio settings
 
   if (settings.debugTraining)
   {
