@@ -1237,88 +1237,88 @@ void updateRadioParameters(uint8_t * rxData)
   memcpy(&params, rxData, sizeof(params));
 
   //Update the radio parameters
-  tempSettings.autoTuneFrequency = params.autoTuneFrequency;
-  tempSettings.frequencyHop = params.frequencyHop;
-  tempSettings.frequencyMax = params.frequencyMax;
-  tempSettings.frequencyMin = params.frequencyMin;
-  tempSettings.maxDwellTime = params.maxDwellTime;
-  tempSettings.numberOfChannels = params.numberOfChannels;
-  tempSettings.radioBandwidth = params.radioBandwidth;
-  tempSettings.radioBroadcastPower_dbm = params.radioBroadcastPower_dbm;
-  tempSettings.radioCodingRate = params.radioCodingRate;
-  tempSettings.radioPreambleLength = params.radioPreambleLength;
-  tempSettings.radioSpreadFactor = params.radioSpreadFactor;
-  tempSettings.radioSyncWord = params.radioSyncWord;
-  tempSettings.txToRxUsec = params.txToRxUsec;
+  trainingSettings.autoTuneFrequency = params.autoTuneFrequency;
+  trainingSettings.frequencyHop = params.frequencyHop;
+  trainingSettings.frequencyMax = params.frequencyMax;
+  trainingSettings.frequencyMin = params.frequencyMin;
+  trainingSettings.maxDwellTime = params.maxDwellTime;
+  trainingSettings.numberOfChannels = params.numberOfChannels;
+  trainingSettings.radioBandwidth = params.radioBandwidth;
+  trainingSettings.radioBroadcastPower_dbm = params.radioBroadcastPower_dbm;
+  trainingSettings.radioCodingRate = params.radioCodingRate;
+  trainingSettings.radioPreambleLength = params.radioPreambleLength;
+  trainingSettings.radioSpreadFactor = params.radioSpreadFactor;
+  trainingSettings.radioSyncWord = params.radioSyncWord;
+  trainingSettings.txToRxUsec = params.txToRxUsec;
 
   //Update the radio protocol parameters
-  tempSettings.dataScrambling = params.dataScrambling;
-  tempSettings.enableCRC16 = params.enableCRC16;
-  tempSettings.encryptData = params.encryptData;
-  memcpy(tempSettings.encryptionKey, params.encryptionKey, sizeof(tempSettings.encryptionKey));
-  tempSettings.framesToYield = params.framesToYield;
-  tempSettings.heartbeatTimeout = params.heartbeatTimeout;
-  tempSettings.maxResends = params.maxResends;
-  tempSettings.netID = params.netID;
-  tempSettings.operatingMode = params.operatingMode;
-  tempSettings.overheadTime = params.overheadTime;
-  tempSettings.selectLedUse = params.selectLedUse;
-  tempSettings.server = params.server;
-  tempSettings.verifyRxNetID = params.verifyRxNetID;
+  trainingSettings.dataScrambling = params.dataScrambling;
+  trainingSettings.enableCRC16 = params.enableCRC16;
+  trainingSettings.encryptData = params.encryptData;
+  memcpy(trainingSettings.encryptionKey, params.encryptionKey, sizeof(trainingSettings.encryptionKey));
+  trainingSettings.framesToYield = params.framesToYield;
+  trainingSettings.heartbeatTimeout = params.heartbeatTimeout;
+  trainingSettings.maxResends = params.maxResends;
+  trainingSettings.netID = params.netID;
+  trainingSettings.operatingMode = params.operatingMode;
+  trainingSettings.overheadTime = params.overheadTime;
+  trainingSettings.selectLedUse = params.selectLedUse;
+  trainingSettings.server = params.server;
+  trainingSettings.verifyRxNetID = params.verifyRxNetID;
 
   //Update the debug parameters
   if (params.copyDebug)
   {
-    tempSettings.copyDebug = params.copyDebug;
-    tempSettings.debug = params.debug;
-    tempSettings.debugDatagrams = params.debugDatagrams;
-    tempSettings.debugHeartbeat = params.debugHeartbeat;
-    tempSettings.debugNvm = params.debugNvm;
-    tempSettings.debugRadio = params.debugRadio;
-    tempSettings.debugReceive = params.debugReceive;
-    tempSettings.debugSerial = params.debugSerial;
-    tempSettings.debugStates = params.debugStates;
-    tempSettings.debugSync = params.debugSync;
-    tempSettings.debugTraining = params.debugTraining;
-    tempSettings.debugTransmit = params.debugTransmit;
-    tempSettings.displayRealMillis = params.displayRealMillis;
-    tempSettings.printAckNumbers = params.printAckNumbers;
-    tempSettings.printChannel = params.printChannel;
-    tempSettings.printFrequency = params.printFrequency;
-    tempSettings.printLinkUpDown = params.printLinkUpDown;
-    tempSettings.printPacketQuality = params.printPacketQuality;
-    tempSettings.printPktData = params.printPktData;
-    tempSettings.printRfData = params.printRfData;
-    tempSettings.printTimestamp = params.printTimestamp;
-    tempSettings.printTxErrors = params.printTxErrors;
+    trainingSettings.copyDebug = params.copyDebug;
+    trainingSettings.debug = params.debug;
+    trainingSettings.debugDatagrams = params.debugDatagrams;
+    trainingSettings.debugHeartbeat = params.debugHeartbeat;
+    trainingSettings.debugNvm = params.debugNvm;
+    trainingSettings.debugRadio = params.debugRadio;
+    trainingSettings.debugReceive = params.debugReceive;
+    trainingSettings.debugSerial = params.debugSerial;
+    trainingSettings.debugStates = params.debugStates;
+    trainingSettings.debugSync = params.debugSync;
+    trainingSettings.debugTraining = params.debugTraining;
+    trainingSettings.debugTransmit = params.debugTransmit;
+    trainingSettings.displayRealMillis = params.displayRealMillis;
+    trainingSettings.printAckNumbers = params.printAckNumbers;
+    trainingSettings.printChannel = params.printChannel;
+    trainingSettings.printFrequency = params.printFrequency;
+    trainingSettings.printLinkUpDown = params.printLinkUpDown;
+    trainingSettings.printPacketQuality = params.printPacketQuality;
+    trainingSettings.printPktData = params.printPktData;
+    trainingSettings.printRfData = params.printRfData;
+    trainingSettings.printTimestamp = params.printTimestamp;
+    trainingSettings.printTxErrors = params.printTxErrors;
   }
 
   //Update the serial parameters
   if (params.copySerial)
   {
-    tempSettings.copySerial = params.copySerial;
-    tempSettings.echo = params.echo;
-    tempSettings.flowControl = params.flowControl;
-    tempSettings.invertCts = params.invertCts;
-    tempSettings.invertRts = params.invertRts;
-    tempSettings.serialSpeed = params.serialSpeed;
-    tempSettings.serialTimeoutBeforeSendingFrame_ms = params.serialTimeoutBeforeSendingFrame_ms;
-    tempSettings.usbSerialWait = params.usbSerialWait;
+    trainingSettings.copySerial = params.copySerial;
+    trainingSettings.echo = params.echo;
+    trainingSettings.flowControl = params.flowControl;
+    trainingSettings.invertCts = params.invertCts;
+    trainingSettings.invertRts = params.invertRts;
+    trainingSettings.serialSpeed = params.serialSpeed;
+    trainingSettings.serialTimeoutBeforeSendingFrame_ms = params.serialTimeoutBeforeSendingFrame_ms;
+    trainingSettings.usbSerialWait = params.usbSerialWait;
   }
 
   //Update the training values
-  tempSettings.clientFindPartnerRetryInterval = params.clientFindPartnerRetryInterval;
+  trainingSettings.clientFindPartnerRetryInterval = params.clientFindPartnerRetryInterval;
   //The trainingKey is already the same
-  tempSettings.trainingTimeout = params.trainingTimeout;
+  trainingSettings.trainingTimeout = params.trainingTimeout;
 
   //Update the trigger parameters
   if (params.copyTriggers)
   {
-    tempSettings.copyTriggers = params.copyTriggers;
-    tempSettings.triggerEnable = params.triggerEnable;
-    tempSettings.triggerEnable2 = params.triggerEnable2;
-    tempSettings.triggerWidth = params.triggerWidth;
-    tempSettings.triggerWidthIsMultiplier = params.triggerWidthIsMultiplier;
+    trainingSettings.copyTriggers = params.copyTriggers;
+    trainingSettings.triggerEnable = params.triggerEnable;
+    trainingSettings.triggerEnable2 = params.triggerEnable2;
+    trainingSettings.triggerWidth = params.triggerWidth;
+    trainingSettings.triggerWidthIsMultiplier = params.triggerWidthIsMultiplier;
   }
 }
 
@@ -1334,7 +1334,7 @@ bool xmitDatagramTrainRadioParameters(const uint8_t * clientID)
   radioCallHistory[RADIO_CALL_xmitDatagramTrainRadioParameters] = millis();
 
   //Initialize the radio parameters
-  memcpy(&params, &tempSettings, sizeof(settings));
+  memcpy(&params, &trainingSettings, sizeof(settings));
   params.server = false;
 
   //Add the destination (client) ID

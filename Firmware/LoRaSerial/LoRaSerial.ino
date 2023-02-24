@@ -509,7 +509,8 @@ unsigned long retransmitTimeout = 0; //Throttle back re-transmits
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const Settings defaultSettings;
 Settings settings; //Active settings used by the radio
-Settings tempSettings; //Create a duplicate of settings during training so that we can resort as needed
+Settings tempSettings; //Temporary settings used for command processing
+Settings trainingSettings; //Settings used for training other radios
 
 char platformPrefix[25]; //Used for printing platform specific device name, ie "SAMD21 1W 915MHz"
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
