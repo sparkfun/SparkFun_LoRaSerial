@@ -1099,6 +1099,9 @@ void updateLeds()
 {
   static uint8_t previousLedUse;
 
+  //If training button is being pressed, LEDs are being updated by that function
+  if (trainBtn != NULL && trainBtn->read()) return;
+
   //When changing patterns, start with the LEDs off
   if (previousLedUse != settings.selectLedUse)
   {
