@@ -262,6 +262,8 @@ void updateRadioState()
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     case RADIO_P2P_LINK_DOWN:
+      rssi = -200; //Force RSSI LEDs off until link is up
+
       //If we are on the wrong channel, go home
       if (channelNumber != 0)
       {
@@ -356,6 +358,8 @@ void updateRadioState()
       break;
 
     case RADIO_P2P_WAIT_SYNC_CLOCKS:
+      rssi = -200; //Force RSSI LEDs off until link is up
+
       if (transactionComplete)
       {
         //Decode the received packet
@@ -479,6 +483,8 @@ void updateRadioState()
       break;
 
     case RADIO_P2P_WAIT_ZERO_ACKS:
+      rssi = -200; //Force RSSI LEDs off until link is up
+
       if (transactionComplete == true)
       {
         //Decode the received packet
@@ -1023,6 +1029,8 @@ void updateRadioState()
     //Start searching for other radios
     //====================
     case RADIO_DISCOVER_BEGIN:
+      rssi = -200; //Force RSSI LEDs off until link is up
+
       if (settings.server)
       {
         changeState(RADIO_MP_STANDBY);
@@ -1060,6 +1068,8 @@ void updateRadioState()
     //Walk through channel table backwards, transmitting a FIND_PARTNER and looking for a SYNC_CLOCKS
     //====================
     case RADIO_DISCOVER_SCANNING:
+      rssi = -200; //Force RSSI LEDs off until link is up
+
       if (settings.server)
       {
         changeState(RADIO_MP_STANDBY);
@@ -1206,6 +1216,7 @@ void updateRadioState()
     //Wait for the Server to transmit a HB on Channel 0
     //====================
     case RADIO_DISCOVER_STANDBY:
+      rssi = -200; //Force RSSI LEDs off until link is up
 
       //Process the receive packet
       if (transactionComplete == true)
