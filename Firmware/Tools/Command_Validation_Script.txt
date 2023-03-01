@@ -17,6 +17,24 @@ ati6
 ati7
 ati8
 ati9
+ati10
+ati11
+ati12
+ati13
+ati14
+ati15
+ati16
+ati17
+ati18
+ati19
+ati20
+ati21
+ati22
+ati23
+ati24
+ati25
+ati26
+ati27
 ati0
 
 ats28=0
@@ -441,6 +459,6 @@ ats255?
 
 ati0
 
-at&w
+at&f
 
 atz

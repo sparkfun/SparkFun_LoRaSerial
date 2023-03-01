@@ -3,7 +3,7 @@ SparkFun LoRaSerial
 
 [![SparkFun LoRaSerial](https://cdn.sparkfun.com//assets/parts/1/8/9/4/0/19311-SparkFun_LoRaSerial_Kit_-_915MHz-01.jpg)](https://www.sparkfun.com/products/19311)
 
-[*SparkFun GPS-RTK-SMA - ZED-F9P (GPS-19311)*](https://www.sparkfun.com/products/19311)
+[*SparkFun LoRaSerial Kit - 915MHz (WRL-19311)*](https://www.sparkfun.com/products/19311)
 
 Head to the [LoRaSerial Product Manual](http://docs.sparkfun.com/SparkFun_LoRaSerial/) for technical documentation.
 

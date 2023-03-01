@@ -8,16 +8,26 @@ ERROR
 at?
 Command summary:
   AT? - Print the command summary
+  ATD - Display the debug settings
   ATF - Enter training mode and return to factory defaults
+  ATG - Generate new netID and encryption key
   ATI - Display the radio version
   ATI? - Display the information commands
   ATIn - Display system information
+  ATL - VC link reset
   ATO - Exit command mode
+  ATP - Display probe trigger settings
   ATSn=xxx - Set parameter n's value to xxx
   ATSn? - Print parameter n's current value
   ATT - Enter training mode
+  ATV - Display virtual circuit settings
   ATX - Stop the training server
   ATZ - Reboot the radio
+  AT-Param=xxx - Set parameter's value to xxx by name (Param)
+  AT-Param? - Print parameter's current value by name (Param)
+  AT-? - Display the setting values
+  AT&F - Restore factory settings
+  AT&W - Save current settings to NVM
 ati?
   ATI0 - Show user settable parameters
   ATI1 - Show board variant
@@ -28,15 +38,33 @@ ati?
   ATI6 - Display AES key
   ATI7 - Show current FHSS channel
   ATI8 - Display unique ID
+  ATI9 - Display the total datagrams sent
+  ATI10 - Display the total datagrams received
+  ATI11 - Display the total frames sent
+  ATI12 - Display the total frames received
+  ATI13 - Display the total bad frames received
+  ATI14 - Display the total duplicate frames received
+  ATI15 - Display the total lost TX frames
+  ATI16 - Display the maximum datagram size
+  ATI17 - Display the total link failures
+  ATI18 - Display the VC frames sent
+  ATI19 - Display the VC frames received
+  ATI20 - Display the VC messages sent
+  ATI21 - Display the VC messages received
+  ATI22 - Display the VC bad length received
+  ATI23 - Display the VC link failures
+  ATI24 - Display the VC details
+  ATI25 - Display the total insufficient buffer count
+  ATI26 - Display the total number of bad CRC frames
 # Allow leading white space (space, tab, cr, lf)
 ERROR
         	ati
 OK
-SparkFun LoRaSerial SAMD21 1W 915MHz v1.1
+SparkFun LoRaSerial SAMD21 1W 915MHz v2.0
         ati1
 SparkFun LoRaSerial SAMD21 1W 915MHz
 	ati2
-1.1
+2.0
 ati3
 -157
 ati4
@@ -50,6 +78,42 @@ ati7
 ati8
 75E1FA5B4A34555020312E340F2715FF
 ati9
+Total datagrams sent: 102
+ati10
+Total datagrams received: 0
+ati11
+Total frames sent: 0
+ati12
+Total frames sent: 0
+ati13
+Total bad frames received: 0
+ati14
+Total duplicate frames received: 0
+ati15
+Total lost TX frames: 0
+ati16
+Maximum datagram size: 253
+ati17
+Total link failures: 0
+ati18
+VC 0 frames sent: 0
+ati19
+VC 0 frames received: 0
+ati20
+VC 0 messages sent: 0
+ati21
+VC 0 messages received: 0
+ati22
+VC 0 bad length received: 0
+ati23
+VC 0 link failures: 0
+ati24
+VC 0: Not valid!
+ati25
+Total insufficient buffer count: 0
+ati26
+Total number of bad CRC frames: 0
+ati27
 ERROR
 ati0
 ATS0:SerialSpeed=57600
@@ -105,772 +169,702 @@ OK
 ERROR
 ats0=0
 ERROR
-ats0=1
+at-SerialSpeed=1
 ERROR
-ats0=40
+at-SerialSpeed=40
 ERROR
-ats0=50
+at-SerialSpeed=50
 ERROR
-ats0=110
+at-SerialSpeed=110
 ERROR
-ats0=134
+at-SerialSpeed=134
 ERROR
-ats0=150
+at-SerialSpeed=150
 ERROR
-ats0=300
+at-SerialSpeed=300
 ERROR
-ats0=400
+at-SerialSpeed=400
 ERROR
-ats0=600
+at-SerialSpeed=600
 ERROR
-ats0=1200
+at-SerialSpeed=1200
 ERROR
-ats0=2400
+at-SerialSpeed=2400
 OK
-ats0=4800
+at-SerialSpeed=4800
 OK
-ats0=9600
+at-SerialSpeed=9600
 OK
-ats0=14400
+at-SerialSpeed=14400
 OK
-ats0=19200
+at-SerialSpeed=19200
 OK
-ats0=28800
+at-SerialSpeed=28800
 ERROR
-ats0=38400
+at-SerialSpeed=38400
 OK
-ats0=57600
+at-SerialSpeed=57600
 OK
-ats0=76800
+at-SerialSpeed=76800
 ERROR
-ats0=115200
+at-SerialSpeed=115200
 OK
-ats0=128000
+at-SerialSpeed=128000
 ERROR
-ats0=230400
+at-SerialSpeed=230400
 ERROR
-ats0=250000
+at-SerialSpeed=250000
 ERROR
-ats0=256000
+at-SerialSpeed=256000
 ERROR
-ats0=460800
+at-SerialSpeed=460800
 ERROR
-ats0=500000
+at-SerialSpeed=500000
 ERROR
-ats0=512000
+at-SerialSpeed=512000
 ERROR
-ats0=576000
+at-SerialSpeed=576000
 ERROR
-ats0=921600
+at-SerialSpeed=921600
 ERROR
-ats0=1000000
+at-SerialSpeed=1000000
 ERROR
-ats0=1843200
+at-SerialSpeed=1843200
 ERROR
-ats0=2000000
+at-SerialSpeed=2000000
 ERROR
-ats0=3000000
+at-SerialSpeed=3000000
 ERROR
-ats0=3686400
+at-SerialSpeed=3686400
 ERROR
-ats0=4000000
+at-SerialSpeed=4000000
 ERROR
-ats0=57600
+at-SerialSpeed=57600
 OK
-ats0?
+at-SerialSpeed?
 57600
-# AirSpeed
+at-AirSpeed=1
 ERROR
-ats1=1
-ERROR
-ats1=40
+at-AirSpeed=40
 OK
-ats1=50
+at-AirSpeed=50
 ERROR
-ats1=110
+at-AirSpeed=110
 ERROR
-ats1=134
+at-AirSpeed=134
 ERROR
-ats1=150
+at-AirSpeed=150
 OK
-ats1=300
+at-AirSpeed=300
 ERROR
-ats1=400
+at-AirSpeed=400
 OK
-ats1=600
+at-AirSpeed=600
 ERROR
-ats1=1200
+at-AirSpeed=1200
 OK
-ats1=2400
+at-AirSpeed=2400
 OK
-ats1=4800
+at-AirSpeed=4800
 OK
-ats1=9600
+at-AirSpeed=9600
 OK
-ats1=14400
+at-AirSpeed=14400
 ERROR
-ats1=19200
+at-AirSpeed=19200
 OK
-ats1=28800
+at-AirSpeed=28800
 OK
-ats1=38400
+at-AirSpeed=38400
 OK
-ats1=57600
+at-AirSpeed=57600
 ERROR
-ats1=76800
+at-AirSpeed=76800
 ERROR
-ats1=115200
+at-AirSpeed=115200
 ERROR
-ats1=128000
+at-AirSpeed=128000
 ERROR
-ats1=230400
+at-AirSpeed=230400
 ERROR
-ats1=250000
+at-AirSpeed=250000
 ERROR
-ats1=256000
+at-AirSpeed=256000
 ERROR
-ats1=460800
+at-AirSpeed=460800
 ERROR
-ats1=500000
+at-AirSpeed=500000
 ERROR
-ats1=512000
+at-AirSpeed=512000
 ERROR
-ats1=576000
+at-AirSpeed=576000
 ERROR
-ats1=921600
+at-AirSpeed=921600
 ERROR
-ats1=1000000
+at-AirSpeed=1000000
 ERROR
-ats1=1843200
+at-AirSpeed=1843200
 ERROR
-ats1=2000000
+at-AirSpeed=2000000
 ERROR
-ats1=3000000
+at-AirSpeed=3000000
 ERROR
-ats1=3686400
+at-AirSpeed=3686400
 ERROR
-ats1=4000000
+at-AirSpeed=4000000
 ERROR
-ats1=0
+at-AirSpeed=0
 OK
-ats1?
+at-AirSpeed?
 0
-# NetID
-ERROR
-ats2=0
+at-AlternateLedUsage=1
 OK
-ats2=255
-OK
-ats2=192
-OK
-ats2?
-192
-# PointToPoint
+at-AlternateLedUsage=2
 ERROR
-ats3=0
+at-AlternateLedUsage=0
 OK
-ats3=2
-ERROR
-ats3=1
-OK
-ats3?
-1
-# EncryptData
-ERROR
-ats4=0
-OK
-ats4=2
-ERROR
-ats4=1
-OK
-ats4?
-1
-# EncryptionKey
-ERROR
-ats5=00112233445566778899aabbccddeeff
-OK
-ats5?
-00112233445566778899AABBCCDDEEFF
-ats5=00112233445566778899aabbccddeef
-ERROR
-ats5=00112233445566778899aabbccddeefff
-ERROR
-ats5=00112233445566778899aabbccddeefg
-ERROR
-ats5=37782141A665734E4475672AE6308308
-OK
-ats5?
-37782141A665734E4475672AE6308308
-# DataScrambling
-ERROR
-ats6=1
-OK
-ats6=2
-ERROR
-ats6=0
-OK
-ats6?
+at-AlternateLedUsage?
 0
-# TxPower
-ERROR
-ats7=13
-ERROR
-ats7=14
+at-AutoTune=1
 OK
-ats7=31
+at-AutoTune=2
 ERROR
-ats7=30
+at-AutoTune=0
 OK
-ats7?
-30
-# FrequencyMin
-ERROR
-ats9=928
-OK
-ats8=0
-ERROR
-ats8=928.1
-ERROR
-ats8=928
-OK
-ats8=927.9
-OK
-ats8=901.9
-ERROR
-ats8=902
-OK
-ats8?
-902.000
-# FrequencyMax
-ERROR
-ats9=0
-ERROR
-ats9=901.9
-ERROR
-ats9=902
-OK
-ats9=902.1
-OK
-ats9=927.9
-OK
-ats9=928.1
-ERROR
-ats9=928
-OK
-ats9?
-928.000
-# NumberOfChannels
-ERROR
-ats10=0
-ERROR
-ats10=1
-OK
-ats10=255
-OK
-ats10=256
-ERROR
-ats10=50
-OK
-ats10?
-50
-# FrequencyHop
-ERROR
-ats11=0
-OK
-ats11=2
-ERROR
-ats11=1
-OK
-ats11?
-1
-# MaxDwellTime
-ERROR
-ats12=9
-ERROR
-ats12=10
-OK
-ats12=65535
-OK
-ast12=65536
-ERROR
-ats12=400
-OK
-ats12?
-400
-# Bandwidth
-ERROR
-ats1=4800
+at-AutoTune?
+0
+at-AirSpeed=4800
 Warning: AirSpeed override of bandwidth, spread factor, and coding rate
 OK
-ats13=0
+at-Bandwidth=0
 OK
-ats13=10.4
+at-Bandwidth=10.4
 AirSpeed is overriding
 ERROR
-ats13=15.6
+at-Bandwidth=15.6
 AirSpeed is overriding
 ERROR
-ats13=20
+at-Bandwidth=20
 AirSpeed is overriding
 ERROR
-ats13=31.25
+at-Bandwidth=31.25
 AirSpeed is overriding
 ERROR
-ats13=41.7
+at-Bandwidth=41.7
 AirSpeed is overriding
 ERROR
-ats13=62.5
+at-Bandwidth=62.5
 AirSpeed is overriding
 ERROR
-ats13=125
+at-Bandwidth=125
 AirSpeed is overriding
 ERROR
-ats13=250
+at-Bandwidth=250
 AirSpeed is overriding
 ERROR
-ats13=500
+at-Bandwidth=500
 AirSpeed is overriding
 ERROR
-ats1=0
+at-AirSpeed=0
 OK
-ats13=0
+at-Bandwidth=0
 ERROR
-ats13=10.4
+at-Bandwidth=10.4
 OK
-ats13=15.6
+at-Bandwidth=15.6
 OK
-ats13=20.8
+at-Bandwidth=20.8
 OK
-ats13=31.25
+at-Bandwidth=31.25
 OK
-ats13=41.7
+at-Bandwidth=41.7
 OK
-ats13=62.5
+at-Bandwidth=62.5
 OK
-ats13=125
+at-Bandwidth=125
 OK
-ats13=250
+at-Bandwidth=250
 OK
-ats13=500
+at-Bandwidth=500
 OK
-ats13?
+at-Bandwidth?
 500.00
-ats1=4800
+at-ClientRetryInterval=1
+ERROR
+at-ClientRetryInterval=2
+ERROR
+at-ClientRetryInterval=0
+ERROR
+at-ClientRetryInterval?
+ERROR
+at-CmdVC=0
+OK
+at-CmdVC=7;
+OK
+at-CmdVC=8;
+ERROR
+at-CmdVC?
+7
+at-AirSpeed=4800
 Warning: AirSpeed override of bandwidth, spread factor, and coding rate
 OK
-# SpreadFactor
-ERROR
-ats14=5
+at-CodingRate=4
 AirSpeed is overriding
 ERROR
-ats14=6
+at-CodingRate=5
 AirSpeed is overriding
 ERROR
-ats14=12
+at-CodingRate=9
 AirSpeed is overriding
 ERROR
-ats14=13
+at-CodingRate=8
 AirSpeed is overriding
 ERROR
-ats14=9
-AirSpeed is overriding
-ERROR
-ats1=0
+at-AirSpeed=0
 OK
-ats14=5
+at-CodingRate=4
 ERROR
-ats14=6
+at-CodingRate=5
 OK
-ats14=12
+at-CodingRate=9
+ERROR
+at-CodingRate=8
 OK
-ats14=13
-ERROR
-ats14=9
-OK
-ats14?
-9
-# CodingRate
-ERROR
-ats15=4
-ERROR
-ats15=5
-OK
-ats15=9
-ERROR
-ats15=8
-OK
-ats1=4800
-Warning: AirSpeed override of bandwidth, spread factor, and coding rate
-OK
-ats15=4
-AirSpeed is overriding
-ERROR
-ats15=5
-AirSpeed is overriding
-ERROR
-ats15=9
-AirSpeed is overriding
-ERROR
-ats15=8
-AirSpeed is overriding
-ERROR
-ats15?
+at-CodingRate?
 8
-# SyncWord
+at-CopyDebug=1
+OK
+at-CopyDebug=2
 ERROR
-ats16=0
+at-CopyDebug=0
 OK
-ats16=255
-OK
-ats16=256
-ERROR
-ats16=18
-OK
-ats16?
-18
-# PreambleLength
-ERROR
-ats17=5
-ERROR
-ats17=6
-OK
-ats17=255
-OK
-ats17=256
-OK
-ats17=65535
-OK
-ats17=65536
-ERROR
-ats17=8
-OK
-ats17?
-8
-# FrameSize
-ERROR
-ats18=15
-ERROR
-ats18=16
-OK
-ats18=256
-ERROR
-ats18=255
-ERROR
-ats18=254
-OK
-ats18=253
-OK
-ats18?
-253
-# FrameTimeout
-ERROR
-ats19=9
-ERROR
-ats19=10
-OK
-ats19=2000
-OK
-ats19=2001
-ERROR
-ats19=50
-OK
-ats19?
-50
-# Debug
-ERROR
-ats20=1
-OK
-ats20=2
-ERROR
-ats20=0
-OK
-ats20?
+at-CopyDebug?
 0
-# Echo
-ERROR
-ats21=1
+at-CopySerial=1
 OK
-ats21=2
+at-CopySerial=2
 ERROR
-ats21=0
+at-CopySerial=0
 OK
-ats21?
+at-CopySerial?
 0
-# HeartBeatTimeout
-ERROR
-ats22=249
-ERROR
-ats22=250
+at-CopyTriggers=1
 OK
-ats22=65535
-OK
-ats22=65536
+at-CopyTriggers=2
 ERROR
-ats22=5000
+at-CopyTriggers=0
 OK
-ats22?
-5000
-# FlowControl
-ERROR
-ats23=1
-OK
-ats23=2
-ERROR
-ats23=0
-OK
-ats23?
+at-CopyTriggers?
 0
-# AutoTune
-ERROR
-ats24=1
+at-DataScrambling=1
 OK
-ats24=2
+at-DataScrambling=2
 ERROR
-ats24=0
+at-DataScrambling=0
 OK
-ats24?
+at-DataScrambling?
 0
-# DisplayPacketQuality
-ERROR
-ats25=1
+at-Debug=1
 OK
-ats25=2
+at-Debug=2
 ERROR
-ats25=0
+at-Debug=0
 OK
-ats25?
+at-Debug?
 0
-# MaxResends
+at-DebugDatagrams=1
+OK
+at-DebugDatagrams=2
 ERROR
-ats26=0
+at-DebugDatagrams=0
 OK
-ats26=255
+at-DebugDatagrams?
+0
+at-DebugRadio=1
 OK
-ats26=256
+at-DebugRadio=2
 ERROR
-ats26=2
+at-DebugRadio=0
 OK
-ats26?
-2
-# SortParametersByName
+at-DebugRadio?
+0
+at-DebugStates=1
+OK
+at-DebugStates=2
 ERROR
-ats27=0
+at-DebugStates=0
 OK
-ats27=2
+at-DebugStates?
+0
+at-DebugTraining=1
+OK
+at-DebugTraining=2
 ERROR
-ats27=1
+at-DebugTraining=0
 OK
-ats27?
+at-DebugTraining?
+0
+at-DebugReceive=1
+OK
+at-DebugReceive=2
+ERROR
+at-DebugReceive=0
+OK
+at-DebugReceive?
+0
+at-DebugTransmit=1
+OK
+at-DebugTransmit=2
+ERROR
+at-DebugTransmit=0
+OK
+at-DebugTransmit?
+0
+at-DisplayPacketQuality=1
+OK
+at-DisplayPacketQuality=2
+ERROR
+at-DisplayPacketQuality=0
+OK
+at-DisplayPacketQuality?
+0
+at-DisplayRealMillis=1
+OK
+at-DisplayRealMillis=2
+ERROR
+at-DisplayRealMillis=0
+OK
+at-DisplayRealMillis?
+0
+at-Echo=1
+OK
+at-Echo=2
+ERROR
+at-Echo=0
+OK
+at-Echo?
+0
+at-EnableCRC16=1
+OK
+at-EnableCRC16=2
+ERROR
+at-EnableCRC16=0
+OK
+at-EnableCRC16?
+0
+at-EncryptData=0
+OK
+at-EncryptData=2
+ERROR
+at-EncryptData=1
+OK
+at-EncryptData?
 1
-# ParameterName
+at-EncryptionKey=00112233445566778899aabbccddeeff
+OK
+at-EncryptionKey?
+00112233445566778899AABBCCDDEEFF
+at-EncryptionKey=00112233445566778899aabbccddeef
 ERROR
-ats28=0
-OK
-ats28=2
+at-EncryptionKey=00112233445566778899aabbccddeefff
 ERROR
-ats28=1
-PrintParameterName=1
-OK
-ats28?
-PrintParameterName=1
-# PrintFrequency
+at-EncryptionKey=00112233445566778899aabbccddeefg
 ERROR
-ats29=1
-PrintFrequency=1
+at-EncryptionKey=37782141A665734E4475672AE6308308
 OK
-ats29=2
+at-EncryptionKey?
+37782141A665734E4475672AE6308308
+at-FlowControl=1
+OK
+at-FlowControl=2
 ERROR
-ats29=0
-PrintFrequency=0
+at-FlowControl=0
 OK
-ats29?
-PrintFrequency=0
-# DebugRadio
+at-FlowControl?
+0
+at-FrameTimeout=9
 ERROR
-ats30=1
-DebugRadio=1
+at-FrameTimeout=10
 OK
-ats30=2
+at-FrameTimeout=2000
+OK
+at-FrameTimeout=2001
 ERROR
-ats30=0
-DebugRadio=0
+at-FrameTimeout=50
 OK
-ats30?
-DebugRadio=0
-# DebugStates
+at-FrameTimeout?
+50
+at-FrequencyHop=0
+OK
+at-FrequencyHop=2
 ERROR
-ats31=1
-DebugStates=1
+at-FrequencyHop=1
 OK
-ats31=2
+at-FrequencyHop?
+1
+at-FrequencyMin=0
 ERROR
-ats31=0
-DebugStates=0
-OK
-ats31?
-DebugStates=0
-# DebugTraining
+at-FrequencyMin=901.9
 ERROR
-ats32=1
-DebugTraining=1
+at-FrequencyMin=902
 OK
-ats32=2
+at-FrequencyMin=902.1
+OK
+at-FrequencyMin=927.9
+OK
+at-FrequencyMin=928.1
 ERROR
-ats32=0
-DebugTraining=0
+at-FrequencyMin=928
 OK
-ats32?
-DebugTraining=0
-# DebugTrigger
+at-FrequencyMin?
+928.000
+at-FrequencyMin=928
+OK
+at-FrequencyMin=0
 ERROR
-ats33=1
-DebugTrigger=1
-OK
-ats33=2
+at-FrequencyMin=928.1
 ERROR
-ats33=0
-DebugTrigger=0
+at-FrequencyMin=928
 OK
-ats33?
-DebugTrigger=0
-# UsbSerialWait
+at-FrequencyMin=927.9
+OK
+at-FrequencyMin=901.9
 ERROR
-ats34=1
-UsbSerialWait=1
+at-FrequencyMin=902
 OK
-ats34=2
+at-FrequencyMin?
+902.000
+at-HeartBeatTimeout=249
 ERROR
-ats34=0
-UsbSerialWait=0
+at-HeartBeatTimeout=250
 OK
-ats34?
-UsbSerialWait=0
-# PrintRfData
+at-HeartBeatTimeout=65535
+OK
+at-HeartBeatTimeout=65536
 ERROR
-ats35=1
-PrintRfData=1
+at-HeartBeatTimeout=5000
 OK
-ats35=2
+at-HeartBeatTimeout?
+5000
+at-InvertCts=1
+OK
+at-InvertCts=2
 ERROR
-ats35=0
-PrintRfData=0
+at-InvertCts=0
 OK
-ats35?
-PrintRfData=0
-# PrintPktData
+at-InvertCts?
+0
+at-InvertRts=1
+OK
+at-InvertRts=2
 ERROR
-ats36=1
-PrintPktData=1
+at-InvertRts=0
 OK
-ats36=2
+at-InvertRts?
+0
+at-MaxDwellTime=9
 ERROR
-ats36=0
-PrintPktData=0
+at-MaxDwellTime=10
 OK
-ats36?
-PrintPktData=0
-# VerifyRxNetID
+at-MaxDwellTime=65535
+OK
+at-MaxDwellTime=65536
 ERROR
-ats37=1
-VerifyRxNetID=1
+at-MaxDwellTime=400
 OK
-ats37=2
+at-MaxDwellTime?
+400
+at-MaxResends=0
+OK
+at-MaxResends=255
+OK
+at-MaxResends=256
 ERROR
-ats37=0
-VerifyRxNetID=0
+at-MaxResends=2
 OK
-ats37?
-VerifyRxNetID=0
-# TriggerWidth
+at-MaxResends?
+2
+at-NetID=0
+OK
+at-NetID=255
+OK
+at-NetID=192
+OK
+at-NetID?
+192
+at-NumberOfChannels=0
 ERROR
-ats38=0
+at-NumberOfChannels=1
+OK
+at-NumberOfChannels=255
+OK
+at-NumberOfChannels=256
 ERROR
-ats38=1
-TriggerWidth=1
+at-NumberOfChannels=50
 OK
-ats38=255
-TriggerWidth=255
+at-NumberOfChannels?
+50
+at-OperatingMode=0
 OK
-ats38=256
+at-OperatingMode=2
+OK
+at-OperatingMode=3
 ERROR
-ats38=25
-TriggerWidth=25
+at-OperatingMode=1
 OK
-# TriggerWidthIsMultiplier
+at-OperatingMode?
+1
+at-OverHeadtime=0
+OK
+at-OverHeadtime=1000
+OK
+at-OverHeadtime=1001
 ERROR
-ats39=0
-TriggerWidthIsMultiplier=0
-OK
-ats39=2
+at-OverHeadtime?
+1000
+at-PreambleLength=5
 ERROR
-ats39=1
-TriggerWidthIsMultiplier=1
+at-PreambleLength=6
 OK
-# TriggerEnable: 31-0
+at-PreambleLength=255
+OK
+at-PreambleLength=256
+OK
+at-PreambleLength=65535
+OK
+at-PreambleLength=65536
 ERROR
-ats40=0
-TriggerEnable: 31-0=0
+at-PreambleLength=8
 OK
-ats40=4294967295
-TriggerEnable: 31-0=-1
+at-PreambleLength?
+8
+at-PrintFrequency=1
 OK
-# TriggerEnable: 63-32
+at-PrintFrequency=2
 ERROR
-ats41=0
-TriggerEnable: 63-32=0
+at-PrintFrequency=0
 OK
-ats41=4294967295
-TriggerEnable: 63-32=-1
+at-PrintFrequency?
+0
+at-PrintLinkUpDown=1
 OK
-# DebugReceive
+at-PrintLinkUpDown=2
 ERROR
-ats42=1
-DebugReceive=1
+at-PrintLinkUpDown=0
 OK
-ats42=2
-ERROR
-ats42=0
-DebugReceive=0
+at-PrintLinkUpDown?
+0
+at-PrintPktData=1
 OK
-# DebugTransmit
+at-PrintPktData=2
 ERROR
-ats43=1
-DebugTransmit=1
+at-PrintPktData=0
 OK
-ats43=2
-ERROR
-ats43=0
-DebugTransmit=0
+at-PrintPktData?
+0
+at-PrintRfData=1
 OK
-# PrintTxErrors
+at-PrintRfData=2
 ERROR
-ats44=1
-PrintTxErrors=1
+at-PrintRfData=0
 OK
-ats44=2
-ERROR
-ats44=0
-PrintTxErrors=0
+at-PrintRfData?
+0
+at-PrintTimestamp=1
 OK
-# useV2
+at-PrintTimestamp=2
 ERROR
-ats45=1
-UseV2=1
+at-PrintTimestamp=0
 OK
-ats45=2
-ERROR
-ats45=0
-UseV2=0
+at-PrintTimestamp?
+0
+at-PrintTxErrors=1
 OK
-# PrintTimestamp
+at-PrintTxErrors=2
 ERROR
-ats46=1
-PrintTimestamp=1
+at-PrintTxErrors=0
 OK
-ats46=2
+at-PrintTxErrors?
+0
+at-RadioProtocolVersion=0
 ERROR
-ats46=0
-PrintTimestamp=0
+at-RadioProtocolVersion=1
+ERROR
+at-RadioProtocolVersion=2
+ERROR
+at-RadioProtocolVersion=3
+ERROR
+at-RadioProtocolVersion?
+ERROR
+at-AirSpeed=4800
+Warning: AirSpeed override of bandwidth, spread factor, and coding rate
+OK
+at-SpreadFactor=5
+AirSpeed is overriding
+ERROR
+at-SpreadFactor=6
+AirSpeed is overriding
+ERROR
+at-SpreadFactor=12
+AirSpeed is overriding
+ERROR
+at-SpreadFactor=13
+AirSpeed is overriding
+ERROR
+at-SpreadFactor=9
+AirSpeed is overriding
+ERROR
+at-AirSpeed=0
+OK
+at-SpreadFactor=5
+ERROR
+at-SpreadFactor=6
+OK
+at-SpreadFactor=12
+OK
+at-SpreadFactor=13
+ERROR
+at-SpreadFactor=9
+OK
+at-SpreadFactor?
+9
+at-SyncWord=0
+OK
+at-SyncWord=255
+OK
+at-SyncWord=256
+ERROR
+at-SyncWord=18
+OK
+at-SyncWord?
+18
+at-TrainingKey=01020304050607080910111213141516
+OK
+at-TrainingKey=0102030405060708091011121314151
+ERROR
+at-TrainingKey=010203040506070809101112131415160
+ERROR
+at-TrainingKey?
+01020304050607080910111213141516
+at-TrainingServer=1
+OK
+at-TrainingServer=2
+ERROR
+at-TrainingServer=0
+OK
+at-TrainingServer?
+0
+at-TrainingTimeout=1
+OK
+at-TrainingTimeout=255
+OK
+at-TrainingTimeout=0
+ERROR
+at-TrainingTimeout?
+255
+at-TriggerEnable_31-0=0
+OK
+at-TriggerEnable_31-0=4294967295
 OK
 # Invalid commands
 ERROR
@@ -934,3 +928,5 @@ at&w
 OK
 atz
 OK
+LRS
+LRS Setup Complete
