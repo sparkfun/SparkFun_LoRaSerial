@@ -33,7 +33,6 @@ The LoRaSerial products are described in the [introduction](http://docs.sparkfun
 
 * [Point-to-Point](https://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/#point-to-point) with guaranteed delivery or the link breaks
 * [Multipoint](https://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/#multipoint), two or more LoRaSerial radios, is best for real-time applications but uses broadcast datagrams that may be lost
-* [Virtual-Circuit](https://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/#virtual-circuits) supports multipoint with guaranteed delivery or the link breaks. This mode uses a special serial interface.
 
 Enter [command mode](http://docs.sparkfun.com/SparkFun_LoRaSerial/at_commands/) to change modes and adjust the parameters for that mode of operation. [Training](http://docs.sparkfun.com/SparkFun_LoRaSerial/training/) is the process to distribute the set of parameters from a server radio (server=1) to the other client radios (server=0). Training can be done one radio at a time or multiple radios at once.
 
