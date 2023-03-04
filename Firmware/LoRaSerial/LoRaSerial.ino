@@ -70,7 +70,6 @@ const int FIRMWARE_VERSION_MINOR = 0;
 #define P2P_ZERO_ACKS_BYTES     sizeof(unsigned long) //Number of data bytes in the ZERO_ACKS frame
 #define P2P_HEARTBEAT_BYTES     sizeof(unsigned long) //Number of data bytes in the HEARTBEAT frame
 #define P2P_ACK_BYTES           sizeof(unsigned long) //Number of data bytes in the ACK frame
-#define VC_HEARTBEAT_BYTES      1 + 1 + 1 + 16 + 4 //Number of data bytes in the VC_HEARTBEAT frame
 
 //Bit 0: Signal Detected indicates that a valid LoRa preamble has been detected
 //Bit 1: Signal Synchronized indicates that the end of Preamble has been detected, the modem is in lock
@@ -245,7 +244,7 @@ bool writeOnCommandExit = false; //Goes true if user specifies ATW command
                                   |
                                   | processSerialInput
                                   |
-                                  | inCommandMode or local VC command?
+                                  | inCommandMode?
                                   |
                      true         V        false
                     .-------------+--------------------------.
@@ -270,14 +269,14 @@ bool writeOnCommandExit = false; //Goes true if user specifies ATW command
       |                           V                          |
       |                    commandRXBuffer                   |
       |                           |                          |
-      |                           V          VC Remote Cmd   V
-      |                     commandBuffer <------------------+
+      |                           V                          |
+      |                     commandBuffer                    |
       |                           |                          |
       |                           V                          |
       |                  Command processing                  |
-      |                     checkCommand                     | Data or
-      |                           |                          | VC Data or
-      |                           V                          | VC Rmt Cmd Resp
+      |                     checkCommand                     | Data
+      |                           |                          |
+      |                           V                          |
       |                    commandTXBuffer                   |
       |                           |                          |
       |                           V                          |
@@ -296,74 +295,6 @@ bool writeOnCommandExit = false; //Goes true if user specifies ATW command
                                   V
                          serialTransmitBuffer
                                   |
-                                  |
-                                  V
-                             USB or UART
-
-*/
-
-/* Data Flow - Virtual Circuit
-
-                             USB or UART
-                                  |
-                                  | Flow control: RTS for UART
-                                  |      Off: Buffer full
-                                  |      On: Buffer drops below half full
-                                  | updateSerial
-                                  V
-                         serialReceiveBuffer
-                                  |
-                                  | vcProcessSerialInput
-                                  |
-                                  | Destination VC?
-                                  V                                    Other
-                    .-------------+--------------->+---------------->+------> Discard
-         VC_COMMAND |                         myVc |            >= 0 |
-                    |                              |    VC_BROADCAST |
-                    |                              |                 |
-                    V                              |                 v
-              commandBuffer                        |           radioTxBuffer
-                    |                              |                 |
-                    | Remote Command?              |                 v
-                    |                              |           outgoingPacket
-       false        V         true                 |                 |
-      .-------------+-------------.                |                 V
-      |                           |                |       Send to remote system
-      |                           V                |                 |
-      |                    outgoingPacket          |                 V
-      |                           |                |          incomingBuffer
-      |                           V                |                 |
-      |                 Send to remote system      |                 |
-      |                           |                |                 |
-      |                           V                |                 |
-      |                    incomingBuffer          |                 |
-      |                           |                |                 |
-      |                           V                |                 |
-      |                    commandRXBuffer         |                 |
-      |                           |                |                 |
-      |                           V                |                 |
-      |                  Command processing        |                 |
-      |                     checkCommand           |                 |
-      |                           |                |                 |
-      |                           V                |                 |
-      |                    commandTXBuffer         |                 |
-      |                           |                |                 |
-      |                           V                |                 |
-      |                    outgoingPacket          |                 |
-      |                           |                |                 |
-      |                           V                |                 |
-      |               Send back to local system    |                 |
-      |                           |                |                 |
-      |                           V                |                 |
-      |                    incomingBuffer          |                 |
-      |                           |                |                 |
-      |                           V                V                 |
-      `-------------------------->+<---------------+<----------------'
-                                  |
-                                  V
-                        serialTransmitBuffer
-                                  |
-                                  | Flow control: CTS for UART
                                   |
                                   V
                              USB or UART
@@ -477,12 +408,10 @@ CONTROL_U8 txControl;
 unsigned long ackTimer;
 
 //Retransmit support
-uint8_t rmtCmdVc;
 uint8_t rexmtBuffer[MAX_PACKET_SIZE];
 CONTROL_U8 rexmtControl;
 uint8_t rexmtLength;
 uint8_t rexmtFrameSentCount;
-uint8_t rexmtTxDestVc;
 
 //Multi-point Training
 bool trainingServerRunning; //Training server is running
@@ -491,16 +420,12 @@ float originalChannel; //Original channel from HOP table while training is in pr
 uint8_t trainingPartnerID[UNIQUE_ID_BYTES]; //Unique ID of the training partner
 uint8_t myUniqueId[UNIQUE_ID_BYTES]; // Unique ID of this system
 
-//Virtual-Circuit
-int8_t cmdVc;   //VC index for ATI commands only
-int8_t myVc;
-int8_t rxDestVc;
-int8_t rxSrcVc;
-uint8_t *rxVcData;
-int8_t txDestVc;
-VIRTUAL_CIRCUIT virtualCircuitList[MAX_VC];
+uint32_t messagesReceived;
+uint8_t rmtTxAckNumber;
+uint8_t rxAckNumber;
+uint8_t txAckNumber;
+
 uint8_t serialOperatingMode;
-uint32_t vcConnecting;
 
 unsigned int multipointChannelLoops = 0; //Count the number of times Multipoint scanning has traversed the table
 
@@ -620,14 +545,6 @@ void setup()
   beginSerial(settings.serialSpeed);
 
   verifyTables(); //Verify that the enum counts match the name table lengths
-
-  //Load the unique IDs for the virtual circuits
-  //Always hand out the same VC number for a given unique ID
-  if (settings.server)
-  {
-    for (index = 0; index < MAX_VC; index++)
-      nvmLoadVcUniqueId(index);
-  }
 
   arch.uniqueID(myUniqueId); //Get the unique ID
 

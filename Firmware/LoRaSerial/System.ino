@@ -712,7 +712,6 @@ void blinkRadioRssiLed()
     case LEDS_MULTIPOINT:
     case LEDS_P2P:
     case LEDS_RADIO_USE:
-    case LEDS_VC:
       //Check for the start of a new pulse
       if ((currentMillis - ledPreviousRssiMillis) >= LED_MAX_PULSE_WIDTH)
       {
@@ -774,13 +773,6 @@ void blinkSerialRxLed(bool illuminate)
       else
         digitalWrite(pin_yellow_LED, LOW);
       break;
-
-    case LEDS_VC:
-      if (illuminate == true)
-        digitalWrite(GREEN_LED_2, HIGH);
-      else
-        digitalWrite(GREEN_LED_2, LOW);
-      break;
   }
 }
 
@@ -799,7 +791,6 @@ void blinkRadioRxLed(bool on)
     case LEDS_MULTIPOINT:
     case LEDS_P2P:
     case LEDS_RADIO_USE:
-    case LEDS_VC:
       if (on)
         digitalWrite(GREEN_LED_1, LED_ON);
       else if ((millis() - linkDownTimer) >= RADIO_USE_BLINK_MILLIS)
@@ -823,7 +814,6 @@ void blinkRadioTxLed(bool on)
     case LEDS_MULTIPOINT:
     case LEDS_P2P:
     case LEDS_RADIO_USE:
-    case LEDS_VC:
       if (on)
         digitalWrite(GREEN_LED_4, LED_ON);
       else if ((millis() - datagramTimer) >= RADIO_USE_BLINK_MILLIS)
@@ -902,7 +892,6 @@ void blinkHeartbeatLed(bool on)
   {
     case LEDS_MULTIPOINT:
     case LEDS_P2P:
-    case LEDS_VC:
       if (on)
       {
         digitalWrite(BLUE_LED, LED_ON);
@@ -921,7 +910,6 @@ void blinkChannelHopLed(bool on)
   {
     case LEDS_MULTIPOINT:
     case LEDS_P2P:
-    case LEDS_VC:
       if (on)
         digitalWrite(YELLOW_LED, LED_ON);
       else if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
@@ -997,49 +985,6 @@ void p2pLeds()
   blinkRadioRssiLed();
 
   //Leave the LINK LED (GREEN_LED_2) off
-
-  //Update the hop LED
-  if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
-    digitalWrite(YELLOW_LED, LED_OFF);
-
-  //Update the HEARTBEAT LED
-  blinkHeartbeatLed(false);
-}
-
-//Display the VC LED pattern
-void vcLeds()
-{
-  uint32_t currentMillis;
-  static uint32_t blinkSyncMillis;
-
-  //Turn off the RX LED to end the blink
-  blinkRadioRxLed(false);
-
-  //Turn off the TX LED to end the blink
-  blinkRadioTxLed(false);
-
-  //Pulse width modulate the RSSI LED (GREEN_LED_3)
-  currentMillis = millis();
-  if (virtualCircuitList[VC_SERVER].vcState)
-    blinkRadioRssiLed();
-
-#define VC_SYNC_BLINK_RATE      (1000 / 4)
-
-  //Turn on the RSSI LED
-  else if (((currentMillis - blinkSyncMillis) >= (VC_SYNC_BLINK_RATE >> 1))
-           && (digitalRead(GREEN_LED_3) == LED_OFF))
-    digitalWrite(GREEN_LED_3, LED_ON);
-
-  //Turn off the RSSI LED
-  else if ((!virtualCircuitList[VC_SERVER].vcState)
-           && (((currentMillis - blinkSyncMillis) >= VC_SYNC_BLINK_RATE))
-           && (digitalRead(GREEN_LED_3) == LED_ON))
-  {
-    digitalWrite(GREEN_LED_3, LED_OFF);
-    blinkSyncMillis = currentMillis;
-  }
-
-  //Serial RX displayed on the LINK LED (GREEN_LED_2) by blinkSerialRxLed
 
   //Update the hop LED
   if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
@@ -1129,11 +1074,6 @@ void updateLeds()
     //Display the point-to-point LED pattern
     case LEDS_P2P:
       p2pLeds();
-      break;
-
-    //Display the multipoint LED pattern
-    case LEDS_VC:
-      vcLeds();
       break;
 
     //Display the cylon LED pattern
@@ -1248,18 +1188,6 @@ void triggerFrequency(uint16_t frequency)
   digitalWrite(pin_trigger, HIGH);
 }
 
-//Verify the VC_STATE_TYPE enums against the vcStateNames table
-const char * verifyVcStateNames()
-{
-  bool valid;
-
-  //Verify the length of the vcStateNames table
-  valid = (VC_STATE_MAX == (sizeof(vcStateNames) / sizeof(vcStateNames[0])));
-  if (!valid)
-    return "ERROR: Fix difference between VC_STATE_TYPE and vcStateNames";
-  return NULL;
-}
-
 //Verify the enums .vs. name tables, stop on failure to force software fix
 void verifyTables()
 {
@@ -1274,11 +1202,6 @@ void verifyTables()
 
     //Verify that the datagram type table contains all of the datagram types
     errorMessage = verifyRadioDatagramType();
-    if (errorMessage)
-      break;
-
-    //Verify the VC state name table
-    errorMessage = verifyVcStateNames();
     if (errorMessage)
       break;
 

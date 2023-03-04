@@ -6,7 +6,6 @@
 WDTZero myWatchDog;
 
 #define NVM_ERASE_VALUE         0xff
-#define NVM_UNIQUE_ID_OFFSET    (EEPROM_EMULATION_SIZE - (MAX_VC * UNIQUE_ID_BYTES))
 
 /*
   Data flow

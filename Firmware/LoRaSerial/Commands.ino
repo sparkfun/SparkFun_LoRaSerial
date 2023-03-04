@@ -23,7 +23,6 @@ typedef bool (* COMMAND_ROUTINE)(const char * commandString);
 typedef struct
 {
   const char * prefix;
-  bool supportedInVcMode;
   COMMAND_ROUTINE processCommand;
 } COMMAND_PREFIX;
 
@@ -39,8 +38,6 @@ bool commandAT(const char * commandString)
   uint8_t id[UNIQUE_ID_BYTES];
   const char * string;
   unsigned long timer;
-  VIRTUAL_CIRCUIT * vc = &virtualCircuitList[cmdVc];
-  uint8_t vcIndex;
 
   //'AT'
   if (commandLength == 2)
@@ -57,9 +54,7 @@ bool commandAT(const char * commandString)
       case ('?'): //Display the command help
         systemPrintln("Command summary:");
         systemPrintln("  AT? - Print the command summary");
-        systemPrintln("  ATA - Get the current VC status");
         systemPrintln("  ATB - Break the link");
-        systemPrintln("  ATC - Establish VC connection for data");
         systemPrintln("  ATD - Display the debug settings");
         systemPrintln("  ATF - Restore factory settings");
         systemPrintln("  ATG - Generate new netID and encryption key");
@@ -71,7 +66,6 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATR - Display radio settings");
         systemPrintln("  ATS - Display the serial settings");
         systemPrintln("  ATT - Enter training mode");
-        systemPrintln("  ATV - Display virtual circuit settings");
         systemPrintln("  ATW - Save current settings to NVM");
         systemPrintln("  ATZ - Reboot the radio");
         systemPrintln("  AT-Param=xxx - Set parameter's value to xxx by name (Param)");
@@ -79,15 +73,10 @@ bool commandAT(const char * commandString)
         systemPrintln("  AT-? - Display the setting values");
         return true;
 
-      case ('A'): //ATA - Get the current VC status
-        for (int index = 0; index < MAX_VC; index++)
-          vcSendPcStateMessage(index, virtualCircuitList[index].vcState);
-        return true;
-
       case ('B'): //ATB - Break the link
 
         //Compute the time delay
-        delayMillis = (VC_LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout;
+        delayMillis = (LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout;
 
         //Warn the user of the delay
         systemPrint("Delaying ");
@@ -96,37 +85,20 @@ bool commandAT(const char * commandString)
         outputSerialData(true);
 
         //Flag the links as broken
-        if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
-        {
-          for (int i = 0; i < MAX_VC; i++)
-            if ((virtualCircuitList[i].vcState != VC_STATE_LINK_DOWN) && (i != myVc))
-              vcBreakLink(i);
-        }
-        else if (settings.operatingMode == MODE_POINT_TO_POINT)
+        if (settings.operatingMode == MODE_POINT_TO_POINT)
         {
           breakLink();
           outputSerialData(true);
         }
 
         //Idle the system to break the link
-        //This is required on the server system which does not request an VC number assignment
         timer = millis();
-        while ((millis() - timer) < ((VC_LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout))
+        while ((millis() - timer) < ((LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout))
           petWDT();
         changeState(RADIO_RESET);
 
         //Display the end of the delay
         systemPrintln("Delay done");
-        return true;
-
-      case ('C'): //ATC - Establish VC connection for data
-        if ((settings.operatingMode != MODE_VIRTUAL_CIRCUIT)
-            || (vc->vcState != VC_STATE_LINK_ALIVE))
-          return false;
-        if (cmdVc == myVc)
-          vcChangeState(cmdVc, VC_STATE_CONNECTED);
-        else
-          vcChangeState(cmdVc, VC_STATE_SEND_UNKNOWN_ACKS);
         return true;
 
       case ('F'): //ATF - Restore default parameters
@@ -138,10 +110,6 @@ bool commandAT(const char * commandString)
         forceRadioReset = true;
 
         recordSystemSettings();
-
-        //Clear the unique ID table
-        for (vcIndex = 0; vcIndex < MAX_VC; vcIndex++)
-          nvmEraseUniqueId(vcIndex);
         return true;
 
       case ('G'): //ATG - Generate a new netID and encryption key
@@ -224,11 +192,8 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI8 - Display system unique ID");
         systemPrintln("  ATI9 - Display the maximum datagram size");
         systemPrintln("  ATI10 - Display radio metrics");
-        systemPrintln("  ATI11 - Return myVc value");
-        systemPrintln("  ATI12 - Display the VC details");
         systemPrintln("  ATI13 - Display the SX1276 registers");
         systemPrintln("  ATI14 - Dump the radioTxBuffer");
-        systemPrintln("  ATI15 - Dump the NVM unique ID table");
         return true;
 
       case ('0'): //ATI0 - Show user settable parameters
@@ -345,55 +310,19 @@ bool commandAT(const char * commandString)
         //ACK management metrics
         if (settings.operatingMode == MODE_POINT_TO_POINT)
         {
-          vc = &virtualCircuitList[0];
           systemPrintln("    ACK Management");
           systemPrint("        Last RX ACK number: ");
-          systemPrintln(vc->rxAckNumber);
+          systemPrintln(rxAckNumber);
           systemPrint("        Next RX ACK number: ");
-          systemPrintln(vc->rmtTxAckNumber);
+          systemPrintln(rmtTxAckNumber);
           systemPrint("        Last TX ACK number: ");
-          systemPrintln(vc->txAckNumber);
+          systemPrintln(txAckNumber);
           systemPrint("        ackTimer: ");
           if (ackTimer)
             systemPrintTimestamp(ackTimer + timestampOffset);
           else
             systemPrint("Not Running");
           systemPrintln();
-        }
-        else if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
-        {
-          systemPrintln("    ACK Management");
-          systemPrint("        ackTimer: ");
-          if (ackTimer)
-          {
-            systemPrint("VC ");
-            systemPrint(txDestVc);
-            systemPrint(", ");
-            systemPrintTimestamp(ackTimer + timestampOffset);
-            systemPrintln();
-          }
-          else
-            systemPrintln("Not Running");
-          systemPrint("    vcConnecting: ");
-          systemPrint((int)vcConnecting, HEX);
-          if (vcConnecting)
-          {
-            systemPrintln();
-            for (int index = 0; index < MAX_VC; index++)
-            {
-              if (vcConnecting & (1 << index))
-              {
-                systemPrint("        VC ");
-                if (index < 10)
-                  systemWrite(' ');
-                systemPrint(index);
-                systemPrint(" State: ");
-                systemPrintln(vcStateNames[virtualCircuitList[index].vcState]);
-              }
-            }
-          }
-          else
-            systemPrintln("None");
         }
         outputSerialData(true);
         petWDT();
@@ -602,110 +531,6 @@ bool commandAT(const char * commandString)
         displayRadioStateHistory();
         return true;
 
-      case ('1'): //ATI11 - Return myVc value
-        systemPrintln();
-        systemPrint("myVc: ");
-        systemPrintln(myVc);
-        return true;
-
-      case ('2'): //ATI12 - Display the VC details
-        systemPrintTimestamp();
-        systemPrint("VC ");
-        systemPrint(cmdVc);
-        systemPrint(": ");
-        if (!vc->flags.valid)
-          systemPrintln("Down, Not valid");
-        else
-        {
-          systemPrintln(vcStateNames[vc->vcState]);
-          systemPrintTimestamp();
-          systemPrint("    ID: ");
-          systemPrintUniqueID(vc->uniqueId);
-          systemPrintln(vc->flags.valid ? " (Valid)" : " (Invalid)");
-
-          //Heartbeat metrics
-          systemPrintTimestamp();
-          systemPrintln("    Heartbeats");
-          if (cmdVc == myVc)
-          {
-            systemPrintTimestamp();
-            systemPrint("        Next TX: ");
-            systemPrintTimestamp(heartbeatTimer + heartbeatRandomTime + timestampOffset);
-            systemPrintln();
-          }
-          systemPrintTimestamp();
-          systemPrint("        Last:    ");
-          systemPrintTimestamp(vc->lastTrafficMillis + timestampOffset);
-          systemPrintln();
-          systemPrintTimestamp();
-          systemPrint("        First:   ");
-          systemPrintTimestamp(vc->firstHeartbeatMillis + timestampOffset);
-          systemPrintln();
-          systemPrintTimestamp();
-          systemPrint("        Up Time: ");
-          deltaMillis = vc->lastTrafficMillis - vc->firstHeartbeatMillis;
-          if (deltaMillis < 0)
-            deltaMillis = -deltaMillis;
-          systemPrintTimestamp(deltaMillis);
-          systemPrintln();
-          outputSerialData(true);
-          petWDT();
-
-          //Transmitter metrics
-          systemPrintTimestamp();
-          systemPrintln("    Sent");
-          systemPrintTimestamp();
-          systemPrint("        Frames: ");
-          systemPrintln(vc->framesSent);
-          systemPrintTimestamp();
-          systemPrint("        Messages: ");
-          systemPrintln(vc->messagesSent);
-          outputSerialData(true);
-          petWDT();
-
-          //Receiver metrics
-          systemPrintTimestamp();
-          systemPrintln("    Received");
-          systemPrintTimestamp();
-          systemPrint("        Frames: ");
-          systemPrintln(vc->framesReceived);
-          systemPrintTimestamp();
-          systemPrint("        Messages: ");
-          systemPrintln(vc->messagesReceived);
-          systemPrintTimestamp();
-          systemPrint("        Bad Lengths: ");
-          systemPrintln(vc->badLength);
-          systemPrintTimestamp();
-          systemPrint("        Link Failures: ");
-          systemPrintln(linkFailures);
-          outputSerialData(true);
-          petWDT();
-
-          //ACK Management metrics
-          systemPrintTimestamp();
-          systemPrintln("    ACK Management");
-          systemPrintTimestamp();
-          systemPrint("        Last RX ACK number: ");
-          systemPrintln(vc->rxAckNumber);
-          systemPrintTimestamp();
-          systemPrint("        Next RX ACK number: ");
-          systemPrintln(vc->rmtTxAckNumber);
-          systemPrintTimestamp();
-          systemPrint("        Last TX ACK number: ");
-          systemPrintln(vc->txAckNumber);
-          if (txDestVc == cmdVc)
-          {
-            systemPrintTimestamp();
-            systemPrint("        ackTimer: ");
-            if (ackTimer)
-              systemPrintTimestamp(ackTimer + timestampOffset);
-            else
-              systemPrint("Not Running");
-            systemPrintln();
-          }
-        }
-        return true;
-
       case ('3'): //ATI13 - Display the SX1276 registers
         printSX1276Registers();
         return true;
@@ -713,26 +538,6 @@ bool commandAT(const char * commandString)
       case ('4'): //ATI14 - Dump the radioTxBuffer
         systemPrintln("radioTxBuffer:");
         dumpCircularBuffer(radioTxBuffer, radioTxTail, sizeof(radioTxBuffer), availableRadioTXBytes());
-        return true;
-
-      case ('5'): //ATI15 - Dump the NVM unique ID table
-        systemPrintln("NVM Unique ID Table");
-        for (vcIndex = 0; vcIndex < MAX_VC; vcIndex++)
-        {
-          systemPrint("    ");
-          if (vcIndex < 10)
-            systemWrite(' ');
-          systemPrint(vcIndex);
-          systemPrint(": ");
-          if (nvmIsVcUniqueIdSet(vcIndex))
-          {
-            nvmGetUniqueId(vcIndex, id);
-            systemPrintUniqueID(id);
-            systemPrintln();
-          }
-          else
-            systemPrintln("Empty");
-        }
         return true;
     }
   }
@@ -763,15 +568,14 @@ bool sendRemoteCommand(const char * commandString)
 //----------------------------------------
 
 const COMMAND_PREFIX prefixTable[] = {
-  {"ATD",  1, commandDisplayDebug},
-  {"ATP",  1, commandDisplayProbe},
-  {"ATR",  1, commandDisplayRadio},
-  {"ATS",  1, commandDisplaySerial},
-  {"ATV",  1, commandDisplayVirtualCircuit},
-  {"AT-?", 1, commandDisplayAll},
-  {"AT-",  1, commandSetByName},
-  {"AT",   1, commandAT},
-  {"RT",   0, sendRemoteCommand},
+  {"ATD",  commandDisplayDebug},
+  {"ATP",  commandDisplayProbe},
+  {"ATR",  commandDisplayRadio},
+  {"ATS",  commandDisplaySerial},
+  {"AT-?", commandDisplayAll},
+  {"AT-",  commandSetByName},
+  {"AT",   commandAT},
+  {"RT",   sendRemoteCommand},
 };
 
 const int prefixCount = sizeof(prefixTable) / sizeof(prefixTable[0]);
@@ -806,7 +610,7 @@ void checkCommand()
     for (index = 0; index < prefixCount; index++)
     {
       //Skip command types not supported in current mode
-      if ((!prefixTable[index].supportedInVcMode) && (settings.operatingMode != MODE_POINT_TO_POINT))
+      if (settings.operatingMode != MODE_POINT_TO_POINT)
         continue;
 
       //Locate the prefix
@@ -845,30 +649,11 @@ void reportOK()
 //Notify the host that the command is complete
 void commandComplete(bool success)
 {
-  if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
-  {
-    //Output the serial message header
-    systemWrite(START_OF_VC_SERIAL);
-    systemWrite(sizeof(VC_RADIO_MESSAGE_HEADER) + sizeof(VC_COMMAND_COMPLETE_MESSAGE));
-    systemWrite(PC_COMMAND_COMPLETE);
-    systemWrite(myVc);
-
-    //Output the command complete message
-    systemWrite(success ? VC_CMD_SUCCESS : VC_CMD_ERROR);
-  }
 }
 
 //Notify the host of the reset then reboot the system
 void commandReset()
 {
-  if (serialOperatingMode == MODE_VIRTUAL_CIRCUIT)
-  {
-    //Notify the PC of the serial port failure
-    serialOutputByte(START_OF_VC_SERIAL);
-    serialOutputByte(3);
-    serialOutputByte(PC_SERIAL_RECONNECT);
-    serialOutputByte(myVc);
-  }
   outputSerialData(true);
   systemFlush();
   systemReset();
@@ -929,13 +714,6 @@ bool commandDisplayRadio(const char * commandString)
 bool commandDisplaySerial(const char * commandString)
 {
   displayParameters('S', false);
-  return true;
-}
-
-//Display only the virtual circuit commands
-bool commandDisplayVirtualCircuit(const char * commandString)
-{
-  displayParameters('V', false);
   return true;
 }
 
@@ -1027,22 +805,9 @@ bool valServer (void * value, uint32_t valMin, uint32_t valMax)
 {
   uint32_t settingValue = *(uint32_t *)value;
   bool valid;
-  int8_t vcIndex;
 
   //Validate the value
   valid = valInt(value, valMin, valMax);
-
-  //Check for a change from client to server
-  if (valid && (!settings.server) && settingValue)
-  {
-    //Clear the unique ID table in NVM
-    for (vcIndex = 1; vcIndex < MAX_VC; vcIndex++)
-      if (nvmIsVcUniqueIdSet(vcIndex))
-        nvmEraseUniqueId(vcIndex);
-
-    //Set our address as the server address
-    nvmSaveUniqueId(VC_SERVER, myUniqueId);
-  }
   return valid;
 }
 
@@ -1182,10 +947,6 @@ const COMMAND_ENTRY commands[] =
   {'P',   1,   0,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable_63-32",  &tempSettings.triggerEnable2},
   {'P',   1,   0,    1, 255,    0, TYPE_U8,           valInt,         "TriggerWidth",         &tempSettings.triggerWidth},
   {'P',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,     "TriggerWidthIsMultiplier", &tempSettings.triggerWidthIsMultiplier},
-
-  /*Virtual circuit parameters
-    Ltr, All, reset, min, max, digits,    type,         validation,     name,                   setting addr */
-  {'V',   0,   0,    0, MAX_VC - 1, 0, TYPE_U8,         valInt,         "CmdVC",                &cmdVc},
 };
 
 const int commandCount = sizeof(commands) / sizeof(commands[0]);

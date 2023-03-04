@@ -33,17 +33,12 @@ typedef enum
   RADIO_TRAIN_WAIT_FOR_FIND_PARTNER,
   RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE,
 
-  //Virtual-Circuit states
-  RADIO_VC_WAIT_SERVER,
-  RADIO_VC_WAIT_TX_DONE,
-  RADIO_VC_WAIT_RECEIVE,
-
   RADIO_MAX_STATE,
 } RadioStates;
 
 RadioStates radioState = RADIO_RESET;
 
-#define P2P_LINK_BREAK_MULTIPLIER       3
+#define LINK_BREAK_MULTIPLIER           3
 
 typedef struct _RADIO_STATE_ENTRY
 {
@@ -93,12 +88,6 @@ const RADIO_STATE_ENTRY radioStateTable[] =
   //    State                           RX      Name                              Description
   {RADIO_TRAIN_WAIT_FOR_FIND_PARTNER,    1, "TRAIN_WAIT_FOR_FIND_PARTNER",    "Train: Wait for training FIND_PARTNER"}, //18
   {RADIO_TRAIN_WAIT_TX_RADIO_PARAMS_DONE, 0, "TRAIN_WAIT_TX_RADIO_PARAMS_DONE", "Train: Wait for TX params done"},      //19
-
-  //Virtual circuit states
-  //    State                           RX      Name                              Description
-  {RADIO_VC_WAIT_SERVER,                 1, "VC_WAIT_SERVER",                 "VC: Wait for the server"},         //20
-  {RADIO_VC_WAIT_TX_DONE,                0, "VC_WAIT_TX_DONE",                "VC: Wait for TX done"},            //21
-  {RADIO_VC_WAIT_RECEIVE,                1, "VC_WAIT_RECEIVE",                "VC: Wait for receive"},            //22
 };
 
 //Possible types of packets received
@@ -106,7 +95,6 @@ typedef enum
 {
   //Sync frequencies, HEARTBEAT timing and zero ACKs
   //P2P: Between the two LoRaSerial radios
-  //VC:  Between the server radio and a client radio
   DATAGRAM_FIND_PARTNER = 0,        // 0
   DATAGRAM_SYNC_CLOCKS,             // 1
   DATAGRAM_ZERO_ACKS,               // 2
@@ -125,12 +113,6 @@ typedef enum
   DATAGRAM_TRAINING_FIND_PARTNER,   // 9
   DATAGRAM_TRAINING_PARAMS,         //10
   DATAGRAM_TRAINING_ACK,            //11
-
-  //Virtual-Circuit (VC) exchange
-  DATAGRAM_VC_HEARTBEAT,            //12
-  DATAGRAM_VC_UNKNOWN_ACKS,         //13 Synchronize ACKs client VC to client VC
-  DATAGRAM_VC_SYNC_ACKS,            //14
-  DATAGRAM_VC_ZERO_ACKS,            //15
 
   //Add new datagram types before this line
   MAX_DATAGRAM_TYPE,
@@ -154,78 +136,7 @@ const char * const radioDatagramType[] =
   "DATAGRAM",
   //         9                    10                11
   "TRAINING_FIND_PARTNER", "TRAINING_PARAMS", "TRAINING_ACK",
-  //    12
-  "VC_HEARTBEAT",
-  //      13               14              15
-  "VC_UNKNOWN_ACKS", "VC_SYNC_ACKS", "VC_ZERO_ACKS",
 };
-
-typedef struct _VC_FLAGS
-{
-  bool valid : 1;           //Unique ID is valid
-  bool wasConnected : 1;    //The VC was previously connected
-} VC_FLAGS;
-
-typedef struct _VIRTUAL_CIRCUIT
-{
-  uint8_t uniqueId[UNIQUE_ID_BYTES];
-  unsigned long firstHeartbeatMillis; //Time VC link came up
-  unsigned long lastTrafficMillis; //Last time a frame was received
-  unsigned long timerMillis; //Last time the timer was started, after handshake or ACK
-
-  //Link quality metrics
-  uint32_t framesSent;        //myVc --> VC, Total number of frames sent
-  uint32_t framesReceived;    //myVc <-- VC, Total number of frames received
-  uint32_t messagesSent;      //myVc --> VC, Total number of messages sent
-  uint32_t messagesReceived;  //myVc <-- VC, Total number of messages received
-  uint32_t badLength;         //myVc <-- VC, Total number of bad lengths received
-  uint32_t linkFailures;      //myVc <-> VC, Total number of link failures
-
-  //Link management
-
-  VC_FLAGS flags;
-  uint8_t vcState;            //State of VC
-
-  /* ACK number management
-
-              System A                              System B
-             (in destVc)                           (in srcVc)
-
-             txAckNumber
-                  |
-                  V
-            Tx DATA Frame -----------------------> Rx DATA Frame
-                                                        |
-                                                        V
-                                                    AckNumber == rmtTxAckNumber
-                                                        |
-                                                        | yes
-                                                        V
-                                                   rxAckNumber = rmtTxAckNumber++
-                                                        |
-                                                        V
-          Rx DATA_Ack Frame <--------------------- Tx DATA_ACK Frame
-                  |
-                  V
-              ackNumber == txAckNumber
-                  |
-                  | yes
-                  V
-             txAckNumber++
-  */
-
-  uint8_t rmtTxAckNumber; //Next expected ACK # from remote system in DATA frame,
-  //incremented upon match to received DATA frame ACK number,
-  //indicates frame was received and processed
-  //Duplicate frame if received ACK # == (rmtTxAckNumber -1)
-  uint8_t rxAckNumber;    //Received ACK # of the most recent acknowledged DATA frame,
-  //does not get incremented, used to ACK the data frame
-  uint8_t txAckNumber;    //# of next ACK to be sent by the local system in DATA frame,
-  //incremented when successfully acknowledged via DATA_ACK frame
-} VIRTUAL_CIRCUIT;
-
-#define ADD_VC_STATE_NAMES_TABLE
-#include "Virtual_Circuit_Protocol.h"
 
 enum
 { //#, Width - Computed with:
@@ -264,10 +175,6 @@ enum
   TRIGGER_RX_HEARTBEAT,
   TRIGGER_RX_SPI_DONE,
   TRIGGER_RX_SYNC_CLOCKS,
-  TRIGGER_RX_VC_HEARTBEAT,
-  TRIGGER_RX_VC_SYNC_ACKS,
-  TRIGGER_RX_VC_UNKNOWN_ACKS,
-  TRIGGER_RX_VC_ZERO_ACKS,
   TRIGGER_RX_YIELD,
   TRIGGER_RX_ZERO_ACKS,
   TRIGGER_SYNC_CHANNEL_TIMER,
@@ -291,10 +198,6 @@ enum
   TRIGGER_TX_LOAD_CHANNEL_TIMER_VALUE,
   TRIGGER_TX_SPI_DONE,
   TRIGGER_TX_SYNC_CLOCKS,
-  TRIGGER_TX_VC_HEARTBEAT,
-  TRIGGER_TX_VC_SYNC_ACKS,
-  TRIGGER_TX_VC_UNKNOWN_ACKS,
-  TRIGGER_TX_VC_ZERO_ACKS,
   TRIGGER_TX_YIELD,
   TRIGGER_TX_ZERO_ACKS,
   TRIGGER_UNKNOWN_PACKET,
@@ -313,7 +216,6 @@ typedef enum
 {
   MODE_MULTIPOINT = 0,
   MODE_POINT_TO_POINT,
-  MODE_VIRTUAL_CIRCUIT,
 } OPERATING_MODE;
 
 typedef struct _CONTROL_U8
@@ -345,8 +247,7 @@ typedef enum
   LEDS_MULTIPOINT = 0,  // 0: Green1: RX, Green2: Sync, Green3: RSSI, Green4: TX
   //    Blue: Hop, Yellow: HEARTBEAT RX/TX
   LEDS_P2P,         // 1: Green: RSSI, Blue: Serial TX, Yellow: Serial RX
-  LEDS_VC,          // 2; Green1: RX, Green2: Sync, Green3: RSSI, Green4: TX
-  //    Blue: Hop, Yellow: HEARTBEAT RX/TX
+  RESERVED,
   LEDS_RADIO_USE,   // 3: Green1: RX, Green2: Link, Green3: RSSI, Green4: TX
   //    Blue: Bad frames, Yellow: Bad CRC
   LEDS_RSSI,        // 4: Green: RSSI, Blue: Serial TX, Yellow: Serial RX
@@ -416,7 +317,7 @@ typedef struct struct_settings {
   uint8_t operatingMode = MODE_POINT_TO_POINT; //Receiving unit will check netID and ACK. If set to false, receiving unit doesn't check netID or ACK.
 
   uint8_t selectLedUse = LEDS_RSSI; //Select LED use
-  bool server = false; //Default to being a client, enable server for multipoint, VC and training
+  bool server = false; //Default to being a client, enable server for multipoint and training
   uint8_t netID = 192; //Both radios must share a network ID
   bool verifyRxNetID = true; //Verify RX netID value when not operating in point-to-point mode
 
@@ -582,12 +483,6 @@ typedef enum
   RADIO_CALL_xmitDatagramTrainingFindPartner,
   RADIO_CALL_xmitDatagramTrainingAck,
   RADIO_CALL_xmitDatagramTrainRadioParameters,
-  RADIO_CALL_xmitVcDatagram,
-  RADIO_CALL_xmitVcHeartbeat,
-  RADIO_CALL_xmitVcAckFrame,
-  RADIO_CALL_xmitVcUnknownAcks,
-  RADIO_CALL_xmitVcSyncAcks,
-  RADIO_CALL_xmitVcZeroAcks,
   RADIO_CALL_rcvDatagram,
   RADIO_CALL_transmitDatagram,
   RADIO_CALL_retransmitDatagram,
