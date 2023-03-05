@@ -417,7 +417,6 @@ void processSerialInput()
             commandLength--;
 
             //Erase the previous character
-            systemWrite(incoming);
             systemWrite(' ');
             systemWrite(incoming);
           }
