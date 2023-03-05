@@ -1,34 +1,40 @@
 OK
 #Restore factory defaults
+#RESTORE FACTORY DEFAULTS
 ERROR
-at&f
+atf
+ATF
 OK
 # Display the commands
+# DISPLAY THE COMMANDS
 ERROR
 at?
+AT?
 Command summary:
   AT? - Print the command summary
+  ATA - Get the current VC status
+  ATB - Break the link
+  ATC - Establish VC connection for data
   ATD - Display the debug settings
-  ATF - Enter training mode and return to factory defaults
+  ATF - Restore factory settings
   ATG - Generate new netID and encryption key
   ATI - Display the radio version
   ATI? - Display the information commands
   ATIn - Display system information
-  ATL - VC link reset
   ATO - Exit command mode
   ATP - Display probe trigger settings
-  ATSn=xxx - Set parameter n's value to xxx
-  ATSn? - Print parameter n's current value
+  ATR - Display radio settings
+  ATS - Display the serial settings
   ATT - Enter training mode
   ATV - Display virtual circuit settings
-  ATX - Stop the training server
+  ATW - Save current settings to NVM
   ATZ - Reboot the radio
   AT-Param=xxx - Set parameter's value to xxx by name (Param)
   AT-Param? - Print parameter's current value by name (Param)
   AT-? - Display the setting values
-  AT&F - Restore factory settings
-  AT&W - Save current settings to NVM
+OK
 ati?
+ATI?
   ATI0 - Show user settable parameters
   ATI1 - Show board variant
   ATI2 - Show firmware version
@@ -37,896 +43,1489 @@ ati?
   ATI5 - Show max possible bytes per second
   ATI6 - Display AES key
   ATI7 - Show current FHSS channel
-  ATI8 - Display unique ID
-  ATI9 - Display the total datagrams sent
-  ATI10 - Display the total datagrams received
-  ATI11 - Display the total frames sent
-  ATI12 - Display the total frames received
-  ATI13 - Display the total bad frames received
-  ATI14 - Display the total duplicate frames received
-  ATI15 - Display the total lost TX frames
-  ATI16 - Display the maximum datagram size
-  ATI17 - Display the total link failures
-  ATI18 - Display the VC frames sent
-  ATI19 - Display the VC frames received
-  ATI20 - Display the VC messages sent
-  ATI21 - Display the VC messages received
-  ATI22 - Display the VC bad length received
-  ATI23 - Display the VC link failures
-  ATI24 - Display the VC details
-  ATI25 - Display the total insufficient buffer count
-  ATI26 - Display the total number of bad CRC frames
+  ATI8 - Display system unique ID
+  ATI9 - Display the maximum datagram size
+  ATI10 - Display radio metrics
+  ATI11 - Return myVc value
+  ATI12 - Display the VC details
+  ATI13 - Display the SX1276 registers
+  ATI14 - Dump the radioTxBuffer
+  ATI15 - Dump the NVM unique ID table
+OK
 # Allow leading white space (space, tab, cr, lf)
+# ALLOW LEADING WHITE SPACE (SPACE, TAB, CR, LF)
 ERROR
         	ati
-OK
+ATI
 SparkFun LoRaSerial SAMD21 1W 915MHz v2.0
+OK
         ati1
+ATI1
 SparkFun LoRaSerial SAMD21 1W 915MHz
+OK
 	ati2
+ATI2
 2.0
+OK
 ati3
+ATI3
 -157
+OK
 ati4
-227
+ATI4
+121
+OK
 ati5
-506
+ATI5
+498
+OK
 ati6
-37782141A665734E4475672AE6308308
+ATI6
+State: P2P: [No Link] Waiting for FIND_PARTNER
+OK
 ati7
+ATI7
 0
+OK
 ati8
-75E1FA5B4A34555020312E340F2715FF
+ATI8
+2B5860865730305020312E5016100FFF
+OK
 ati9
-Total datagrams sent: 102
+ATI9
+Maximum datagram size: 249
+OK
 ati10
-Total datagrams received: 0
-ati11
-Total frames sent: 0
-ati12
-Total frames sent: 0
-ati13
-Total bad frames received: 0
-ati14
-Total duplicate frames received: 0
-ati15
-Total lost TX frames: 0
-ati16
-Maximum datagram size: 253
-ati17
-Total link failures: 0
-ati18
-VC 0 frames sent: 0
-ati19
-VC 0 frames received: 0
-ati20
-VC 0 messages sent: 0
-ati21
-VC 0 messages received: 0
-ati22
-VC 0 bad length received: 0
-ati23
-VC 0 link failures: 0
-ati24
-VC 0: Not valid!
-ati25
-Total insufficient buffer count: 0
-ati26
-Total number of bad CRC frames: 0
-ati27
-ERROR
+ATI10
+Radio Metrics @     0:01:55.410
+    Link Status: Down
+        Last RX:      0:00:00.000
+        First RX:     0:00:00.000
+        Up Time:      0:00:00.000
+    Sent
+        Datagrams: 90
+        Frames: 90
+        Lost Frames: 0
+    Received
+        Frames: 0
+        Datagrams: 0
+        Bad CRC: 0
+        Bad Frames: 0
+        Duplicate Frames: 0
+        Insufficient Space: 0
+        Net ID Mismatch: 0
+        Link failures: 0
+    ACK Management
+        Last RX ACK number: 0
+        Next RX ACK number: 0
+        Last TX ACK number: 0
+        ackTimer: Not Running
+    Clock Synchronization
+        ACK Time: 47364 uSec
+        FIND_PARTNER Time: 47367 uSec
+        HEARTBEAT Time: 47356 uSec
+        SYNC_CLOCKS Time: 46439 uSec
+        Uptime:     0:01:55.520
+        TimeStampOffset:     0:00:00.000
+        Adjusted Time:     0:01:55.520
+    Circular Buffers
+        serialReceiveBuffer: rxHead: 191, rxTail: 190, 1 bytes
+        serialTransmitBuffer: txHead: 3088, txTail: 2964, 144 bytes
+        radioTxBuffer: radioTxHead: 0, radioTxTail: 0, 0 bytes
+        inCommandMode: True
+        commandRXBuffer: commandRXHead: 0, commandRXTail: 0, 0 bytes
+        commandTXBuffer: commandTXHead: 0, commandTXTail: 0, 0 bytes
+    Radio
+        Channel: 0
+        Frequency: 918.250 MHz
+        maxDwellTime: 400 mSec
+        Last Successful Transmit:     0:01:54.348
+        Last Transmit Failure: None
+        Last Successful Receive: None
+        Last Receive Failure: None
+        radio.startReceive Failure: None
+        transactionComplete: False
+        lastReceiveInProcessTrue @     0:00:00.000
+        lastModemStatus: 00
+        irqFlags: 0x0008
+            TX Done
+        receiveInProcess: False
+    Call History
+            0:00:00.337: setRadioFrequency
+            0:00:00.337: configureRadio
+            0:00:00.388: xmitDatagramP2PSyncClocks
+            0:00:00.436: xmitDatagramP2PHeartbeat
+            0:00:00.483: xmitDatagramP2PAck
+            0:01:54.346: calcAirTimeUsec
+            0:01:54.346: transmitDatagram
+            0:01:54.346: retransmitDatagram
+            0:01:54.346: xmitDatagramP2PFindPartner
+            0:01:54.361: hopISR
+            0:01:54.393: transactionCompleteISR
+            0:01:54.461: stopChannelTimer
+            0:01:54.461: returnToReceiving
+            0:01:54.461: setHeartbeatShort
+    State History
+            0:00:00.019: RESET
+            0:01:54.348: P2P_WAIT_TX_FIND_PARTNER_DONE
+            0:01:54.394: P2P_WAIT_SYNC_CLOCKS
+            0:01:54.461: P2P_LINK_DOWN
+OK
 ati0
-ATS0:SerialSpeed=57600
-ATS1:AirSpeed=4800
-ATS2:netID=192
-ATS3:PointToPoint=1
-ATS4:EncryptData=1
-ATS5:EncryptionKey=37782141A665734E4475672AE6308308
-ATS6:DataScrambling=0
-ATS7:TxPower=30
-ATS8:FrequencyMin=902.000
-ATS9:FrequencyMax=928.000
-ATS10:NumberOfChannels=50
-ATS11:FrequencyHop=1
-ATS12:MaxDwellTime=400
-ATS13:Bandwidth=500.00
-ATS14:SpreadFactor=9
-ATS15:CodingRate=8
-ATS16:SyncWord=18
-ATS17:PreambleLength=8
-ATS18:FrameSize=253
-ATS19:FrameTimeout=50
-ATS20:Debug=0
-ATS21:Echo=0
-ATS22:HeartBeatTimeout=5000
-ATS23:FlowControl=0
-ATS24:AutoTune=0
-ATS25:DisplayPacketQuality=0
-ATS26:MaxResends=2
-ATS27:SortParametersByName=0
-ATS28:PrintParameterName=0
-ATS29:PrintFrequency=0
-ATS30:DebugRadio=0
-ATS31:DebugStates=0
-ATS32:DebugTraining=0
-ATS33:DebugTrigger=0
-ATS34:UsbSerialWait=0
-ATS35:PrintRfData=0
-ATS36:PrintPktData=0
-ATS37:VerifyRxNetID=0
-ATS38:TriggerWidth=25
-ATS39:TriggerWidthIsMultiplier=1
-ATS40:TriggerEnable: 31-0=-1
-ATS41:TriggerEnable: 63-32=-1
-ATS42:DebugReceive=0
-ATS43:DebugTransmit=0
-ATS44:PrintTxErrors=0
-ATS45:UseV2=0
-ATS46:PrintTimestamp=0
-ats28=0
+ATI0
+AT-AirSpeed=0
+AT-AutoTune=0
+AT-Bandwidth=500.00
+AT-ClientFindPartnerRetryInterval=3
+AT-CmdVC=0
+AT-CodingRate=8
+AT-CopyDebug=0
+AT-CopySerial=0
+AT-CopyTriggers=0
+AT-DataScrambling=0
+AT-Debug=0
+AT-DebugDatagrams=0
+AT-DebugHeartbeat=0
+AT-DebugNvm=0
+AT-DebugRadio=0
+AT-DebugReceive=0
+AT-DebugSerial=0
+AT-DebugStates=0
+AT-DebugSync=0
+AT-DebugTraining=0
+AT-DebugTransmit=0
+AT-DisplayRealMillis=0
+AT-Echo=0
+AT-EnableCRC16=1
+AT-EncryptData=1
+AT-EncryptionKey=37782141A665734E4475672AE6308308
+AT-FlowControl=0
+AT-FramesToYield=3
+AT-FrequencyHop=1
+AT-FrequencyMax=928.000
+AT-FrequencyMin=902.000
+AT-HeartBeatTimeout=5000
+AT-InvertCts=0
+AT-InvertRts=0
+AT-MaxDwellTime=400
+AT-MaxResends=0
+AT-NetID=192
+AT-NumberOfChannels=50
+AT-OperatingMode=1
+AT-OverHeadtime=10
+AT-PreambleLength=8
+AT-PrintAckNumbers=0
+AT-PrintChannel=0
+AT-PrintFrequency=0
+AT-PrintLinkUpDown=0
+AT-PrintPacketQuality=0
+AT-PrintPktData=0
+AT-PrintRfData=0
+AT-PrintTimestamp=0
+AT-PrintTxErrors=0
+AT-SelectLedUse=4
+AT-SerialDelay=50
+AT-SerialSpeed=57600
+AT-Server=0
+AT-SpreadFactor=9
+AT-SyncWord=18
+AT-TrainingKey=537061726B46756E547261696E696E67
+AT-TrainingTimeout=1
+AT-TriggerEnable_31-0=0
+AT-TriggerEnable_63-32=0
+AT-TriggerWidth=25
+AT-TriggerWidthIsMultiplier=1
+AT-TxPower=30
+AT-TxToRxUsec=657
+AT-UsbSerialWait=0
+AT-VerifyRxNetID=1
 OK
-# SerialSpeed
+#Debug parameters
+#DEBUG PARAMETERS
 ERROR
-ats0=0
-ERROR
-at-SerialSpeed=1
-ERROR
-at-SerialSpeed=40
-ERROR
-at-SerialSpeed=50
-ERROR
-at-SerialSpeed=110
-ERROR
-at-SerialSpeed=134
-ERROR
-at-SerialSpeed=150
-ERROR
-at-SerialSpeed=300
-ERROR
-at-SerialSpeed=400
-ERROR
-at-SerialSpeed=600
-ERROR
-at-SerialSpeed=1200
-ERROR
-at-SerialSpeed=2400
-OK
-at-SerialSpeed=4800
-OK
-at-SerialSpeed=9600
-OK
-at-SerialSpeed=14400
-OK
-at-SerialSpeed=19200
-OK
-at-SerialSpeed=28800
-ERROR
-at-SerialSpeed=38400
-OK
-at-SerialSpeed=57600
-OK
-at-SerialSpeed=76800
-ERROR
-at-SerialSpeed=115200
-OK
-at-SerialSpeed=128000
-ERROR
-at-SerialSpeed=230400
-ERROR
-at-SerialSpeed=250000
-ERROR
-at-SerialSpeed=256000
-ERROR
-at-SerialSpeed=460800
-ERROR
-at-SerialSpeed=500000
-ERROR
-at-SerialSpeed=512000
-ERROR
-at-SerialSpeed=576000
-ERROR
-at-SerialSpeed=921600
-ERROR
-at-SerialSpeed=1000000
-ERROR
-at-SerialSpeed=1843200
-ERROR
-at-SerialSpeed=2000000
-ERROR
-at-SerialSpeed=3000000
-ERROR
-at-SerialSpeed=3686400
-ERROR
-at-SerialSpeed=4000000
-ERROR
-at-SerialSpeed=57600
-OK
-at-SerialSpeed?
-57600
-at-AirSpeed=1
-ERROR
-at-AirSpeed=40
-OK
-at-AirSpeed=50
-ERROR
-at-AirSpeed=110
-ERROR
-at-AirSpeed=134
-ERROR
-at-AirSpeed=150
-OK
-at-AirSpeed=300
-ERROR
-at-AirSpeed=400
-OK
-at-AirSpeed=600
-ERROR
-at-AirSpeed=1200
-OK
-at-AirSpeed=2400
-OK
-at-AirSpeed=4800
-OK
-at-AirSpeed=9600
-OK
-at-AirSpeed=14400
-ERROR
-at-AirSpeed=19200
-OK
-at-AirSpeed=28800
-OK
-at-AirSpeed=38400
-OK
-at-AirSpeed=57600
-ERROR
-at-AirSpeed=76800
-ERROR
-at-AirSpeed=115200
-ERROR
-at-AirSpeed=128000
-ERROR
-at-AirSpeed=230400
-ERROR
-at-AirSpeed=250000
-ERROR
-at-AirSpeed=256000
-ERROR
-at-AirSpeed=460800
-ERROR
-at-AirSpeed=500000
-ERROR
-at-AirSpeed=512000
-ERROR
-at-AirSpeed=576000
-ERROR
-at-AirSpeed=921600
-ERROR
-at-AirSpeed=1000000
-ERROR
-at-AirSpeed=1843200
-ERROR
-at-AirSpeed=2000000
-ERROR
-at-AirSpeed=3000000
-ERROR
-at-AirSpeed=3686400
-ERROR
-at-AirSpeed=4000000
-ERROR
-at-AirSpeed=0
-OK
-at-AirSpeed?
-0
-at-AlternateLedUsage=1
-OK
-at-AlternateLedUsage=2
-ERROR
-at-AlternateLedUsage=0
-OK
-at-AlternateLedUsage?
-0
-at-AutoTune=1
-OK
-at-AutoTune=2
-ERROR
-at-AutoTune=0
-OK
-at-AutoTune?
-0
-at-AirSpeed=4800
-Warning: AirSpeed override of bandwidth, spread factor, and coding rate
-OK
-at-Bandwidth=0
-OK
-at-Bandwidth=10.4
-AirSpeed is overriding
-ERROR
-at-Bandwidth=15.6
-AirSpeed is overriding
-ERROR
-at-Bandwidth=20
-AirSpeed is overriding
-ERROR
-at-Bandwidth=31.25
-AirSpeed is overriding
-ERROR
-at-Bandwidth=41.7
-AirSpeed is overriding
-ERROR
-at-Bandwidth=62.5
-AirSpeed is overriding
-ERROR
-at-Bandwidth=125
-AirSpeed is overriding
-ERROR
-at-Bandwidth=250
-AirSpeed is overriding
-ERROR
-at-Bandwidth=500
-AirSpeed is overriding
-ERROR
-at-AirSpeed=0
-OK
-at-Bandwidth=0
-ERROR
-at-Bandwidth=10.4
-OK
-at-Bandwidth=15.6
-OK
-at-Bandwidth=20.8
-OK
-at-Bandwidth=31.25
-OK
-at-Bandwidth=41.7
-OK
-at-Bandwidth=62.5
-OK
-at-Bandwidth=125
-OK
-at-Bandwidth=250
-OK
-at-Bandwidth=500
-OK
-at-Bandwidth?
-500.00
-at-ClientRetryInterval=1
-ERROR
-at-ClientRetryInterval=2
-ERROR
-at-ClientRetryInterval=0
-ERROR
-at-ClientRetryInterval?
-ERROR
-at-CmdVC=0
-OK
-at-CmdVC=7;
-OK
-at-CmdVC=8;
-ERROR
-at-CmdVC?
-7
-at-AirSpeed=4800
-Warning: AirSpeed override of bandwidth, spread factor, and coding rate
-OK
-at-CodingRate=4
-AirSpeed is overriding
-ERROR
-at-CodingRate=5
-AirSpeed is overriding
-ERROR
-at-CodingRate=9
-AirSpeed is overriding
-ERROR
-at-CodingRate=8
-AirSpeed is overriding
-ERROR
-at-AirSpeed=0
-OK
-at-CodingRate=4
-ERROR
-at-CodingRate=5
-OK
-at-CodingRate=9
-ERROR
-at-CodingRate=8
-OK
-at-CodingRate?
-8
 at-CopyDebug=1
+AT-COPYDEBUG=1
 OK
 at-CopyDebug=2
+AT-COPYDEBUG=2
 ERROR
 at-CopyDebug=0
+AT-COPYDEBUG=0
 OK
-at-CopyDebug?
+at-CopyDebug
+AT-COPYDEBUG
 0
-at-CopySerial=1
 OK
-at-CopySerial=2
-ERROR
-at-CopySerial=0
-OK
-at-CopySerial?
-0
-at-CopyTriggers=1
-OK
-at-CopyTriggers=2
-ERROR
-at-CopyTriggers=0
-OK
-at-CopyTriggers?
-0
-at-DataScrambling=1
-OK
-at-DataScrambling=2
-ERROR
-at-DataScrambling=0
-OK
-at-DataScrambling?
-0
 at-Debug=1
+AT-DEBUG=1
 OK
 at-Debug=2
+AT-DEBUG=2
 ERROR
 at-Debug=0
+AT-DEBUG=0
 OK
-at-Debug?
+at-Debug
+AT-DEBUG
 0
+OK
 at-DebugDatagrams=1
+AT-DEBUGDATAGRAMS=1
 OK
 at-DebugDatagrams=2
+AT-DEBUGDATAGRAMS=2
 ERROR
 at-DebugDatagrams=0
+AT-DEBUGDATAGRAMS=0
 OK
-at-DebugDatagrams?
+at-DebugDatagrams
+AT-DEBUGDATAGRAMS
 0
+OK
+at-DebugHeartbeat=1
+AT-DEBUGHEARTBEAT=1
+OK
+at-DebugHeartbeat=2
+AT-DEBUGHEARTBEAT=2
+ERROR
+at-DebugHeartbeat=0
+AT-DEBUGHEARTBEAT=0
+OK
+at-DebugHeartbeat
+AT-DEBUGHEARTBEAT
+0
+OK
+at-DebugNvm=1
+AT-DEBUGNVM=1
+OK
+at-DebugNvm=2
+AT-DEBUGNVM=2
+ERROR
+at-DebugNvm=0
+AT-DEBUGNVM=0
+OK
+at-DebugNvm
+AT-DEBUGNVM
+0
+OK
 at-DebugRadio=1
+AT-DEBUGRADIO=1
 OK
 at-DebugRadio=2
+AT-DEBUGRADIO=2
 ERROR
 at-DebugRadio=0
+AT-DEBUGRADIO=0
 OK
-at-DebugRadio?
+at-DebugRadio
+AT-DEBUGRADIO
 0
-at-DebugStates=1
 OK
-at-DebugStates=2
-ERROR
-at-DebugStates=0
-OK
-at-DebugStates?
-0
-at-DebugTraining=1
-OK
-at-DebugTraining=2
-ERROR
-at-DebugTraining=0
-OK
-at-DebugTraining?
-0
 at-DebugReceive=1
+AT-DEBUGRECEIVE=1
 OK
 at-DebugReceive=2
+AT-DEBUGRECEIVE=2
 ERROR
 at-DebugReceive=0
+AT-DEBUGRECEIVE=0
 OK
-at-DebugReceive?
+at-DebugReceive
+AT-DEBUGRECEIVE
 0
+OK
+at-DebugSerial=1
+AT-DEBUGSERIAL=1
+OK
+at-DebugSerial=2
+AT-DEBUGSERIAL=2
+ERROR
+at-DebugSerial=0
+AT-DEBUGSERIAL=0
+OK
+at-DebugSerial
+AT-DEBUGSERIAL
+0
+OK
+at-DebugStates=1
+AT-DEBUGSTATES=1
+OK
+at-DebugStates=2
+AT-DEBUGSTATES=2
+ERROR
+at-DebugStates=0
+AT-DEBUGSTATES=0
+OK
+at-DebugStates
+AT-DEBUGSTATES
+0
+OK
+at-DebugSync=1
+AT-DEBUGSYNC=1
+OK
+at-DebugSync=2
+AT-DEBUGSYNC=2
+ERROR
+at-DebugSync=0
+AT-DEBUGSYNC=0
+OK
+at-DebugSync
+AT-DEBUGSYNC
+0
+OK
+at-DebugTraining=1
+AT-DEBUGTRAINING=1
+OK
+at-DebugTraining=2
+AT-DEBUGTRAINING=2
+ERROR
+at-DebugTraining=0
+AT-DEBUGTRAINING=0
+OK
+at-DebugTraining
+AT-DEBUGTRAINING
+0
+OK
 at-DebugTransmit=1
+AT-DEBUGTRANSMIT=1
 OK
 at-DebugTransmit=2
+AT-DEBUGTRANSMIT=2
 ERROR
 at-DebugTransmit=0
+AT-DEBUGTRANSMIT=0
 OK
-at-DebugTransmit?
+at-DebugTransmit
+AT-DEBUGTRANSMIT
 0
-at-DisplayPacketQuality=1
 OK
-at-DisplayPacketQuality=2
-ERROR
-at-DisplayPacketQuality=0
-OK
-at-DisplayPacketQuality?
-0
 at-DisplayRealMillis=1
+AT-DISPLAYREALMILLIS=1
 OK
 at-DisplayRealMillis=2
+AT-DISPLAYREALMILLIS=2
 ERROR
 at-DisplayRealMillis=0
+AT-DISPLAYREALMILLIS=0
 OK
-at-DisplayRealMillis?
+at-DisplayRealMillis
+AT-DISPLAYREALMILLIS
 0
-at-Echo=1
 OK
-at-Echo=2
+at-PrintAckNumbers=1
+AT-PRINTACKNUMBERS=1
+OK
+at-PrintAckNumbers=2
+AT-PRINTACKNUMBERS=2
 ERROR
-at-Echo=0
+at-PrintAckNumbers=0
+AT-PRINTACKNUMBERS=0
 OK
-at-Echo?
+at-PrintAckNumbers
+AT-PRINTACKNUMBERS
 0
-at-EnableCRC16=1
 OK
-at-EnableCRC16=2
+at-PrintChannel=1
+AT-PRINTCHANNEL=1
+OK
+at-PrintChannel=2
+AT-PRINTCHANNEL=2
 ERROR
-at-EnableCRC16=0
+at-PrintChannel=0
+AT-PRINTCHANNEL=0
 OK
-at-EnableCRC16?
+at-PrintChannel
+AT-PRINTCHANNEL
 0
-at-EncryptData=0
 OK
-at-EncryptData=2
-ERROR
-at-EncryptData=1
-OK
-at-EncryptData?
-1
-at-EncryptionKey=00112233445566778899aabbccddeeff
-OK
-at-EncryptionKey?
-00112233445566778899AABBCCDDEEFF
-at-EncryptionKey=00112233445566778899aabbccddeef
-ERROR
-at-EncryptionKey=00112233445566778899aabbccddeefff
-ERROR
-at-EncryptionKey=00112233445566778899aabbccddeefg
-ERROR
-at-EncryptionKey=37782141A665734E4475672AE6308308
-OK
-at-EncryptionKey?
-37782141A665734E4475672AE6308308
-at-FlowControl=1
-OK
-at-FlowControl=2
-ERROR
-at-FlowControl=0
-OK
-at-FlowControl?
-0
-at-FrameTimeout=9
-ERROR
-at-FrameTimeout=10
-OK
-at-FrameTimeout=2000
-OK
-at-FrameTimeout=2001
-ERROR
-at-FrameTimeout=50
-OK
-at-FrameTimeout?
-50
-at-FrequencyHop=0
-OK
-at-FrequencyHop=2
-ERROR
-at-FrequencyHop=1
-OK
-at-FrequencyHop?
-1
-at-FrequencyMin=0
-ERROR
-at-FrequencyMin=901.9
-ERROR
-at-FrequencyMin=902
-OK
-at-FrequencyMin=902.1
-OK
-at-FrequencyMin=927.9
-OK
-at-FrequencyMin=928.1
-ERROR
-at-FrequencyMin=928
-OK
-at-FrequencyMin?
-928.000
-at-FrequencyMin=928
-OK
-at-FrequencyMin=0
-ERROR
-at-FrequencyMin=928.1
-ERROR
-at-FrequencyMin=928
-OK
-at-FrequencyMin=927.9
-OK
-at-FrequencyMin=901.9
-ERROR
-at-FrequencyMin=902
-OK
-at-FrequencyMin?
-902.000
-at-HeartBeatTimeout=249
-ERROR
-at-HeartBeatTimeout=250
-OK
-at-HeartBeatTimeout=65535
-OK
-at-HeartBeatTimeout=65536
-ERROR
-at-HeartBeatTimeout=5000
-OK
-at-HeartBeatTimeout?
-5000
-at-InvertCts=1
-OK
-at-InvertCts=2
-ERROR
-at-InvertCts=0
-OK
-at-InvertCts?
-0
-at-InvertRts=1
-OK
-at-InvertRts=2
-ERROR
-at-InvertRts=0
-OK
-at-InvertRts?
-0
-at-MaxDwellTime=9
-ERROR
-at-MaxDwellTime=10
-OK
-at-MaxDwellTime=65535
-OK
-at-MaxDwellTime=65536
-ERROR
-at-MaxDwellTime=400
-OK
-at-MaxDwellTime?
-400
-at-MaxResends=0
-OK
-at-MaxResends=255
-OK
-at-MaxResends=256
-ERROR
-at-MaxResends=2
-OK
-at-MaxResends?
-2
-at-NetID=0
-OK
-at-NetID=255
-OK
-at-NetID=192
-OK
-at-NetID?
-192
-at-NumberOfChannels=0
-ERROR
-at-NumberOfChannels=1
-OK
-at-NumberOfChannels=255
-OK
-at-NumberOfChannels=256
-ERROR
-at-NumberOfChannels=50
-OK
-at-NumberOfChannels?
-50
-at-OperatingMode=0
-OK
-at-OperatingMode=2
-OK
-at-OperatingMode=3
-ERROR
-at-OperatingMode=1
-OK
-at-OperatingMode?
-1
-at-OverHeadtime=0
-OK
-at-OverHeadtime=1000
-OK
-at-OverHeadtime=1001
-ERROR
-at-OverHeadtime?
-1000
-at-PreambleLength=5
-ERROR
-at-PreambleLength=6
-OK
-at-PreambleLength=255
-OK
-at-PreambleLength=256
-OK
-at-PreambleLength=65535
-OK
-at-PreambleLength=65536
-ERROR
-at-PreambleLength=8
-OK
-at-PreambleLength?
-8
 at-PrintFrequency=1
+AT-PRINTFREQUENCY=1
 OK
 at-PrintFrequency=2
+AT-PRINTFREQUENCY=2
 ERROR
 at-PrintFrequency=0
+AT-PRINTFREQUENCY=0
 OK
-at-PrintFrequency?
+at-PrintFrequency
+AT-PRINTFREQUENCY
 0
+OK
 at-PrintLinkUpDown=1
+AT-PRINTLINKUPDOWN=1
 OK
 at-PrintLinkUpDown=2
+AT-PRINTLINKUPDOWN=2
 ERROR
 at-PrintLinkUpDown=0
+AT-PRINTLINKUPDOWN=0
 OK
-at-PrintLinkUpDown?
+at-PrintLinkUpDown
+AT-PRINTLINKUPDOWN
 0
+OK
+at-PrintPacketQuality=1
+AT-PRINTPACKETQUALITY=1
+OK
+at-PrintPacketQuality=2
+AT-PRINTPACKETQUALITY=2
+ERROR
+at-PrintPacketQuality=0
+AT-PRINTPACKETQUALITY=0
+OK
+at-PrintPacketQuality
+AT-PRINTPACKETQUALITY
+0
+OK
 at-PrintPktData=1
+AT-PRINTPKTDATA=1
 OK
 at-PrintPktData=2
+AT-PRINTPKTDATA=2
 ERROR
 at-PrintPktData=0
+AT-PRINTPKTDATA=0
 OK
-at-PrintPktData?
+at-PrintPktData
+AT-PRINTPKTDATA
 0
+OK
 at-PrintRfData=1
+AT-PRINTRFDATA=1
 OK
 at-PrintRfData=2
+AT-PRINTRFDATA=2
 ERROR
 at-PrintRfData=0
+AT-PRINTRFDATA=0
 OK
-at-PrintRfData?
+at-PrintRfData
+AT-PRINTRFDATA
 0
+OK
 at-PrintTimestamp=1
+AT-PRINTTIMESTAMP=1
 OK
 at-PrintTimestamp=2
+AT-PRINTTIMESTAMP=2
 ERROR
 at-PrintTimestamp=0
+AT-PRINTTIMESTAMP=0
 OK
-at-PrintTimestamp?
+at-PrintTimestamp
+AT-PRINTTIMESTAMP
 0
+OK
 at-PrintTxErrors=1
+AT-PRINTTXERRORS=1
 OK
 at-PrintTxErrors=2
+AT-PRINTTXERRORS=2
 ERROR
 at-PrintTxErrors=0
+AT-PRINTTXERRORS=0
 OK
-at-PrintTxErrors?
+at-PrintTxErrors
+AT-PRINTTXERRORS
 0
-at-RadioProtocolVersion=0
-ERROR
-at-RadioProtocolVersion=1
-ERROR
-at-RadioProtocolVersion=2
-ERROR
-at-RadioProtocolVersion=3
-ERROR
-at-RadioProtocolVersion?
-ERROR
-at-AirSpeed=4800
-Warning: AirSpeed override of bandwidth, spread factor, and coding rate
 OK
-at-SpreadFactor=5
-AirSpeed is overriding
-ERROR
-at-SpreadFactor=6
-AirSpeed is overriding
-ERROR
-at-SpreadFactor=12
-AirSpeed is overriding
-ERROR
-at-SpreadFactor=13
-AirSpeed is overriding
-ERROR
-at-SpreadFactor=9
-AirSpeed is overriding
+#Radio Parameters
+#RADIO PARAMETERS
 ERROR
 at-AirSpeed=0
+AT-AIRSPEED=0
+ERROR
+at-AirSpeed=1
+AT-AIRSPEED=1
+ERROR
+at-AirSpeed=40
+AT-AIRSPEED=40
+Warning: AirSpeed overrides bandwidth, coding rate, spread factor,
+heartbeatTimeout, and txToRxUsec
+OK
+at-AirSpeed=50
+AT-AIRSPEED=50
+ERROR
+at-AirSpeed=110
+AT-AIRSPEED=110
+ERROR
+at-AirSpeed=134
+AT-AIRSPEED=134
+ERROR
+at-AirSpeed=150
+AT-AIRSPEED=150
+Warning: AirSpeed overrides bandwidth, coding rate, spread factor,
+heartbeatTimeout, and txToRxUsec
+OK
+at-AirSpeed=300
+AT-AIRSPEED=300
+ERROR
+at-AirSpeed=400
+AT-AIRSPEED=400
+Warning: AirSpeed overrides bandwidth, coding rate, spread factor,
+heartbeatTimeout, and txToRxUsec
+OK
+at-AirSpeed=600
+AT-AIRSPEED=600
+ERROR
+at-AirSpeed=1200
+AT-AIRSPEED=1200
+Warning: AirSpeed overrides bandwidth, coding rate, spread factor,
+heartbeatTimeout, and txToRxUsec
+OK
+at-AirSpeed=2400
+AT-AIRSPEED=2400
+Warning: AirSpeed overrides bandwidth, coding rate, spread factor,
+heartbeatTimeout, and txToRxUsec
+OK
+at-AirSpeed=4800
+AT-AIRSPEED=4800
+Warning: AirSpeed overrides bandwidth, coding rate, spread factor,
+heartbeatTimeout, and txToRxUsec
+OK
+at-AirSpeed=9600
+AT-AIRSPEED=9600
+Warning: AirSpeed overrides bandwidth, coding rate, spread factor,
+heartbeatTimeout, and txToRxUsec
+OK
+at-AirSpeed=14400
+AT-AIRSPEED=14400
+ERROR
+at-AirSpeed=19200
+AT-AIRSPEED=19200
+Warning: AirSpeed overrides bandwidth, coding rate, spread factor,
+heartbeatTimeout, and txToRxUsec
+OK
+at-AirSpeed=28800
+AT-AIRSPEED=28800
+Warning: AirSpeed overrides bandwidth, coding rate, spread factor,
+heartbeatTimeout, and txToRxUsec
+OK
+at-AirSpeed=38400
+AT-AIRSPEED=38400
+Warning: AirSpeed overrides bandwidth, coding rate, spread factor,
+heartbeatTimeout, and txToRxUsec
+OK
+at-AirSpeed=57600
+AT-AIRSPEED=57600
+ERROR
+at-AirSpeed=76800
+AT-AIRSPEED=76800
+ERROR
+at-AirSpeed=115200
+AT-AIRSPEED=115200
+ERROR
+at-AirSpeed=128000
+AT-AIRSPEED=128000
+ERROR
+at-AirSpeed=230400
+AT-AIRSPEED=230400
+ERROR
+at-AirSpeed=250000
+AT-AIRSPEED=250000
+ERROR
+at-AirSpeed=256000
+AT-AIRSPEED=256000
+ERROR
+at-AirSpeed=460800
+AT-AIRSPEED=460800
+ERROR
+at-AirSpeed=500000
+AT-AIRSPEED=500000
+ERROR
+at-AirSpeed=512000
+AT-AIRSPEED=512000
+ERROR
+at-AirSpeed=576000
+AT-AIRSPEED=576000
+ERROR
+at-AirSpeed=921600
+AT-AIRSPEED=921600
+ERROR
+at-AirSpeed=1000000
+AT-AIRSPEED=1000000
+ERROR
+at-AirSpeed=1843200
+AT-AIRSPEED=1843200
+ERROR
+at-AirSpeed=2000000
+AT-AIRSPEED=2000000
+ERROR
+at-AirSpeed=3000000
+AT-AIRSPEED=3000000
+ERROR
+at-AirSpeed=3686400
+AT-AIRSPEED=3686400
+ERROR
+at-AirSpeed=4000000
+AT-AIRSPEED=4000000
+ERROR
+at-AirSpeed=4800
+AT-AIRSPEED=4800
+Warning: AirSpeed overrides bandwidth, coding rate, spread factor,
+heartbeatTimeout, and txToRxUsec
+OK
+at-AirSpeed
+AT-AIRSPEED
+4800
+OK
+at-AutoTune=1
+AT-AUTOTUNE=1
+OK
+at-AutoTune=2
+AT-AUTOTUNE=2
+ERROR
+at-AutoTune=0
+AT-AUTOTUNE=0
+OK
+at-AutoTune
+AT-AUTOTUNE
+0
+OK
+at-Bandwidth=0
+AT-BANDWIDTH=0
+ERROR
+at-Bandwidth=10.4
+AT-BANDWIDTH=10.4
+OK
+at-Bandwidth=15.6
+AT-BANDWIDTH=15.6
+OK
+at-Bandwidth=20
+AT-BANDWIDTH=20
+ERROR
+at-Bandwidth=31.25
+AT-BANDWIDTH=31.25
+OK
+at-Bandwidth=41.7
+AT-BANDWIDTH=41.7
+OK
+at-Bandwidth=62.5
+AT-BANDWIDTH=62.5
+OK
+at-Bandwidth=125
+AT-BANDWIDTH=125
+OK
+at-Bandwidth=250
+AT-BANDWIDTH=250
+OK
+at-Bandwidth=500
+AT-BANDWIDTH=500
+OK
+at-Bandwidth
+AT-BANDWIDTH
+500.00
+OK
+at-CodingRate=4
+AT-CODINGRATE=4
+ERROR
+at-CodingRate=5
+AT-CODINGRATE=5
+OK
+at-CodingRate=9
+AT-CODINGRATE=9
+ERROR
+at-CodingRate=8
+AT-CODINGRATE=8
+OK
+at-CodingRate
+AT-CODINGRATE
+8
+OK
+at-FrequencyHop=0
+AT-FREQUENCYHOP=0
+OK
+at-FrequencyHop=2
+AT-FREQUENCYHOP=2
+ERROR
+at-FrequencyHop=1
+AT-FREQUENCYHOP=1
+OK
+at-FrequencyHop
+AT-FREQUENCYHOP
+1
+OK
+at-FrequencyMax=0
+AT-FREQUENCYMAX=0
+ERROR
+at-FrequencyMax=901.9
+AT-FREQUENCYMAX=901.9
+ERROR
+at-FrequencyMax=902
+AT-FREQUENCYMAX=902
+OK
+at-FrequencyMax=902.1
+AT-FREQUENCYMAX=902.1
+OK
+at-FrequencyMax=927.9
+AT-FREQUENCYMAX=927.9
+OK
+at-FrequencyMax=928.1
+AT-FREQUENCYMAX=928.1
+OK
+at-FrequencyMax=928
+AT-FREQUENCYMAX=928
+OK
+at-FrequencyMax
+AT-FREQUENCYMAX
+928.000
+OK
+at-FrequencyMin=928
+AT-FREQUENCYMIN=928
+OK
+at-FrequencyMin=0
+AT-FREQUENCYMIN=0
+ERROR
+at-FrequencyMin=928.1
+AT-FREQUENCYMIN=928.1
+ERROR
+at-FrequencyMin=928
+AT-FREQUENCYMIN=928
+OK
+at-FrequencyMin=927.9
+AT-FREQUENCYMIN=927.9
+OK
+at-FrequencyMin=901.9
+AT-FREQUENCYMIN=901.9
+OK
+at-FrequencyMin=902
+AT-FREQUENCYMIN=902
+OK
+at-FrequencyMin
+AT-FREQUENCYMIN
+902.000
+OK
+at-MaxDwellTime=9
+AT-MAXDWELLTIME=9
+ERROR
+at-MaxDwellTime=10
+AT-MAXDWELLTIME=10
+OK
+at-MaxDwellTime=65535
+AT-MAXDWELLTIME=65535
+OK
+at-MaxDwellTime=65536
+AT-MAXDWELLTIME=65536
+ERROR
+at-MaxDwellTime=400
+AT-MAXDWELLTIME=400
+OK
+at-MaxDwellTime
+AT-MAXDWELLTIME
+400
+OK
+at-NumberOfChannels=0
+AT-NUMBEROFCHANNELS=0
+ERROR
+at-NumberOfChannels=1
+AT-NUMBEROFCHANNELS=1
+OK
+at-NumberOfChannels=255
+AT-NUMBEROFCHANNELS=255
+OK
+at-NumberOfChannels=256
+AT-NUMBEROFCHANNELS=256
+ERROR
+at-NumberOfChannels=50
+AT-NUMBEROFCHANNELS=50
+OK
+at-NumberOfChannels
+AT-NUMBEROFCHANNELS
+50
+OK
+at-PreambleLength=5
+AT-PREAMBLELENGTH=5
+ERROR
+at-PreambleLength=6
+AT-PREAMBLELENGTH=6
+OK
+at-PreambleLength=255
+AT-PREAMBLELENGTH=255
+OK
+at-PreambleLength=256
+AT-PREAMBLELENGTH=256
+OK
+at-PreambleLength=65535
+AT-PREAMBLELENGTH=65535
+OK
+at-PreambleLength=65536
+AT-PREAMBLELENGTH=65536
+ERROR
+at-PreambleLength=8
+AT-PREAMBLELENGTH=8
+OK
+at-PreambleLength
+AT-PREAMBLELENGTH
+8
 OK
 at-SpreadFactor=5
+AT-SPREADFACTOR=5
 ERROR
 at-SpreadFactor=6
+AT-SPREADFACTOR=6
 OK
 at-SpreadFactor=12
+AT-SPREADFACTOR=12
 OK
 at-SpreadFactor=13
+AT-SPREADFACTOR=13
 ERROR
 at-SpreadFactor=9
+AT-SPREADFACTOR=9
 OK
-at-SpreadFactor?
+at-SpreadFactor
+AT-SPREADFACTOR
 9
+OK
 at-SyncWord=0
+AT-SYNCWORD=0
 OK
 at-SyncWord=255
+AT-SYNCWORD=255
 OK
 at-SyncWord=256
+AT-SYNCWORD=256
 ERROR
 at-SyncWord=18
+AT-SYNCWORD=18
 OK
-at-SyncWord?
+at-SyncWord
+AT-SYNCWORD
 18
-at-TrainingKey=01020304050607080910111213141516
 OK
-at-TrainingKey=0102030405060708091011121314151
+at-TxPower=13
+AT-TXPOWER=13
 ERROR
-at-TrainingKey=010203040506070809101112131415160
-ERROR
-at-TrainingKey?
-01020304050607080910111213141516
-at-TrainingServer=1
+at-TxPower=14
+AT-TXPOWER=14
 OK
-at-TrainingServer=2
+at-TxPower=31
+AT-TXPOWER=31
 ERROR
-at-TrainingServer=0
+at-TxPower=30
+AT-TXPOWER=30
 OK
-at-TrainingServer?
+at-TxPower
+AT-TXPOWER
+30
+OK
+at-TxToRxUsec=999999
+AT-TXTORXUSEC=999999
+OK
+at-TxToRxUsec=1000000
+AT-TXTORXUSEC=1000000
+ERROR
+at-TxToRxUsec=0
+AT-TXTORXUSEC=0
+OK
+at-TxToRxUsec
+AT-TXTORXUSEC
 0
-at-TrainingTimeout=1
 OK
-at-TrainingTimeout=255
+#Radio Protocol Parameters
+#RADIO PROTOCOL PARAMETERS
+ERROR
+at-DataScrambling=1
+AT-DATASCRAMBLING=1
+OK
+at-DataScrambling=2
+AT-DATASCRAMBLING=2
+ERROR
+at-DataScrambling=0
+AT-DATASCRAMBLING=0
+OK
+at-DataScrambling
+AT-DATASCRAMBLING
+0
+OK
+at-EnableCRC16=0
+AT-ENABLECRC16=0
+OK
+at-EnableCRC16=2
+AT-ENABLECRC16=2
+ERROR
+at-EnableCRC16=1
+AT-ENABLECRC16=1
+OK
+at-EnableCRC16
+AT-ENABLECRC16
+1
+OK
+at-EncryptData=0
+AT-ENCRYPTDATA=0
+OK
+at-EncryptData=2
+AT-ENCRYPTDATA=2
+ERROR
+at-EncryptData=1
+AT-ENCRYPTDATA=1
+OK
+at-EncryptData
+AT-ENCRYPTDATA
+1
+OK
+at-EncryptionKey=00112233445566778899aabbccddeeff
+AT-ENCRYPTIONKEY=00112233445566778899AABBCCDDEEFF
+OK
+at-EncryptionKey
+AT-ENCRYPTIONKEY
+00112233445566778899AABBCCDDEEFF
+OK
+at-EncryptionKey=00112233445566778899aabbccddeef
+AT-ENCRYPTIONKEY=00112233445566778899AABBCCDDEEF
+ERROR
+at-EncryptionKey=00112233445566778899aabbccddeefff
+AT-ENCRYPTIONKEY=00112233445566778899AABBCCDDEEFFF
+ERROR
+at-EncryptionKey=00112233445566778899aabbccddeefg
+AT-ENCRYPTIONKEY=00112233445566778899AABBCCDDEEFG
+ERROR
+at-EncryptionKey=37782141A665734E4475672AE6308308
+AT-ENCRYPTIONKEY=37782141A665734E4475672AE6308308
+OK
+at-EncryptionKey
+AT-ENCRYPTIONKEY
+37782141A665734E4475672AE6308308
+OK
+at-FramesToYield=255
+AT-FRAMESTOYIELD=255
+OK
+at-FramesToYield=256
+AT-FRAMESTOYIELD=256
+ERROR
+at-FramesToYield=0
+AT-FRAMESTOYIELD=0
+OK
+at-FramesToYield
+AT-FRAMESTOYIELD
+0
+OK
+at-HeartBeatTimeout=249
+AT-HEARTBEATTIMEOUT=249
+ERROR
+at-HeartBeatTimeout=250
+AT-HEARTBEATTIMEOUT=250
+OK
+at-HeartBeatTimeout=65535
+AT-HEARTBEATTIMEOUT=65535
+OK
+at-HeartBeatTimeout=65536
+AT-HEARTBEATTIMEOUT=65536
+ERROR
+at-HeartBeatTimeout=5000
+AT-HEARTBEATTIMEOUT=5000
+OK
+at-HeartBeatTimeout
+AT-HEARTBEATTIMEOUT
+5000
+OK
+at-MaxResends=0
+AT-MAXRESENDS=0
+OK
+at-MaxResends=255
+AT-MAXRESENDS=255
+OK
+at-MaxResends=256
+AT-MAXRESENDS=256
+ERROR
+at-MaxResends=2
+AT-MAXRESENDS=2
+OK
+at-MaxResends
+AT-MAXRESENDS
+2
+OK
+at-NetID=0
+AT-NETID=0
+OK
+at-NetID=255
+AT-NETID=255
+OK
+at-NetID=192
+AT-NETID=192
+OK
+at-NetID
+AT-NETID
+192
+OK
+at-OperatingMode=0
+AT-OPERATINGMODE=0
+OK
+at-OperatingMode=1
+AT-OPERATINGMODE=1
+OK
+at-OperatingMode
+AT-OPERATINGMODE
+1
+OK
+at-OverHeadtime=0
+AT-OVERHEADTIME=0
+OK
+at-OverHeadtime=1001
+AT-OVERHEADTIME=1001
+ERROR
+at-OverHeadtime=1000
+AT-OVERHEADTIME=1000
+OK
+at-OverHeadtime
+AT-OVERHEADTIME
+1000
+OK
+at-SelectLedUse=0
+AT-SELECTLEDUSE=0
+OK
+at-SelectLedUse=1
+AT-SELECTLEDUSE=1
+OK
+at-SelectLedUse=256
+AT-SELECTLEDUSE=256
+ERROR
+at-SelectLedUse=255
+AT-SELECTLEDUSE=255
+OK
+at-SelectLedUse=4
+AT-SELECTLEDUSE=4
+OK
+at-SelectLedUse
+AT-SELECTLEDUSE
+4
+OK
+at-Server=1
+AT-SERVER=1
+OK
+at-Server=2
+AT-SERVER=2
+ERROR
+at-Server=0
+AT-SERVER=0
+OK
+at-Server
+AT-SERVER
+0
+OK
+at-VerifyRxNetID=1
+AT-VERIFYRXNETID=1
+OK
+at-VerifyRxNetID=2
+AT-VERIFYRXNETID=2
+ERROR
+at-VerifyRxNetID=0
+AT-VERIFYRXNETID=0
+OK
+at-VerifyRxNetID
+AT-VERIFYRXNETID
+0
+OK
+#Serial Parameters
+#SERIAL PARAMETERS
+ERROR
+at-CopySerial=1
+AT-COPYSERIAL=1
+OK
+at-CopySerial=2
+AT-COPYSERIAL=2
+ERROR
+at-CopySerial=0
+AT-COPYSERIAL=0
+OK
+at-CopySerial
+AT-COPYSERIAL
+0
+OK
+at-Echo=1
+AT-ECHO=1
+OK
+at-Echo=2
+AT-ECHO=2
+ERROR
+at-Echo=0
+AT-ECHO=0
+OK
+at-Echo
+AT-ECHO
+0
+OK
+at-FlowControl=1
+AT-FLOWCONTROL=1
+OK
+at-FlowControl=2
+AT-FLOWCONTROL=2
+ERROR
+at-FlowControl=0
+AT-FLOWCONTROL=0
+OK
+at-FlowControl
+AT-FLOWCONTROL
+0
+OK
+at-InvertCts=0
+AT-INVERTCTS=0
+OK
+at-InvertCts=2
+AT-INVERTCTS=2
+ERROR
+at-InvertCts=1
+AT-INVERTCTS=1
+OK
+at-InvertCts
+AT-INVERTCTS
+1
+OK
+at-InvertRts=0
+AT-INVERTRTS=0
+OK
+at-InvertRts=2
+AT-INVERTRTS=2
+ERROR
+at-InvertRts=1
+AT-INVERTRTS=1
+OK
+at-InvertRts
+AT-INVERTRTS
+1
+OK
+at-SerialDelay=9
+AT-SERIALDELAY=9
+ERROR
+at-SerialDelay=10
+AT-SERIALDELAY=10
+OK
+at-SerialDelay=1
+AT-SERIALDELAY=1
+ERROR
+at-SerialDelay=2001
+AT-SERIALDELAY=2001
+ERROR
+at-SerialDelay=2000
+AT-SERIALDELAY=2000
+OK
+at-SerialDelay
+AT-SERIALDELAY
+2000
+OK
+at-SerialSpeed=0
+AT-SERIALSPEED=0
+ERROR
+at-SerialSpeed=1
+AT-SERIALSPEED=1
+ERROR
+at-SerialSpeed=40
+AT-SERIALSPEED=40
+ERROR
+at-SerialSpeed=50
+AT-SERIALSPEED=50
+ERROR
+at-SerialSpeed=110
+AT-SERIALSPEED=110
+ERROR
+at-SerialSpeed=134
+AT-SERIALSPEED=134
+ERROR
+at-SerialSpeed=150
+AT-SERIALSPEED=150
+ERROR
+at-SerialSpeed=300
+AT-SERIALSPEED=300
+ERROR
+at-SerialSpeed=400
+AT-SERIALSPEED=400
+ERROR
+at-SerialSpeed=600
+AT-SERIALSPEED=600
+ERROR
+at-SerialSpeed=1200
+AT-SERIALSPEED=1200
+ERROR
+at-SerialSpeed=2400
+AT-SERIALSPEED=2400
+OK
+at-SerialSpeed=4800
+AT-SERIALSPEED=4800
+OK
+at-SerialSpeed=9600
+AT-SERIALSPEED=9600
+OK
+at-SerialSpeed=14400
+AT-SERIALSPEED=14400
+OK
+at-SerialSpeed=19200
+AT-SERIALSPEED=19200
+OK
+at-SerialSpeed=28800
+AT-SERIALSPEED=28800
+ERROR
+at-SerialSpeed=38400
+AT-SERIALSPEED=38400
+OK
+at-SerialSpeed=57600
+AT-SERIALSPEED=57600
+OK
+at-SerialSpeed=76800
+AT-SERIALSPEED=76800
+ERROR
+at-SerialSpeed=115200
+AT-SERIALSPEED=115200
+OK
+at-SerialSpeed=128000
+AT-SERIALSPEED=128000
+ERROR
+at-SerialSpeed=230400
+AT-SERIALSPEED=230400
+ERROR
+at-SerialSpeed=250000
+AT-SERIALSPEED=250000
+ERROR
+at-SerialSpeed=256000
+AT-SERIALSPEED=256000
+ERROR
+at-SerialSpeed=460800
+AT-SERIALSPEED=460800
+ERROR
+at-SerialSpeed=500000
+AT-SERIALSPEED=500000
+ERROR
+at-SerialSpeed=512000
+AT-SERIALSPEED=512000
+ERROR
+at-SerialSpeed=576000
+AT-SERIALSPEED=576000
+ERROR
+at-SerialSpeed=921600
+AT-SERIALSPEED=921600
+ERROR
+at-SerialSpeed=1000000
+AT-SERIALSPEED=1000000
+ERROR
+at-SerialSpeed=1843200
+AT-SERIALSPEED=1843200
+ERROR
+at-SerialSpeed=2000000
+AT-SERIALSPEED=2000000
+ERROR
+at-SerialSpeed=3000000
+AT-SERIALSPEED=3000000
+ERROR
+at-SerialSpeed=3686400
+AT-SERIALSPEED=3686400
+ERROR
+at-SerialSpeed=4000000
+AT-SERIALSPEED=4000000
+ERROR
+at-SerialSpeed=57600
+AT-SERIALSPEED=57600
+OK
+at-SerialSpeed
+AT-SERIALSPEED
+57600
+OK
+at-UsbSerialWait=1
+AT-USBSERIALWAIT=1
+OK
+at-UsbSerialWait=2
+AT-USBSERIALWAIT=2
+ERROR
+at-UsbSerialWait=0
+AT-USBSERIALWAIT=0
+OK
+at-UsbSerialWait
+AT-USBSERIALWAIT
+0
+OK
+#Training Parameters
+#TRAINING PARAMETERS
+ERROR
+at-ClientFindPartnerRetryInterval=1
+AT-CLIENTFINDPARTNERRETRYINTERVAL=1
+OK
+at-ClientFindPartnerRetryInterval=0
+AT-CLIENTFINDPARTNERRETRYINTERVAL=0
+ERROR
+at-ClientFindPartnerRetryInterval=256
+AT-CLIENTFINDPARTNERRETRYINTERVAL=256
+ERROR
+at-ClientFindPartnerRetryInterval=255
+AT-CLIENTFINDPARTNERRETRYINTERVAL=255
+OK
+at-ClientFindPartnerRetryInterval
+AT-CLIENTFINDPARTNERRETRYINTERVAL
+255
+OK
+at-TrainingKey=00112233445566778899aabbccddeeff
+AT-TRAININGKEY=00112233445566778899AABBCCDDEEFF
+OK
+at-TrainingKey
+AT-TRAININGKEY
+00112233445566778899AABBCCDDEEFF
+OK
+at-TrainingKey=00112233445566778899aabbccddeef
+AT-TRAININGKEY=00112233445566778899AABBCCDDEEF
+ERROR
+at-TrainingKey=00112233445566778899aabbccddeefff
+AT-TRAININGKEY=00112233445566778899AABBCCDDEEFFF
+ERROR
+at-TrainingKey=00112233445566778899aabbccddeefg
+AT-TRAININGKEY=00112233445566778899AABBCCDDEEFG
+ERROR
+at-TrainingKey=37782141A665734E4475672AE6308308
+AT-TRAININGKEY=37782141A665734E4475672AE6308308
+OK
+at-TrainingKey
+AT-TRAININGKEY
+37782141A665734E4475672AE6308308
 OK
 at-TrainingTimeout=0
+AT-TRAININGTIMEOUT=0
 ERROR
-at-TrainingTimeout?
+at-TrainingTimeout=1
+AT-TRAININGTIMEOUT=1
+OK
+at-TrainingTimeout=256
+AT-TRAININGTIMEOUT=256
+ERROR
+at-TrainingTimeout=255
+AT-TRAININGTIMEOUT=255
+OK
+at-TrainingTimeout
+AT-TRAININGTIMEOUT
 255
-at-TriggerEnable_31-0=0
+OK
+#Trigger Parameters
+#TRIGGER PARAMETERS
+ERROR
+at-CopyTriggers=1
+AT-COPYTRIGGERS=1
+OK
+at-CopyTriggers=2
+AT-COPYTRIGGERS=2
+ERROR
+at-CopyTriggers=0
+AT-COPYTRIGGERS=0
+OK
+at-CopyTriggers
+AT-COPYTRIGGERS
+0
 OK
 at-TriggerEnable_31-0=4294967295
+AT-TRIGGERENABLE_31-0=4294967295
 OK
-# Invalid commands
+at-TriggerEnable_31-0=0
+AT-TRIGGERENABLE_31-0=0
+OK
+at-TriggerEnable_31-0
+AT-TRIGGERENABLE_31-0
+0
+OK
+at-TriggerEnable_63-32=4294967295
+AT-TRIGGERENABLE_63-32=4294967295
+OK
+at-TriggerEnable_63-32=0
+AT-TRIGGERENABLE_63-32=0
+OK
+at-TriggerEnable_63-32
+AT-TRIGGERENABLE_63-32
+0
+OK
+at-TriggerWidth=0
+AT-TRIGGERWIDTH=0
 ERROR
-ats47=1
+at-TriggerWidth=1
+AT-TRIGGERWIDTH=1
+OK
+at-TriggerWidth=256
+AT-TRIGGERWIDTH=256
 ERROR
-ats47?
+at-TriggerWidth=255
+AT-TRIGGERWIDTH=255
+OK
+at-TriggerWidth
+AT-TRIGGERWIDTH
+255
+OK
+at-TriggerWidthIsMultiplier=0
+AT-TRIGGERWIDTHISMULTIPLIER=0
+OK
+at-TriggerWidthIsMultiplier=2
+AT-TRIGGERWIDTHISMULTIPLIER=2
 ERROR
-ats255=1
-ERROR
-ats255?
-ERROR
+at-TriggerWidthIsMultiplier=1
+AT-TRIGGERWIDTHISMULTIPLIER=1
+OK
+at-TriggerWidthIsMultiplier
+AT-TRIGGERWIDTHISMULTIPLIER
+1
+OK
 ati0
-ATS1:AirSpeed=4800
-ATS24:AutoTune=0
-ATS13:Bandwidth=500.00
-ATS15:CodingRate=8
-ATS6:DataScrambling=0
-ATS20:Debug=0
-ATS30:DebugRadio=0
-ATS42:DebugReceive=0
-ATS31:DebugStates=0
-ATS32:DebugTraining=0
-ATS43:DebugTransmit=0
-ATS33:DebugTrigger=0
-ATS25:DisplayPacketQuality=0
-ATS21:Echo=0
-ATS4:EncryptData=1
-ATS5:EncryptionKey=37782141A665734E4475672AE6308308
-ATS23:FlowControl=0
-ATS18:FrameSize=253
-ATS19:FrameTimeout=50
-ATS11:FrequencyHop=1
-ATS9:FrequencyMax=928.000
-ATS8:FrequencyMin=902.000
-ATS22:HeartBeatTimeout=5000
-ATS12:MaxDwellTime=400
-ATS26:MaxResends=2
-ATS2:netID=192
-ATS10:NumberOfChannels=50
-ATS3:PointToPoint=1
-ATS17:PreambleLength=8
-ATS29:PrintFrequency=0
-ATS28:PrintParameterName=1
-ATS36:PrintPktData=0
-ATS35:PrintRfData=0
-ATS46:PrintTimestamp=0
-ATS44:PrintTxErrors=0
-ATS0:SerialSpeed=57600
-ATS27:SortParametersByName=1
-ATS14:SpreadFactor=9
-ATS16:SyncWord=18
-ATS40:TriggerEnable: 31-0=-1
-ATS41:TriggerEnable: 63-32=-1
-ATS38:TriggerWidth=25
-ATS39:TriggerWidthIsMultiplier=1
-ATS7:TxPower=30
-ATS34:UsbSerialWait=0
-ATS45:UseV2=0
-ATS37:VerifyRxNetID=0
-at&w
+ATI0
+AT-AirSpeed=4800
+AT-AutoTune=0
+AT-Bandwidth=500.00
+AT-ClientFindPartnerRetryInterval=255
+AT-CmdVC=0
+AT-CodingRate=8
+AT-CopyDebug=0
+AT-CopySerial=0
+AT-CopyTriggers=0
+AT-DataScrambling=0
+AT-Debug=0
+AT-DebugDatagrams=0
+AT-DebugHeartbeat=0
+AT-DebugNvm=0
+AT-DebugRadio=0
+AT-DebugReceive=0
+AT-DebugSerial=0
+AT-DebugStates=0
+AT-DebugSync=0
+AT-DebugTraining=0
+AT-DebugTransmit=0
+AT-DisplayRealMillis=0
+AT-Echo=0
+AT-EnableCRC16=1
+AT-EncryptData=1
+AT-EncryptionKey=37782141A665734E4475672AE6308308
+AT-FlowControl=0
+AT-FramesToYield=0
+AT-FrequencyHop=1
+AT-FrequencyMax=928.000
+AT-FrequencyMin=902.000
+AT-HeartBeatTimeout=5000
+AT-InvertCts=1
+AT-InvertRts=1
+AT-MaxDwellTime=400
+AT-MaxResends=2
+AT-NetID=192
+AT-NumberOfChannels=50
+AT-OperatingMode=1
+AT-OverHeadtime=1000
+AT-PreambleLength=8
+AT-PrintAckNumbers=0
+AT-PrintChannel=0
+AT-PrintFrequency=0
+AT-PrintLinkUpDown=0
+AT-PrintPacketQuality=0
+AT-PrintPktData=0
+AT-PrintRfData=0
+AT-PrintTimestamp=0
+AT-PrintTxErrors=0
+AT-SelectLedUse=4
+AT-SerialDelay=2000
+AT-SerialSpeed=57600
+AT-Server=0
+AT-SpreadFactor=9
+AT-SyncWord=18
+AT-TrainingKey=37782141A665734E4475672AE6308308
+AT-TrainingTimeout=255
+AT-TriggerEnable_31-0=0
+AT-TriggerEnable_63-32=0
+AT-TriggerWidth=255
+AT-TriggerWidthIsMultiplier=1
+AT-TxPower=30
+AT-TxToRxUsec=0
+AT-UsbSerialWait=0
+AT-VerifyRxNetID=0
+OK
+atf
+ATF
 OK
 atz
+ATZ
 OK
-LRS
-LRS Setup Complete
