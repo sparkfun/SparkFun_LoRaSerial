@@ -4,8 +4,7 @@ void systemPrint(const char* string)
   uint16_t length;
 
   length = strlen(string);
-  for (uint16_t x = 0 ; x < length ; x++)
-    serialOutputByte(string[x]);
+  serialBufferOutput((uint8_t *)string, length);
 }
 
 //Print a string with a carriage return and linefeed

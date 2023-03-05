@@ -2887,7 +2887,8 @@ void breakLink()
   }
 
   //Flush the buffers
-  resetSerial();
+  if (!inCommandMode)
+    resetSerial();
 
   //Reset the radio and the link
   triggerEvent(TRIGGER_RADIO_RESET);
