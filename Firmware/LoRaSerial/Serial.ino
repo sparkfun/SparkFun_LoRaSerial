@@ -931,10 +931,8 @@ void resetSerial()
 
   //Empty the buffers
   rxHead = rxTail;
-  radioTxHead = radioTxTail;
   txHead = txTail;
   commandRXHead = commandRXTail;
   commandTXHead = commandTXTail;
-  endOfTxData = &outgoingPacket[headerBytes];
   commandLength = 0;
 }

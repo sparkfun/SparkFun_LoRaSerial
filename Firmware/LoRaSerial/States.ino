@@ -2887,7 +2887,10 @@ void breakLink()
   }
 
   //Flush the buffers
-  resetSerial();
+  if (!inCommandMode)
+    resetSerial();
+  radioTxHead = radioTxTail;
+  endOfTxData = &outgoingPacket[headerBytes];
 
   //Reset the radio and the link
   triggerEvent(TRIGGER_RADIO_RESET);
@@ -3052,7 +3055,11 @@ void vcBreakLink(int8_t vcIndex)
   //Flush the buffers
   outputSerialData(true);
   if (vcIndex == myVc)
+  {
     resetSerial();
+    radioTxHead = radioTxTail;
+    endOfTxData = &outgoingPacket[headerBytes];
+  }
 }
 
 //Place VC in LINK-UP state since it is receiving HEARTBEATs from the remote radio
