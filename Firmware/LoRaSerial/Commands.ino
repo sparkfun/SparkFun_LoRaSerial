@@ -736,6 +736,29 @@ bool commandAT(const char * commandString)
         return true;
     }
   }
+  if ((commandString[2] == 'I') && (commandString[3] == '5') && (commandLength == 5))
+  {
+    switch (commandString[4])
+    {
+      default:
+        return false;
+
+      case ('0'): //ATI50 - Output 80000 bytes, stop when serial is full
+        for (uint16_t line = 0; line < 1000; line++)
+        {
+          const char * text = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUV";
+
+          if (line < 100)
+            systemWrite('0');
+          if (line < 10)
+            systemWrite('0');
+          systemPrint(line);
+          systemWrite(':');
+          systemPrintln(text);
+        }
+        return true;
+    }
+  }
 
   //Invalid command
   return false;
