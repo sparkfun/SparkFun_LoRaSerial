@@ -100,6 +100,105 @@ void recordSystemSettings()
   arch.eepromCommit();
 }
 
+int nvmVcOffset(int8_t vc)
+{
+  return NVM_UNIQUE_ID_OFFSET + (vc * UNIQUE_ID_BYTES);
+}
+
+//Erase the specified unique ID
+void nvmEraseUniqueId(int8_t vc)
+{
+  uint8_t id[UNIQUE_ID_BYTES];
+  int index;
+
+  //Set the erase value
+  for (index = 0; index < sizeof(id); index++)
+    id[index] = NVM_ERASE_VALUE;
+
+  //Erase this portion of the NVM
+  nvmSaveUniqueId(vc, id);
+
+  //Invalidate the VC structure
+  memcpy(virtualCircuitList[vc].uniqueId, id, sizeof(id));
+  virtualCircuitList[vc].flags.valid = false;
+}
+
+//Get the unique ID for the VC from NVM
+void nvmGetUniqueId(int8_t vc, uint8_t * uniqueId)
+{
+  uint8_t id[UNIQUE_ID_BYTES];
+
+  //Read the unique ID from the flash
+  EEPROM.get(nvmVcOffset(vc), id);
+  memcpy(uniqueId, id, UNIQUE_ID_BYTES);
+}
+
+//Determine if the unique ID is set
+bool nvmIsVcUniqueIdSet(int8_t vc)
+{
+  uint8_t id[UNIQUE_ID_BYTES];
+  int index;
+
+  //Read the ID from the flash
+  nvmGetUniqueId(vc, id);
+
+  //Determine if a unique ID is set in the flash
+  for (index = 0; index < sizeof(id); index++)
+    if (id[index] != NVM_ERASE_VALUE)
+      return true;
+  return false;
+}
+
+//Copy the unique ID for the VC from NVM into the virtualCircuitList entry
+void nvmLoadVcUniqueId(int8_t vc)
+{
+  uint8_t id[UNIQUE_ID_BYTES];
+  int index;
+
+  //Read the ID from the flash
+  nvmGetUniqueId(vc, id);
+
+  //Update the VC when a unique ID is in the NVM
+  if (nvmIsVcUniqueIdSet(vc))
+  {
+    //The unique ID was set, copy it into the VC structure
+    memcpy(virtualCircuitList[vc].uniqueId, id, sizeof(id));
+    virtualCircuitList[vc].flags.valid = true;
+  }
+}
+
+//Save the unique ID into the NVM
+void nvmSaveUniqueId(int8_t vc, uint8_t * uniqueId)
+{
+  uint8_t id[UNIQUE_ID_BYTES];
+  int index;
+
+  //Get the unique ID value
+  memcpy(id, uniqueId, sizeof(id));
+
+  //Write the ID into the flash
+  EEPROM.put(nvmVcOffset(vc), id);
+  arch.eepromCommit();
+
+  //Place the address in the VC structure
+  memcpy(virtualCircuitList[vc].uniqueId, id, sizeof(id));
+  virtualCircuitList[vc].flags.valid = true;
+}
+
+//Save the unique ID from the virtualCircuitList entry into the NVM
+void nvmSaveVcUniqueId(int8_t vc)
+{
+  uint8_t id[UNIQUE_ID_BYTES];
+  int index;
+
+  //Read the ID from the flash
+  nvmGetUniqueId(vc, id);
+
+  //Write the ID into the flash
+  if (memcmp(id, virtualCircuitList[vc].uniqueId, sizeof(id)) != 0)
+    nvmSaveUniqueId(vc, virtualCircuitList[vc].uniqueId);
+}
+
 //Erase the entire EEPROM
 void nvmErase()
 {

@@ -109,7 +109,11 @@ void convertAirSpeedToSettings(Settings *newSettings, uint16_t airSpeed)
       //HEARTBEAT bytes worst case
       //  P2P - 13,
       //  MP - 7,
-      newSettings->heartbeatTimeout = 25 * 1000;
+      //  VC - 30,
+      if (newSettings->operatingMode == MODE_VIRTUAL_CIRCUIT)
+        newSettings->heartbeatTimeout = 60 * 1000;
+      else
+        newSettings->heartbeatTimeout = 25 * 1000;
       //uSec: 26018 26026 26026 26025 26020 26038 ==> ~26026
       newSettings->txToRxUsec = 26026;
       break;
@@ -117,7 +121,10 @@ void convertAirSpeedToSettings(Settings *newSettings, uint16_t airSpeed)
       newSettings->radioSpreadFactor = 10;
       newSettings->radioBandwidth = 62.5;
       newSettings->radioCodingRate = 8;
-      newSettings->heartbeatTimeout = 8 * 1000;
+      if (newSettings->operatingMode == MODE_VIRTUAL_CIRCUIT)
+        newSettings->heartbeatTimeout = 15 * 1000;
+      else
+        newSettings->heartbeatTimeout = 8 * 1000;
       //uSec: 12187 12188 12189 12190 12191 12194 ==> ~12190
       newSettings->txToRxUsec = 12190;
       break;
@@ -125,7 +132,10 @@ void convertAirSpeedToSettings(Settings *newSettings, uint16_t airSpeed)
       newSettings->radioSpreadFactor = 10;
       newSettings->radioBandwidth = 125;
       newSettings->radioCodingRate = 8;
-      newSettings->heartbeatTimeout = 5 * 1000;
+      if (newSettings->operatingMode == MODE_VIRTUAL_CIRCUIT)
+        newSettings->heartbeatTimeout = 9 * 1000;
+      else
+        newSettings->heartbeatTimeout = 5 * 1000;
       //uSec: 6072 6070 6072 6070 6069 6067 ==> ~6070
       newSettings->txToRxUsec = 6070;
       break;
@@ -1355,6 +1365,207 @@ bool xmitDatagramTrainRadioParameters(const uint8_t * clientID)
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//Virtual Circuit frames
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+//Broadcast a datagram to all of the VCs
+bool xmitVcDatagram()
+{
+  radioCallHistory[RADIO_CALL_xmitVcDatagram] = millis();
+
+  /*
+                                                                   endOfTxData ---.
+                                                                                  |
+                                                                                  V
+      +----------+---------+----------+------------+----------+---------+---------+----------+
+      | Optional |         | Optional | Optional   |          |         |         | Optional |
+      | NET ID   | Control | C-Timer  | SF6 Length | DestAddr | SrcAddr | Data    | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | n Bytes | n Bytes  |
+      +----------+---------+----------+------------+----------+---------+---------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_DATAGRAM;
+  txControl.ackNumber = 0;
+  return (transmitDatagram());
+}
+
+//Broadcast a HEARTBEAT to all of the VCs
+bool xmitVcHeartbeat()
+{
+  return xmitVcHeartbeat(VC_IGNORE_TX, myUniqueId);
+}
+
+bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
+{
+  uint32_t currentMillis = millis();
+  uint8_t * startOfData;
+  uint8_t * txData;
+
+  radioCallHistory[RADIO_CALL_xmitVcHeartbeat] = currentMillis;
+
+  startOfData = endOfTxData;
+
+  //Build the VC header
+  txData = endOfTxData;
+  *endOfTxData++ = 0; //Reserve for length
+  *endOfTxData++ = VC_BROADCAST;
+  *endOfTxData++ = addr;
+
+  //Add this radio's unique ID
+  memcpy(endOfTxData, id, UNIQUE_ID_BYTES);
+  endOfTxData += UNIQUE_ID_BYTES;
+
+  //Add the current time for timestamp synchronization
+  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
+  endOfTxData += sizeof(currentMillis);
+
+  //Set the length field
+  *txData = (uint8_t)(endOfTxData - txData);
+
+  /*
+                                                                                         endOfTxData ---.
+                                                                                                        |
+                                                                                                        V
+      +----------+---------+----------+------------+----------+----------+---------+----------+---------+----------+
+      | Optional |         | Optional | Optional   |          |          |         |          |         | Optional |
+      | NET ID   | Control | C-Timer  | SF6 Length |  Length  | DestAddr | SrcAddr | Src ID   | millis  | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     |  8 bits  | 8 bits   | 8 bits  | 16 Bytes | 4 Bytes | n Bytes  |
+      +----------+---------+----------+------------+----------+----------+---------+----------+---------+----------+
+  */
+
+  //Verify the data length
+  if ((endOfTxData - startOfData) != VC_HEARTBEAT_BYTES)
+    waitForever("ERROR - Fix the VC_HEARTBEAT_BYTES value!");
+
+  txControl.datagramType = DATAGRAM_VC_HEARTBEAT;
+  txControl.ackNumber = 0;
+
+  //Select a random for the next heartbeat
+  setVcHeartbeatTimer();
+  return (transmitDatagram());
+}
+
+//Build the ACK frame
+bool xmitVcAckFrame(int8_t destVc)
+{
+  VC_RADIO_MESSAGE_HEADER * vcHeader;
+
+  radioCallHistory[RADIO_CALL_xmitVcAckFrame] = millis();
+
+  vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
+  vcHeader->length = VC_RADIO_HEADER_BYTES;
+  vcHeader->destVc = destVc;
+  vcHeader->srcVc = myVc;
+  endOfTxData += VC_RADIO_HEADER_BYTES;
+
+  /*
+                                                         endOfTxData ---.
+                                                                        |
+                                                                        V
+      +----------+---------+----------+------------+----------+---------+----------+
+      | Optional |         | Optional | Optional   |          |         | Optional |
+      | NET ID   | Control | C-Timer  | SF6 Length | DestAddr | SrcAddr | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | n Bytes  |
+      +----------+---------+----------+------------+----------+---------+----------+
+  */
+
+  //Finish building the ACK frame
+  txControl.datagramType = DATAGRAM_DATA_ACK;
+  return (transmitDatagram());
+}
+
+//Build and transmit the UNKNOWN_ACKS frame, first frame in 3-way ACKs handshake
+bool xmitVcUnknownAcks(int8_t destVc)
+{
+  VC_RADIO_MESSAGE_HEADER * vcHeader;
+
+  radioCallHistory[RADIO_CALL_xmitVcUnknownAcks] = millis();
+
+  vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
+  vcHeader->length = VC_RADIO_HEADER_BYTES;
+  vcHeader->destVc = destVc;
+  vcHeader->srcVc = myVc;
+  endOfTxData += VC_RADIO_HEADER_BYTES;
+
+  /*
+                                                         endOfTxData ---.
+                                                                        |
+                                                                        V
+      +----------+---------+----------+------------+----------+---------+----------+
+      | Optional |         | Optional | Optional   |          |         | Optional |
+      | NET ID   | Control | C-Timer  | SF6 Length | DestAddr | SrcAddr | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | n Bytes  |
+      +----------+---------+----------+------------+----------+---------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_VC_UNKNOWN_ACKS;
+  return (transmitDatagram());
+}
+
+//Build and transmit the SYNC_ACKS frame, second frame in 3-way ACKs handshake
+bool xmitVcSyncAcks(int8_t destVc)
+{
+  VC_RADIO_MESSAGE_HEADER * vcHeader;
+
+  radioCallHistory[RADIO_CALL_xmitVcSyncAcks] = millis();
+
+  vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
+  vcHeader->length = VC_RADIO_HEADER_BYTES;
+  vcHeader->destVc = destVc;
+  vcHeader->srcVc = myVc;
+  endOfTxData += VC_RADIO_HEADER_BYTES;
+
+  if (settings.debugSync)
+  {
+    systemPrint("    channelNumber: ");
+    systemPrintln(channelNumber);
+    outputSerialData(true);
+  }
+
+  /*
+                                                         endOfTxData ---.
+                                                                        |
+                                                                        V
+      +----------+---------+----------+------------+----------+---------+----------+
+      | Optional |         | Optional | Optional   |          |         | Optional |
+      | NET ID   | Control | C-Timer  | SF6 Length | DestAddr | SrcAddr | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | n Bytes  |
+      +----------+---------+----------+------------+----------+---------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_VC_SYNC_ACKS;
+  return (transmitDatagram());
+}
+
+//Build and transmit the ZERO_ACKS frame, last frame in 3-way ACKs handshake
+bool xmitVcZeroAcks(int8_t destVc)
+{
+  VC_RADIO_MESSAGE_HEADER * vcHeader;
+
+  radioCallHistory[RADIO_CALL_xmitVcZeroAcks] = millis();
+
+  vcHeader = (VC_RADIO_MESSAGE_HEADER *)endOfTxData;
+  vcHeader->length = VC_RADIO_HEADER_BYTES;
+  vcHeader->destVc = destVc;
+  vcHeader->srcVc = myVc;
+  endOfTxData += VC_RADIO_HEADER_BYTES;
+
+  /*
+                                                         endOfTxData ---.
+                                                                        |
+                                                                        V
+      +----------+---------+----------+------------+----------+---------+----------+
+      | Optional |         | Optional | Optional   |          |         | Optional |
+      | NET ID   | Control | C-Timer  | SF6 Length | DestAddr | SrcAddr | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | n Bytes  |
+      +----------+---------+----------+------------+----------+---------+----------+
+  */
+
+  txControl.datagramType = DATAGRAM_VC_ZERO_ACKS;
+  return (transmitDatagram());
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Datagram reception
 //
 //Security or lack there of:
@@ -1423,13 +1634,14 @@ bool xmitDatagramTrainRadioParameters(const uint8_t * clientID)
 //    comparing that with the last 2 bytes
 // 9. Determine if the link is using a network ID value, by checking the first byte
 //    in each of the transmitted frames
-// 10. Determine which set of data frames are being transmitted
-// 11. Determine the maximum interval between HEARTBEAT frames to roughly determine
+// 10. Determine if the virtual circuit header is contained in the transmitted frames
+// 11. Determine which set of data frames are being transmitted
+// 12. Determine the maximum interval between HEARTBEAT frames to roughly determine
 //     the HeartbeatTimeout value
-// 12. Look for HEARTBEAT frames and FIND_PARTNER frames.  A FIND_PARTNER frame
+// 13. Look for HEARTBEAT frames and FIND_PARTNER frames.  A FIND_PARTNER frame
 //     is sent following a link failure which occurs after three HEARTBEAT timeout
 //     periods.
-// 13. The MaxResends value can be estimated by the maximum number of data
+// 14. The MaxResends value can be estimated by the maximum number of data
 //     retransmissions done prior to the link failure.  A large number of link
 //     failures will need to be collected from a very radio near the network.
 //
@@ -1468,6 +1680,8 @@ PacketType rcvDatagram()
   PacketType datagramType;
   uint8_t receivedNetID;
   CONTROL_U8 rxControl;
+  VIRTUAL_CIRCUIT * vc;
+  VC_RADIO_MESSAGE_HEADER * vcHeader;
 
   radioCallHistory[RADIO_CALL_rcvDatagram] = millis();
 
@@ -1527,6 +1741,8 @@ PacketType rcvDatagram()
   returnToReceiving(); //Immediately begin listening while we process new data
 
   rxData = incomingBuffer;
+  vc = &virtualCircuitList[0];
+  vcHeader = NULL;
 
   /*
       |<--------------------------- rxDataBytes --------------------------->|
@@ -1844,8 +2060,119 @@ PacketType rcvDatagram()
   else
     rxDataBytes -= minDatagramSize;
 
+  //Get the Virtual-Circuit header
+  rxVcData = rxData;
+  if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+  {
+    //Verify that the virtual circuit header is present
+    if (rxDataBytes < 3)
+    {
+      if (settings.debugReceive || settings.debugDatagrams)
+      {
+        systemPrintTimestamp();
+        systemPrint("Missing VC header bytes, received only ");
+        systemPrint(rxDataBytes);
+        systemPrintln(" bytes, expecting at least 3 bytes");
+        outputSerialData(true);
+        if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+          hopChannel();
+      }
+      badFrames++;
+      return DATAGRAM_BAD;
+    }
+
+    //Parse the virtual circuit header
+    vcHeader = (VC_RADIO_MESSAGE_HEADER *)rxData;
+    rxDestVc = vcHeader->destVc;
+    rxSrcVc = vcHeader->srcVc;
+    rxVcData = &rxData[3];
+
+    //Display the virtual circuit header
+    if (settings.debugReceive)
+    {
+      systemPrintTimestamp();
+      systemPrint("    VC Length: ");
+      systemPrintln(vcHeader->length);
+      systemPrint("    DestAddr: ");
+      if (rxDestVc == VC_BROADCAST)
+        systemPrintln("Broadcast");
+      else
+        systemPrintln(rxDestVc);
+      systemPrint("    SrcAddr: ");
+      if (rxSrcVc == VC_UNASSIGNED)
+        systemPrintln("Unassigned");
+      else
+        systemPrintln(rxSrcVc);
+      outputSerialData(true);
+      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+        hopChannel();
+    }
+
+    //Validate the source VC
+    vc = NULL;
+    if (rxSrcVc != VC_UNASSIGNED)
+    {
+      if ((uint8_t)rxSrcVc >= MAX_VC)
+      {
+        if (settings.debugReceive || settings.debugDatagrams)
+        {
+          systemPrintTimestamp();
+          systemPrint("Invalid source VC: ");
+          systemPrintln(rxSrcVc);
+          outputSerialData(true);
+          if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+            hopChannel();
+          if (settings.printRfData && rxDataBytes)
+            dumpBuffer(incomingBuffer, rxDataBytes);
+          outputSerialData(true);
+        }
+        badFrames++;
+        return DATAGRAM_BAD;
+      }
+      vc = &virtualCircuitList[rxSrcVc];
+    }
+
+    //Validate the length
+    if (vcHeader->length != rxDataBytes)
+    {
+      if (settings.debugReceive || settings.debugDatagrams)
+      {
+        systemPrintTimestamp();
+        systemPrint("Invalid VC length, received ");
+        systemPrint(vcHeader->length);
+        systemPrint(" expecting ");
+        systemPrintln(rxDataBytes);
+        outputSerialData(true);
+      }
+      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+        hopChannel();
+      if (vc)
+        vc->badLength++;
+      badFrames++;
+      return DATAGRAM_BAD;
+    }
+
+    //Validate the destination VC
+    if ((rxDestVc != VC_BROADCAST) && (rxDestVc != myVc))
+    {
+      if (settings.debugReceive || settings.debugDatagrams)
+      {
+        systemPrintTimestamp();
+        systemPrint("Not my VC: ");
+        systemPrintln(rxDestVc);
+        outputSerialData(true);
+        if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+          hopChannel();
+        if (settings.printPktData && rxDataBytes)
+          dumpBuffer(incomingBuffer, rxDataBytes);
+        outputSerialData(true);
+      }
+      return DATAGRAM_NOT_MINE;
+    }
+  }
+
   //Verify the packet number last so that the expected datagram or ACK number can be updated
-  if (settings.operatingMode != MODE_MULTIPOINT)
+  if (vc && (settings.operatingMode != MODE_MULTIPOINT))
   {
     switch (datagramType)
     {
@@ -1853,7 +2180,7 @@ PacketType rcvDatagram()
         break;
 
       case DATAGRAM_DATA_ACK:
-        if (ackNumber != txAckNumber)
+        if (ackNumber != vc->txAckNumber)
         {
           if (settings.debugReceive || settings.debugDatagrams)
           {
@@ -1861,7 +2188,7 @@ PacketType rcvDatagram()
             systemPrint("Invalid ACK number, received ");
             systemPrint(ackNumber);
             systemPrint(" expecting ");
-            systemPrintln(txAckNumber);
+            systemPrintln(vc->txAckNumber);
             outputSerialData(true);
             if (timeToHop == true) //If the channelTimer has expired, move to next frequency
               hopChannel();
@@ -1874,13 +2201,13 @@ PacketType rcvDatagram()
         if (settings.printAckNumbers)
         {
           systemPrint("txAckNumber: ");
-          systemPrint(txAckNumber);
+          systemPrint(vc->txAckNumber);
           systemPrint(" --> ");
         }
-        txAckNumber = (txAckNumber + 1) & 3;
+        vc->txAckNumber = (vc->txAckNumber + 1) & 3;
         if (settings.printAckNumbers)
         {
-          systemPrintln(txAckNumber);
+          systemPrintln(vc->txAckNumber);
           outputSerialData(true);
         }
 
@@ -1889,14 +2216,16 @@ PacketType rcvDatagram()
         break;
 
       case DATAGRAM_HEARTBEAT:
-        datagramType = validateDatagram(datagramType, ackNumber, rxDataBytes);
+        if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+          break;
+        datagramType = validateDatagram(vc, datagramType, ackNumber, rxDataBytes);
         if (datagramType != DATAGRAM_HEARTBEAT)
           return datagramType;
         lastRxDatagram = rcvTimeMillis;
         break;
 
       case DATAGRAM_REMOTE_COMMAND:
-        datagramType = validateDatagram(datagramType, ackNumber, sizeof(commandRXBuffer)
+        datagramType = validateDatagram(vc, datagramType, ackNumber, sizeof(commandRXBuffer)
                                         - availableRXCommandBytes());
         if (datagramType != DATAGRAM_REMOTE_COMMAND)
           return datagramType;
@@ -1904,7 +2233,7 @@ PacketType rcvDatagram()
         break;
 
       case DATAGRAM_REMOTE_COMMAND_RESPONSE:
-        datagramType = validateDatagram(datagramType, ackNumber, sizeof(serialTransmitBuffer)
+        datagramType = validateDatagram(vc, datagramType, ackNumber, sizeof(serialTransmitBuffer)
                                         - availableTXBytes());
         if (datagramType != DATAGRAM_REMOTE_COMMAND_RESPONSE)
           return datagramType;
@@ -1912,17 +2241,17 @@ PacketType rcvDatagram()
         break;
 
       case DATAGRAM_DATA:
-        datagramType = validateDatagram(datagramType, ackNumber, sizeof(serialTransmitBuffer)
+        datagramType = validateDatagram(vc, datagramType, ackNumber, sizeof(serialTransmitBuffer)
                                         - availableTXBytes());
         if (datagramType != DATAGRAM_DATA)
           return datagramType;
         lastRxDatagram = rcvTimeMillis;
-        messagesReceived++;
+        vc->messagesReceived++;
         break;
     }
 
     //Account for this frame
-    framesReceived++;
+    vc->framesReceived++;
   }
 
   //If packet is good, check requestYield bit
@@ -1970,6 +2299,13 @@ PacketType rcvDatagram()
   {
     systemPrintTimestamp();
     systemPrint("RX: ");
+    if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+    {
+      systemPrint((uint8_t)((rxDestVc == VC_BROADCAST) ? rxDestVc : rxDestVc & VCAB_NUMBER_MASK));
+      systemPrint(" <-- ");
+      systemPrint((uint8_t)((rxSrcVc == VC_UNASSIGNED) ? rxSrcVc : rxSrcVc & VCAB_NUMBER_MASK));
+      systemWrite(' ');
+    }
     systemPrint(radioDatagramType[datagramType]);
     switch (datagramType)
     {
@@ -1985,6 +2321,8 @@ PacketType rcvDatagram()
         if (settings.operatingMode != MODE_MULTIPOINT)
         {
           systemPrint(" (");
+          if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+            systemPrint("VC ");
           systemPrint("ACK #");
           systemPrint(ackNumber);
           systemPrint(")");
@@ -2013,12 +2351,12 @@ PacketType rcvDatagram()
 // * Received datagramType
 // * DATAGRAM_DUPLICATE
 // * DATAGRAM_BAD
-PacketType validateDatagram(PacketType datagramType, uint8_t ackNumber, uint16_t freeBytes)
+PacketType validateDatagram(VIRTUAL_CIRCUIT * vc, PacketType datagramType, uint8_t ackNumber, uint16_t freeBytes)
 {
-  if (ackNumber != rmtTxAckNumber)
+  if (ackNumber != vc->rmtTxAckNumber)
   {
     //Determine if this is a duplicate datagram
-    if (ackNumber == ((rmtTxAckNumber - 1) & 3))
+    if (ackNumber == ((vc->rmtTxAckNumber - 1) & 3))
     {
       if (settings.debugReceive || settings.debugDatagrams)
       {
@@ -2041,7 +2379,7 @@ PacketType validateDatagram(PacketType datagramType, uint8_t ackNumber, uint16_t
       systemPrint("Invalid datagram number, received ");
       systemPrint(ackNumber);
       systemPrint(" expecting ");
-      systemPrintln(rmtTxAckNumber);
+      systemPrintln(vc->rmtTxAckNumber);
       outputSerialData(true);
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
@@ -2070,21 +2408,21 @@ PacketType validateDatagram(PacketType datagramType, uint8_t ackNumber, uint16_t
   if (settings.printAckNumbers)
   {
     systemPrint("rxAckNumber: ");
-    systemPrint(rxAckNumber);
+    systemPrint(vc->rxAckNumber);
     systemPrint(" --> ");
   }
-  rxAckNumber = rmtTxAckNumber;
+  vc->rxAckNumber = vc->rmtTxAckNumber;
   if (settings.printAckNumbers)
   {
-    systemPrintln(rxAckNumber);
+    systemPrintln(vc->rxAckNumber);
     systemPrint("rmtTxAckNumber: ");
-    systemPrint(rmtTxAckNumber);
+    systemPrint(vc->rmtTxAckNumber);
     systemPrint(" --> ");
   }
-  rmtTxAckNumber = (rmtTxAckNumber + 1) & 3;
+  vc->rmtTxAckNumber = (vc->rmtTxAckNumber + 1) & 3;
   if (settings.printAckNumbers)
   {
-    systemPrintln(rmtTxAckNumber);
+    systemPrintln(vc->rmtTxAckNumber);
     outputSerialData(true);
   }
   return datagramType;
@@ -2101,6 +2439,10 @@ bool transmitDatagram()
   uint8_t control;
   uint8_t * header;
   uint8_t length;
+  int8_t srcVc;
+  uint8_t * vcData;
+  VIRTUAL_CIRCUIT * vc;
+  VC_RADIO_MESSAGE_HEADER * vcHeader;
 
   if (timeToHop == true) //If the channelTimer has expired, move to next frequency
     hopChannel();
@@ -2109,6 +2451,23 @@ bool transmitDatagram()
   txDatagramMicros = micros();
   radioCallHistory[RADIO_CALL_transmitDatagram] = millis();
 
+  //Parse the virtual circuit header
+  vc = &virtualCircuitList[0];
+  vcHeader = NULL;
+  if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+  {
+    vc = NULL;
+    vcHeader = (VC_RADIO_MESSAGE_HEADER *)&outgoingPacket[headerBytes];
+    txDestVc = vcHeader->destVc;
+    srcVc = vcHeader->srcVc;
+    if ((uint8_t)vcHeader->destVc <= MAX_VC)
+    {
+      vc = &virtualCircuitList[txDestVc];
+      vc->messagesSent++;
+    }
+    vcData = (uint8_t *)&vcHeader[1];
+  }
+
   //Determine the packet size
   datagramsSent++;
   txDatagramSize = endOfTxData - outgoingPacket;
@@ -2116,9 +2475,9 @@ bool transmitDatagram()
 
   //Select the ACK number
   if (txControl.datagramType == DATAGRAM_DATA_ACK)
-    txControl.ackNumber = rxAckNumber;
+    txControl.ackNumber = vc->rxAckNumber;
   else
-    txControl.ackNumber = txAckNumber;
+    txControl.ackNumber = vc->txAckNumber;
 
   //If we are ACK'ing data, and we have data to send ourselves, request that
   //the sender yield to give us an opportunity to send our data
@@ -2135,6 +2494,13 @@ bool transmitDatagram()
   {
     systemPrintTimestamp();
     systemPrint("TX: ");
+    if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+    {
+      systemPrint((uint8_t)((srcVc == VC_UNASSIGNED) ? srcVc : srcVc & VCAB_NUMBER_MASK));
+      systemPrint(" --> ");
+      systemPrint((uint8_t)((txDestVc == VC_BROADCAST) ? txDestVc : txDestVc & VCAB_NUMBER_MASK));
+      systemWrite(' ');
+    }
     systemPrint(radioDatagramType[txControl.datagramType]);
     switch (txControl.datagramType)
     {
@@ -2150,6 +2516,8 @@ bool transmitDatagram()
         if (settings.operatingMode != MODE_MULTIPOINT)
         {
           systemPrint(" (");
+          if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+            systemPrint("VC ");
           systemPrint("ACK #");
           systemPrint(txControl.ackNumber);
           systemPrint(")");
@@ -2400,6 +2768,41 @@ bool transmitDatagram()
     }
   }
 
+  /*                                               endOfTxData ---.
+                                       Header ------.             |
+                                                    |             |
+                                                    V             V
+      +----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional |  Optional  |             | Optional |
+      |  NET ID  | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
+      |  8 bits  |  8 bits  | 2 bytes  |   8 bits   |   n bytes   | n Bytes  |
+      +----------+----------+----------+------------+-------------+----------+
+      |                                             |             |
+      |                                             |<- Length -->|
+      |<-------------------- txDatagramSize --------------------->|
+  */
+
+  //Verify the Virtual-Circuit length
+  if (settings.debugTransmit && (settings.operatingMode == MODE_VIRTUAL_CIRCUIT))
+  {
+    systemPrintTimestamp();
+    systemPrint("    Length: ");
+    systemPrintln(vcHeader->length);
+    systemPrint("    DestAddr: ");
+    if (txDestVc == VC_BROADCAST)
+      systemPrintln("Broadcast");
+    else
+      systemPrintln(txDestVc);
+    systemPrint("    SrcAddr: ");
+    if (srcVc == VC_UNASSIGNED)
+      systemPrintln("Unassigned");
+    else
+      systemPrintln(srcVc);
+    outputSerialData(true);
+    if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+      hopChannel();
+  }
+
   /*
                                                    endOfTxData ---.
                                                                   |
@@ -2537,7 +2940,7 @@ bool transmitDatagram()
 
   //Transmit this datagram
   frameSentCount = 0; //This is the first time this frame is being sent
-  return (retransmitDatagram());
+  return (retransmitDatagram(vc));
 }
 
 //Print the control byte value
@@ -2591,7 +2994,7 @@ void printControl(uint8_t value)
 
 //The previous transmission was not received, retransmit the datagram
 //Returns false if we could not start tranmission due to packet received or RX in process
-bool retransmitDatagram()
+bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
 {
   radioCallHistory[RADIO_CALL_retransmitDatagram] = millis();
 
@@ -2640,6 +3043,17 @@ bool retransmitDatagram()
   if (
     (receiveInProcess() == true)
     || (transactionComplete == true)
+    || (
+      //If we are in VC mode, and destination is not broadcast,
+      //and the destination circuit is offline
+      //and we are not scanning for servers
+      //then don't transmit
+      (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+      && (txDestVc != VC_BROADCAST)
+      && (virtualCircuitList[txDestVc & VCAB_NUMBER_MASK].vcState == VC_STATE_LINK_DOWN)
+      && (txDestVc != VC_UNASSIGNED)
+      && (radioState != RADIO_DISCOVER_SCANNING)
+    )
   )
   {
     triggerEvent(TRIGGER_TRANSMIT_CANCELED);
@@ -2650,6 +3064,8 @@ bool retransmitDatagram()
         systemPrintln("RXTC");
       else if (receiveInProcess())
         systemPrintln("RXIP");
+      else
+        systemPrintln("VC link down");
       outputSerialData(true);
     }
     return (false); //Do not start transmit while RX is or has occured
@@ -2675,6 +3091,8 @@ bool retransmitDatagram()
       triggerEvent(TRIGGER_TX_SPI_DONE);
       txSuccessMillis = xmitTimeMillis;
       frameSentCount++;
+      if (vc)
+        vc->framesSent++;
       framesSent++;
       if (settings.debugTransmit)
       {
@@ -3243,6 +3661,12 @@ const I16_TO_STRING radioCallName[] =
   {RADIO_CALL_xmitDatagramTrainingFindPartner, "xmitDatagramTrainingFindPartner"},
   {RADIO_CALL_xmitDatagramTrainingAck, "xmitDatagramTrainingAck"},
   {RADIO_CALL_xmitDatagramTrainRadioParameters, "xmitDatagramTrainRadioParameters"},
+  {RADIO_CALL_xmitVcDatagram, "xmitVcDatagram"},
+  {RADIO_CALL_xmitVcHeartbeat, "xmitVcHeartbeat"},
+  {RADIO_CALL_xmitVcAckFrame, "xmitVcAckFrame"},
+  {RADIO_CALL_xmitVcUnknownAcks, "xmitVcUpdateAcks"},
+  {RADIO_CALL_xmitVcSyncAcks, "xmitVcSyncAcks"},
+  {RADIO_CALL_xmitVcZeroAcks, "xmitVcZeroAcks"},
   {RADIO_CALL_rcvDatagram, "rcvDatagram"},
   {RADIO_CALL_transmitDatagram, "transmitDatagram"},
   {RADIO_CALL_retransmitDatagram, "retransmitDatagram"},
