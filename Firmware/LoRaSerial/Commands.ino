@@ -87,7 +87,7 @@ bool commandAT(const char * commandString)
       case ('B'): //ATB - Break the link
 
         //Compute the time delay
-        delayMillis = (VC_LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout;
+        delayMillis = (LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout;
 
         //Warn the user of the delay
         systemPrint("Delaying ");
@@ -111,7 +111,7 @@ bool commandAT(const char * commandString)
         //Idle the system to break the link
         //This is required on the server system which does not request an VC number assignment
         timer = millis();
-        while ((millis() - timer) < ((VC_LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout))
+        while ((millis() - timer) < ((LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout))
           petWDT();
         changeState(RADIO_RESET);
 
