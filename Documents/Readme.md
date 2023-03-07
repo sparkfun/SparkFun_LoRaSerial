@@ -11,4 +11,4 @@ Additionally, this folder contains the various datasheets for the SX1276 IC, com
 
 [Atmel SAM D21G Datasheet](https://cdn.sparkfun.com/datasheets/Dev/Arduino/Boards/Atmel-42181-SAM-D21_Datasheet.pdf)
 
-Please see the [LoRaSerial Product Manual](http://docs.sparkfun.com/SparkFun_LoRaSerial/) for technical documentation.
+Please see the [LoRaSerial Product Manual](http://docs.sparkfun.com/SparkFun_LoRaSerial/) for all the general documentation on how to use LoRaSerial.
