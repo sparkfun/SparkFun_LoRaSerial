@@ -20,7 +20,7 @@ theme:
     - content.code.annotate
     # - navigation.tracking
     # - navigation.tabs.sticky
-    # - navigation.tabs    
+    # - navigation.tabs
 
   icon:
     repo: fontawesome/brands/github
@@ -71,7 +71,7 @@ extra:
       link: https://www.facebook.com/SparkFun
     - icon: fontawesome/brands/twitter
       link: https://twitter.com/sparkfun
-  
+
 nav:
     - Introduction: index.md
     - quick_start.md
@@ -81,6 +81,7 @@ nav:
     - operating_modes.md
     - firmware_update.md
     - hardware_overview.md
+    - firmware_build.md
 
 extra:
   version:
