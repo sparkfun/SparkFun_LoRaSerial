@@ -1,6 +1,6 @@
 +++
 #Restore factory defaults
-at&f
+atf
 
 # Display the commands
 at?
@@ -18,447 +18,450 @@ ati7
 ati8
 ati9
 ati10
-ati11
-ati12
-ati13
-ati14
-ati15
-ati16
-ati17
-ati18
-ati19
-ati20
-ati21
-ati22
-ati23
-ati24
-ati25
-ati26
-ati27
 ati0
 
-ats28=0
+#Debug parameters
+at-CopyDebug=1
+at-CopyDebug=2
+at-CopyDebug=0
+at-CopyDebug
 
-# SerialSpeed
-ats0=0
-ats0=1
-ats0=40
-ats0=50
-ats0=110
-ats0=134
-ats0=150
-ats0=300
-ats0=400
-ats0=600
-ats0=1200
-ats0=2400
-ats0=4800
-ats0=9600
-ats0=14400
-ats0=19200
-ats0=28800
-ats0=38400
-ats0=57600
-ats0=76800
-ats0=115200
-ats0=128000
-ats0=230400
-ats0=250000
-ats0=256000
-ats0=460800
-ats0=500000
-ats0=512000
-ats0=576000
-ats0=921600
-ats0=1000000
-ats0=1843200
-ats0=2000000
-ats0=3000000
-ats0=3686400
-ats0=4000000
-ats0=57600
-ats0?
+at-Debug=1
+at-Debug=2
+at-Debug=0
+at-Debug
 
-# AirSpeed
-ats1=1
-ats1=40
-ats1=50
-ats1=110
-ats1=134
-ats1=150
-ats1=300
-ats1=400
-ats1=600
-ats1=1200
-ats1=2400
-ats1=4800
-ats1=9600
-ats1=14400
-ats1=19200
-ats1=28800
-ats1=38400
-ats1=57600
-ats1=76800
-ats1=115200
-ats1=128000
-ats1=230400
-ats1=250000
-ats1=256000
-ats1=460800
-ats1=500000
-ats1=512000
-ats1=576000
-ats1=921600
-ats1=1000000
-ats1=1843200
-ats1=2000000
-ats1=3000000
-ats1=3686400
-ats1=4000000
-ats1=0
-ats1?
+at-DebugDatagrams=1
+at-DebugDatagrams=2
+at-DebugDatagrams=0
+at-DebugDatagrams
 
-# NetID
-ats2=0
-ats2=255
-ats2=192
-ats2?
+at-DebugHeartbeat=1
+at-DebugHeartbeat=2
+at-DebugHeartbeat=0
+at-DebugHeartbeat
 
-# PointToPoint
-ats3=0
-ats3=2
-ats3=1
-ats3?
+at-DebugNvm=1
+at-DebugNvm=2
+at-DebugNvm=0
+at-DebugNvm
 
-# EncryptData
-ats4=0
-ats4=2
-ats4=1
-ats4?
+at-DebugRadio=1
+at-DebugRadio=2
+at-DebugRadio=0
+at-DebugRadio
 
-# EncryptionKey
-ats5=00112233445566778899aabbccddeeff
-ats5?
-ats5=00112233445566778899aabbccddeef
-ats5=00112233445566778899aabbccddeefff
-ats5=00112233445566778899aabbccddeefg
-ats5=37782141A665734E4475672AE6308308
-ats5?
+at-DebugReceive=1
+at-DebugReceive=2
+at-DebugReceive=0
+at-DebugReceive
 
-# DataScrambling
-ats6=1
-ats6=2
-ats6=0
-ats6?
+at-DebugSerial=1
+at-DebugSerial=2
+at-DebugSerial=0
+at-DebugSerial
 
-# TxPower
-ats7=13
-ats7=14
-ats7=31
-ats7=30
-ats7?
+at-DebugStates=1
+at-DebugStates=2
+at-DebugStates=0
+at-DebugStates
 
-# FrequencyMin
-ats9=928
-ats8=0
-ats8=928.1
-ats8=928
-ats8=927.9
-ats8=901.9
-ats8=902
-ats8?
+at-DebugSync=1
+at-DebugSync=2
+at-DebugSync=0
+at-DebugSync
 
-# FrequencyMax
-ats9=0
-ats9=901.9
-ats9=902
-ats9=902.1
-ats9=927.9
-ats9=928.1
-ats9=928
-ats9?
+at-DebugTraining=1
+at-DebugTraining=2
+at-DebugTraining=0
+at-DebugTraining
 
-# NumberOfChannels
-ats10=0
-ats10=1
-ats10=255
-ats10=256
-ats10=50
-ats10?
+at-DebugTransmit=1
+at-DebugTransmit=2
+at-DebugTransmit=0
+at-DebugTransmit
 
-# FrequencyHop
-ats11=0
-ats11=2
-ats11=1
-ats11?
+at-DisplayRealMillis=1
+at-DisplayRealMillis=2
+at-DisplayRealMillis=0
+at-DisplayRealMillis
 
-# MaxDwellTime
-ats12=9
-ats12=10
-ats12=65535
-ast12=65536
-ats12=400
-ats12?
+at-PrintAckNumbers=1
+at-PrintAckNumbers=2
+at-PrintAckNumbers=0
+at-PrintAckNumbers
 
-# Bandwidth
-ats1=4800
+at-PrintChannel=1
+at-PrintChannel=2
+at-PrintChannel=0
+at-PrintChannel
 
-ats13=0
-ats13=10.4
-ats13=15.6
-ats13=20
-ats13=31.25
-ats13=41.7
-ats13=62.5
-ats13=125
-ats13=250
-ats13=500
+at-PrintFrequency=1
+at-PrintFrequency=2
+at-PrintFrequency=0
+at-PrintFrequency
 
-ats1=0
+at-PrintLinkUpDown=1
+at-PrintLinkUpDown=2
+at-PrintLinkUpDown=0
+at-PrintLinkUpDown
 
-ats13=0
-ats13=10.4
-ats13=15.6
-ats13=20.8
-ats13=31.25
-ats13=41.7
-ats13=62.5
-ats13=125
-ats13=250
-ats13=500
-ats13?
+at-PrintPacketQuality=1
+at-PrintPacketQuality=2
+at-PrintPacketQuality=0
+at-PrintPacketQuality
 
-ats1=4800
+at-PrintPktData=1
+at-PrintPktData=2
+at-PrintPktData=0
+at-PrintPktData
 
-# SpreadFactor
-ats14=5
-ats14=6
-ats14=12
-ats14=13
-ats14=9
+at-PrintRfData=1
+at-PrintRfData=2
+at-PrintRfData=0
+at-PrintRfData
 
-ats1=0
+at-PrintTimestamp=1
+at-PrintTimestamp=2
+at-PrintTimestamp=0
+at-PrintTimestamp
 
-ats14=5
-ats14=6
-ats14=12
-ats14=13
-ats14=9
-ats14?
+at-PrintTxErrors=1
+at-PrintTxErrors=2
+at-PrintTxErrors=0
+at-PrintTxErrors
 
-# CodingRate
-ats15=4
-ats15=5
-ats15=9
-ats15=8
+#Radio Parameters
+at-AirSpeed=0
+at-AirSpeed=1
+at-AirSpeed=40
+at-AirSpeed=50
+at-AirSpeed=110
+at-AirSpeed=134
+at-AirSpeed=150
+at-AirSpeed=300
+at-AirSpeed=400
+at-AirSpeed=600
+at-AirSpeed=1200
+at-AirSpeed=2400
+at-AirSpeed=4800
+at-AirSpeed=9600
+at-AirSpeed=14400
+at-AirSpeed=19200
+at-AirSpeed=28800
+at-AirSpeed=38400
+at-AirSpeed=57600
+at-AirSpeed=76800
+at-AirSpeed=115200
+at-AirSpeed=128000
+at-AirSpeed=230400
+at-AirSpeed=250000
+at-AirSpeed=256000
+at-AirSpeed=460800
+at-AirSpeed=500000
+at-AirSpeed=512000
+at-AirSpeed=576000
+at-AirSpeed=921600
+at-AirSpeed=1000000
+at-AirSpeed=1843200
+at-AirSpeed=2000000
+at-AirSpeed=3000000
+at-AirSpeed=3686400
+at-AirSpeed=4000000
+at-AirSpeed=4800
+at-AirSpeed
 
-ats1=4800
+at-AutoTune=1
+at-AutoTune=2
+at-AutoTune=0
+at-AutoTune
 
-ats15=4
-ats15=5
-ats15=9
-ats15=8
-ats15?
+at-Bandwidth=0
+at-Bandwidth=10.4
+at-Bandwidth=15.6
+at-Bandwidth=20
+at-Bandwidth=31.25
+at-Bandwidth=41.7
+at-Bandwidth=62.5
+at-Bandwidth=125
+at-Bandwidth=250
+at-Bandwidth=500
+at-Bandwidth
 
-# SyncWord
-ats16=0
-ats16=255
-ats16=256
-ats16=18
-ats16?
+at-CodingRate=4
+at-CodingRate=5
+at-CodingRate=9
+at-CodingRate=8
+at-CodingRate
 
-# PreambleLength
-ats17=5
-ats17=6
-ats17=255
-ats17=256
-ats17=65535
-ats17=65536
-ats17=8
-ats17?
+at-FrequencyHop=0
+at-FrequencyHop=2
+at-FrequencyHop=1
+at-FrequencyHop
 
-# FrameSize
-ats18=15
-ats18=16
-ats18=256
-ats18=255
-ats18=254
-ats18=253
-ats18?
+at-FrequencyMax=0
+at-FrequencyMax=901.9
+at-FrequencyMax=902
+at-FrequencyMax=902.1
+at-FrequencyMax=927.9
+at-FrequencyMax=928.1
+at-FrequencyMax=928
+at-FrequencyMax
 
-# FrameTimeout
-ats19=9
-ats19=10
-ats19=2000
-ats19=2001
-ats19=50
-ats19?
+at-FrequencyMin=928
+at-FrequencyMin=0
+at-FrequencyMin=928.1
+at-FrequencyMin=928
+at-FrequencyMin=927.9
+at-FrequencyMin=901.9
+at-FrequencyMin=902
+at-FrequencyMin
 
-# Debug
-ats20=1
-ats20=2
-ats20=0
-ats20?
+at-MaxDwellTime=9
+at-MaxDwellTime=10
+at-MaxDwellTime=65535
+at-MaxDwellTime=65536
+at-MaxDwellTime=400
+at-MaxDwellTime
 
-# Echo
-ats21=1
-ats21=2
-ats21=0
-ats21?
+at-NumberOfChannels=0
+at-NumberOfChannels=1
+at-NumberOfChannels=255
+at-NumberOfChannels=256
+at-NumberOfChannels=50
+at-NumberOfChannels
 
-# HeartBeatTimeout
-ats22=249
-ats22=250
-ats22=65535
-ats22=65536
-ats22=5000
-ats22?
+at-PreambleLength=5
+at-PreambleLength=6
+at-PreambleLength=255
+at-PreambleLength=256
+at-PreambleLength=65535
+at-PreambleLength=65536
+at-PreambleLength=8
+at-PreambleLength
 
-# FlowControl
-ats23=1
-ats23=2
-ats23=0
-ats23?
+at-SpreadFactor=5
+at-SpreadFactor=6
+at-SpreadFactor=12
+at-SpreadFactor=13
+at-SpreadFactor=9
+at-SpreadFactor
 
-# AutoTune
-ats24=1
-ats24=2
-ats24=0
-ats24?
+at-SyncWord=0
+at-SyncWord=255
+at-SyncWord=256
+at-SyncWord=18
+at-SyncWord
 
-# DisplayPacketQuality
-ats25=1
-ats25=2
-ats25=0
-ats25?
+at-TxPower=13
+at-TxPower=14
+at-TxPower=31
+at-TxPower=30
+at-TxPower
 
-# MaxResends
-ats26=0
-ats26=255
-ats26=256
-ats26=2
-ats26?
+at-TxToRxUsec=999999
+at-TxToRxUsec=1000000
+at-TxToRxUsec=0
+at-TxToRxUsec
 
-# SortParametersByName
-ats27=0
-ats27=2
-ats27=1
-ats27?
+#Radio Protocol Parameters
+at-DataScrambling=1
+at-DataScrambling=2
+at-DataScrambling=0
+at-DataScrambling
 
-# ParameterName
-ats28=0
-ats28=2
-ats28=1
-ats28?
+at-EnableCRC16=0
+at-EnableCRC16=2
+at-EnableCRC16=1
+at-EnableCRC16
 
-# PrintFrequency
-ats29=1
-ats29=2
-ats29=0
-ats29?
+at-EncryptData=0
+at-EncryptData=2
+at-EncryptData=1
+at-EncryptData
 
-# DebugRadio
-ats30=1
-ats30=2
-ats30=0
-ats30?
+at-EncryptionKey=00112233445566778899aabbccddeeff
+at-EncryptionKey
+at-EncryptionKey=00112233445566778899aabbccddeef
+at-EncryptionKey=00112233445566778899aabbccddeefff
+at-EncryptionKey=00112233445566778899aabbccddeefg
+at-EncryptionKey=37782141A665734E4475672AE6308308
+at-EncryptionKey
 
-# DebugStates
-ats31=1
-ats31=2
-ats31=0
-ats31?
+at-FramesToYield=255
+at-FramesToYield=256
+at-FramesToYield=0
+at-FramesToYield
 
-# DebugTraining
-ats32=1
-ats32=2
-ats32=0
-ats32?
+at-HeartBeatTimeout=249
+at-HeartBeatTimeout=250
+at-HeartBeatTimeout=65535
+at-HeartBeatTimeout=65536
+at-HeartBeatTimeout=5000
+at-HeartBeatTimeout
 
-# DebugTrigger
-ats33=1
-ats33=2
-ats33=0
-ats33?
+at-MaxResends=0
+at-MaxResends=255
+at-MaxResends=256
+at-MaxResends=2
+at-MaxResends
 
-# UsbSerialWait
-ats34=1
-ats34=2
-ats34=0
-ats34?
+at-NetID=0
+at-NetID=255
+at-NetID=192
+at-NetID
 
-# PrintRfData
-ats35=1
-ats35=2
-ats35=0
-ats35?
+at-OperatingMode=0
+at-OperatingMode=1
+at-OperatingMode
 
-# PrintPktData
-ats36=1
-ats36=2
-ats36=0
-ats36?
+at-OverHeadtime=0
+at-OverHeadtime=1001
+at-OverHeadtime=1000
+at-OverHeadtime
 
-# VerifyRxNetID
-ats37=1
-ats37=2
-ats37=0
-ats37?
+at-SelectLedUse=0
+at-SelectLedUse=1
+at-SelectLedUse=256
+at-SelectLedUse=255
+at-SelectLedUse=4
+at-SelectLedUse
 
-# TriggerWidth
-ats38=0
-ats38=1
-ats38=255
-ats38=256
-ats38=25
+at-Server=1
+at-Server=2
+at-Server=0
+at-Server
 
-# TriggerWidthIsMultiplier
-ats39=0
-ats39=2
-ats39=1
+at-VerifyRxNetID=1
+at-VerifyRxNetID=2
+at-VerifyRxNetID=0
+at-VerifyRxNetID
 
-# TriggerEnable: 31-0
-ats40=0
-ats40=4294967295
+#Serial Parameters
+at-CopySerial=1
+at-CopySerial=2
+at-CopySerial=0
+at-CopySerial
 
-# TriggerEnable: 63-32
-ats41=0
-ats41=4294967295
+at-Echo=1
+at-Echo=2
+at-Echo=0
+at-Echo
 
-# DebugReceive
-ats42=1
-ats42=2
-ats42=0
+at-FlowControl=1
+at-FlowControl=2
+at-FlowControl=0
+at-FlowControl
 
-# DebugTransmit
-ats43=1
-ats43=2
-ats43=0
+at-InvertCts=0
+at-InvertCts=2
+at-InvertCts=1
+at-InvertCts
 
-# PrintTxErrors
-ats44=1
-ats44=2
-ats44=0
+at-InvertRts=0
+at-InvertRts=2
+at-InvertRts=1
+at-InvertRts
 
-# useV2
-ats45=1
-ats45=2
-ats45=0
+at-SerialDelay=9
+at-SerialDelay=10
+at-SerialDelay=1
+at-SerialDelay=2001
+at-SerialDelay=2000
+at-SerialDelay
 
-# PrintTimestamp
-ats46=1
-ats46=2
-ats46=0
+at-SerialSpeed=0
+at-SerialSpeed=1
+at-SerialSpeed=40
+at-SerialSpeed=50
+at-SerialSpeed=110
+at-SerialSpeed=134
+at-SerialSpeed=150
+at-SerialSpeed=300
+at-SerialSpeed=400
+at-SerialSpeed=600
+at-SerialSpeed=1200
+at-SerialSpeed=2400
+at-SerialSpeed=4800
+at-SerialSpeed=9600
+at-SerialSpeed=14400
+at-SerialSpeed=19200
+at-SerialSpeed=28800
+at-SerialSpeed=38400
+at-SerialSpeed=57600
+at-SerialSpeed=76800
+at-SerialSpeed=115200
+at-SerialSpeed=128000
+at-SerialSpeed=230400
+at-SerialSpeed=250000
+at-SerialSpeed=256000
+at-SerialSpeed=460800
+at-SerialSpeed=500000
+at-SerialSpeed=512000
+at-SerialSpeed=576000
+at-SerialSpeed=921600
+at-SerialSpeed=1000000
+at-SerialSpeed=1843200
+at-SerialSpeed=2000000
+at-SerialSpeed=3000000
+at-SerialSpeed=3686400
+at-SerialSpeed=4000000
+at-SerialSpeed=57600
+at-SerialSpeed
 
-# Invalid commands
-ats47=1
-ats47?
+at-UsbSerialWait=1
+at-UsbSerialWait=2
+at-UsbSerialWait=0
+at-UsbSerialWait
 
-ats255=1
-ats255?
+#Training Parameters
+at-ClientFindPartnerRetryInterval=1
+at-ClientFindPartnerRetryInterval=0
+at-ClientFindPartnerRetryInterval=256
+at-ClientFindPartnerRetryInterval=255
+at-ClientFindPartnerRetryInterval
+
+at-TrainingKey=00112233445566778899aabbccddeeff
+at-TrainingKey
+at-TrainingKey=00112233445566778899aabbccddeef
+at-TrainingKey=00112233445566778899aabbccddeefff
+at-TrainingKey=00112233445566778899aabbccddeefg
+at-TrainingKey=37782141A665734E4475672AE6308308
+at-TrainingKey
+
+at-TrainingTimeout=0
+at-TrainingTimeout=1
+at-TrainingTimeout=256
+at-TrainingTimeout=255
+at-TrainingTimeout
+
+#Trigger Parameters
+at-CopyTriggers=1
+at-CopyTriggers=2
+at-CopyTriggers=0
+at-CopyTriggers
+
+at-TriggerEnable_31-0=4294967295
+at-TriggerEnable_31-0=0
+at-TriggerEnable_31-0
+
+at-TriggerEnable_63-32=4294967295
+at-TriggerEnable_63-32=0
+at-TriggerEnable_63-32
+
+at-TriggerWidth=0
+at-TriggerWidth=1
+at-TriggerWidth=256
+at-TriggerWidth=255
+at-TriggerWidth
+
+at-TriggerWidthIsMultiplier=0
+at-TriggerWidthIsMultiplier=2
+at-TriggerWidthIsMultiplier=1
+at-TriggerWidthIsMultiplier
 
 ati0
 
-at&f
+atf
 
 atz
