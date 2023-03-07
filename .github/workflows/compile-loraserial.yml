@@ -28,7 +28,7 @@ jobs:
         run: arduino-cli core update-index
 
       - name: Install Arduino SAMD platform
-        run: arduino-cli core install arduino:samd
+        run: arduino-cli core install arduino:samd@1.8.13
 
       - name: Install SparkFun SAMD platforms
         run: arduino-cli core install SparkFun:samd@1.8.9
