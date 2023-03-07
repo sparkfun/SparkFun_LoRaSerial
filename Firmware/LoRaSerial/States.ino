@@ -988,7 +988,7 @@ void updateRadioState()
       //----------
       //Always check for link timeout
       //----------
-      if ((millis() - linkDownTimer) >= (P2P_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))
+      if ((millis() - linkDownTimer) >= (LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))
         //Break the link
         breakLink();
       break;
@@ -2486,7 +2486,7 @@ void updateRadioState()
         //Determine if the link has timed out
         vc = &virtualCircuitList[index];
         if ((vc->vcState != VC_STATE_LINK_DOWN) && (serverLinkBroken
-            || ((currentMillis - vc->lastTrafficMillis) > (VC_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))))
+            || ((currentMillis - vc->lastTrafficMillis) > (LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))))
         {
           if (index == VC_SERVER)
           {
