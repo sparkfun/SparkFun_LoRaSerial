@@ -2351,7 +2351,7 @@ PacketType rcvDatagram()
 // * Received datagramType
 // * DATAGRAM_DUPLICATE
 // * DATAGRAM_BAD
-PacketType validateDatagram(VIRTUAL_CIRCUIT * vc, PacketType datagramType, uint8_t ackNumber, uint16_t freeBytes)
+PacketType validateDatagram(VIRTUAL_CIRCUIT * vc, PacketType datagramType, uint8_t ackNumber, int freeBytes)
 {
   if (ackNumber != vc->rmtTxAckNumber)
   {
@@ -2389,12 +2389,12 @@ PacketType validateDatagram(VIRTUAL_CIRCUIT * vc, PacketType datagramType, uint8
   }
 
   //Verify that there is sufficient space in the serialTransmitBuffer
-  if (inCommandMode || ((sizeof(serialTransmitBuffer) - availableTXBytes()) < rxDataBytes))
+  if (inCommandMode || (freeBytes < rxDataBytes))
   {
     if (settings.debugReceive || settings.debugDatagrams)
     {
       systemPrintTimestamp();
-      systemPrintln("Insufficient space in the serialTransmitBuffer");
+      systemPrintln("Insufficient space in the receive buffer");
     }
     insufficientSpace++;
 
