@@ -721,6 +721,14 @@ void updateRadioState()
             triggerEvent(TRIGGER_RX_DATA);
 
             //Place the data in the serial output buffer
+            if (settings.debugSerial)
+            {
+              systemPrint("Moving ");
+              systemPrint(rxDataBytes);
+              systemPrintln(" from incomingBuffer to serialTransmitBuffer");
+              dumpBuffer(rxData, length);
+              outputSerialData(true);
+            }
             serialBufferOutput(rxData, rxDataBytes);
 
             //Transmit ACK
@@ -750,6 +758,16 @@ void updateRadioState()
           case DATAGRAM_REMOTE_COMMAND:
             triggerEvent(TRIGGER_RX_COMMAND);
 
+            //Debug the remote command operation
+            if (settings.debugSerial)
+            {
+              systemPrint("Moving ");
+              systemPrint(rxDataBytes);
+              systemPrintln(" from incomingBuffer to commandRXBuffer");
+              dumpBuffer(rxData, length);
+              outputSerialData(true);
+            }
+
             //Determine the number of bytes received
             length = 0;
             if ((commandRXHead + rxDataBytes) > sizeof(commandRXBuffer))
@@ -772,9 +790,16 @@ void updateRadioState()
           case DATAGRAM_REMOTE_COMMAND_RESPONSE:
             triggerEvent(TRIGGER_RX_COMMAND_RESPONSE);
 
-            //Print received data. This is blocking but we do not use the serialTransmitBuffer because we're in command mode (and it's not much data to print).
-            for (int x = 0 ; x < rxDataBytes ; x++)
-              Serial.write(rxData[x]);
+            //Print received data.
+            if (settings.debugSerial)
+            {
+              systemPrint("Moving ");
+              systemPrint(rxDataBytes);
+              systemPrintln(" from incomingBuffer to serialTransmitBuffer");
+              dumpBuffer(rxData, length);
+              outputSerialData(true);
+            }
+            serialBufferOutput(rxData, rxDataBytes);
 
             //Transmit ACK
             P2P_SEND_ACK(TRIGGER_TX_ACK);
