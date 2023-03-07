@@ -2,7 +2,7 @@
 
 LoRaSerial radios are very flexible. By default, the radio is looking for serial communication at 57600bps. Open the terminal of your choice and enter +++ and wait for an OK. The radio is now ready for an AT command.
 
-A PDF of *all* AT commands is available [here](img/LoRaSerial%20AT%20Commands%20v2.0.pdf). 
+A PDF of *all* AT commands is available [here](img/LoRaSerial%20AT%20Commands%20v2.0.pdf).
 
 Below is a brief list of commands:
 
@@ -11,9 +11,7 @@ Below is a brief list of commands:
 |+++         | Enter command mode                       |
 |AT          | Reports OK                               |
 |AT?         | Display help text                        |
-|ATA         | Get the current VC status                |
 |ATB         | Break the link                           |
-|ATC         | Establish VC connection for data         |
 |ATD         | Display the debug settings               |
 |ATF         | Restore factory settings                 |
 |ATG         | Generate new netID and encryption key    |
@@ -25,7 +23,6 @@ Below is a brief list of commands:
 |ATR         | Display radio settings                   |
 |ATS         | Display the serial settings              |
 |ATT         | Enter training mode                      |
-|ATV         | Display virtual circuit settings         |
 |ATW         | Save current settings to NVM             |
 |ATZ         | Reboot the radio                         |
 |AT-Param=xxx| Set parameter's value to xxx by name (Param)|
@@ -41,7 +38,7 @@ The commands are best discussed in groups:
 * [Info Commands](http://docs.sparkfun.com/SparkFun_LoRaSerial/at_commands/#info-commands)
 * Debug Commands
 
-A parameter is set using the **AT-** prefix, followed by the name of the command with an equals sign and the value to set. For example, sending **AT-Echo=1**** will enable serial echo. This setting can be stored in NVM (non-volatile memory) by sending the **ATW** command. To query a setting, send the AT command without a value and the device will respond with the current value. For example, sending **AT-FrequencyMax** will generate the response **928.000** followed by **OK**. 
+A parameter is set using the **AT-** prefix, followed by the name of the command with an equals sign and the value to set. For example, sending **AT-Echo=1**** will enable serial echo. This setting can be stored in NVM (non-volatile memory) by sending the **ATW** command. To query a setting, send the AT command without a value and the device will respond with the current value. For example, sending **AT-FrequencyMax** will generate the response **928.000** followed by **OK**.
 
 ## Radio Commands
 
@@ -73,7 +70,7 @@ A table of the subset of the common Radio Link Parameters is available [here](im
 | AT-MaxResends | Attempts before dropping packet
 | AT-NetID | Network ID
 | AT-NumberOfChannels | Divide available spectrum by this amount
-| AT-OperatingMode | Multipoint, P2P, or VC
+| AT-OperatingMode | Multipoint or P2P
 | AT-OverHeadtime | Additional ms before ACK timeout occurs
 | AT-PreambleLength | Set LoRa preamble length
 | AT-SelectLedUse | Define LED behavior
@@ -89,14 +86,14 @@ A table of the subset of the common Radio Link Parameters is available [here](im
 *Table of Radio Commands*
 
 
-* **AirSpeed** - This is the effective rate in bits-per-second at which data is sent over the air. In general, the lower the airspeed, the greater the transmission distance. LoRaSerial uses buffers to receive and send serial over USB or UART at the *SerialSpeed* and begins sending that data in chunks over the air at the AirSpeed. The *AirSpeed* setting does not have to match the SerialSpeed. It is recommended to limit the total incoming data to match the airspeed. For example, regularly sending a group of 300 bytes with an air speed of 4800 bps (480 bytes per second) will allow the radio sufficient bandwidth. Sending 1,000 bytes per second with an air speed of 4800 bps (480 bytes per second) will within a few seconds overwhelm the link leading to buffer overflow and data loss. The default is 4800bps. Allowed values are 400, 1200, 2400, 4800, 9600, and 19200 bits per second. Changing the AirSpeed value overwrites the following 5 parameters: 
+* **AirSpeed** - This is the effective rate in bits-per-second at which data is sent over the air. In general, the lower the airspeed, the greater the transmission distance. LoRaSerial uses buffers to receive and send serial over USB or UART at the *SerialSpeed* and begins sending that data in chunks over the air at the AirSpeed. The *AirSpeed* setting does not have to match the SerialSpeed. It is recommended to limit the total incoming data to match the airspeed. For example, regularly sending a group of 300 bytes with an air speed of 4800 bps (480 bytes per second) will allow the radio sufficient bandwidth. Sending 1,000 bytes per second with an air speed of 4800 bps (480 bytes per second) will within a few seconds overwhelm the link leading to buffer overflow and data loss. The default is 4800bps. Allowed values are 400, 1200, 2400, 4800, 9600, and 19200 bits per second. Changing the AirSpeed value overwrites the following 5 parameters:
 
   + HeartbeatTimeout
   + RadioBandwidth
   + RadioCodingRate
   + RadioSpreadFactor
   + TxToRxUsec
-  
+
   After AirSpeed is set, it is possible to modify any of the above five parameters. Note that AirSpeed is just an easy way to set the five parameters to known values. AirSpeed is not a parameter that is transmitted during training, merely a convenient way to set the five parameters in one step.
 
 * **AutoTune** - Enabling autotune will cause the radio to tune the receiver frequency based on the calculated frequency error. This is used for testing and is not recommended for general use.
@@ -109,7 +106,7 @@ A table of the subset of the common Radio Link Parameters is available [here](im
 
 * **DataScrambling** - Enabling data scrambling will send all packets through an *[IBM data whitening](https://www.nxp.com/docs/en/application-note/AN5070.pdf)* process. This removes long sets of 1s or 0s from the packet to reduce DC bias during transmission. This is generally not needed and is not recommended when AES encryption is enabled. By default, scrambling is turned off.
 
-* **EnableCRC16** - When CRC is enabled, any packet that does not have a valid CRC will be ignored. The SX1276 IC has CRC at the radio interface, but because of RF noise, the number of corrupt packets is noticeable. This extra layer ensures packet delivery. Enabling CRC will add two bytes to each frame. 
+* **EnableCRC16** - When CRC is enabled, any packet that does not have a valid CRC will be ignored. The SX1276 IC has CRC at the radio interface, but because of RF noise, the number of corrupt packets is noticeable. This extra layer ensures packet delivery. Enabling CRC will add two bytes to each frame.
 
 * **EncryptData** - By default all packets are encrypted using 128-bit AES GCM. Disabling this will not achieve a greater range or bandwidth. Disabling encryption will allow all packets to be seen in clear text via an SDR or other monitoring device.
 
@@ -119,9 +116,9 @@ A table of the subset of the common Radio Link Parameters is available [here](im
 
 * **FrequencyHop** - The LoRaSerial implements frequency hopping spread spectrum (FHSS) by default to meet FCC Part 15.247 compliance. Turning off frequency hopping is not recommended unless You Know What You’re Doing™.
 
-* **FrequencyMin/FrequencyMax** - These are the lower and upper bounds for the allowed transmission frequencies in megahertz. By default, this is 902.0 to 928.0. 
+* **FrequencyMin/FrequencyMax** - These are the lower and upper bounds for the allowed transmission frequencies in megahertz. By default, this is 902.0 to 928.0.
 
-* **HeartbeatTimeout** - Heartbeats are transmitted on a regular basis by the server and in point-to-point and virtual circuit modes by the clients. This parameter specifies the time in milliseconds during which a HEARTBEAT frame should be transmitted. If a HEARTBEAT frame is not received within three (3) times this interval then the point-to-point or virtual circuit link is broken. The default heartbeatTimeout is 5000 milliseconds (5 seconds).
+* **HeartbeatTimeout** - Heartbeats are transmitted on a regular basis by the server and in point-to-point mode by the clients. This parameter specifies the time in milliseconds during which a HEARTBEAT frame should be transmitted. If a HEARTBEAT frame is not received within three (3) times this interval then the point-to-point link is broken. The default heartbeatTimeout is 5000 milliseconds (5 seconds).
 
 * **MaxDwellTime** - The number of milliseconds of transmission allowed on a given frequency before hopping intra-packet. The default is 400ms to be compliant with FCC Part 15.247. This means the radio will change its frequency to the next channel in the hop table during the packet transmission. Note this is the maximum dwell time; depending on the air speed setting the radio may have a hopping period that is shorter than the dwell time.
 
@@ -131,13 +128,11 @@ A table of the subset of the common Radio Link Parameters is available [here](im
 
 * **NumberOfChannels** - The available spectrum (default is 902MHz to 928MHz) is divided by this number of channels to create the channel spacing and allowed frequency list (aka the ‘hop table’). The default is 50 channels to meet FCC Part 15.247 compliance and may be changed to meet local regulations.
 
-* **OperatingMode** - The radios can operate in one of three different modes: Multipoint, Point-To-Point, and Virtual Circuit. See [Operating Modes](http://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/) for more information.
+* **OperatingMode** - The radios can operate in one of two different modes: Multipoint and Point-To-Point. See [Operating Modes](http://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/) for more information.
 
   + MODE_MULTIPOINT (0) - A single server with multiple clients. All radios may broadcast to all other radios, but data is not guaranteed to be received by the other radios. This mode is great when real-time transmission is necessary and the application can tolerate some loss of data.
 
   + MODE_POINT_TO_POINT (1, default) - Communications between two LoRaSerial radios with guaranteed delivery of frames or the link breaks.
-
-  + MODE_VIRTUAL_CIRCUIT (2) - A single server with multiple clients that supports multipoint communications with guaranteed delivery or the link breaks. This mode uses a special protocol over the serial link to be able to specify the destination radio for transmission and the receive radio for reception. More information is available [here](http://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/#virtual-circuits).
 
 * **OverheadTime** - The number of milliseconds to add to ACK and datagram times before ACK timeout occurs. The default is 10 milliseconds.
 
@@ -145,7 +140,7 @@ A table of the subset of the common Radio Link Parameters is available [here](im
 
 * **SelectLedUse** - Select how to display information on the LEDs. See [LED States](http://docs.sparkfun.com/SparkFun_LoRaSerial/led_states/) for more information.
 
-* **Server** - Enable (1) or disable (0) the server mode for training and for multipoint or virtual circuit operation. The default is client mode (0). The radio designated as Server synchronizes the network. A server is required for Multipoint, Virtual Circuit, and Training modes.
+* **Server** - Enable (1) or disable (0) the server mode for training and for multipoint operation. The default is client mode (0). The radio designated as Server synchronizes the network. A server is required for Multipoint and Training modes.
 
 * **SpreadFactor** - The spread factor used during LoRa transmissions. It is recommended to use the airspeed setting unless you are very aware of the consequences. This setting is overwritten if the AirSpeed setting is changed. In general, a higher spread factor provides a longer range, but a lower overall data rate. Allowed spread factors: 6 to 12 (inclusive).
 
@@ -153,7 +148,7 @@ A table of the subset of the common Radio Link Parameters is available [here](im
 
 * **TxPower** - The LoRaSerial uses a high-power 1W transceiver. By default, all transmissions are sent at the highest possible power of 30dBm which is compliant with FCC Part 15.247 when used with an antenna that has a gain of 6dBi or less. If your local regulations require lower transmission power this setting can be lowered. Allowed values are 30 down to 14dBm. Note: The chosen setting is the actual measured transmit power at the SMA connector. An internal lookup table sets the radio settings accordingly.
 
-* **TxToRxUsec** - This is the number of microseconds between when the transmitter completes a transmission, and when the receiver completes the reception of that packet. For lower airspeeds, this value increases and generally tracks to 1 symbol time. It is recommended to use the airspeed setting unless you are very aware of the consequences. This setting is overwritten if the AirSpeed setting is changed. 
+* **TxToRxUsec** - This is the number of microseconds between when the transmitter completes a transmission, and when the receiver completes the reception of that packet. For lower airspeeds, this value increases and generally tracks to 1 symbol time. It is recommended to use the airspeed setting unless you are very aware of the consequences. This setting is overwritten if the AirSpeed setting is changed.
 
 * **VerifyRxNetID** - Enable (1) or disable (0) the verification of the netID value during reception. The default is enabled (1).
 
@@ -201,11 +196,8 @@ A table of the subset of the common Radio Link Parameters is available [here](im
 | ATI8 | Display system unique ID
 | ATI9 | Display the maximum datagram size
 | ATI10 | Display radio metrics
-| ATI11 | Return myVc value
-| ATI12 | Display the VC details
 | ATI13 | Display the SX1276 registers
 | ATI14 | Dump the radioTxBuffer
-| ATI15 | Dump the NVM unique ID table
 
 * **ATI0** - List all available AT commands.
 
@@ -223,21 +215,15 @@ A table of the subset of the common Radio Link Parameters is available [here](im
 
 * **ATI7** - Displays the current channel number. For example: "29".
 
-* **ATI8** - Displays the unique 32-character, 16-byte, 128-bit value marked into the SAMD21 microcontroller. Used during Virtual Circuit mode to assign destination IDs. For example: "5BCEDAE13630595020312E32102317FF".
+* **ATI8** - Displays the unique 32-character, 16-byte, 128-bit value marked into the SAMD21 microcontroller. For example: "5BCEDAE13630595020312E32102317FF".
 
 * **ATI9** - Displays the maximum number of bytes that can be transmitted. Different radio settings will use fewer or a greater number of bytes for overhead. For example: "249".
 
 * **ATI10** - Displays a large number of metrics related to the radio link including datagrams sent, link uptime, ACK counts, buffer states, etc.
 
-* **ATI11** - Displays the assigned simplified Virtual Circuit ID assigned by the server. For example, "myVc: 3".
-
-* **ATI12** - Displays the Virtual Circuit state of this radio as it relates to the network. 
-
 * **ATI13** - Displays the contents of all the registers in the SX1276 LoRa transceiver.
 
 * **ATI14** - Displays the contents of the current transmit buffer.
-
-* **ATI15** - Displays a list of all the unique IDs of the known clients used in Virtual Circuit mode. 
 
 ## Remote Training
 
@@ -245,7 +231,7 @@ Currently, only one remote command is supported - **RTT**. Issuing this command 
 
 This command is generally used to remotely configure a radio. First, the **RTT** command is issued, the local radio is configured (including enabling Server), then the **ATT** is issued to push the local radio into training. Because the local radio is the server, its settings are set to the remote radio. The remote radio will reset and start with these newly issued settings. The local radio needs to reset with an **ATZ** command and the link should be re-established with new settings. Below is a command script to achieve this remote configuration. We assume the radios are currently linked at the start of the script.
 
-*Note:* RTT is only supported in P2P and VC modes.
+*Note:* RTT is only supported in P2P mode.
 
     +++
     RTT

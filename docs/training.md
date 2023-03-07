@@ -35,11 +35,11 @@ If a radio is set for P2P mode, entering training mode as a server will generate
 
 ## Factory Reset
 
-Press and hold the training button for 15 seconds to Factory Reset the radio. Release the button when all the LEDs blink quickly three times during the reset.  Just before reset the NVM is erased and LoRaSerial returns to factory settings. Note: You can also return a radio to factory defaults using the **ATF** command.
+Press and hold the training button for 10 seconds to Factory Reset the radio. Release the button when all the LEDs blink quickly three times during the reset.  Just before reset the NVM is erased and LoRaSerial returns to factory settings. Note: You can also return a radio to factory defaults using the **ATF** command.
 
 ## Temporary Training Server
 
-It is possible to use temporary training servers for multipoint mode. The only difference between a temporary server and a regular server is that the parameters are not saved to the non-volatile storage using the ATW command before exiting command mode.
+It is possible to use a temporary training server for multipoint mode. The only difference between a temporary server and a regular server is that the parameters are not saved to the non-volatile storage of the server using the ATW command before exiting command mode.
 
 ## Example: Training a Batch of Radios
 
