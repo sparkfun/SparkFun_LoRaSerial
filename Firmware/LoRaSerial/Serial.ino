@@ -35,6 +35,10 @@ void serialBufferOutput(uint8_t * data, uint16_t dataLength)
 {
   int length;
 
+  //Make sure there is enough room in the buffer
+  if ((sizeof(serialTransmitBuffer) - availableTXBytes()) < (dataLength + 32))
+    outputSerialData(true);
+
   length = 0;
   if ((txHead + dataLength) > sizeof(serialTransmitBuffer))
   {
@@ -55,6 +59,10 @@ void serialOutputByte(uint8_t data)
 {
   if (printerEndpoint == PRINT_TO_SERIAL)
   {
+    //Make sure there is enough room in the buffer
+    if ((sizeof(serialTransmitBuffer) - availableTXBytes()) < 32)
+      outputSerialData(true);
+
     //Add this byte to the serial output buffer
     serialTransmitBuffer[txHead++] = data;
     txHead %= sizeof(serialTransmitBuffer);
