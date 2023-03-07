@@ -224,11 +224,11 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI8 - Display system unique ID");
         systemPrintln("  ATI9 - Display the maximum datagram size");
         systemPrintln("  ATI10 - Display radio metrics");
-        systemPrintln("  ATI11 - Return myVc value");
-        systemPrintln("  ATI12 - Display the VC details");
-        systemPrintln("  ATI13 - Display the SX1276 registers");
-        systemPrintln("  ATI14 - Dump the radioTxBuffer");
-        systemPrintln("  ATI15 - Dump the NVM unique ID table");
+
+        //Virtual circuit information commands
+        systemPrintln("  ATI30 - Return myVc value");
+        systemPrintln("  ATI31 - Display the VC details");
+        systemPrintln("  ATI32 - Dump the NVM unique ID table");
         return true;
 
       case ('0'): //ATI0 - Show user settable parameters
@@ -601,14 +601,22 @@ bool commandAT(const char * commandString)
         systemPrintln("    State History");
         displayRadioStateHistory();
         return true;
+    }
+  }
+  if ((commandString[2] == 'I') && (commandString[3] == '3') && (commandLength == 5))
+  {
+    switch (commandString[4])
+    {
+      default:
+        return false;
 
-      case ('1'): //ATI11 - Return myVc value
+      case ('0'): //ATI30 - Return myVc value
         systemPrintln();
         systemPrint("myVc: ");
         systemPrintln(myVc);
         return true;
 
-      case ('2'): //ATI12 - Display the VC details
+      case ('1'): //ATI31 - Display the VC details
         systemPrintTimestamp();
         systemPrint("VC ");
         systemPrint(cmdVc);
@@ -706,16 +714,7 @@ bool commandAT(const char * commandString)
         }
         return true;
 
-      case ('3'): //ATI13 - Display the SX1276 registers
-        printSX1276Registers();
-        return true;
-
-      case ('4'): //ATI14 - Dump the radioTxBuffer
-        systemPrintln("radioTxBuffer:");
-        dumpCircularBuffer(radioTxBuffer, radioTxTail, sizeof(radioTxBuffer), availableRadioTXBytes());
-        return true;
-
-      case ('5'): //ATI15 - Dump the NVM unique ID table
+      case ('2'): //ATI32 - Dump the NVM unique ID table
         systemPrintln("NVM Unique ID Table");
         for (vcIndex = 0; vcIndex < MAX_VC; vcIndex++)
         {
@@ -756,6 +755,10 @@ bool commandAT(const char * commandString)
           systemWrite(':');
           systemPrintln(text);
         }
+        return true;
+
+      case ('1'): //ATI51 - Display the SX1276 registers
+        printSX1276Registers();
         return true;
     }
   }
