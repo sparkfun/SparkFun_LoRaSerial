@@ -358,6 +358,16 @@ at-InvertCts=2
 at-InvertCts=1
 at-InvertCts
 
+at-RTSOffBytes=0
+at-RTSOffBytes=1025
+at-RTSOffBytes=1024
+at-RTSOffBytes=32
+
+at-RTSOnBytes=0
+at-RTSOnBytes=1025
+at-RTSOnBytes=1024
+at-RTSOnBytes=256
+
 at-InvertRts=0
 at-InvertRts=2
 at-InvertRts=1
