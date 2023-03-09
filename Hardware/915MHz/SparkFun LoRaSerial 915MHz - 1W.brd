@@ -7140,7 +7140,7 @@ These are the free and generally easy to produce 4-layer PCB design rules. You c
 <wire x1="9.283" y1="1.27" x2="8.013" y2="2.54" width="0.1778" layer="1"/>
 <wire x1="26.1239" y1="11.6459" x2="18.161" y2="3.683" width="0.1778" layer="2"/>
 </signal>
-<signal name="D30/CTS-I_LV">
+<signal name="D30/!CTS!-I_LV">
 <contactref element="U2" pad="37"/>
 <contactref element="R14" pad="1"/>
 <contactref element="Q1" pad="2"/>
@@ -7180,7 +7180,7 @@ These are the free and generally easy to produce 4-layer PCB design rules. You c
 <signal name="D22">
 <contactref element="U2" pad="21"/>
 </signal>
-<signal name="D38/RTS-O">
+<signal name="D38/!RTS!-O">
 <contactref element="U2" pad="22"/>
 <contactref element="J5" pad="5"/>
 <wire x1="23.65" y1="18.22" x2="23.65" y2="16.5126" width="0.1778" layer="1"/>
@@ -7275,7 +7275,7 @@ These are the free and generally easy to produce 4-layer PCB design rules. You c
 <wire x1="1.27" y1="12.7" x2="3.175" y2="10.795" width="0.1778" layer="16"/>
 <wire x1="3.175" y1="10.795" x2="3.175" y2="9.652" width="0.1778" layer="16"/>
 </signal>
-<signal name="CTS-I_HV">
+<signal name="!CTS!-I_HV">
 <contactref element="J5" pad="4"/>
 <contactref element="Q1" pad="3"/>
 <contactref element="R15" pad="1"/>
