@@ -132,7 +132,19 @@ For advanced users, the 915/868MHz modules feature a U.FL connector. This can be
 
 ### Power Selection
 
-LoRaSerial uses an onboard 'ideal' MOSFET to select the high voltage source between the USB connector and the VCC/GND of the UART connector. This allows dual power supplies to be applied without fear of back-feeding a higher voltage onto a lower voltage system. RF path.
+LoRaSerial uses an onboard 'ideal' MOSFET to select the high voltage source between the USB connector and the VCC/GND of the UART connector. This allows dual power supplies to be applied without fear of back-feeding a higher voltage onto a lower voltage system.
+
+## Enclosure
+
+The enclosure is industrial 3D SLA printed with an effective IPX rating of IP52 (dust and waterdrop protected).
+
+The enclosure is secured with two screws on either side of the unit. The top cover can be removed to expose the inner assembly.
+
+The enclosure includes mounting holes for wall or rack mounting.
+
+![LoRaSerial Enclosure UV Exposed](img/SparkFun%20LoRaSerial%203D%20Printed%20Enclosure.png)
+
+**Note:** Leaving a LoRaSerial unit exposed to daylight outdoors or near a window will cause the cover to darken over a period of months. This will not affect the performance of the radio or the enclosure.
 
 ## Power Usage
 
