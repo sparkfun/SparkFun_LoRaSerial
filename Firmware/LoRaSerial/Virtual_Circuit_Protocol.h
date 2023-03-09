@@ -64,8 +64,6 @@
 #define VC_HB_CHANNEL       (VC_HB_CHANNEL_TIMER + sizeof(uint16_t))
 #define VC_HB_END           (VC_HB_CHANNEL + sizeof(uint8_t))
 
-#define VC_LINK_BREAK_MULTIPLIER    3 //Number of missing HEARTBEAT timeouts
-
 //ASCII characters
 #define START_OF_VC_SERIAL  0x02      //From ASCII table - Start of Text
 

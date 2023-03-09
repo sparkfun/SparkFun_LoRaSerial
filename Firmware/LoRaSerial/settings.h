@@ -43,7 +43,7 @@ typedef enum
 
 RadioStates radioState = RADIO_RESET;
 
-#define P2P_LINK_BREAK_MULTIPLIER       3
+#define LINK_BREAK_MULTIPLIER           3
 
 typedef struct _RADIO_STATE_ENTRY
 {

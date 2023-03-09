@@ -721,6 +721,14 @@ void updateRadioState()
             triggerEvent(TRIGGER_RX_DATA);
 
             //Place the data in the serial output buffer
+            if (settings.debugSerial)
+            {
+              systemPrint("Moving ");
+              systemPrint(rxDataBytes);
+              systemPrintln(" from incomingBuffer to serialTransmitBuffer");
+              dumpBuffer(rxData, length);
+              outputSerialData(true);
+            }
             serialBufferOutput(rxData, rxDataBytes);
 
             //Transmit ACK
@@ -750,6 +758,16 @@ void updateRadioState()
           case DATAGRAM_REMOTE_COMMAND:
             triggerEvent(TRIGGER_RX_COMMAND);
 
+            //Debug the remote command operation
+            if (settings.debugSerial)
+            {
+              systemPrint("Moving ");
+              systemPrint(rxDataBytes);
+              systemPrintln(" from incomingBuffer to commandRXBuffer");
+              dumpBuffer(rxData, length);
+              outputSerialData(true);
+            }
+
             //Determine the number of bytes received
             length = 0;
             if ((commandRXHead + rxDataBytes) > sizeof(commandRXBuffer))
@@ -772,9 +790,16 @@ void updateRadioState()
           case DATAGRAM_REMOTE_COMMAND_RESPONSE:
             triggerEvent(TRIGGER_RX_COMMAND_RESPONSE);
 
-            //Print received data. This is blocking but we do not use the serialTransmitBuffer because we're in command mode (and it's not much data to print).
-            for (int x = 0 ; x < rxDataBytes ; x++)
-              Serial.write(rxData[x]);
+            //Print received data.
+            if (settings.debugSerial)
+            {
+              systemPrint("Moving ");
+              systemPrint(rxDataBytes);
+              systemPrintln(" from incomingBuffer to serialTransmitBuffer");
+              dumpBuffer(rxData, length);
+              outputSerialData(true);
+            }
+            serialBufferOutput(rxData, rxDataBytes);
 
             //Transmit ACK
             P2P_SEND_ACK(TRIGGER_TX_ACK);
@@ -963,7 +988,7 @@ void updateRadioState()
       //----------
       //Always check for link timeout
       //----------
-      if ((millis() - linkDownTimer) >= (P2P_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))
+      if ((millis() - linkDownTimer) >= (LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))
         //Break the link
         breakLink();
       break;
@@ -2461,7 +2486,7 @@ void updateRadioState()
         //Determine if the link has timed out
         vc = &virtualCircuitList[index];
         if ((vc->vcState != VC_STATE_LINK_DOWN) && (serverLinkBroken
-            || ((currentMillis - vc->lastTrafficMillis) > (VC_LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))))
+            || ((currentMillis - vc->lastTrafficMillis) > (LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))))
         {
           if (index == VC_SERVER)
           {
@@ -2887,7 +2912,10 @@ void breakLink()
   }
 
   //Flush the buffers
-  resetSerial();
+  if (!inCommandMode)
+    resetSerial();
+  radioTxHead = radioTxTail;
+  endOfTxData = &outgoingPacket[headerBytes];
 
   //Reset the radio and the link
   triggerEvent(TRIGGER_RADIO_RESET);
@@ -3052,7 +3080,11 @@ void vcBreakLink(int8_t vcIndex)
   //Flush the buffers
   outputSerialData(true);
   if (vcIndex == myVc)
+  {
     resetSerial();
+    radioTxHead = radioTxTail;
+    endOfTxData = &outgoingPacket[headerBytes];
+  }
 }
 
 //Place VC in LINK-UP state since it is receiving HEARTBEATs from the remote radio
