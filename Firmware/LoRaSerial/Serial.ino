@@ -293,12 +293,13 @@ uint8_t readyOutgoingCommandPacket(uint16_t offset)
 //Scan for escape characters
 void updateSerial()
 {
+  int bufferSpace;
   uint16_t previousHead;
   int x;
 
   //Assert RTS when there is enough space in the receive buffer
   if ((!rtsAsserted) && (availableRXBytes() < (sizeof(serialReceiveBuffer) / 2))
-      && (availableTXBytes() < (sizeof(serialTransmitBuffer) / 4)))
+      && (availableTXBytes() <= RTS_ON_BYTES))
     updateRTS(true);
 
   //Attempt to empty the serialTransmitBuffer
@@ -306,7 +307,8 @@ void updateSerial()
 
   //Look for local incoming serial
   previousHead = rxHead;
-  while (rtsAsserted && arch.serialAvailable() && (transactionComplete == false))
+  bufferSpace = sizeof(serialReceiveBuffer) - 1 - availableRXBytes();
+  while (bufferSpace-- && arch.serialAvailable() && (transactionComplete == false))
   {
     blinkSerialRxLed(true); //Turn on LED during serial reception
 
@@ -314,14 +316,14 @@ void updateSerial()
     petWDT();
     if (timeToHop == true) hopChannel();
 
-    //Deassert RTS when the buffer gets full
-    if (rtsAsserted && (sizeof(serialReceiveBuffer) - availableRXBytes()) < 32)
-      updateRTS(false);
-
     byte incoming = systemRead();
 
     serialReceiveBuffer[rxHead++] = incoming; //Push char to holding buffer
     rxHead %= sizeof(serialReceiveBuffer);
+
+    //Deassert RTS when the buffer gets full
+    if (rtsAsserted && (sizeof(serialReceiveBuffer) - availableRXBytes()) <= settings.rtsOffBytes)
+      updateRTS(false);
   } //End Serial.available()
   blinkSerialRxLed(false); //Turn off LED
 

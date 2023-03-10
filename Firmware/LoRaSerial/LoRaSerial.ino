@@ -82,6 +82,9 @@ const int FIRMWARE_VERSION_MINOR = 0;
 #define ENABLE_DEVELOPER false
 #endif  //ENABLE_DEVELOPER
 
+#define SERIAL_RX_BUFFER_SIZE     1024
+#define RTS_ON_BYTES              (SERIAL_RX_BUFFER_SIZE / 4)
+
 #include "settings.h"
 
 //Hardware connections
@@ -195,7 +198,7 @@ const uint8_t responseDelayDivisor = 4; //Add on to max response time after pack
 //Buffer to receive serial data from the USB or serial ports
 uint16_t rxHead = 0;
 uint16_t rxTail = 0;
-uint8_t serialReceiveBuffer[1024];
+uint8_t serialReceiveBuffer[SERIAL_RX_BUFFER_SIZE];
 
 //Buffer to store bytes for transmission via the long range radio
 uint16_t radioTxHead = 0;

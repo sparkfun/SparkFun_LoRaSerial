@@ -445,6 +445,10 @@ typedef struct struct_settings {
   uint16_t serialTimeoutBeforeSendingFrame_ms = 50; //Send partial buffer if time expires
   bool echo = false; //Print locally inputted serial
   bool flowControl = false; //Enable the use of CTS/RTS flow control signals
+
+  uint16_t rtsOffBytes = 32; //Number of free bytes in serialReceiveBuffer when RTS is deasserted
+  uint16_t rtsOnBytes = RTS_ON_BYTES; //Number of free bytes in serialReceiveBuffer when RTS is asserted
+
 #if (ENABLE_DEVELOPER == true)
 #define WAIT_SERIAL_DEFAULT     true
 #else   //ENABLE_DEVELOPER
