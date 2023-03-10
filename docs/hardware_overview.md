@@ -53,12 +53,13 @@ The pinout is as follows:
 
 #### Flow Control
 
+![Flow control on the SAMD21](img/SAMD21%20Flow%20control.png)
+
+If flow control is enabled, LoRaSerial will send data when its CTS pin is driven low (the host system is telling the radio to transmit). If flow control is enabled, LoRaSerial will drive its RTS low if its serial buffer is full (the radio is telling the host system to hold its horses). CTS and RTS pins are only exposed on the UART connector but if flow control is enabled, the UART flow control pins will apply to both USB and serial data streams. Internal pull-ups are used so if flow control is enabled, RTS and CTS must not be left floating. By default, flow control is turned off.
+
 Hardware flow control applies to both the UART connection and the USB connector but in slightly different ways. 
 
-If Flow Control is enabled, the UART will use standard CTS and RTS pins to control the flow. If LoRaSerial is running low on serial buffer space, and Flow Control is enabled, it will pull RTS low to indicate to the host to refrain from sending data to LoRaSerial. 
-
 The USB connection uses a concept called backpressure. It is not affected by the [FlowControl setting](http://docs.sparkfun.com/SparkFun_LoRaSerial/at_commands/#serial-commands) and cannot be disabled. If LoRaSerial is not able to read the incoming data fast enough, the USB driver will indicate to the host’s operating system that the data has not been consumed. Depending on the application, data will either be paused or lost. 
-
 
 ![STRSVR Buffering Serial Data](img/RTKLIB%20STRSVR%20Buffering%20Data.png)
 

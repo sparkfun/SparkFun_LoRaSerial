@@ -169,7 +169,9 @@ A table of the subset of the common Radio Link Parameters is available [here](im
 
 * **Echo** - By default, the radio will not echo the incoming serial. This is helpful at times if a user is typing data directly into a terminal. During AT configuration echo is turned on regardless of this setting.
 
-* **FlowControl** - If flow control is enabled, the radio will not print data if CTS is low (the host is telling the radio to hold its horses). If flow control is enabled, the radio will pull RTS low if its serial buffer is full (the radio is telling the host to hold its horses). CTS and RTS pins are only exposed on the UART connector but apply to both USB and serial data streams. By default, flow control is turned off. Internal pull-ups are used so RTS and CTS can be left floating if not used.
+![Flow control on the SAMD21](img/SAMD21%20Flow%20control.png)
+
+* **FlowControl** - If flow control is enabled, LoRaSerial will send data when its CTS pin is driven low (the host system is telling the radio to transmit). If flow control is enabled, LoRaSerial will drive its RTS low if its serial buffer is full (the radio is telling the host system to hold its horses). CTS and RTS pins are only exposed on the UART connector but if flow control is enabled, the UART flow control pins will apply to both USB and serial data streams. Internal pull-ups are used so if flow control is enabled, RTS and CTS must not be left floating. By default, flow control is turned off.
 
 * **InvertCts** - By default, InvertCts is false and CTS is high when data is allowed to flow. Enable InvertCts to do the opposite.
 
