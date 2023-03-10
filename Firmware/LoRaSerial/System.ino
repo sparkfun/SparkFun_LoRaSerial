@@ -271,24 +271,25 @@ void updateButton()
     if (buttonWasPressed)
     {
       deltaTime = millis() - buttonPressedTime;
+
+      //Check for reset to factory settings
+      if (deltaTime >= trainButtonFactoryResetTime)
+      {
+        //Erase the EEPROM
+        nvmErase();
+
+        //Reboot the radio
+        commandReset();
+      }
+
       if (!buttonPressed)
       {
         //Button just released
         settings = originalSettings;
 
-        //Check for reset to factory settings
-        if (deltaTime >= trainButtonFactoryResetTime)
-        {
-          //Erase the EEPROM
-          nvmErase();
-
-          //Reboot the radio
-          commandReset();
-        }
-
         //Starting training or exiting training via the button is only possible
         //when the radio is not in command mode!
-        else if (!inCommandMode)
+        if (!inCommandMode)
         {
           //Check for server training request
           if (deltaTime >= trainButtonServerTime)
@@ -1098,6 +1099,9 @@ void buttonLeds()
 void updateLeds()
 {
   static uint8_t previousLedUse;
+
+  //If training button is being pressed, LEDs are being updated by that function
+  if (trainBtn != NULL && trainBtn->read()) return;
 
   //When changing patterns, start with the LEDs off
   if (previousLedUse != settings.selectLedUse)

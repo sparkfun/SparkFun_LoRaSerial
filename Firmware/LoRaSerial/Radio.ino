@@ -1682,6 +1682,7 @@ PacketType rcvDatagram()
   CONTROL_U8 rxControl;
   VIRTUAL_CIRCUIT * vc;
   VC_RADIO_MESSAGE_HEADER * vcHeader;
+  int packetRSSI = -200;
 
   radioCallHistory[RADIO_CALL_rcvDatagram] = millis();
 
@@ -1704,7 +1705,7 @@ PacketType rcvDatagram()
   {
     rxSuccessMillis = rcvTimeMillis;
     triggerEvent(TRIGGER_RX_SPI_DONE);
-    rssi = radio.getRSSI();
+    packetRSSI = radio.getRSSI();
   }
   else
   {
@@ -2341,6 +2342,9 @@ PacketType rcvDatagram()
   //Process the packet
   datagramsReceived++;
   linkDownTimer = millis();
+
+  //If we've made it this far, packet is valid. Assign RSSI.
+  rssi = packetRSSI;
 
   //Blink the RX LED
   blinkRadioRxLed(true);

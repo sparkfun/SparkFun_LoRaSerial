@@ -25,7 +25,7 @@ If training needs to be canceled, press and release the training button before t
 
 ## Training as Server
 
-Press and hold the training button until the blue LED starts to blink then release the button. The cylon pattern pattern appears on the green LEDs. In this mode, the radio will respond to any training client with its settings. The radio will not exit this mode unless it is powered cycled or the **ATZ** reset command is issued.
+Press and hold the training button until the blue LED starts to blink then release the button. The Cylon pattern appears on the green LEDs. In this mode, the radio will respond to any training client with its settings. The radio will not exit this mode unless it is powered cycled or the **ATZ** reset command is issued.
 
 This mode (Training as Server) is convenient when multiple clients need to be paired to a server. For example, when a device is configured to be a Server in Multipoint mode, putting it in *Training as Server* mode will allow a user to put another radio into *Training as Client*. The radios will communicate and the Server radio will configure the client radio. Any number of client radios can be quickly and conveniently configured this way.
 
@@ -35,11 +35,11 @@ If a radio is set for P2P mode, entering training mode as a server will generate
 
 ## Factory Reset
 
-Press and hold the training button for 15 seconds to Factory Reset the radio. Release the button when all the LEDs blink quickly three times during the reset.  Just before reset the NVM is erased and LoRaSerial returns to factory settings. Note: You can also return a radio to factory defaults using the **ATF** command.
+Press and hold the training button for 10 seconds to Factory Reset the radio. Release the button when all the LEDs blink quickly three times during the reset.  Just before reset the NVM is erased and LoRaSerial returns to factory settings. Note: You can also return a radio to factory defaults using the **ATF** command.
 
 ## Temporary Training Server
 
-It is possible to use temporary training servers for multipoint mode. The only difference between a temporary server and a regular server is that the parameters are not saved to the non-volatile storage using the ATW command before exiting command mode.
+It is possible to use a temporary training server for multipoint mode. The only difference between a temporary server and a regular server is that the parameters are not saved to the non-volatile storage of the server using the ATW command before exiting command mode.
 
 ## Example: Training a Batch of Radios
 
@@ -97,3 +97,18 @@ Other optional sets of training parameters may be communicated between the radio
 * Trigger parameters
 
 For more information about the various radio settings, please see [AT Commands](http://docs.sparkfun.com/SparkFun_LoRaSerial/at_commands/).
+
+## Security Considerations
+
+**Summary:** We recommend training radios located next to each other, in a secure area with antennas removed, to limit the amount of RF emissions and potential security issues. If security is a great concern, do not use training. Instead, AT commands can be used to set the settings between radios including AES keys.
+
+During training, the Server will broadcast sensitive information including AES keys. Additionally, all radios used in training will use the default, published training settings. These include the following important parameters:
+
+* 14dBm lower power transmission
+* Default training frequency and hop tables
+* Default training AES key
+
+By default, radios will use the lowest power transmission possible of 14dBm. This is to limit RF eavesdropping. While data is encrypted and frequency hopping is used, the key *is* publicly published, and the hop table could be deduced. In theory, the transmitted parameters, including link keys that are trained to the Client could be obtained. 
+
+If desired, the AES key used during training can be assigned to all units either using training (note the security issue) or via AT commands. This allows future training to be secure.
+

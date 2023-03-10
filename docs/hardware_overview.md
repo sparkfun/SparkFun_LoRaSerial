@@ -129,3 +129,39 @@ Two GPIOs capable of ADC are broken out for potential future use.
 *Zero ohm jumper resistor and U.FL connector*
 
 For advanced users, the 915/868MHz modules feature a U.FL connector. This can be helpful if you need to embed the radio in an enclosure and need an external bulkhead RP-SMA connector. To use the U.FL connection, desolder the 0402 0Ω jumper and move it to the U.FL's RF path.
+
+### Power Selection
+
+LoRaSerial uses an onboard 'ideal' MOSFET to select the high voltage source between the USB connector and the VCC/GND of the UART connector. This allows dual power supplies to be applied without fear of back-feeding a higher voltage onto a lower voltage system.
+
+## Enclosure
+
+The enclosure is industrial 3D SLA printed with an effective IPX rating of IP52 (dust and waterdrop protected).
+
+The enclosure is secured with two screws on either side of the unit. The top cover can be removed to expose the inner assembly.
+
+![Alt text](img/SparkFun%20LoRaSerial%20Enclosure%20Dimensions.png)
+
+*[LoRaSerial Dimensional Drawing](img/SparkFun_LoRaSerial_Enclosure_Dimensions.pdf)*
+
+The enclosure includes mounting holes for wall or rack mounting.
+
+![LoRaSerial Enclosure UV Exposed](img/SparkFun%20LoRaSerial%203D%20Printed%20Enclosure.png)
+
+**Note:** Leaving a LoRaSerial unit exposed to daylight outdoors or near a window will cause the cover to darken over a period of months. This will not affect the performance of the radio or the enclosure.
+
+## Power Usage
+
+The SX1276 based radio module is rated for 1 Watt. The radio can be adjusted from 14dBm up to 30dBm (default). 
+
+**Note:** The **AT-TxPower** command ranges from 14 to 30 in dBm. The radio uses an internal lookup table to map the correct power output (30dBm by default) to the associated power level for the power amplifier (20 in this case).
+
+![A 1W radio using 2.5W](img/SparkFun%20LoRaSerial%20Power%20Usage.png)
+
+During broadcast, the radio can use much more than 1W. Use a good 5V supply capable of outputting at least 1A at 5V. A USB 3.0 port is good. A USB 2.0 port will considerably limit the capabilities of the radio.
+
+![Power output vs Power input](img/SparkFun%20LoRaSerial%20Power%20Measurements.png)
+
+The power meter and hardware setup limited the ability to get to the full 30dBm output. The above measurements should be used as a rule-of-thumb for power considerations.
+
+
