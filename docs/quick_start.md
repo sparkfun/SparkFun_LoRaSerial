@@ -45,8 +45,8 @@ Occasionally, SparkFun may release new firmware for LoRaSerial. The
 
 The following hardware documents are available:
 
-* [Schematic](https://cdn.sparkfun.com/assets/b/e/9/a/d/SparkFun_LoRaSerial_915MHz_-_1W.pdf)
-* [Eagle Files](https://cdn.sparkfun.com/assets/f/b/b/6/f/SparkFun_LoRaSerial_915MHz_-_1W.zip)
+* [Schematic](https://cdn.sparkfun.com/assets/9/3/0/6/e/SparkFun_LoRaSerial_915MHz_-_1W.pdf)
+* [Eagle Files](https://cdn.sparkfun.com/assets/d/e/c/e/5/SparkFun_LoRaSerial_915MHz_-_1W.zip)
 * [Semtech SX1276 datasheet](https://cdn.sparkfun.com/assets/7/7/3/2/2/SX1276_Datasheet.pdf)
 * [Ebyte E19-915M30S Datasheet](https://cdn.sparkfun.com/assets/6/3/e/e/3/E19-915M30S_Usermanual_EN_v1.20.pdf)
 * [Atmel SAMD-21 datasheet](https://cdn.sparkfun.com/datasheets/Dev/Arduino/Boards/Atmel-42181-SAM-D21_Datasheet.pdf)

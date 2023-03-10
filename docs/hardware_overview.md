@@ -140,6 +140,10 @@ The enclosure is industrial 3D SLA printed with an effective IPX rating of IP52 
 
 The enclosure is secured with two screws on either side of the unit. The top cover can be removed to expose the inner assembly.
 
+![Alt text](img/SparkFun%20LoRaSerial%20Enclosure%20Dimensions.png)
+
+*[LoRaSerial Dimensional Drawing](img/SparkFun_LoRaSerial_Enclosure_Dimensions.pdf)*
+
 The enclosure includes mounting holes for wall or rack mounting.
 
 ![LoRaSerial Enclosure UV Exposed](img/SparkFun%20LoRaSerial%203D%20Printed%20Enclosure.png)
