@@ -14,7 +14,7 @@ INCLUDES = settings.h ../LoRaSerial_Firmware/Virtual_Circuit_Protocol.h
 
 COMMON_LIB = Common_Lib.a
 
-LIB_OBJS = RadioV2.o Sockets.o States.o System.o Terminal.o
+LIB_OBJS = RadioV2.o Terminal.o
 
 ##########
 # Buid tools and rules

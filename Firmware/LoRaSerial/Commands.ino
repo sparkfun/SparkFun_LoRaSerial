@@ -87,7 +87,7 @@ bool commandAT(const char * commandString)
       case ('B'): //ATB - Break the link
 
         //Compute the time delay
-        delayMillis = (VC_LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout;
+        delayMillis = (LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout;
 
         //Warn the user of the delay
         systemPrint("Delaying ");
@@ -111,7 +111,7 @@ bool commandAT(const char * commandString)
         //Idle the system to break the link
         //This is required on the server system which does not request an VC number assignment
         timer = millis();
-        while ((millis() - timer) < ((VC_LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout))
+        while ((millis() - timer) < ((LINK_BREAK_MULTIPLIER + 2) * settings.heartbeatTimeout))
           petWDT();
         changeState(RADIO_RESET);
 
@@ -224,11 +224,11 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI8 - Display system unique ID");
         systemPrintln("  ATI9 - Display the maximum datagram size");
         systemPrintln("  ATI10 - Display radio metrics");
-        systemPrintln("  ATI11 - Return myVc value");
-        systemPrintln("  ATI12 - Display the VC details");
-        systemPrintln("  ATI13 - Display the SX1276 registers");
-        systemPrintln("  ATI14 - Dump the radioTxBuffer");
-        systemPrintln("  ATI15 - Dump the NVM unique ID table");
+
+        //Virtual circuit information commands
+        systemPrintln("  ATI30 - Return myVc value");
+        systemPrintln("  ATI31 - Display the VC details");
+        systemPrintln("  ATI32 - Dump the NVM unique ID table");
         return true;
 
       case ('0'): //ATI0 - Show user settable parameters
@@ -601,14 +601,22 @@ bool commandAT(const char * commandString)
         systemPrintln("    State History");
         displayRadioStateHistory();
         return true;
+    }
+  }
+  if ((commandString[2] == 'I') && (commandString[3] == '3') && (commandLength == 5))
+  {
+    switch (commandString[4])
+    {
+      default:
+        return false;
 
-      case ('1'): //ATI11 - Return myVc value
+      case ('0'): //ATI30 - Return myVc value
         systemPrintln();
         systemPrint("myVc: ");
         systemPrintln(myVc);
         return true;
 
-      case ('2'): //ATI12 - Display the VC details
+      case ('1'): //ATI31 - Display the VC details
         systemPrintTimestamp();
         systemPrint("VC ");
         systemPrint(cmdVc);
@@ -706,16 +714,7 @@ bool commandAT(const char * commandString)
         }
         return true;
 
-      case ('3'): //ATI13 - Display the SX1276 registers
-        printSX1276Registers();
-        return true;
-
-      case ('4'): //ATI14 - Dump the radioTxBuffer
-        systemPrintln("radioTxBuffer:");
-        dumpCircularBuffer(radioTxBuffer, radioTxTail, sizeof(radioTxBuffer), availableRadioTXBytes());
-        return true;
-
-      case ('5'): //ATI15 - Dump the NVM unique ID table
+      case ('2'): //ATI32 - Dump the NVM unique ID table
         systemPrintln("NVM Unique ID Table");
         for (vcIndex = 0; vcIndex < MAX_VC; vcIndex++)
         {
@@ -733,6 +732,33 @@ bool commandAT(const char * commandString)
           else
             systemPrintln("Empty");
         }
+        return true;
+    }
+  }
+  if ((commandString[2] == 'I') && (commandString[3] == '5') && (commandLength == 5))
+  {
+    switch (commandString[4])
+    {
+      default:
+        return false;
+
+      case ('0'): //ATI50 - Output 80000 bytes, stop when serial is full
+        for (uint16_t line = 0; line < 1000; line++)
+        {
+          const char * text = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUV";
+
+          if (line < 100)
+            systemWrite('0');
+          if (line < 10)
+            systemWrite('0');
+          systemPrint(line);
+          systemWrite(':');
+          systemPrintln(text);
+        }
+        return true;
+
+      case ('1'): //ATI51 - Display the SX1276 registers
+        printSX1276Registers();
         return true;
     }
   }
@@ -1165,6 +1191,8 @@ const COMMAND_ENTRY commands[] =
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "FlowControl",          &tempSettings.flowControl},
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertCts",            &tempSettings.invertCts},
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertRts",            &tempSettings.invertRts},
+  {'S',   0,   0,    0, SERIAL_RX_BUFFER_SIZE, 0, TYPE_U16, valInt,   "RTSOffBytes",            &tempSettings.rtsOffBytes},
+  {'S',   0,   0,    0, SERIAL_RX_BUFFER_SIZE, 0, TYPE_U16, valInt,   "RTSOnBytes",            &tempSettings.rtsOnBytes},
   {'S',   0,   0,   10, 2000,   0, TYPE_U16,          valInt,         "SerialDelay",          &tempSettings.serialTimeoutBeforeSendingFrame_ms},
   {'S',   0,   0,    0,   0,    0, TYPE_SPEED_SERIAL, valSpeedSerial, "SerialSpeed",          &tempSettings.serialSpeed},
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "UsbSerialWait",        &tempSettings.usbSerialWait},

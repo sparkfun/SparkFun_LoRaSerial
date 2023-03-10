@@ -43621,6 +43621,10 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <text x="7.62" y="132.08" size="1.778" layer="97" align="center-left">915MHz: 10/10</text>
 <text x="7.62" y="129.54" size="1.778" layer="97" align="center-left">868MHz: 3.3/10</text>
 <text x="7.62" y="127" size="1.778" layer="97" align="center-left">433MHz: 10/20</text>
+<text x="226.06" y="7.62" size="1.27" layer="97" font="vector" align="center">LoRaSerial will drive !RTS! low when it is ready for data.</text>
+<text x="226.06" y="5.08" size="1.27" layer="97" font="vector" align="center">If !CTS! is low, LoRaSerial will send data.</text>
+<text x="226.06" y="2.54" size="1.27" layer="97" font="vector" align="center">Based on SAMD21 datasheet, section 25.6.3.2 Hardware Handshaking</text>
+<text x="226.06" y="10.16" size="1.27" layer="97" font="vector" align="center">When flow control is enabled:</text>
 </plain>
 <instances>
 <instance part="FID1" gate="G$1" x="424.18" y="43.18" smashed="yes"/>
@@ -45047,7 +45051,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <label x="73.66" y="114.3" size="1.27" layer="95" font="vector" rot="R90" xref="yes"/>
 </segment>
 </net>
-<net name="D30/CTS-I_LV" class="0">
+<net name="D30/!CTS!-I_LV" class="0">
 <segment>
 <pinref part="U2" gate="G$1" pin="PB22(SER5:2+)"/>
 <wire x1="386.08" y1="172.72" x2="388.62" y2="172.72" width="0.1524" layer="91"/>
@@ -45082,7 +45086,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <label x="388.62" y="226.06" size="1.27" layer="95" font="vector" xref="yes"/>
 </segment>
 </net>
-<net name="D38/RTS-O" class="0">
+<net name="D38/!RTS!-O" class="0">
 <segment>
 <pinref part="U2" gate="G$1" pin="PA13(I2C/SER2:1+)"/>
 <wire x1="386.08" y1="223.52" x2="388.62" y2="223.52" width="0.1524" layer="91"/>
@@ -45190,7 +45194,7 @@ touch button, slider and wheel user interfaces.&lt;/p&gt;</description>
 <pinref part="TP7" gate="G$1" pin="1"/>
 </segment>
 </net>
-<net name="CTS-I_HV" class="0">
+<net name="!CTS!-I_HV" class="0">
 <segment>
 <label x="175.26" y="20.32" size="1.27" layer="95" font="vector" xref="yes"/>
 <wire x1="172.72" y1="20.32" x2="175.26" y2="20.32" width="0.1524" layer="91"/>

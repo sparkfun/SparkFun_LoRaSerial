@@ -261,7 +261,6 @@ void updateButton()
   static bool buttonWasPressed;
   uint32_t deltaTime;
   static Settings originalSettings;
-  static uint32_t pressedTime;
 
   if (trainBtn != NULL)
   {
@@ -271,9 +270,7 @@ void updateButton()
     //Determine the current button state
     if (buttonWasPressed)
     {
-      //Update the LEDs
-      deltaTime = millis() - pressedTime;
-      buttonLeds(deltaTime);
+      deltaTime = millis() - buttonPressedTime;
 
       //Check for reset to factory settings
       if (deltaTime >= trainButtonFactoryResetTime)
@@ -320,8 +317,6 @@ void updateButton()
           else
           {
             //The user has stopped training with the button
-            //Restore the previous settings
-            settings = originalSettings;
             if (inTraining)
             {
               inTraining = false;
@@ -339,11 +334,14 @@ void updateButton()
       if (buttonPressed)
       {
         //Button just pressed
-        pressedTime = millis();
+        buttonPressedTime = millis();
 
         //Save the previous led state
         if (!inTraining)
-          originalSettings = settings;
+        {
+            originalSettings = settings;
+            settings.selectLedUse = LEDS_BUTTON_PRESS;
+        }
       }
     }
 
@@ -1065,14 +1063,16 @@ void updateCylonLEDs()
 }
 
 //Acknowledge the button press
-void buttonLeds(uint32_t pressedMilliseconds)
+void buttonLeds()
 {
   const uint32_t blinkTime = 1000 / 4;  //Blink 4 times per second
   uint8_t on;
   const uint32_t onTime = blinkTime / 2;
+  uint32_t pressedMilliseconds;
   uint8_t seconds;
 
   //Display the number of seconds the button has been pushed
+  pressedMilliseconds = millis() - buttonPressedTime;
   seconds = pressedMilliseconds / 1000;
   setRSSI((pressedMilliseconds >= trainButtonFactoryResetTime) ? 15 : seconds);
 
@@ -1148,6 +1148,10 @@ void updateLeds()
     //Display the radio use LED pattern
     case LEDS_RADIO_USE:
       radioLeds();
+      break;
+
+    case LEDS_BUTTON_PRESS:
+      buttonLeds();
       break;
 
     //Turn off all the LEDs

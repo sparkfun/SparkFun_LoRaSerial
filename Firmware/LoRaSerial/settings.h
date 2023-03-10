@@ -43,7 +43,7 @@ typedef enum
 
 RadioStates radioState = RADIO_RESET;
 
-#define P2P_LINK_BREAK_MULTIPLIER       3
+#define LINK_BREAK_MULTIPLIER           3
 
 typedef struct _RADIO_STATE_ENTRY
 {
@@ -445,6 +445,10 @@ typedef struct struct_settings {
   uint16_t serialTimeoutBeforeSendingFrame_ms = 50; //Send partial buffer if time expires
   bool echo = false; //Print locally inputted serial
   bool flowControl = false; //Enable the use of CTS/RTS flow control signals
+
+  uint16_t rtsOffBytes = 32; //Number of free bytes in serialReceiveBuffer when RTS is deasserted
+  uint16_t rtsOnBytes = RTS_ON_BYTES; //Number of free bytes in serialReceiveBuffer when RTS is asserted
+
 #if (ENABLE_DEVELOPER == true)
 #define WAIT_SERIAL_DEFAULT     true
 #else   //ENABLE_DEVELOPER

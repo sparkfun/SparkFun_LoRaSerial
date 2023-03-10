@@ -14,7 +14,8 @@ bool isCTS()
 {
   if (pin_cts == PIN_UNDEFINED) return (true); //CTS not implmented on this board
   if (settings.flowControl == false) return (true); //CTS turned off
-  return (digitalRead(pin_cts) == HIGH) ^ settings.invertCts;
+  //The SAMD21 specification (page 448) indicates that CTS is low when data is flowing
+  return (digitalRead(pin_cts) == LOW) ^ settings.invertCts;
 }
 
 #define NEXT_RX_TAIL(n)   ((rxTail + n) % sizeof(serialReceiveBuffer))
@@ -34,6 +35,10 @@ uint16_t availableTXBytes()
 void serialBufferOutput(uint8_t * data, uint16_t dataLength)
 {
   int length;
+
+  //Make sure there is enough room in the buffer
+  if ((sizeof(serialTransmitBuffer) - availableTXBytes()) < (dataLength + 32))
+    outputSerialData(true);
 
   length = 0;
   if ((txHead + dataLength) > sizeof(serialTransmitBuffer))
@@ -55,6 +60,10 @@ void serialOutputByte(uint8_t data)
 {
   if (printerEndpoint == PRINT_TO_SERIAL)
   {
+    //Make sure there is enough room in the buffer
+    if ((sizeof(serialTransmitBuffer) - availableTXBytes()) < 32)
+      outputSerialData(true);
+
     //Add this byte to the serial output buffer
     serialTransmitBuffer[txHead++] = data;
     txHead %= sizeof(serialTransmitBuffer);
@@ -72,7 +81,8 @@ void updateRTS(bool assertRTS)
 {
   rtsAsserted = assertRTS;
   if (settings.flowControl && (pin_rts != PIN_UNDEFINED))
-    digitalWrite(pin_rts, assertRTS ^ settings.invertRts);
+    //The SAMD21 specification (page 448) indicates that RTS is low to enable data flow
+    digitalWrite(pin_rts, (assertRTS ? 0 : 1) ^ settings.invertRts);
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -283,12 +293,13 @@ uint8_t readyOutgoingCommandPacket(uint16_t offset)
 //Scan for escape characters
 void updateSerial()
 {
+  int bufferSpace;
   uint16_t previousHead;
   int x;
 
   //Assert RTS when there is enough space in the receive buffer
   if ((!rtsAsserted) && (availableRXBytes() < (sizeof(serialReceiveBuffer) / 2))
-      && (availableTXBytes() < (sizeof(serialTransmitBuffer) / 4)))
+      && (availableTXBytes() <= RTS_ON_BYTES))
     updateRTS(true);
 
   //Attempt to empty the serialTransmitBuffer
@@ -296,7 +307,8 @@ void updateSerial()
 
   //Look for local incoming serial
   previousHead = rxHead;
-  while (rtsAsserted && arch.serialAvailable() && (transactionComplete == false))
+  bufferSpace = sizeof(serialReceiveBuffer) - 1 - availableRXBytes();
+  while (bufferSpace-- && arch.serialAvailable() && (transactionComplete == false))
   {
     blinkSerialRxLed(true); //Turn on LED during serial reception
 
@@ -304,14 +316,14 @@ void updateSerial()
     petWDT();
     if (timeToHop == true) hopChannel();
 
-    //Deassert RTS when the buffer gets full
-    if (rtsAsserted && (sizeof(serialReceiveBuffer) - availableRXBytes()) < 32)
-      updateRTS(false);
-
     byte incoming = systemRead();
 
     serialReceiveBuffer[rxHead++] = incoming; //Push char to holding buffer
     rxHead %= sizeof(serialReceiveBuffer);
+
+    //Deassert RTS when the buffer gets full
+    if (rtsAsserted && (sizeof(serialReceiveBuffer) - availableRXBytes()) <= settings.rtsOffBytes)
+      updateRTS(false);
   } //End Serial.available()
   blinkSerialRxLed(false); //Turn off LED
 
@@ -417,7 +429,6 @@ void processSerialInput()
             commandLength--;
 
             //Erase the previous character
-            systemWrite(incoming);
             systemWrite(' ');
             systemWrite(incoming);
           }
@@ -931,10 +942,8 @@ void resetSerial()
 
   //Empty the buffers
   rxHead = rxTail;
-  radioTxHead = radioTxTail;
   txHead = txTail;
   commandRXHead = commandRXTail;
   commandTXHead = commandTXTail;
-  endOfTxData = &outgoingPacket[headerBytes];
   commandLength = 0;
 }
