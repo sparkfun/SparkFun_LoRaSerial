@@ -45,9 +45,9 @@ The pinout is as follows:
 
 **TX** (Transmit - Connect this pin to the RX pin of your system. This pin uses 3.3V logic.
 
-**CTS** (Clear To Send - (Optional) Connect this pin to a GPIO of your system. This pin is 3.3-5V tolerant and has an internal pull-up. When this pin is high the radio will continue to send data. If the host system pulls this pin low, the radio will stop sending data.
+**CTS** (Clear To Send - (Optional) Connect this pin to a GPIO of your system. This pin is 3.3-5V tolerant and has an internal pull-up. When this pin is low LoRaSerial will continue to send data. If the host system pulls this pin high, the radio will stop sending data.
 
-**RTS** (Ready To Send) - (Optional) Connect this pin to a GPIO of your system. This pin uses 3.3V logic. If the radio’s buffer (size currently is 4096 bytes) becomes full the system will drive RTS low indicating that it should not be passed more data. If more serial data is received, the buffer will be overwritten, oldest data first.
+**RTS** (Ready To Send) - (Optional) Connect this pin to a GPIO of your system. This pin uses 3.3V logic. If the radio’s buffer (size currently is 4096 bytes) becomes full the system will drive RTS high indicating that it should not be passed more data. If more serial data is received, the buffer will be overwritten, oldest data first.
 
 **GND** (Ground) - Connect this pin to the ground of your system.
 
