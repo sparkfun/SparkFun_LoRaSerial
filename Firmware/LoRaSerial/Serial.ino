@@ -76,7 +76,10 @@ void serialOutputByte(uint8_t data)
   }
 }
 
-//Update the output of the RTS pin (host says it's ok to send data when assertRTS = true)
+//Update the output of the RTS pin
+//LoRaSerial will drive RTS low when it is ready for data
+//Given false, we tell the host we *do not* need more data
+//Given true, we tell the host we are ready for more data
 void updateRTS(bool assertRTS)
 {
   rtsAsserted = assertRTS;
@@ -300,7 +303,7 @@ void updateSerial()
   //Assert RTS when there is enough space in the receive buffer
   if ((!rtsAsserted) && (availableRXBytes() < (sizeof(serialReceiveBuffer) / 2))
       && (availableTXBytes() <= RTS_ON_BYTES))
-    updateRTS(true);
+    updateRTS(true); //We're ready for more data
 
   //Attempt to empty the serialTransmitBuffer
   outputSerialData(false);
