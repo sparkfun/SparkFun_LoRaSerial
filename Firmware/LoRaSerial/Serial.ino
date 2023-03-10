@@ -14,7 +14,8 @@ bool isCTS()
 {
   if (pin_cts == PIN_UNDEFINED) return (true); //CTS not implmented on this board
   if (settings.flowControl == false) return (true); //CTS turned off
-  return (digitalRead(pin_cts) == HIGH) ^ settings.invertCts;
+  //The SAMD21 specification (page 448) indicates that CTS is low when data is flowing
+  return (digitalRead(pin_cts) == LOW) ^ settings.invertCts;
 }
 
 #define NEXT_RX_TAIL(n)   ((rxTail + n) % sizeof(serialReceiveBuffer))
@@ -80,7 +81,8 @@ void updateRTS(bool assertRTS)
 {
   rtsAsserted = assertRTS;
   if (settings.flowControl && (pin_rts != PIN_UNDEFINED))
-    digitalWrite(pin_rts, assertRTS ^ settings.invertRts);
+    //The SAMD21 specification (page 448) indicates that RTS is low to enable data flow
+    digitalWrite(pin_rts, (assertRTS ? 0 : 1) ^ settings.invertRts);
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
