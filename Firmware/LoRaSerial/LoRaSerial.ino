@@ -643,7 +643,7 @@ void setup()
 
   arch.beginWDT(); //Start watchdog timer
 
-  updateRTS(true); //Enable serial input
+  updateRTS(true); //We're ready for more data
 
   systemPrintTimestamp();
   systemPrintln("LRS");
