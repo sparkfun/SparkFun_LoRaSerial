@@ -414,17 +414,22 @@ void processSerialInput()
     //Process serial into either rx buffer or command buffer
     if (inCommandMode == true)
     {
-      if (incoming == '\r' && commandLength > 0)
+      //Check for end of command
+      if (incoming == '\r')
       {
-        printerEndpoint = PRINT_TO_SERIAL;
-        systemPrintln();
-        if (settings.debugSerial)
+        //Ignore end of command if no command in the buffer
+        if (commandLength > 0)
         {
-          systemPrint("processSerialInput moved ");
-          systemPrint(commandLength);
-          systemPrintln(" from serialReceiveBuffer into commandBuffer");
+          systemPrintln();
+          if (settings.debugSerial)
+          {
+            systemPrint("processSerialInput moved ");
+            systemPrint(commandLength);
+            systemPrintln(" from serialReceiveBuffer into commandBuffer");
+          }
+          checkCommand(); //Process command buffer
+          break;
         }
-        checkCommand(); //Process command buffer
       }
       else if (incoming == '\n')
         ; //Do nothing
