@@ -354,6 +354,10 @@ void updateSerial()
   {
     commandLength = availableRXCommandBytes();
 
+    //Don't overflow the command buffer, save space for the zero termination
+    if (commandLength >= sizeof(commandBuffer))
+      commandLength = sizeof(commandBuffer) - 1;
+
     for (x = 0 ; x < commandLength ; x++)
     {
       commandBuffer[x] = commandRXBuffer[commandRXTail++];
@@ -454,7 +458,23 @@ void processSerialInput()
         {
           //Move this character into the command buffer
           commandBuffer[commandLength++] = incoming;
-          commandLength %= sizeof(commandBuffer);
+
+          //Don't allow the command to overflow the command buffer
+          //Process the long command instead
+          //Save room for the zero termination
+          if (commandLength >= (sizeof(commandBuffer) - 1))
+          {
+            printerEndpoint = PRINT_TO_SERIAL;
+            systemPrintln();
+            if (settings.debugSerial)
+            {
+              systemPrint("processSerialInput moved ");
+              systemPrint(commandLength);
+              systemPrintln(" from serialReceiveBuffer into commandBuffer");
+            }
+            checkCommand(); //Process command buffer
+            break;
+          }
         }
       }
     }
