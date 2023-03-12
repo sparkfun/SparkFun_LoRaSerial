@@ -911,6 +911,17 @@ char * trimCommand()
   int index;
   int j;
 
+  //Remove the comment
+  for (index = 0; index < commandLength; index++)
+  {
+    if (commandBuffer[index] == '#')
+    {
+      commandBuffer[index] = 0;
+      commandLength = index;
+      break;
+    }
+  }
+
   //Remove the white space
   for (index = 0; index < commandLength; index++)
   {
