@@ -415,7 +415,7 @@ void processSerialInput()
     if (inCommandMode == true)
     {
       //Check for end of command
-      if (incoming == '\r')
+      if ((incoming == '\r') || (incoming == ';'))
       {
         //Ignore end of command if no command in the buffer
         if (commandLength > 0)
