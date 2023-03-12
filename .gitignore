@@ -55,4 +55,5 @@ Icon
 *.a
 
 # Executables
+Firmware/Tools/Slow_Read
 Firmware/Tools/VcServerTest
