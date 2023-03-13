@@ -10,8 +10,14 @@ The LoRaSerial utilizes a SAMD21 microcontroller. To update the firmware, obtain
 
 Next, get the latest LoRaSerial Firmware binary located in [LoRaSerial Binaries folder](https://github.com/sparkfun/SparkFun_LoRaSerial/tree/main/Binaries). Note: There are two types of firmware files, one 'with_bootloader' and one without. You can ignore the 'with_bootloader' type file.
 
-![SAMD21 reset button](Original/SparkFun_LoRaSerial_-_Reset.png)
+![Enlcosure screw](img/SparkFun_LoRaSerial_Enclosure_Screw.jpg)
+
+*Small Philips head screw*
+
+Remove the two side screws and open the LoRaSerial enclosure to expose the reset button. 
+
+![SAMD21 reset button](img/SparkFun_LoRaSerial_Reset_Button.png)
 
 *SAMD21 reset button*
 
-Open the LoRaSerial enclosure to expose the reset button. Connect the LoRaSerial to the computer over USB. Double-tap the reset button to enter bootloader mode. You should see the blue LED slowly pulse on/off. Now open the BOSSA GUI, select the Binary file you downloaded, select the COM port of the LoRaSerial device, and finally click 'Upload Binary'.
+Connect the LoRaSerial to the computer over USB. Double-tap the reset button to enter bootloader mode. You should see the blue LED slowly pulse on/off. Now open the BOSSA GUI, select the Binary file you downloaded, select the COM port of the LoRaSerial device, and finally click 'Upload Binary'.
