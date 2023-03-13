@@ -2,7 +2,7 @@
 
 The LoRaSerial is a SAMD21 based assembly with an SX1276 LoRa radio with innovative firmware to make things as simple as possible.
 
-![SAMD21 based serial radio](Original/SparkFun_LoRaSerial.png)
+![SAMD21 based serial radio](img/SparkFun_LoRaSerial_Mainboard.png)
 
 *SAMD21 based serial radio*
 
@@ -16,7 +16,7 @@ Note: By default, there is a 50ms timeout in which the radio will wait for addit
 
 ### USB C
 
-![USB C connector for power and serial](Original/SparkFun_LoRaSerial_-_USB_C.png)
+![USB C connector for power and serial](img/SparkFun_LoRaSerial_USB_Connector.png)
 
 *USB C connector for power and serial*
 
@@ -24,7 +24,7 @@ The USB C connector provides power and serial communication to the unit. LoRaSer
 
 ### 6-Pin JST
 
-![6-pin locking JST connector for power and  serial](Original/SparkFun_LoRaSerial_-_JST.png)
+![6-pin locking JST connector for power and  serial](img/SparkFun_LoRaSerial_JST_Connector.png)
 
 *6-pin locking JST connector for power and  serial*
 
@@ -67,7 +67,7 @@ This is most obvious in applications such as STRSVR (from [RTKLIB](https://rtkli
 
 ### RSSI LEDs
 
-![4 LEDs indicating signal strength](Original/SparkFun_LoRaSerial_-_RSSI_LEDs.png)
+![4 LEDs indicating signal strength](img/SparkFun_LoRaSerial_RSSI_LEDs.png)
 
 *4 LEDs indicating signal strength*
 
@@ -75,7 +75,7 @@ Four LEDs indicate in real-time the received signal strength or RSSI. These LEDs
 
 ### RPSMA Connector
 
-![Reverse polarized SMA antenna connector](Original/SparkFun_LoRaSerial_-_RP-SMA_Connector.png)
+![Reverse polarized SMA antenna connector](img/SparkFun_LoRaSerial_RF_Connector.png)
 
 *Reverse polarized SMA antenna connector*
 
@@ -85,7 +85,7 @@ Note: Be careful of antennas that have a gain higher than 6 dBi as this may viol
 
 ### Qwiic Connector
 
-![Qwiic connector for I2C communication](Original/SparkFun_LoRaSerial_-_Qwiic.png)
+![Qwiic connector for I2C communication](img/SparkFun_LoRaSerial_Qwiic_Connector.png)
 
 *Qwiic connector for I2C communication*
 
@@ -93,7 +93,7 @@ The Qwiic connector and I2C accessibility are not yet implemented.
 
 ### Train Button
 
-![Button to enter train mode](Original/SparkFun_LoRaSerial_-_Train.png)
+![Button to enter train mode](img/SparkFun_LoRaSerial_Train_Button.png)
 
 *Button to enter train mode*
 
@@ -107,7 +107,7 @@ For security reasons, the radios are both set to the lowest transmission power t
 
 ### Internal Reset Button
 
-![SAMD21 reset button](Original/SparkFun_LoRaSerial_-_Reset.png)
+![SAMD21 reset button](img/SparkFun_LoRaSerial_Reset_Button.png)
 
 *SAMD21 reset button*
 
@@ -117,7 +117,7 @@ Please see [Updating LoRaSerial Firmware](http://docs.sparkfun.com/SparkFun_LoRa
 
 ### GPIO
 
-![GPIOs on SAMD21](Original/SparkFun_LoRaSerial_-_GPIO.png)
+![GPIOs on SAMD21](img/SparkFun_LoRaSerial_External_Pins.png)
 
 *GPIOs on SAMD21*
 

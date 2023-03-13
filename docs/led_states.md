@@ -2,7 +2,7 @@
 
 A variety of LEDs are visible on the LoRaSerial radio to give the user feedback about the state of the system.
 
-![LEDs on the LoRaSerial](img/SparkFun_LoRaSerial_LEDs.png)
+![LEDs on the LoRaSerial](img/SparkFun_LoRaSerial_LEDs_2.png)
 
 *LEDs on the LoRaSerial*
 
