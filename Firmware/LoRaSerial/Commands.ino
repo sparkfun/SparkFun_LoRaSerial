@@ -1244,8 +1244,8 @@ const COMMAND_ENTRY commands[] =
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "FlowControl",          &tempSettings.flowControl},
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertCts",            &tempSettings.invertCts},
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertRts",            &tempSettings.invertRts},
-  {'S',   0,   0,    0, SERIAL_RX_BUFFER_SIZE, 0, TYPE_U16, valInt,   "RTSOffBytes",            &tempSettings.rtsOffBytes},
-  {'S',   0,   0,    0, SERIAL_RX_BUFFER_SIZE, 0, TYPE_U16, valInt,   "RTSOnBytes",            &tempSettings.rtsOnBytes},
+  {'S',   0,   0,    0, SERIAL_RX_BUFFER_SIZE, 0, TYPE_U16, valInt,   "RTSOffBytes",          &tempSettings.rtsOffBytes},
+  {'S',   0,   0,    0, SERIAL_RX_BUFFER_SIZE, 0, TYPE_U16, valInt,   "RTSOnBytes",           &tempSettings.rtsOnBytes},
   {'S',   0,   0,   10, 2000,   0, TYPE_U16,          valInt,         "SerialDelay",          &tempSettings.serialTimeoutBeforeSendingFrame_ms},
   {'S',   0,   0,    0,   0,    0, TYPE_SPEED_SERIAL, valSpeedSerial, "SerialSpeed",          &tempSettings.serialSpeed},
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "UsbSerialWait",        &tempSettings.usbSerialWait},
@@ -1254,6 +1254,7 @@ const COMMAND_ENTRY commands[] =
     Ltr, All, reset, min, max, digits,    type,         validation,     name,                   setting addr */
   {'R',   0,   1,    1, 255,    0, TYPE_U8,           valInt, "ClientFindPartnerRetryInterval", &tempSettings.clientFindPartnerRetryInterval},
   {'R',   0,   0,    0,   0,    0, TYPE_KEY,          valKey,         "TrainingKey",          &tempSettings.trainingKey},
+  {'R',   0,   1,   14,  30,    0, TYPE_U8,           valInt,         "TrainingTxPower",      &tempSettings.trainingTxPower_dbm},
   {'R',   0,   0,    1, 255,    0, TYPE_U8,           valInt,         "TrainingTimeout",      &tempSettings.trainingTimeout},
 
   /*Trigger parameters
@@ -1266,7 +1267,7 @@ const COMMAND_ENTRY commands[] =
 
   /*Virtual circuit parameters
     Ltr, All, reset, min, max, digits,    type,         validation,     name,                   setting addr */
-  {'V',   0,   0,    0, MAX_VC - 1, 0, TYPE_U8,         valInt,         "CmdVC",                &cmdVc},
+  {'V',   0,   0,    0, MAX_VC - 1, 0, TYPE_U8,         valInt,         "CmdVC",              &cmdVc},
 };
 
 const int commandCount = sizeof(commands) / sizeof(commands[0]);

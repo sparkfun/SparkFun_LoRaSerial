@@ -1183,16 +1183,17 @@ bool xmitDatagramTrainingFindPartner()
   //Add the source (server) ID
   memcpy(endOfTxData, myUniqueId, UNIQUE_ID_BYTES);
   endOfTxData += UNIQUE_ID_BYTES;
+  *endOfTxData++ = settings.radioBroadcastPower_dbm;
 
   /*
-                                                endOfTxData ---.
-                                                               |
-                                                               V
-      +----------+---------+----------+------------+-----------+----------+
-      | Optional |         | Optional | Optional   |           | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | Client ID | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 16 Bytes  | n Bytes  |
-      +----------+---------+----------+------------+-----------+----------+
+                                                           endOfTxData ---.
+                                                                          |
+                                                                          V
+      +----------+---------+----------+------------+-----------+----------+----------+
+      | Optional |         | Optional | Optional   |           |          | Optional |
+      | NET ID   | Control | C-Timer  | SF6 Length | Client ID | Tx Power | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 16 Bytes  |  1 Byte  | n Bytes  |
+      +----------+---------+----------+------------+-----------+----------+----------+
   */
 
   txControl.datagramType = DATAGRAM_TRAINING_FIND_PARTNER;
