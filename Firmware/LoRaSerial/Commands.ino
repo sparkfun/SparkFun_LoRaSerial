@@ -780,6 +780,12 @@ bool sendRemoteCommand(const char * commandString)
     commandTXBuffer[commandTXHead++] = commandString[x];
     commandTXHead %= sizeof(commandTXBuffer);
   }
+  if (settings.debugSerial)
+  {
+    systemPrint("sendRemoteCommand moved ");
+    systemPrint(commandLength);
+    systemPrintln(" from commandBuffer into commandTXBuffer");
+  }
   remoteCommandResponse = false;
   return true;
 }
@@ -812,7 +818,19 @@ void checkCommand()
   char * commandString;
   int index;
   int prefixLength;
+  PrinterEndpoints responseDestination;
+  uint16_t responseLength;
   bool success;
+
+  //Save previous index
+  if (settings.debugSerial)
+  {
+    responseDestination = printerEndpoint;
+    if (responseDestination == PRINT_TO_SERIAL)
+      responseLength = txHead;
+    else
+      responseLength = commandTXHead;
+  }
 
   //Zero terminate the string
   success = false;
@@ -860,7 +878,28 @@ void checkCommand()
     systemPrintln("ERROR");
     commandComplete(false);
   }
+
+  //Display the response
   printerEndpoint = PRINT_TO_SERIAL;
+  if (settings.debugSerial)
+  {
+    uint16_t tail;
+    tail = responseLength;
+    if (responseDestination == PRINT_TO_SERIAL)
+    {
+      responseLength = (txHead + sizeof(serialTransmitBuffer) - responseLength) % sizeof(serialTransmitBuffer);
+      systemPrint("checkCommand placed ");
+      systemPrint(responseLength);
+      systemPrintln(" command response bytes into serialTransmitBuffer");
+    }
+    else
+    {
+      responseLength = (commandTXHead + sizeof(commandTXBuffer) - responseLength) % sizeof(commandTXBuffer);
+      systemPrint("checkCommand placed ");
+      systemPrint(responseLength);
+      systemPrintln(" command response bytes into commandTXBuffer");
+    }
+  }
   outputSerialData(true);
   petWDT();
 

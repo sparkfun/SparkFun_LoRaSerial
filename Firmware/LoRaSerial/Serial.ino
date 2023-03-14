@@ -417,6 +417,12 @@ void processSerialInput()
       {
         printerEndpoint = PRINT_TO_SERIAL;
         systemPrintln();
+        if (settings.debugSerial)
+        {
+          systemPrint("processSerialInput moved ");
+          systemPrint(commandLength);
+          systemPrintln(" from serialReceiveBuffer into commandBuffer");
+        }
         checkCommand(); //Process command buffer
       }
       else if (incoming == '\n')
