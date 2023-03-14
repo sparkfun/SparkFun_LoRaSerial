@@ -1726,6 +1726,19 @@ void updateRadioState()
             //Save the client ID
             memcpy(trainingPartnerID, rxData, UNIQUE_ID_BYTES);
 
+            //Increase the TX power if necessary
+            if (settings.radioBroadcastPower_dbm < rxData[UNIQUE_ID_BYTES])
+            {
+              settings.radioBroadcastPower_dbm = rxData[UNIQUE_ID_BYTES];
+              systemPrint("Increasing TX power to ");
+              systemPrint(settings.radioBroadcastPower_dbm);
+              systemPrint(" dB, requested by radio ");
+              systemPrintUniqueID(rxData);
+              systemPrintln();
+              int radioPowerSetting = covertdBmToSetting(settings.radioBroadcastPower_dbm);
+              radio.setOutputPower(radioPowerSetting);
+            }
+
             //Find a slot in the NVM unique ID table
             for (index = 0; index < MAX_VC; index++)
               if (!nvmIsVcUniqueIdSet(index))

@@ -1,7 +1,7 @@
 //Select the training protocol
 void selectTraining()
 {
-  if (settings.server)
+  if (tempSettings.server)
     beginTrainingServer();
   else
     beginTrainingClient();
@@ -110,7 +110,7 @@ void commonTrainingInitialization()
   settings.maxResends = 1;                  //Don't waste time retransmitting
   settings.netID = 'T';                     //NetID for training
   settings.operatingMode = MODE_MULTIPOINT; //Use datagrams
-  settings.radioBroadcastPower_dbm = 14;    //Minimum, assume radios are near each other
+  settings.radioBroadcastPower_dbm = trainingSettings.trainingTxPower_dbm;    //Minimum, assume radios are near each other
   settings.selectLedUse = LEDS_CYLON;       //Display the CYLON pattern on the LEDs
   settings.verifyRxNetID = true;            //Disable netID checking
 

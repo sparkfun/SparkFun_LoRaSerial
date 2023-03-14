@@ -465,6 +465,7 @@ typedef struct struct_settings {
   uint8_t trainingKey[AES_KEY_BYTES] = { 0x53, 0x70, 0x61, 0x72, 0x6b, 0x46, 0x75, 0x6E, 0x54, 0x72, 0x61, 0x69, 0x6e, 0x69, 0x6e, 0x67 };
 
   uint8_t trainingTimeout = 1; //Timeout in minutes to complete the training
+  uint8_t trainingTxPower_dbm = 14; //Transmit power in dBm. Max is 30dBm
 
   //----------------------------------------
   //Trigger parameters
