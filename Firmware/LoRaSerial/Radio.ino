@@ -2393,7 +2393,10 @@ PacketType validateDatagram(VIRTUAL_CIRCUIT * vc, PacketType datagramType, uint8
   }
 
   //Verify that there is sufficient space in the serialTransmitBuffer
-  if (inCommandMode || (freeBytes < rxDataBytes))
+  //Apply back pressure if the remote system is trying to send data while
+  //the local system is in command mode.  Remote command responses should
+  //be received.
+  if ((inCommandMode && (datagramType == DATAGRAM_DATA)) || (freeBytes < rxDataBytes))
   {
     if (settings.debugReceive || settings.debugDatagrams)
     {
