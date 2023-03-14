@@ -375,7 +375,6 @@ void updateSerial()
       commandBuffer[0] = 'A'; //Convert this RT command to an AT command for local consumption
       printerEndpoint = PRINT_TO_RF; //Send prints to RF link
       checkCommand(); //Parse the command buffer
-      printerEndpoint = PRINT_TO_SERIAL;
       remoteCommandResponse = true;
     }
     else

@@ -860,6 +860,7 @@ void checkCommand()
     systemPrintln("ERROR");
     commandComplete(false);
   }
+  printerEndpoint = PRINT_TO_SERIAL;
   outputSerialData(true);
   petWDT();
 
