@@ -814,9 +814,12 @@ void checkCommand()
   int prefixLength;
   bool success;
 
-  //Verify the command length
+  //Zero terminate the string
   success = false;
-  commandString = trimCommand(); //Remove any leading or trailing whitespace
+  commandBuffer[commandLength] = 0;
+
+  //Remove any whitespace
+  commandString = trimCommand();
 
   //Upper case the command
   for (index = 0; index < commandLength; index++)
@@ -845,6 +848,8 @@ void checkCommand()
       break;
     }
   }
+  else if (!commandLength)
+    success = true;
 
   //Print the command failure
   petWDT();
@@ -903,24 +908,31 @@ void commandReset()
 //Remove any preceeding or following whitespace chars
 char * trimCommand()
 {
-  char * commandString = commandBuffer;
+  int index;
+  int j;
 
-  //Remove the leading white space
-  while (isspace(*commandString))
+  //Remove the comment
+  for (index = 0; index < commandLength; index++)
   {
-    commandString++;
-    --commandLength;
+    if (commandBuffer[index] == '#')
+    {
+      commandBuffer[index] = 0;
+      commandLength = index;
+      break;
+    }
   }
 
-  //Zero terminate the string
-  commandString[commandLength] = 0;
-
-  //Remove the trailing white space
-  while (commandLength && isspace(commandString[commandLength - 1]))
-    commandString[--commandLength] = 0;
-
-  //Return the remainder as the command
-  return commandString;
+  //Remove the white space
+  for (index = 0; index < commandLength; index++)
+  {
+    while (isspace(commandBuffer[index]))
+    {
+      for (j = index + 1; j < commandLength; j++)
+        commandBuffer[j - 1] = commandBuffer[j];
+      commandBuffer[--commandLength] = 0;
+    }
+  }
+  return commandBuffer;
 }
 
 //Display all of the commands
