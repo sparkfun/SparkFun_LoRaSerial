@@ -8,6 +8,7 @@
 # Source files
 ##########
 
+EXECUTABLES += Slow_Read
 EXECUTABLES += VcServerTest
 
 INCLUDES = settings.h ../LoRaSerial_Firmware/Virtual_Circuit_Protocol.h
@@ -49,6 +50,9 @@ $(COMMON_LIB): $(LIB_OBJS)
 ##########
 # Build the executables
 ##########
+
+Slow_Read: Slow_Read.c $(COMMON_LIB)
+	$(CC) -o $@ $^
 
 VcServerTest: VcServerTest.c $(COMMON_LIB)
 	$(CC) -o $@ $^
