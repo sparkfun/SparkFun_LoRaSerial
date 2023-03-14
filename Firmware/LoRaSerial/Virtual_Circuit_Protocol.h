@@ -140,10 +140,15 @@ typedef struct _VC_SERIAL_MESSAGE_HEADER
 } VC_SERIAL_MESSAGE_HEADER;
 
 #define VC_SERIAL_HEADER_BYTES  (sizeof(VC_SERIAL_MESSAGE_HEADER)) //Length of the serial VC header in bytes
+#define UNIQUE_ID_ERASE_VALUE   0xff
+#ifndef UNIQUE_ID_BYTES
+#define UNIQUE_ID_BYTES         16
+#endif  //UNIQUE_ID_BYTES
 
 typedef struct _VC_STATE_MESSAGE
 {
-  uint8_t vcState;        //VC state
+  uint8_t vcState;                   //VC state
+  uint8_t uniqueId[UNIQUE_ID_BYTES]; //Unique ID for the LoRaSerial radio, all 0xFF if unknown
 } VC_STATE_MESSAGE;
 
 typedef enum

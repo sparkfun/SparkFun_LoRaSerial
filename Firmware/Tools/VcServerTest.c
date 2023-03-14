@@ -1,4 +1,6 @@
 #define ADD_VC_STATE_NAMES_TABLE
+#include <sys/resource.h>
+#include <sys/time.h>
 #include "settings.h"
 
 #define BUFFER_SIZE           2048
@@ -28,6 +30,8 @@
 typedef struct _VIRTUAL_CIRCUIT
 {
   int vcState;
+  uint8_t uniqueId[UNIQUE_ID_BYTES];
+  bool valid;
 } VIRTUAL_CIRCUIT;
 
 bool commandStatus;
@@ -74,7 +78,7 @@ int cmdToRadio(uint8_t * buffer, int length)
   bytesSent = 0;
   while (bytesSent < length)
   {
-    bytesWritten = write(radio, buffer, length);
+    bytesWritten = write(radio, &buffer[bytesSent], length - bytesSent);
     if (bytesWritten < 0)
     {
       perror("ERROR: Write of data to radio failed!");
@@ -118,7 +122,7 @@ int hostToRadio(uint8_t destVc, uint8_t * buffer, int length)
   bytesSent = 0;
   while (bytesSent < length)
   {
-    bytesWritten = write(radio, buffer, length);
+    bytesWritten = write(radio, &buffer[bytesSent], length - bytesSent);
     if (bytesWritten < 0)
     {
       perror("ERROR: Write of data to radio failed!");
@@ -219,7 +223,7 @@ int stdinToRadio()
   return status;
 }
 
-int hostToStdout(uint8_t * data, uint8_t bytesToSend)
+int hostToStdout(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint8_t bytesToSend)
 {
   uint8_t * buffer;
   uint8_t * bufferEnd;
@@ -298,12 +302,13 @@ int hostToStdout(uint8_t * data, uint8_t bytesToSend)
   return status;
 }
 
-void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t length)
+void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint8_t length)
 {
   char cmdBuffer[128];
   int newState;
   int previousState;
   int srcVc;
+  uint8_t uniqueId[UNIQUE_ID_BYTES];
   VC_STATE_MESSAGE * vcMsg;
 
   //Remember the previous state
@@ -314,6 +319,47 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t length)
   //Set the new state
   newState = vcMsg->vcState;
   virtualCircuitList[srcVc].vcState = newState;
+
+  //Save the LoRaSerial radio's unique ID
+  //Determine if the PC's value is valid
+  memset(uniqueId, UNIQUE_ID_ERASE_VALUE, sizeof(uniqueId));
+  if (!virtualCircuitList[srcVc].valid)
+  {
+    //Determine if the radio knows the value
+    if (memcmp(vcMsg->uniqueId, uniqueId, sizeof(uniqueId)) != 0)
+    {
+      //The radio knows the value, save it in the PC
+      memcpy(virtualCircuitList[srcVc].uniqueId, vcMsg->uniqueId, sizeof(vcMsg->uniqueId));
+      virtualCircuitList[srcVc].valid = true;
+
+      //Display this ID value
+      printf("VC %d unique ID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+             srcVc,
+             vcMsg->uniqueId[0], vcMsg->uniqueId[1], vcMsg->uniqueId[2], vcMsg->uniqueId[3],
+             vcMsg->uniqueId[4], vcMsg->uniqueId[5], vcMsg->uniqueId[6], vcMsg->uniqueId[7],
+             vcMsg->uniqueId[8], vcMsg->uniqueId[9], vcMsg->uniqueId[10], vcMsg->uniqueId[11],
+             vcMsg->uniqueId[12], vcMsg->uniqueId[13], vcMsg->uniqueId[14], vcMsg->uniqueId[15]);
+    }
+  }
+  else
+  {
+    //Determine if the radio has changed for this VC
+    if ((memcmp(vcMsg->uniqueId, virtualCircuitList[srcVc].uniqueId, sizeof(vcMsg->uniqueId)) != 0)
+        && (memcmp(vcMsg->uniqueId, uniqueId, sizeof(uniqueId)) != 0))
+    {
+      //The radio knows the value, save it in the PC
+      memcpy(virtualCircuitList[srcVc].uniqueId, vcMsg->uniqueId, sizeof(vcMsg->uniqueId));
+      virtualCircuitList[srcVc].valid = true;
+
+      //Display this ID value
+      printf("VC %d unique ID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+             srcVc,
+             vcMsg->uniqueId[0], vcMsg->uniqueId[1], vcMsg->uniqueId[2], vcMsg->uniqueId[3],
+             vcMsg->uniqueId[4], vcMsg->uniqueId[5], vcMsg->uniqueId[6], vcMsg->uniqueId[7],
+             vcMsg->uniqueId[8], vcMsg->uniqueId[9], vcMsg->uniqueId[10], vcMsg->uniqueId[11],
+             vcMsg->uniqueId[12], vcMsg->uniqueId[13], vcMsg->uniqueId[14], vcMsg->uniqueId[15]);
+    }
+  }
 
   //Display the state if requested
   if (DISPLAY_STATE_TRANSITION)
@@ -383,7 +429,7 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t length)
   }
 }
 
-void radioDataAck(uint8_t * data, uint8_t length)
+void radioDataAck(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint8_t length)
 {
   VC_DATA_ACK_NACK_MESSAGE * vcMsg;
 
@@ -392,19 +438,26 @@ void radioDataAck(uint8_t * data, uint8_t length)
     printf("ACK from VC %d\n", vcMsg->msgDestVc);
 }
 
-void radioDataNack(uint8_t * data, uint8_t length)
+void radioDataNack(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint8_t length)
 {
+  int vcIndex;
   VC_DATA_ACK_NACK_MESSAGE * vcMsg;
 
   vcMsg = (VC_DATA_ACK_NACK_MESSAGE *)data;
+  vcIndex = vcMsg->msgDestVc & VCAB_NUMBER_MASK;
   if (DISPLAY_DATA_NACK)
-    printf("NACK from VC %d\n", vcMsg->msgDestVc);
+    printf("NACK from VC %d\n", vcIndex);
+
+  //Set the VC state to down
+  virtualCircuitList[vcIndex].vcState = VC_STATE_LINK_DOWN;
 }
 
-void radioCommandComplete(uint8_t srcVc, uint8_t * data, uint8_t length)
+void radioCommandComplete(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint8_t length)
 {
   VC_COMMAND_COMPLETE_MESSAGE * vcMsg;
+  uint8_t srcVc;
 
+  srcVc = header->radio.srcVc;
   vcMsg = (VC_COMMAND_COMPLETE_MESSAGE *)data;
   if (DISPLAY_COMMAND_COMPLETE)
     printf("Command complete from VC %d: %s\n", srcVc,
@@ -461,7 +514,7 @@ int radioToHost()
     length = data - dataStart;
     if (length)
       //Output the debug data
-      hostToStdout(dataStart, length);
+      hostToStdout(NULL, dataStart, length);
 
     //Determine if this is the beginning of a virtual circuit message
     length = dataEnd - data;
@@ -501,8 +554,8 @@ int radioToHost()
     {
       printf("VC Header:\n");
       printf("    length: %d\n", header->radio.length);
-      printf("    destVc: %d\n", header->radio.destVc);
-      printf("    srcVc: %d\n", header->radio.srcVc);
+      printf("    destVc: %d (0x%02x)\n", (uint8_t)header->radio.destVc, (uint8_t)header->radio.destVc);
+      printf("    srcVc: %d (0x%02x)\n", header->radio.srcVc, header->radio.srcVc);
       if (length > 0)
         dumpBuffer(data, length);
     }
@@ -513,29 +566,29 @@ int radioToHost()
 
     //Display link status
     if (header->radio.destVc == PC_LINK_STATUS)
-      radioToPcLinkStatus(header, VC_SERIAL_HEADER_BYTES + length);
+      radioToPcLinkStatus(header, data, VC_SERIAL_HEADER_BYTES + length);
 
     //Display remote command response
     else if (header->radio.destVc == (PC_REMOTE_RESPONSE | myVc))
-      status = hostToStdout(data, length);
+      status = hostToStdout(header, data, length);
 
     //Display command completion status
     else if (header->radio.destVc == PC_COMMAND_COMPLETE)
-      radioCommandComplete(header->radio.srcVc, data, length);
+      radioCommandComplete(header, data, length);
 
     //Display ACKs for transmitted messages
     else if (header->radio.destVc == PC_DATA_ACK)
-      radioDataAck(data, length);
+      radioDataAck(header, data, length);
 
     //Display NACKs for transmitted messages
     else if (header->radio.destVc == PC_DATA_NACK)
-      radioDataNack(data, length);
+      radioDataNack(header, data, length);
 
     //Display received messages
     else if ((header->radio.destVc == myVc) || (header->radio.destVc == VC_BROADCAST))
     {
       //Output this message
-      status = hostToStdout(data, length);
+      status = hostToStdout(header, data, length);
     }
 
     //Unknown messages
@@ -545,8 +598,8 @@ int radioToHost()
       {
         printf("Unknown message, VC Header:\n");
         printf("    length: %d\n", header->radio.length);
-        printf("    destVc: %d\n", header->radio.destVc);
-        printf("    srcVc: %d\n", header->radio.srcVc);
+        printf("    destVc: %d (0x%02x)\n", (uint8_t)header->radio.destVc, (uint8_t)header->radio.destVc);
+        printf("    srcVc: %d (0x%02x)\n", header->radio.srcVc, header->radio.srcVc);
         if (length > 0)
           dumpBuffer(data, length);
       }

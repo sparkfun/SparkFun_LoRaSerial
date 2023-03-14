@@ -3062,6 +3062,10 @@ void vcSendPcStateMessage(int8_t vcIndex, uint8_t state)
   //Build the VC state message
   VC_STATE_MESSAGE message;
   message.vcState = state;
+  if (virtualCircuitList[vcIndex].flags.valid)
+    memcpy(&message.uniqueId[0], &virtualCircuitList[vcIndex].uniqueId[0], sizeof(message.uniqueId));
+  else
+    memset(message.uniqueId, UNIQUE_ID_ERASE_VALUE, sizeof(message.uniqueId));
 
   //Build the message header
   VC_SERIAL_MESSAGE_HEADER header;
