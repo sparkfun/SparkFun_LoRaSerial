@@ -28,6 +28,8 @@
 typedef struct _VIRTUAL_CIRCUIT
 {
   int vcState;
+  uint8_t uniqueId[UNIQUE_ID_BYTES];
+  bool valid;
 } VIRTUAL_CIRCUIT;
 
 bool commandStatus;
@@ -304,6 +306,7 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t length)
   int newState;
   int previousState;
   int srcVc;
+  uint8_t uniqueId[UNIQUE_ID_BYTES];
   VC_STATE_MESSAGE * vcMsg;
 
   //Remember the previous state
@@ -314,6 +317,47 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t length)
   //Set the new state
   newState = vcMsg->vcState;
   virtualCircuitList[srcVc].vcState = newState;
+
+  //Save the LoRaSerial radio's unique ID
+  //Determine if the PC's value is valid
+  memset(uniqueId, UNIQUE_ID_ERASE_VALUE, sizeof(uniqueId));
+  if (!virtualCircuitList[srcVc].valid)
+  {
+    //Determine if the radio knows the value
+    if (memcmp(vcMsg->uniqueId, uniqueId, sizeof(uniqueId)) != 0)
+    {
+      //The radio knows the value, save it in the PC
+      memcpy(virtualCircuitList[srcVc].uniqueId, vcMsg->uniqueId, sizeof(vcMsg->uniqueId));
+      virtualCircuitList[srcVc].valid = true;
+
+      //Display this ID value
+      printf("VC %d unique ID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+             srcVc,
+             vcMsg->uniqueId[0], vcMsg->uniqueId[1], vcMsg->uniqueId[2], vcMsg->uniqueId[3],
+             vcMsg->uniqueId[4], vcMsg->uniqueId[5], vcMsg->uniqueId[6], vcMsg->uniqueId[7],
+             vcMsg->uniqueId[8], vcMsg->uniqueId[9], vcMsg->uniqueId[10], vcMsg->uniqueId[11],
+             vcMsg->uniqueId[12], vcMsg->uniqueId[13], vcMsg->uniqueId[14], vcMsg->uniqueId[15]);
+    }
+  }
+  else
+  {
+    //Determine if the radio has changed for this VC
+    if ((memcmp(vcMsg->uniqueId, virtualCircuitList[srcVc].uniqueId, sizeof(vcMsg->uniqueId)) != 0)
+        && (memcmp(vcMsg->uniqueId, uniqueId, sizeof(uniqueId)) != 0))
+    {
+      //The radio knows the value, save it in the PC
+      memcpy(virtualCircuitList[srcVc].uniqueId, vcMsg->uniqueId, sizeof(vcMsg->uniqueId));
+      virtualCircuitList[srcVc].valid = true;
+
+      //Display this ID value
+      printf("VC %d unique ID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+             srcVc,
+             vcMsg->uniqueId[0], vcMsg->uniqueId[1], vcMsg->uniqueId[2], vcMsg->uniqueId[3],
+             vcMsg->uniqueId[4], vcMsg->uniqueId[5], vcMsg->uniqueId[6], vcMsg->uniqueId[7],
+             vcMsg->uniqueId[8], vcMsg->uniqueId[9], vcMsg->uniqueId[10], vcMsg->uniqueId[11],
+             vcMsg->uniqueId[12], vcMsg->uniqueId[13], vcMsg->uniqueId[14], vcMsg->uniqueId[15]);
+    }
+  }
 
   //Display the state if requested
   if (DISPLAY_STATE_TRANSITION)
