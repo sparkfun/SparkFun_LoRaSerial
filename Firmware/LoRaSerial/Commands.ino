@@ -787,6 +787,7 @@ bool sendRemoteCommand(const char * commandString)
     systemPrintln(" from commandBuffer into commandTXBuffer");
   }
   remoteCommandResponse = false;
+  waitRemoteCommandResponse = true;
   return true;
 }
 

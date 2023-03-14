@@ -395,6 +395,7 @@ void processSerialInput()
   radioHead = radioTxHead;
   while (availableRXBytes()
          && (availableRadioTXBytes() < (sizeof(radioTxBuffer) - maxEscapeCharacters))
+         && ((!inCommandMode) || (!waitRemoteCommandResponse))
          && (transactionComplete == false))
   {
     //Take a break if there are ISRs to attend to

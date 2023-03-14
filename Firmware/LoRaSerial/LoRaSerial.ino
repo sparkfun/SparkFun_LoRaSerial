@@ -230,6 +230,7 @@ const long minEscapeTime_ms = 2000; //Serial traffic must stop this amount befor
 bool inCommandMode = false; //Normal data is prevented from entering serial output when in command mode
 uint8_t commandLength = 0;
 bool remoteCommandResponse;
+bool waitRemoteCommandResponse;
 
 bool rtsAsserted; //When RTS is asserted, host says it's ok to send data
 bool forceRadioReset = false; //Goes true when a setting requires a link/radio reset to work

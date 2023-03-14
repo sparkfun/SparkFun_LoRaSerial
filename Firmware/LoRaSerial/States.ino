@@ -806,6 +806,7 @@ void updateRadioState()
               outputSerialData(true);
             }
             serialBufferOutput(rxData, rxDataBytes);
+            waitRemoteCommandResponse = false;
 
             //Transmit ACK
             P2P_SEND_ACK(TRIGGER_TX_ACK);
@@ -2982,6 +2983,7 @@ void discardPreviousData()
   txTail = txHead;
   commandRXTail = commandRXHead;
   commandTXTail = commandTXHead;
+  waitRemoteCommandResponse = false;
 }
 
 //Output VC link status
