@@ -521,6 +521,12 @@ Settings tempSettings; //Temporary settings used for command processing
 Settings trainingSettings; //Settings used for training other radios
 
 char platformPrefix[25]; //Used for printing platform specific device name, ie "SAMD21 1W 915MHz"
+union {
+  uint32_t u32[2];
+  uint64_t u64;
+} runtime; //Amount of time the system has been running in milliseconds
+uint64_t programmed; //Time the system was programmed in milliseconds
+
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 /*
@@ -659,6 +665,12 @@ void setup()
 void loop()
 {
   petWDT();
+
+  //Update the runtime
+  uint32_t currentMillis = millis();
+  if (currentMillis < runtime.u32[0])
+    runtime.u32[1] += 1;
+  runtime.u32[0] = currentMillis;
 
   updateButton(); //Check if train button is pressed
 
