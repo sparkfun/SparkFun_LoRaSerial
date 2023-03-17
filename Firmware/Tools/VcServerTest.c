@@ -22,7 +22,7 @@
 #define GET_DEVICE_INFO         "ati"
 #define GET_MY_VC_ADDRESS       "ati30"
 #define GET_UNIQUE_ID           "ati8"
-#define GET_VC_STATE            "ati12"
+#define GET_VC_STATE            "ati31"
 #define GET_VC_STATUS           "ata"
 #define LINK_RESET_COMMAND      "atz"
 #define MY_VC_ADDRESS           "myVc: "
@@ -89,7 +89,7 @@
 typedef enum
 {
   //List commands in priority order
-  CMD_ATI11 = 0,              //Get myVC
+  CMD_ATI30 = 0,              //Get myVC
   CMD_ATB,                    //Break all VC links
   CMD_ATA,                    //Get VC status
 
@@ -100,7 +100,7 @@ typedef enum
 
   //Get remote radio connection status, type and ID
   CMD_AT_CMDVC_2,             //Select target VC
-  CMD_ATI12,                  //Get the VC state
+  CMD_ATI31,                  //Get the VC state
   CMD_ATI,                    //Get the device type
   CMD_ATI8,                   //Get the radio's unique ID
 
@@ -110,9 +110,9 @@ typedef enum
 
 const char * const commandName[] =
 {
-  "ATI11", "ATIB", "ATA", "AT-CMDVC", "ATC",
+  "ATI30", "ATIB", "ATA", "AT-CMDVC", "ATC",
   "WAIT_CONNECT",
-  "AT-CMDVC_2", "ATI12", "ATI", "ATI8",
+  "AT-CMDVC_2", "ATI31", "ATI", "ATI8",
 };
 
 typedef struct _VIRTUAL_CIRCUIT
@@ -576,7 +576,7 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint
       else
       {
         COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue, virtualCircuitList[srcVc].commandTimer, CMD_AT_CMDVC_2);
-        COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue, virtualCircuitList[srcVc].commandTimer, CMD_ATI12);
+        COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue, virtualCircuitList[srcVc].commandTimer, CMD_ATI31);
         COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue, virtualCircuitList[srcVc].commandTimer, CMD_ATI);
         COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue, virtualCircuitList[srcVc].commandTimer, CMD_ATI8);
       }
@@ -840,18 +840,18 @@ void issuePcCommands()
                 cmdToRadio((uint8_t *)BREAK_LINKS_COMMAND, strlen(BREAK_LINKS_COMMAND));
                 return;
 
-              case CMD_ATI11: //Get myVC
+              case CMD_ATI30: //Get myVC
                 if (myVc == VC_UNASSIGNED)
                 {
                   //Get myVc address
                   if (DEBUG_PC_CMD_ISSUE)
-                    printf("Issuing ATI11 command\n");
+                    printf("Issuing ATI30 command\n");
                   findMyVc = true;
                   cmdToRadio((uint8_t *)GET_MY_VC_ADDRESS, strlen(GET_MY_VC_ADDRESS));
                   return;
                 }
                 if (DEBUG_PC_CMD_ISSUE)
-                  printf("Skipping ATI11 command, myVC already known\n");
+                  printf("Skipping ATI30 command, myVC already known\n");
                 COMMAND_COMPLETE(pcCommandQueue, pcActiveCommand);
                 break;
 
@@ -877,10 +877,10 @@ void issuePcCommands()
                 cmdToRadio((uint8_t *)START_3_WAY_HANDSHAKE, strlen(START_3_WAY_HANDSHAKE));
                 return;
 
-              case CMD_ATI12:
+              case CMD_ATI31:
                 //Get the VC state
                 if (DEBUG_PC_CMD_ISSUE)
-                  printf("Issuing ATI12 command\n");
+                  printf("Issuing ATI31 command\n");
                 cmdToRadio((uint8_t *)GET_VC_STATE, strlen(GET_VC_STATE));
                 return;
 
@@ -1041,7 +1041,7 @@ bool issueVcCommands(int vcIndex)
 
                 //Get the VC state
                 COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_AT_CMDVC_2);
-                COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_ATI12);
+                COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_ATI31);
                 break;
 
               case CMD_AT_CMDVC_2:
@@ -1049,16 +1049,16 @@ bool issueVcCommands(int vcIndex)
                 if (commandProcessorIdle(vcIndex))
                 {
                   if (DEBUG_PC_CMD_ISSUE)
-                    printf("Migrating AT-CMDVC and ATI12 commands to PC command queue\n");
+                    printf("Migrating AT-CMDVC and ATI31 commands to PC command queue\n");
                   COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_AT_CMDVC_2);
-                  if (COMMAND_PENDING(virtualCircuitList[vcIndex].commandQueue, CMD_ATI12))
-                    COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_ATI12);
+                  if (COMMAND_PENDING(virtualCircuitList[vcIndex].commandQueue, CMD_ATI31))
+                    COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_ATI31);
                   return true;
                 }
                 virtualCircuitList[vcIndex].activeCommand = CMD_LIST_SIZE;
                 return true;
 
-              case CMD_ATI12:
+              case CMD_ATI31:
                 return true;
 
               case CMD_ATI:
@@ -1183,7 +1183,7 @@ int main(int argc, char **argv)
 
     //Perform the initialization commands
     pcCommandTimer = 1;
-    COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_ATI11); //Get myVC
+    COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_ATI30); //Get myVC
     COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_ATA);   //Get all the VC states
 
     //Break the links if requested
