@@ -707,6 +707,78 @@ void radioCommandComplete(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uin
   waitingForCommandComplete = false;
 }
 
+int commandResponse(uint8_t * data, uint8_t length)
+{
+  uint8_t * dataStart;
+  uint8_t * dataEnd;
+  VC_SERIAL_MESSAGE_HEADER * header;
+  int status;
+
+  dataEnd = &data[length];
+  status = 0;
+  do
+  {
+    dataStart = data;
+
+    //Walk through the command response looking for an embedded VC message
+    while ((data < dataEnd) && (*data != START_OF_VC_SERIAL))
+      data++;
+
+    //Output the serial data
+    length = data - dataStart;
+    if (length)
+    {
+      status = hostToStdout(NULL, dataStart, length);
+      if (status)
+        break;
+    }
+
+    //Determine if there is an embedded VC message
+    if (data >= dataEnd)
+      break;
+
+    //Verify that the entire VC message is in the buffer
+    header = (VC_SERIAL_MESSAGE_HEADER *)data;
+    data++; //Skip over the START_OF_VC_SERIAL byte
+    if ((data >= dataEnd) || (&data[*data] > dataEnd))
+    {
+      fprintf(stderr, "ERROR: VC message not fully contained in command response");
+      status = -20;
+      break;
+    }
+
+    //Locate the VC message header and the remainder of the command response
+    length = header->radio.length;
+    dataStart = &data[VC_RADIO_HEADER_BYTES];
+    data += length;
+    length -= VC_RADIO_HEADER_BYTES;
+
+    //Display the VC header and message
+    if (DEBUG_RADIO_TO_PC)
+    {
+      printf("VC Header:\n");
+      printf("    length: %d\n", header->radio.length);
+      printf("    destVc: %d (0x%02x)\n", (uint8_t)header->radio.destVc, (uint8_t)header->radio.destVc);
+      printf("    srcVc: %d (0x%02x)\n", header->radio.srcVc, header->radio.srcVc);
+      if (length > 0)
+        dumpBuffer(dataStart, length);
+    }
+
+    //------------------------------
+    //Process the message
+    //------------------------------
+
+    //Display radio runtime
+    if (header->radio.destVc == PC_RUNTIME)
+      radioRuntime(header, dataStart, length);
+
+    //Dump the unknown VC message
+    else
+      dumpBuffer((uint8_t*)header, length + VC_SERIAL_HEADER_BYTES);
+  } while (data < dataEnd);
+  return status;
+}
+
 int radioToHost()
 {
   int bytesRead;
@@ -811,7 +883,7 @@ int radioToHost()
 
     //Display remote command response
     else if (header->radio.destVc == (PC_REMOTE_RESPONSE | myVc))
-      status = hostToStdout(header, data, length);
+      status = commandResponse(data, length);
 
     //Display command completion status
     else if (header->radio.destVc == PC_COMMAND_COMPLETE)
