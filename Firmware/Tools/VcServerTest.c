@@ -39,7 +39,6 @@
 #define DISPLAY_UNKNOWN_COMMANDS  0
 #define DISPLAY_VC_STATE          0
 #define DUMP_RADIO_TO_PC          0
-#define SEND_ATC_COMMAND          1
 
 #define QUEUE_T                   uint32_t
 #define QUEUE_T_BITS              ((int)(sizeof(QUEUE_T) * 8))
@@ -93,40 +92,17 @@ typedef enum
   CMD_ATI11 = 0,              //Get myVC
   CMD_ATB,                    //Break all VC links
   CMD_ATA,                    //Get VC status
+
+  //Connect to the remote radio
   CMD_AT_CMDVC,               //Select target VC
   CMD_ATC,                    //Start the 3-way handshake
   CMD_WAIT_CONNECTED,         //Wait until the client is connected
+
+  //Get remote radio connection status, type and ID
   CMD_AT_CMDVC_2,             //Select target VC
   CMD_ATI12,                  //Get the VC state
-  CMD_GET_SERVER_MODEL,       //Get the model name
-  CMD_GET_CLIENT_MODEL,       //Get the model name
   CMD_ATI,                    //Get the device type
   CMD_ATI8,                   //Get the radio's unique ID
-  CMD_AT_DISABLE_CONTROLLER,  //Disable the sprinkler controller
-  CMD_AT_DAY_OF_WEEK,         //Set the day of week
-  CMD_AT_TIME_OF_DAY,         //Set the time of day
-  CMD_ATI89,                  //Display the date and time
-
-  //Select the solenoids for each of the zone
-  CMD_SELECT_ZONE,            //Select the zone number
-  CMD_SELECT_SOLENOID,        //Select the solenoid for the zone
-  COMPLETE_ZONE_CONFIGURATION,//Verify that all of the zones are configured
-
-  //Set the start times
-  CMD_SET_DAY_OF_WEEK,        //Set the day of the week
-  CMD_SET_START_TIME,         //Set the start time
-  CMD_SET_ALL_START_TIMES,    //Verify that all of the start times are set
-
-  //Set the zone durations
-  CMD_SET_DAY_OF_WEEK_2,      //Set the day of the week
-  CMD_SELECT_ZONE_2,          //Select the zone number
-  CMD_SET_ZONE_DURATION,      //Set the zone on duration
-  CMD_SET_ALL_DURATIONS,      //Verify that all of the durations are set
-
-/*
-#define SET_MANUAL_ON           "AT-ZoneManualOn="
-#define SET_ZONE_DURATION       "AT-ZoneDuration="
-*/
 
   //Last in the list
   CMD_LIST_SIZE
@@ -134,14 +110,10 @@ typedef enum
 
 const char * const commandName[] =
 {
-  "ATI11", "ATIB", "ATA", "AT-CMDVC", "ATC", "WAIT_CONNECT", "AT-CMDVC_2", "ATI12",
-  "ATI93", "ATI81", "ATI", "ATI8", "AT-EnableController=0",
-  "AT-DayOfWeek", "AT-TimeOfDay", "ATI89",
-  "AT-CommandZone", "AT-LatchingSolenoid", "COMPLETE_ZONE_CONFIGURATION",
-  "AT-CommandDay", "AT-StartTime", "CMD_SET_ALL_START_TIMES",
-  "AT-CommandDay-2", "AT-CommandZone-2", "AT-ZoneDuration", "CMD_SET_ALL_DURATIONS",
+  "ATI11", "ATIB", "ATA", "AT-CMDVC", "ATC",
+  "WAIT_CONNECT",
+  "AT-CMDVC_2", "ATI12", "ATI", "ATI8",
 };
-
 
 typedef struct _VIRTUAL_CIRCUIT
 {
@@ -470,7 +442,6 @@ int hostToStdout(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint8_t byte
 
 void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint8_t length)
 {
-  int durationBase;
   int newState;
   int previousState;
   int srcVc;
