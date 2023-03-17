@@ -161,7 +161,7 @@ int myVc = VC_SERVER;
 uint8_t outputBuffer[VC_SERIAL_HEADER_BYTES + BUFFER_SIZE];
 uint32_t pcActiveCommand = CMD_LIST_SIZE;
 char pcCommandBuffer[128];
-uint8_t pcCommandQueue[COMMAND_QUEUE_SIZE];
+QUEUE_T pcCommandQueue[COMMAND_QUEUE_SIZE];
 uint32_t pcCommandTimer;
 int pcCommandVc = MAX_VC;
 uint8_t remoteCommandVc;
