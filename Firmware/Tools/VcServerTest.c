@@ -110,6 +110,13 @@ typedef enum
   CMD_ATI8_2,                 //Get the radio's unique ID
   CMD_ATI11,                  //Get the runtime
 
+  //Determine if programming is necessary
+  CHECK_FOR_UPDATE,
+
+  //Done programming
+  CMD_ATI11_2,                //Get the runtime
+  PROGRAMMING_COMPLETED,      //Configuration is up-to-date
+
   //Last in the list
   CMD_LIST_SIZE
 } COMMANDS;
@@ -119,6 +126,8 @@ const char * const commandName[] =
   "ATI30", "ATIB", "ATI", "ATI8", "ATA", "AT-CMDVC", "ATC",
   "WAIT_CONNECT",
   "AT-CMDVC_2", "ATI31", "ATI_2", "ATI8_2", "ATI11",
+  "CHECK_FOR_UPDATE",
+  "ATI11_2", "PROGRAMMING_COMPLETED",
 };
 
 typedef struct _VIRTUAL_CIRCUIT
@@ -128,6 +137,7 @@ typedef struct _VIRTUAL_CIRCUIT
   QUEUE_T commandQueue[COMMAND_QUEUE_SIZE];
   uint32_t commandTimer;
   uint64_t programmed;
+  uint64_t programUpdated;
   uint64_t runtime;
   uint8_t uniqueId[UNIQUE_ID_BYTES];
   bool valid;
@@ -602,6 +612,9 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint
       COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue,
                     virtualCircuitList[srcVc].commandTimer,
                     CMD_ATI11);
+      COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue,
+                    virtualCircuitList[srcVc].commandTimer,
+                    CHECK_FOR_UPDATE);
     }
     break;
   }
@@ -1185,7 +1198,32 @@ bool issueVcCommands(int vcIndex)
                 return true;
 
               case CMD_ATI11:
+              case CMD_ATI11_2:
                 sendVcCommand(GET_RUNTIME, vcIndex);
+                return true;
+
+              case CHECK_FOR_UPDATE:
+                if (virtualCircuitList[vcIndex].programUpdated > virtualCircuitList[vcIndex].programmed)
+                {
+                }
+
+                //Complete the programming
+                COMMAND_ISSUE(virtualCircuitList[vcIndex].commandQueue,
+                              virtualCircuitList[vcIndex].commandTimer,
+                              CMD_ATI11_2);
+                COMMAND_ISSUE(virtualCircuitList[vcIndex].commandQueue,
+                              virtualCircuitList[vcIndex].commandTimer,
+                              PROGRAMMING_COMPLETED);
+
+                //Done with the CHECK_FOR_UPDATE command
+                COMMAND_COMPLETE(virtualCircuitList[vcIndex].commandQueue,
+                                 virtualCircuitList[vcIndex].activeCommand);
+                return true;
+
+              case PROGRAMMING_COMPLETED:
+                virtualCircuitList[vcIndex].programmed = virtualCircuitList[vcIndex].runtime;
+                COMMAND_COMPLETE(virtualCircuitList[vcIndex].commandQueue,
+                                 virtualCircuitList[vcIndex].activeCommand);
                 return true;
             }
           }
