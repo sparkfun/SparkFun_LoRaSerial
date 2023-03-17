@@ -23,6 +23,14 @@ void systemPrint(int value)
   systemPrint(temp);
 }
 
+//Print an integer value
+void systemPrintU64(uint64_t value)
+{
+  char temp[20 + 1];
+  sprintf(temp, "%ld", value);
+  systemPrint(temp);
+}
+
 //Print an integer value as HEX or decimal
 void systemPrint(int value, uint8_t printType)
 {

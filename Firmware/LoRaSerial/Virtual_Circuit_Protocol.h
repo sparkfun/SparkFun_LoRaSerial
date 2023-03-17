@@ -31,18 +31,19 @@
 //Address space 7 is reserved for the following special addresses:
 
 #define VC_RSVD_SPECIAL_VCS ((int8_t)(VCAB_CHANNEL_MASK << VCAB_NUMBER_BITS))
-#define VC_BROADCAST        ((int8_t)(VC_RSVD_SPECIAL_VCS | VCAB_NUMBER_MASK))
-#define VC_COMMAND          (VC_BROADCAST - 1) //Command input and command response
-#define VC_UNASSIGNED       (VC_COMMAND - 1)
-#define VC_IGNORE_TX        (VC_UNASSIGNED - 1)
+#define VC_BROADCAST        ((int8_t)(VC_RSVD_SPECIAL_VCS | VCAB_NUMBER_MASK)) //0xff
+#define VC_COMMAND          (VC_BROADCAST - 1)  //0xfe: Command input and command response
+#define VC_UNASSIGNED       (VC_COMMAND - 1)    //0xfd
+#define VC_IGNORE_TX        (VC_UNASSIGNED - 1) //0xfc
 
 //Source and destinations reserved for the local host
-#define PC_COMMAND          VC_RSVD_SPECIAL_VCS //Command input and command response
-#define PC_LINK_STATUS      (PC_COMMAND + 1)    //Asynchronous link status output
-#define PC_DATA_ACK         (PC_LINK_STATUS + 1)//Indicate data delivery success
-#define PC_DATA_NACK        (PC_DATA_ACK + 1)   //Indicate data delivery failure
-#define PC_SERIAL_RECONNECT (PC_DATA_NACK + 1)  //Disconnect/reconnect the serial port over LoRaSerial CPU reset
-#define PC_COMMAND_COMPLETE (PC_SERIAL_RECONNECT + 1)//Command complete
+#define PC_COMMAND          VC_RSVD_SPECIAL_VCS //0xe0: Command input and command response
+#define PC_LINK_STATUS      (PC_COMMAND + 1)    //0xe1: Asynchronous link status output
+#define PC_DATA_ACK         (PC_LINK_STATUS + 1)//0xe2: Indicate data delivery success
+#define PC_DATA_NACK        (PC_DATA_ACK + 1)   //0xe3: Indicate data delivery failure
+#define PC_SERIAL_RECONNECT (PC_DATA_NACK + 1)  //0xe4: Disconnect/reconnect the serial port over LoRaSerial CPU reset
+#define PC_COMMAND_COMPLETE (PC_SERIAL_RECONNECT + 1) //0xe5: Command complete
+#define PC_RUNTIME          (PC_COMMAND_COMPLETE + 1) //0xe6: Radio uptime
 
 //Address space 1 and 6 are reserved for the host PC interface to support remote
 //command processing.  The radio removes these bits and converts them to the
@@ -176,6 +177,12 @@ typedef struct _VC_COMMAND_COMPLETE_MESSAGE
 {
   uint8_t cmdStatus;      //Command status
 } VC_COMMAND_COMPLETE_MESSAGE;
+
+typedef struct _VC_RUNTIME_MESSAGE
+{
+  uint64_t runtime;     //Time the system has been running in milliseconds
+  uint64_t programmed;  //Time the system was programmed in milliseconds
+} VC_RUNTIME_MESSAGE;
 
 //------------------------------------------------------------------------------
 // Macros

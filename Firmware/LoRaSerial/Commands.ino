@@ -224,6 +224,7 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI8 - Display system unique ID");
         systemPrintln("  ATI9 - Display the maximum datagram size");
         systemPrintln("  ATI10 - Display radio metrics");
+        systemPrintln("  ATI11 - Display the system runtime");
 
         //Virtual circuit information commands
         systemPrintln("  ATI30 - Return myVc value");
@@ -600,6 +601,32 @@ bool commandAT(const char * commandString)
         //State history
         systemPrintln("    State History");
         displayRadioStateHistory();
+        return true;
+
+      case ('1'): //ATI11 - Display the system runtime
+        systemPrint("Runtime: ");
+        systemPrintU64(runtime.u64);
+        systemPrint(", Programmed: ");
+        systemPrintU64(programmed);
+        systemPrintln();
+        if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+        {
+          VC_RUNTIME_MESSAGE msg;
+          uint8_t * data;
+
+          //Build the runtime message
+          memcpy(&msg.runtime, &runtime.u64, sizeof(msg.runtime));
+          memcpy(&msg.programmed, &programmed, sizeof(msg.programmed));
+
+          //Send the message
+          systemWrite(START_OF_VC_SERIAL);  //Start byte
+          systemWrite(3 + sizeof(VC_RUNTIME_MESSAGE)); //Length
+          systemWrite(PC_RUNTIME);        //Destination
+          systemWrite(myVc);              //Source
+          data = (uint8_t *)&msg;
+          for (int index = 0; index < sizeof(msg); index++)
+            systemWrite(*data++);
+        }
         return true;
     }
   }

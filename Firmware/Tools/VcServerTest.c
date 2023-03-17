@@ -21,6 +21,7 @@
 #define BREAK_LINKS_COMMAND     "atb"
 #define GET_DEVICE_INFO         "ati"
 #define GET_MY_VC_ADDRESS       "ati30"
+#define GET_RUNTIME             "ati11"
 #define GET_UNIQUE_ID           "ati8"
 #define GET_VC_STATE            "ati31"
 #define GET_VC_STATUS           "ata"
@@ -36,6 +37,7 @@
 #define DISPLAY_DATA_ACK          0
 #define DISPLAY_DATA_NACK         1
 #define DISPLAY_RESOURCE_USAGE    0
+#define DISPLAY_RUNTIME           0
 #define DISPLAY_STATE_TRANSITION  0
 #define DISPLAY_UNKNOWN_COMMANDS  0
 #define DISPLAY_VC_STATE          0
@@ -106,6 +108,7 @@ typedef enum
   CMD_ATI31,                  //Get the VC state
   CMD_ATI_2,                  //Get the device type
   CMD_ATI8_2,                 //Get the radio's unique ID
+  CMD_ATI11,                  //Get the runtime
 
   //Last in the list
   CMD_LIST_SIZE
@@ -115,7 +118,7 @@ const char * const commandName[] =
 {
   "ATI30", "ATIB", "ATI", "ATI8", "ATA", "AT-CMDVC", "ATC",
   "WAIT_CONNECT",
-  "AT-CMDVC_2", "ATI31", "ATI_2", "ATI8_2",
+  "AT-CMDVC_2", "ATI31", "ATI_2", "ATI8_2", "ATI11",
 };
 
 typedef struct _VIRTUAL_CIRCUIT
@@ -124,6 +127,8 @@ typedef struct _VIRTUAL_CIRCUIT
   uint32_t activeCommand;
   QUEUE_T commandQueue[COMMAND_QUEUE_SIZE];
   uint32_t commandTimer;
+  uint64_t programmed;
+  uint64_t runtime;
   uint8_t uniqueId[UNIQUE_ID_BYTES];
   bool valid;
 } VIRTUAL_CIRCUIT;
@@ -594,6 +599,9 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint
       COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue,
                     virtualCircuitList[srcVc].commandTimer,
                     CMD_ATI8_2);
+      COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue,
+                    virtualCircuitList[srcVc].commandTimer,
+                    CMD_ATI11);
     }
     break;
   }
@@ -637,6 +645,23 @@ void radioDataNack(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint8_t le
 
   //Set the VC state to down
   virtualCircuitList[vcIndex].vcState = VC_STATE_LINK_DOWN;
+}
+
+void radioRuntime(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint8_t length)
+{
+  int index;
+  int vcIndex;
+  VC_RUNTIME_MESSAGE * vcMsg;
+
+  vcMsg = (VC_RUNTIME_MESSAGE *)data;
+  vcIndex = header->radio.srcVc & VCAB_NUMBER_MASK;
+  if (DISPLAY_RUNTIME)
+    printf("VC %d runtime: %lld, programmed: %lld\n",
+           vcIndex, (long long)vcMsg->runtime, (long long)vcMsg->programmed);
+
+  //Set the time values
+  memcpy(&virtualCircuitList[vcIndex].runtime, &vcMsg->runtime, sizeof(vcMsg->runtime));
+  memcpy(&virtualCircuitList[vcIndex].programmed, &vcMsg->programmed, sizeof(vcMsg->programmed));
 }
 
 void radioCommandComplete(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint8_t length)
@@ -799,6 +824,10 @@ int radioToHost()
     //Display NACKs for transmitted messages
     else if (header->radio.destVc == PC_DATA_NACK)
       radioDataNack(header, data, length);
+
+    //Display radio runtime
+    else if (header->radio.destVc == PC_RUNTIME)
+      radioRuntime(header, data, length);
 
     //Display received messages
     else if ((header->radio.destVc == myVc) || (header->radio.destVc == VC_BROADCAST))
@@ -1081,6 +1110,10 @@ bool issueVcCommands(int vcIndex)
 
               case CMD_ATI8_2:
                 sendVcCommand(GET_UNIQUE_ID, vcIndex);
+                return true;
+
+              case CMD_ATI11:
+                sendVcCommand(GET_RUNTIME, vcIndex);
                 return true;
             }
           }
