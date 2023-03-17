@@ -571,12 +571,13 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint
   case VC_STATE_CONNECTED:
     if (DEBUG_PC_CMD_ISSUE)
       printf("VC %d CONNECTED\n", srcVc);
-    if (myVc == VC_SERVER)
+    if (COMMAND_PENDING(pcCommandQueue, CMD_ATC)
+      && (pcActiveCommand == CMD_ATC) && (srcVc == pcCommandVc))
     {
       if (virtualCircuitList[srcVc].activeCommand == CMD_ATC)
         COMMAND_COMPLETE(virtualCircuitList[srcVc].commandQueue, virtualCircuitList[srcVc].activeCommand);
+      COMMAND_COMPLETE(pcCommandQueue, pcActiveCommand);
     }
-    COMMAND_COMPLETE(pcCommandQueue, pcActiveCommand);
     if (DISPLAY_VC_STATE)
       printf("======= VC %d CONNECTED ======\n", srcVc);
     if (srcVc != myVc)
