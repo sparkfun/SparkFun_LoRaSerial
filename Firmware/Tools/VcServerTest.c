@@ -35,6 +35,7 @@
 #define DISPLAY_COMMAND_COMPLETE  0
 #define DISPLAY_DATA_ACK          0
 #define DISPLAY_DATA_NACK         1
+#define DISPLAY_RESOURCE_USAGE    0
 #define DISPLAY_STATE_TRANSITION  0
 #define DISPLAY_UNKNOWN_COMMANDS  0
 #define DISPLAY_VC_STATE          0
@@ -1271,7 +1272,7 @@ int main(int argc, char **argv)
         // Check the resource usage
         //----------------------------------------
 
-        if (!(timeoutCount % (ONE_SECOND_COUNT * 60)))
+        if (DISPLAY_RESOURCE_USAGE && (!(timeoutCount % (ONE_SECOND_COUNT * 60))))
         {
           struct rusage usage;
           int s_days;
