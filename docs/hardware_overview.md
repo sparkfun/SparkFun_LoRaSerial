@@ -153,15 +153,19 @@ The enclosure includes mounting holes for wall or rack mounting.
 
 ## Power Usage
 
-The SX1276 based radio module is rated for 1 Watt. The radio can be adjusted from 14dBm up to 30dBm (default). 
+The SX1276-based radio module is rated for 1 watt. The radio can be adjusted from 14dBm up to 30dBm (default). 
 
 **Note:** The **AT-TxPower** command ranges from 14 to 30 in dBm. The radio uses an internal lookup table to map the correct power output (30dBm by default) to the associated power level for the power amplifier (20 in this case).
+
+The average standby current is approximately **60mA** when TxPower of 30 is selected. The average current varies based on the selected output power because the units will periodically transmit *Find Partner* packets when the link is down and *Heartbeat* packets when the link is up, even if there is no data waiting to be transmitted. 
 
 ![A 1W radio using 2.5W](img/SparkFun%20LoRaSerial%20Power%20Usage.png)
 
 During broadcast, the radio can use much more than 1W. Use a good 5V supply capable of outputting at least 1A at 5V. A USB 3.0 port is good. A USB 2.0 port will considerably limit the capabilities of the radio.
 
 ![Power output vs Power input](img/SparkFun%20LoRaSerial%20Power%20Measurements.png)
+
+The above table shows power usage during 100% broadcast envelope usage. The actual current usage will be proportionally lower depending on the amount of data transmitted. For example, if only half of the airspeed is used (240 bytes out of a max of 480 at airspeed 4800) then the transmitter will only be on for 50% of the time at the stated power.
 
 The power meter and hardware setup limited the ability to get to the full 30dBm output. The above measurements should be used as a rule-of-thumb for power considerations.
 
