@@ -1305,7 +1305,6 @@ void updateRadioState()
               startChannelTimer();
               channelTimerStart -= settings.maxDwellTime;
               syncChannelTimer(txSyncClocksUsec);
-              triggerEvent(TRIGGER_RX_SYNC_CLOCKS);
 
               if (settings.debugSync)
               {

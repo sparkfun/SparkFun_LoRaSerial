@@ -931,8 +931,7 @@ bool xmitDatagramP2PSyncClocks()
   radioCallHistory[RADIO_CALL_xmitDatagramP2PSyncClocks] = currentMillis;
 
   startOfData = endOfTxData;
-  memcpy(endOfTxData, &channelNumber, sizeof(channelNumber));
-  endOfTxData += sizeof(channelNumber);
+  *endOfTxData++ = channelNumber;
 
   memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
   endOfTxData += sizeof(unsigned long);
@@ -1149,18 +1148,20 @@ bool xmitDatagramMpHeartbeat()
   radioCallHistory[RADIO_CALL_xmitDatagramMpHeartbeat] = millis();
 
   startOfData = endOfTxData;
-  memcpy(endOfTxData, &channelNumber, sizeof(channelNumber));
-  endOfTxData += sizeof(channelNumber);
+  *endOfTxData++ = channelNumber;
+
+  memcpy(endOfTxData, &currentMillis, sizeof(currentMillis));
+  endOfTxData += sizeof(unsigned long);
 
   /*
-                                              endOfTxData ---.
-                                                             |
-                                                             V
-      +----------+---------+----------+------------+---------+----------+
-      | Optional |         | Optional | Optional   | Channel |          |
-      | NET ID   | Control | C-Timer  | SF6 Length | Number  | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 1 byte  | n Bytes  |
-      +----------+---------+----------+------------+---------+----------+
+                                                        endOfTxData ---.
+                                                                       |
+                                                                       V
+      +----------+---------+----------+------------+---------+---------+----------+
+      | Optional |         | Optional | Optional   | Channel |         |          |
+      | NET ID   | Control | C-Timer  | SF6 Length | Number  | Millis  | Trailer  |
+      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 1 byte  | 4 bytes | n Bytes  |
+      +----------+---------+----------+------------+---------+---------+----------+
   */
 
   //Verify the data length
