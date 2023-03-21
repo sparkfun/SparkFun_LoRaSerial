@@ -3250,7 +3250,7 @@ void stopChannelTimer()
 
 //Given the remote unit's number of ms before its next hop,
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
-void syncChannelTimer(uint32_t frameAirTimeUsec)
+void syncChannelTimer(uint32_t frameAirTimeUsec, bool clockStarting)
 {
   int16_t adjustment;
   uint8_t caseNumber;
@@ -3318,6 +3318,48 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
   //timer update will add only microseconds to when the hop is done.
   delayedHopCount = timeToHop ? 1 : 0;
 
+  // 4800 BPS operation
+  //
+  //            |<---------------- Millis to HOP ---------------->|
+  //     _____  |                                                 |_____________
+  //          |_|_________________________________________________|
+  //            |                          |                      |
+  //   TX Start ^         TX Complete ^    |<-- rmtHopTimeMsec -->|
+  //                           RX Complete ^
+  //
+  //
+  // 150 BPS operation
+  //
+  //            |<--- Millis to HOP --->|
+  //     _____  |                       |_________________________
+  //          |_|_______________________|                  |      |_____________
+  //            |                                          |      |
+  //   TX Start ^                         TX Complete ^    |      |
+  //                                           RX Complete ^      |
+  //                                                       |<-  ->|
+  //                                                    rmtHopTimeMsec
+  //
+  //            Millis to HOP
+  //               |<- ->|
+  //               |     |_________________________                           __
+  //    ___________|_____|                         |_________________________|
+  //               |                                          |              |
+  //      TX Start ^                         TX Complete ^    |              |
+  //                                              RX Complete ^              |
+  //                                                          |<----    ---->|
+  //                                                           rmtHopTimeMsec
+  //
+  //For low speed operation move the TX start into the current dwell time period
+  //to make the rest of the math look like the 4800 BPS operation.
+  frameAirTimeMsec = settings.maxDwellTime - msToNextHopRemote
+                   + (frameAirTimeUsec + settings.txToRxUsec + micros() - transactionCompleteMicros) / 1000;
+  while (frameAirTimeMsec >= (settings.maxDwellTime + (settings.maxDwellTime >> 6)))
+  {
+    frameAirTimeMsec -= settings.maxDwellTime;
+    if (clockStarting)
+      delayedHopCount += 1; //Account for the missing hop when the timer is stopped
+  }
+
   //The radios are using the same frequencies since the frame was successfully
   //received.  The goal is to adjust the channel timer to fire in close proximity
   //to the firing of the remote sysstem's channel timer.  The following cases
@@ -3338,8 +3380,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec)
   //Compute the remote system's channel timer firing time offset in milliseconds
   //using the channel timer value and the adjustments for transmit and receive
   //time (time of flight)
-  frameAirTimeMsec = (frameAirTimeUsec + settings.txToRxUsec + micros() - transactionCompleteMicros) / 1000;
-  rmtHopTimeMsec = msToNextHopRemote - frameAirTimeMsec;
+  rmtHopTimeMsec = settings.maxDwellTime - frameAirTimeMsec;
 
   //Compute when the local system last hopped
   lclHopTimeMsec = currentMillis - channelTimerStart;
