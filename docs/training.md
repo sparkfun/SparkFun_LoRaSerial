@@ -83,6 +83,59 @@ A command script is simply a text file containing the AT commands the user would
 
 Copying and pasting command scripts into a terminal program is an efficient way of configuring a radio.
 
+## Virtual Circuit Training
+
+It is recommended to use a command script to initialize the server radio when performing virtual-circuit training. The client radios can either use command mode or the training button to enter training mode.
+
+Temporary Server (Doesn't save settings):
+
+* If the radio is not already in point-to-point or multi-point mode, hold the training button down for 15 seconds
+* Connect to the LoRaSerial radio via USB or the serial port
+* Enter command mode with +++
+* Start from factory defaults by issuing the ATF command
+* Issue the following commands:
+  * AT-OperatingMode=2
+  * AT-Server=1
+  * AT-SelectLedUse=2
+  * ATG
+* Set any of the other parameters
+* Enter training mode with ATT command
+* Wait for clients to be trained
+* Exit command mode with ATO command or reboot with ATZ command
+
+Server (Saves settings):
+
+* If not already at factory reset, hold the training button down for 15 seconds
+* Connect to the LoRaSerial radio via USB or the serial port
+* Enter command mode with +++
+* Start from factory defaults by issuing the ATF command
+* Issue the following commands:
+  * AT-OperatingMode=2
+  * AT-Server=1
+  * AT-SelectLedUse=2
+  * ATG
+* Set any of the other parameters
+* Enter training mode with ATT command
+* Wait for clients to be trained
+* Save parameters with ATW command
+* Always reboot with ATZ command
+
+Client:
+
+* 2 second training button press
+* Receives training parameters from server
+* Saves new parameters
+* Reboots
+
+Client:
+
+* Connect to the LoRaSerial radio via USB or the serial port
+* Enter command mode using +++
+* Enter training using the ATT command
+* Receives training parameters from server
+* Saves new parameters
+* Reboots
+
 ## Training Parameters
 
 The training parameters for radio communication fall into two groups:
