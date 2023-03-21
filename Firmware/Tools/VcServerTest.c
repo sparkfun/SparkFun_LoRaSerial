@@ -27,6 +27,7 @@
 #define GET_VC_STATUS           "ata"
 #define LINK_RESET_COMMAND      "atz"
 #define MY_VC_ADDRESS           "myVc: "
+#define SET_PROGRAM_COMPLETE    "ati12"
 #define START_3_WAY_HANDSHAKE   "atc"
 
 #define DEBUG_LOCAL_COMMANDS      0
@@ -114,7 +115,7 @@ typedef enum
   CHECK_FOR_UPDATE,
 
   //Done programming
-  CMD_ATI11_2,                //Get the runtime
+  CMD_ATI12,                  //Tell the radio that programming is complete
   PROGRAMMING_COMPLETED,      //Configuration is up-to-date
 
   //Last in the list
@@ -127,7 +128,7 @@ const char * const commandName[] =
   "WAIT_CONNECT",
   "AT-CMDVC_2", "ATI31", "ATI_2", "ATI8_2", "ATI11",
   "CHECK_FOR_UPDATE",
-  "ATI11_2", "PROGRAMMING_COMPLETED",
+  "ATI12", "PROGRAMMING_COMPLETED",
 };
 
 typedef struct _VIRTUAL_CIRCUIT
@@ -707,6 +708,10 @@ void radioCommandComplete(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uin
   }
   else
   {
+    //Finish the programming
+    if (virtualCircuitList[srcVc].activeCommand == CMD_ATI12)
+      virtualCircuitList[srcVc].programUpdated = virtualCircuitList[srcVc].programmed;
+
     //This was a VC command
     COMMAND_COMPLETE(virtualCircuitList[srcVc].commandQueue,
                      virtualCircuitList[srcVc].activeCommand);
@@ -1198,22 +1203,21 @@ bool issueVcCommands(int vcIndex)
                 return true;
 
               case CMD_ATI11:
-              case CMD_ATI11_2:
                 sendVcCommand(GET_RUNTIME, vcIndex);
                 return true;
 
               case CHECK_FOR_UPDATE:
-                if (virtualCircuitList[vcIndex].programUpdated > virtualCircuitList[vcIndex].programmed)
+                if ((!virtualCircuitList[vcIndex].programUpdated)
+                  || (virtualCircuitList[vcIndex].programUpdated > virtualCircuitList[vcIndex].programmed))
                 {
+                  //Complete the programming
+                  COMMAND_ISSUE(virtualCircuitList[vcIndex].commandQueue,
+                                virtualCircuitList[vcIndex].commandTimer,
+                                CMD_ATI12);
+                  COMMAND_ISSUE(virtualCircuitList[vcIndex].commandQueue,
+                                virtualCircuitList[vcIndex].commandTimer,
+                                PROGRAMMING_COMPLETED);
                 }
-
-                //Complete the programming
-                COMMAND_ISSUE(virtualCircuitList[vcIndex].commandQueue,
-                              virtualCircuitList[vcIndex].commandTimer,
-                              CMD_ATI11_2);
-                COMMAND_ISSUE(virtualCircuitList[vcIndex].commandQueue,
-                              virtualCircuitList[vcIndex].commandTimer,
-                              PROGRAMMING_COMPLETED);
 
                 //Done with the CHECK_FOR_UPDATE command
                 COMMAND_COMPLETE(virtualCircuitList[vcIndex].commandQueue,

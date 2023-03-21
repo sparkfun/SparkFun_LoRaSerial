@@ -225,6 +225,7 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI9 - Display the maximum datagram size");
         systemPrintln("  ATI10 - Display radio metrics");
         systemPrintln("  ATI11 - Display the system runtime");
+        systemPrintln("  ATI12 - Set programming complete");
 
         //Virtual circuit information commands
         systemPrintln("  ATI30 - Return myVc value");
@@ -602,6 +603,14 @@ bool commandAT(const char * commandString)
         systemPrintln("    State History");
         displayRadioStateHistory();
         return true;
+
+      case ('2'): //ATI12 - Set programming complete
+        programmed = runtime.u64;
+
+        //    Fall through
+        //          |
+        //          |
+        //          V
 
       case ('1'): //ATI11 - Display the system runtime
         systemPrint("Runtime: ");
