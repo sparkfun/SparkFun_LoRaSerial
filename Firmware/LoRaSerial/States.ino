@@ -750,7 +750,7 @@ void updateRadioState()
             COMPUTE_TIMESTAMP_OFFSET(rxData, 1, txDataAckUsec);
 
             //The datagram we are expecting
-            syncChannelTimer(txDataAckUsec); //Adjust freq hop ISR based on remote's remaining clock
+            syncChannelTimer(txDataAckUsec, 0); //Adjust freq hop ISR based on remote's remaining clock
 
             triggerEvent(TRIGGER_RX_ACK);
 
@@ -1067,9 +1067,9 @@ void updateRadioState()
       //then skip active discovery and go to standby
       if (((frameAirTimeUsec + txDataAckUsec + settings.txToRxUsec) / 1000) > (settings.maxDwellTime / 2))
       {
-        stopChannelTimer();
         channelNumber = 0;
         setRadioFrequency(false);
+        stopChannelTimer();
         changeState(RADIO_DISCOVER_STANDBY);
       }
       else
@@ -1160,7 +1160,7 @@ void updateRadioState()
               //Start and adjust freq hop ISR based on remote's remaining clock
               startChannelTimer();
               channelTimerStart -= settings.maxDwellTime;
-              syncChannelTimer(txSyncClocksUsec);
+              syncChannelTimer(txSyncClocksUsec, 1);
               triggerEvent(TRIGGER_RX_SYNC_CLOCKS);
 
               if (settings.debugSync)
@@ -1304,7 +1304,7 @@ void updateRadioState()
               //Start and adjust freq hop ISR based on remote's remaining clock
               startChannelTimer();
               channelTimerStart -= settings.maxDwellTime;
-              syncChannelTimer(txSyncClocksUsec);
+              syncChannelTimer(txSyncClocksUsec, 1);
 
               if (settings.debugSync)
               {
@@ -1422,7 +1422,7 @@ void updateRadioState()
             if (settings.server == false)
             {
               //Adjust freq hop ISR based on server's remaining clock
-              syncChannelTimer(txHeartbeatUsec);
+              syncChannelTimer(txHeartbeatUsec, 0);
 
               //Received heartbeat - do not ack.
               triggerEvent(TRIGGER_RX_HEARTBEAT);
@@ -3224,7 +3224,7 @@ void vcReceiveHeartbeat(uint32_t rxMillis)
 
   //Adjust freq hop ISR based on server's remaining clock
   if ((rxSrcVc == VC_SERVER) || (memcmp(rxVcData, myUniqueId, sizeof(myUniqueId)) == 0))
-    syncChannelTimer(txHeartbeatUsec);
+    syncChannelTimer(txHeartbeatUsec, 0);
 
   //Update the timestamp offset
   if (rxSrcVc == VC_SERVER)
