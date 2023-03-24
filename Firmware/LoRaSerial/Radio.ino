@@ -214,20 +214,26 @@ void convertAirSpeedToSettings(Settings *newSettings, uint16_t airSpeed)
 //Given settings, attempt to ID our airSpeed
 uint16_t convertSettingsToAirSpeed(Settings *newSettings)
 {
-  uint16_t airSpeed = 0;
+  if ( (newSettings->radioBandwidth == 62.5) && (newSettings->radioSpreadFactor == 11) && (newSettings->radioCodingRate == 8) ) return (40);
+  else if ( (newSettings->radioBandwidth == 62.5) && (newSettings->radioSpreadFactor == 10) && (newSettings->radioCodingRate == 8) ) return (150);
+  else if ( (newSettings->radioBandwidth == 125) && (newSettings->radioSpreadFactor == 10) && (newSettings->radioCodingRate == 8) ) return (400);
+  else if ( (newSettings->radioBandwidth == 125) && (newSettings->radioSpreadFactor == 9) && (newSettings->radioCodingRate == 8) )return (1200);
+  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 10) && (newSettings->radioCodingRate == 8) )return (2400);
+  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 9) && (newSettings->radioCodingRate == 8) )return (4800);
+  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 8) && (newSettings->radioCodingRate == 7) ) return (9600);
+  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 7) && (newSettings->radioCodingRate == 7) ) return (19200);
+  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 6) && (newSettings->radioCodingRate == 6) ) return (28800);
+  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 6) && (newSettings->radioCodingRate == 5) ) return (38400);
 
-  if ( (newSettings->radioBandwidth == 62.5) && (newSettings->radioSpreadFactor == 11) && (newSettings->radioCodingRate == 8) ) airSpeed = 40;
-  else if ( (newSettings->radioBandwidth == 62.5) && (newSettings->radioSpreadFactor == 10) && (newSettings->radioCodingRate == 8) ) airSpeed = 150;
-  else if ( (newSettings->radioBandwidth == 125) && (newSettings->radioSpreadFactor == 10) && (newSettings->radioCodingRate == 8) ) airSpeed = 400;
-  else if ( (newSettings->radioBandwidth == 125) && (newSettings->radioSpreadFactor == 9) && (newSettings->radioCodingRate == 8) ) airSpeed = 1200;
-  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 10) && (newSettings->radioCodingRate == 8) ) airSpeed = 2400;
-  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 9) && (newSettings->radioCodingRate == 8) ) airSpeed = 4800;
-  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 8) && (newSettings->radioCodingRate == 7) ) airSpeed = 9600;
-  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 7) && (newSettings->radioCodingRate == 7) ) airSpeed = 19200;
-  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 6) && (newSettings->radioCodingRate == 6) ) airSpeed = 28800;
-  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 6) && (newSettings->radioCodingRate == 5) ) airSpeed = 38400;
+  systemPrint("Unknown airSpeed for Bandwidth: ");
+  systemPrint(newSettings->radioBandwidth);
+  systemPrint(" SpreadFactor: ");
+  systemPrint(newSettings->radioSpreadFactor);
+  systemPrint(" CodingRate: ");
+  systemPrint(newSettings->radioCodingRate);
+  systemPrintln();
 
-  return (airSpeed);
+  return (0);
 }
 
 //Set radio frequency
