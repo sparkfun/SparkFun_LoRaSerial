@@ -607,7 +607,7 @@ bool vcSerialMessageReceived()
   do
   {
     //Determine if the radio is idle
-    if (receiveInProcess())
+    if (receiveInProcess(false))
       //The radio is busy, wait until it is idle
       break;
 

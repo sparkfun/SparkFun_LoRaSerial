@@ -287,7 +287,7 @@ void returnToReceiving()
 {
   radioCallHistory[RADIO_CALL_returnToReceiving] = millis();
 
-  if (receiveInProcess() == true) return; //Do not touch the radio if it is already receiving
+  if (receiveInProcess(false) == true) return; //Do not touch the radio if it is already receiving
 
   int state;
   if (settings.radioSpreadFactor > 6)
@@ -655,32 +655,25 @@ unsigned long mSecToChannelZero()
 }
 
 //Returns true if the radio indicates we have an ongoing reception
-bool receiveInProcess()
+bool receiveInProcess(bool startClock)
 {
   uint8_t radioStatus = radio.getModemStatus();
   radioStatus &= 0b11011; //Get bits 0, 1, 3, and 4
 
   //Known states where a reception is in progress
-  if (radioStatus == 0b00001)
-    return (true);
-  else if (radioStatus == 0b00011)
-    return (true);
-  else if (radioStatus == 0b01011)
-    return (true);
-
-  //  switch (radioStatus)
-  //  {
-  //    default:
-  //      Serial.print("Unknown status: 0b");
-  //      Serial.println(radioStatus, BIN);
-  //      break;
-  //    case (0b00000):
-  //      //No receive in process
-  //    case (0b10000):
-  //      //Modem clear. No receive in process
-  //      break;
-  //  }
-
+  switch (radioStatus)
+  {
+    case 0b00001:
+    case 0b00011:
+    case 0b01011:
+      if (startClock && (!channelTimerMsec))
+      {
+        //Compute the approximate time for the next hop
+        startChannelTimer(settings.maxDwellTime - ((settings.txToRxUsec * 25) / 4000));
+        triggerEvent(TRIGGER_RECEIVE_IN_PROCESS);
+      }
+      return (true);
+  }
   return (false);
 }
 
@@ -3088,7 +3081,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
 
   //Drop this datagram if the receiver is active
   if (
-    (receiveInProcess() == true)
+    (receiveInProcess(false) == true)
     || (transactionComplete == true)
     || (
       //If we are in VC mode, and destination is not broadcast,
@@ -3109,7 +3102,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
       systemPrint("TX failed: ");
       if (transactionComplete)
         systemPrintln("RXTC");
-      else if (receiveInProcess())
+      else if (receiveInProcess(false))
         systemPrintln("RXIP");
       else
         systemPrintln("VC link down");
@@ -3124,7 +3117,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
 
     if (state == RADIOLIB_ERR_NONE)
     {
-      if (receiveInProcess() == true)
+      if (receiveInProcess(false) == true)
       {
         //Edge case: if we have started TX, but during the SPI transaction a preamble was detected
         //then return false. This will cause the radio to transmit, then a transactionComplete ISR will trigger.
