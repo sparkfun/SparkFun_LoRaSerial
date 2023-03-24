@@ -56,7 +56,7 @@ bool configureRadio()
   }
   else
   {
-    if (radio.autoLDRO(true) != RADIOLIB_ERR_NONE)
+    if (radio.autoLDRO() != RADIOLIB_ERR_NONE)
       success = false;
   }
 

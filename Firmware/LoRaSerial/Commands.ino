@@ -1184,7 +1184,7 @@ bool valSpeedAir (void * value, uint32_t valMin, uint32_t valMax)
   {
     //Adjust the settings to match the requested airSpeed
     convertAirSpeedToSettings(&tempSettings, settingValue);
-    airSpeed = 0;
+    airSpeed = settingValue;
     systemPrintln("Warning: AirSpeed overrides bandwidth, coding rate, spread factor,");
     systemPrintln("heartbeatTimeout, and txToRxUsec");
   }
