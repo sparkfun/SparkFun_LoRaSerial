@@ -589,7 +589,7 @@ bool commandAT(const char * commandString)
         if (irqFlags & 1)
           systemPrintln("            CAD Detected");
         systemPrint("        receiveInProcess: ");
-        systemPrintln(receiveInProcess() ? "True" : "False");
+        systemPrintln(receiveInProcess(false) ? "True" : "False");
         outputSerialData(true);
         petWDT();
 

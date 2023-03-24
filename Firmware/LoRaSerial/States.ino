@@ -330,7 +330,7 @@ void updateRadioState()
       }
 
       //Is it time to send the FIND_PARTNER to the remote system
-      else if ((receiveInProcess() == false) && ((millis() - heartbeatTimer) >= randomTime))
+      else if ((receiveInProcess(false) == false) && ((millis() - heartbeatTimer) >= randomTime))
       {
         //Transmit the FIND_PARTNER
         triggerEvent(TRIGGER_TX_FIND_PARTNER);
@@ -814,7 +814,7 @@ void updateRadioState()
         }
       }
 
-      else if (receiveInProcess() == false)
+      else if (receiveInProcess(false) == false)
       {
         //----------
         //Priority 1: Transmit a HEARTBEAT if necessary
@@ -1182,7 +1182,7 @@ void updateRadioState()
       }
 
       //Nothing received
-      else if (receiveInProcess() == false)
+      else if (receiveInProcess(false) == false)
       {
         //Check for a receive timeout
         timeoutMsec = settings.overheadTime + ((frameAirTimeUsec + txDataAckUsec + settings.txToRxUsec) / 1000);
@@ -1242,9 +1242,20 @@ void updateRadioState()
     //Wait for the Server to transmit a HB on Channel 0
     //====================
     case RADIO_DISCOVER_STANDBY:
+      //Hop channels when required
+      if (timeToHop == true)
+        hopChannel();
+      if (channelNumber && (!channelTimerMsec))
+      {
+        //Return to channel zero
+        channelNumber = 0;
+        setRadioFrequency(false);
+      }
+
       rssi = -200; //Force RSSI LEDs off until link is up
 
       //Process the receive packet
+      receiveInProcess(true);
       if (transactionComplete == true)
       {
         triggerEvent(TRIGGER_MP_PACKET_RECEIVED);
@@ -1308,7 +1319,6 @@ void updateRadioState()
               setRadioFrequency(false);
 
               //Start and adjust freq hop ISR based on remote's remaining clock
-              startChannelTimer();
               channelTimerStart -= settings.maxDwellTime;
               syncChannelTimer(txSyncClocksUsec, 1);
 
@@ -1453,7 +1463,7 @@ void updateRadioState()
       }
 
       //If the radio is available, send any data in the serial buffer over the radio
-      else if (receiveInProcess() == false)
+      else if (receiveInProcess(false) == false)
       {
         heartbeatTimeout = ((millis() - heartbeatTimer) > heartbeatRandomTime);
 
@@ -1623,7 +1633,7 @@ void updateRadioState()
       }
 
       //Determine if a receive is in process
-      else if (receiveInProcess())
+      else if (receiveInProcess(false))
       {
         if (!trainingPreviousRxInProgress)
         {
@@ -1783,7 +1793,7 @@ void updateRadioState()
       }
 
       //Determine if a receive is in process
-      else if (receiveInProcess())
+      else if (receiveInProcess(false))
         if (!trainingPreviousRxInProgress)
         {
           trainingPreviousRxInProgress = true;
@@ -2193,7 +2203,7 @@ void updateRadioState()
       }
 
       //when not receiving process the pending transmit requests
-      else if (!receiveInProcess())
+      else if (!receiveInProcess(false))
       {
         //----------
         //Priority 1: Transmit a HEARTBEAT if necessary
@@ -2321,7 +2331,7 @@ void updateRadioState()
         {
           for (index = 0; index < MAX_VC; index++)
           {
-            if (receiveInProcess())
+            if (receiveInProcess(false))
               break;
 
             //Determine the first VC that is walking through connections
