@@ -995,7 +995,7 @@ void updateRadioState()
       //----------
       //Always check for link timeout
       //----------
-      if ((millis() - linkDownTimer) >= (LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))
+      if ((millis() - linkDownTimer) >= (LINK_BREAK_MULTIPLIER * (uint32_t)settings.heartbeatTimeout))
         //Break the link
         breakLink();
       break;
@@ -1475,7 +1475,7 @@ void updateRadioState()
         //If the client hasn't received a packet in too long, return to scanning
         else if (settings.server == false)
         {
-          if ((millis() - lastPacketReceived) > (settings.heartbeatTimeout * 3))
+          if ((millis() - lastPacketReceived) > ((uint32_t)settings.heartbeatTimeout * LINK_BREAK_MULTIPLIER))
           {
             if (settings.debugSync)
             {
@@ -1919,7 +1919,7 @@ void updateRadioState()
           vcReceiveHeartbeat(millis() - currentMillis);
 
           //Delay for a while before sending the HEARTBEAT
-          heartbeatRandomTime = random((settings.heartbeatTimeout * 2) / 10, settings.heartbeatTimeout);
+          heartbeatRandomTime = random(((uint32_t)settings.heartbeatTimeout * 2) / 10, settings.heartbeatTimeout);
           changeState(RADIO_VC_WAIT_RECEIVE);
         }
         else
@@ -2503,7 +2503,7 @@ void updateRadioState()
         //Determine if the link has timed out
         vc = &virtualCircuitList[index];
         if ((vc->vcState != VC_STATE_LINK_DOWN) && (serverLinkBroken
-            || ((currentMillis - vc->lastTrafficMillis) > (LINK_BREAK_MULTIPLIER * settings.heartbeatTimeout))))
+            || ((currentMillis - vc->lastTrafficMillis) > (LINK_BREAK_MULTIPLIER * (uint32_t)settings.heartbeatTimeout))))
         {
           if (index == VC_SERVER)
           {
