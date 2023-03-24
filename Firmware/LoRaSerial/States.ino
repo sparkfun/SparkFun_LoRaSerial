@@ -1411,10 +1411,6 @@ void updateRadioState()
                 changeState(RADIO_MP_WAIT_TX_DONE);
               }
             }
-            else
-            {
-              changeState(RADIO_MP_STANDBY);
-            }
             break;
 
           case DATAGRAM_HEARTBEAT:
@@ -1432,7 +1428,6 @@ void updateRadioState()
               lastPacketReceived = millis(); //Update timestamp for Link LED
 
               blinkHeartbeatLed(true);
-              changeState(RADIO_MP_STANDBY);
             }
             break;
 
@@ -1446,8 +1441,6 @@ void updateRadioState()
             frequencyCorrection += radio.getFrequencyError() / 1000000.0;
 
             lastPacketReceived = millis(); //Update timestamp for Link LED
-
-            changeState(RADIO_MP_STANDBY);
             break;
         }
       }
