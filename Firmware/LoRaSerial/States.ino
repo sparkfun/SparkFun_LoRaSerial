@@ -1256,6 +1256,7 @@ void updateRadioState()
         switch (packetType)
         {
           default:
+            stopChannelTimer();
             triggerEvent(TRIGGER_UNKNOWN_PACKET);
             if (settings.debugDatagrams)
             {
@@ -1268,14 +1269,17 @@ void updateRadioState()
             break;
 
           case DATAGRAM_BAD:
+            stopChannelTimer();
             triggerEvent(TRIGGER_BAD_PACKET);
             break;
 
           case DATAGRAM_CRC_ERROR:
+            stopChannelTimer();
             triggerEvent(TRIGGER_CRC_ERROR);
             break;
 
           case DATAGRAM_NETID_MISMATCH:
+            stopChannelTimer();
             triggerEvent(TRIGGER_NETID_MISMATCH);
             break;
 
@@ -1286,10 +1290,12 @@ void updateRadioState()
           case DATAGRAM_REMOTE_COMMAND:
           case DATAGRAM_REMOTE_COMMAND_RESPONSE:
             //We should not be receiving these datagrams, but if we do, just ignore
+            stopChannelTimer();
             triggerEvent(TRIGGER_BAD_PACKET);
             break;
 
           case DATAGRAM_FIND_PARTNER:
+            stopChannelTimer();
             triggerEvent(TRIGGER_RX_FIND_PARTNER);
             break;
 
@@ -1334,6 +1340,7 @@ void updateRadioState()
 
           case DATAGRAM_DATA:
             //Don't deal with data until we are sync'd with server
+            stopChannelTimer();
             triggerEvent(TRIGGER_RX_DATA);
             break;
         }
