@@ -47,6 +47,19 @@ bool configureRadio()
       success = false;
   }
 
+  //Force LDRO for low airspeeds
+  uint16_t airSpeed = convertSettingsToAirSpeed(&settings);
+  if (airSpeed <= 400)
+  {
+    if (radio.forceLDRO(true) != RADIOLIB_ERR_NONE)
+      success = false;
+  }
+  else
+  {
+    if (radio.autoLDRO(true) != RADIOLIB_ERR_NONE)
+      success = false;
+  }
+
   radio.setDio0Action(transactionCompleteISR); //Called when transmission is finished
   radio.setDio1Action(hopISR); //Called after a transmission has started, so we can move to next freq
 
@@ -196,6 +209,25 @@ void convertAirSpeedToSettings(Settings *newSettings, uint16_t airSpeed)
       newSettings->txToRxUsec = 0;
       break;
   }
+}
+
+//Given settings, attempt to ID our airSpeed
+uint16_t convertSettingsToAirSpeed(Settings *newSettings)
+{
+  uint16_t airSpeed = 0;
+
+  if ( (newSettings->radioBandwidth == 62.5) && (newSettings->radioSpreadFactor == 11) && (newSettings->radioCodingRate == 8) ) airSpeed = 40;
+  else if ( (newSettings->radioBandwidth == 62.5) && (newSettings->radioSpreadFactor == 10) && (newSettings->radioCodingRate == 8) ) airSpeed = 150;
+  else if ( (newSettings->radioBandwidth == 125) && (newSettings->radioSpreadFactor == 10) && (newSettings->radioCodingRate == 8) ) airSpeed = 400;
+  else if ( (newSettings->radioBandwidth == 125) && (newSettings->radioSpreadFactor == 9) && (newSettings->radioCodingRate == 8) ) airSpeed = 1200;
+  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 10) && (newSettings->radioCodingRate == 8) ) airSpeed = 2400;
+  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 9) && (newSettings->radioCodingRate == 8) ) airSpeed = 4800;
+  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 8) && (newSettings->radioCodingRate == 7) ) airSpeed = 9600;
+  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 7) && (newSettings->radioCodingRate == 7) ) airSpeed = 19200;
+  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 6) && (newSettings->radioCodingRate == 6) ) airSpeed = 28800;
+  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 6) && (newSettings->radioCodingRate == 5) ) airSpeed = 38400;
+
+  return (airSpeed);
 }
 
 //Set radio frequency
@@ -3352,7 +3384,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec, bool clockStarting)
   //For low speed operation move the TX start into the current dwell time period
   //to make the rest of the math look like the 4800 BPS operation.
   frameAirTimeMsec = settings.maxDwellTime - msToNextHopRemote
-                   + (frameAirTimeUsec + settings.txToRxUsec + micros() - transactionCompleteMicros) / 1000;
+                     + (frameAirTimeUsec + settings.txToRxUsec + micros() - transactionCompleteMicros) / 1000;
   while (frameAirTimeMsec >= (settings.maxDwellTime + (settings.maxDwellTime >> 6)))
   {
     frameAirTimeMsec -= settings.maxDwellTime;
