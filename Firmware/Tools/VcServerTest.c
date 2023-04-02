@@ -30,6 +30,7 @@
 #define SET_PROGRAM_COMPLETE    "ati12"
 #define START_3_WAY_HANDSHAKE   "atc"
 
+#define DEBUG_CMD_ISSUE           0
 #define DEBUG_LOCAL_COMMANDS      0
 #define DEBUG_PC_CMD_ISSUE        0
 #define DEBUG_PC_TO_RADIO         0
@@ -64,28 +65,54 @@
 {                                                                     \
   if (COMMAND_PENDING(queue, active))                                 \
   {                                                                   \
+    if (DEBUG_CMD_ISSUE)                                              \
+    {                                                                 \
+      if (queue == pcCommandQueue)                                    \
+        printf("PC %s done\n", commandName[active]);                  \
+      else                                                            \
+      {                                                               \
+        int vc = (&queue[0] - &virtualCircuitList[0].commandQueue[0]) \
+               * sizeof(QUEUE_T) / sizeof(virtualCircuitList[0]);     \
+        printf("VC %d %s done\n", vc, commandName[active]);           \
+      }                                                               \
+    }                                                                 \
     queue[active / QUEUE_T_BITS] &= ~(1 << (active & QUEUE_T_MASK));  \
     active = CMD_LIST_SIZE;                                           \
   }                                                                   \
 }
 
-#define COMMAND_ISSUE(queue, pollCount, cmd)              \
-{                                                         \
-  /* Place the command in the queue */                    \
-  queue[cmd / QUEUE_T_BITS] |= 1 << (cmd & QUEUE_T_MASK); \
-                                                          \
-  /* Timeout the command processor */                     \
-  if (!commandProcessorRunning)                           \
-    commandProcessorRunning = STALL_CHECK_COUNT;          \
-                                                          \
-  /* Remember when this command was issued */             \
-  if (!pollCount)                                         \
-  {                                                       \
-    if (timeoutCount)                                     \
-      pollCount = timeoutCount;                           \
-    else                                                  \
-      pollCount = 1;                                      \
-  }                                                       \
+#define COMMAND_ISSUE(queue, pollCount, cmd)                          \
+{                                                                     \
+  if (DEBUG_CMD_ISSUE)                                                \
+  {                                                                   \
+    if (!COMMAND_PENDING(queue, cmd))                                 \
+    {                                                                 \
+      if (queue == pcCommandQueue)                                    \
+        printf("PC %s issued\n", commandName[cmd]);                   \
+      else                                                            \
+      {                                                               \
+        int vc = (&queue[0] - &virtualCircuitList[0].commandQueue[0]) \
+               * sizeof(QUEUE_T) / sizeof(virtualCircuitList[0]);     \
+        printf("VC %d %s issued\n", vc, commandName[cmd]);            \
+      }                                                               \
+    }                                                                 \
+  }                                                                   \
+                                                                      \
+  /* Place the command in the queue */                                \
+  queue[cmd / QUEUE_T_BITS] |= 1 << (cmd & QUEUE_T_MASK);             \
+                                                                      \
+  /* Timeout the command processor */                                 \
+  if (!commandProcessorRunning)                                       \
+    commandProcessorRunning = STALL_CHECK_COUNT;                      \
+                                                                      \
+  /* Remember when this command was issued */                         \
+  if (!pollCount)                                                     \
+  {                                                                   \
+    if (timeoutCount)                                                 \
+      pollCount = timeoutCount;                                       \
+    else                                                              \
+      pollCount = 1;                                                  \
+  }                                                                   \
 }
 
 #define COMMAND_PENDING(queue,cmd)  ((queue[cmd / QUEUE_T_BITS] >> (cmd & QUEUE_T_MASK)) & 1)
