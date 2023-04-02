@@ -231,6 +231,7 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI30 - Return myVc value");
         systemPrintln("  ATI31 - Display the VC details");
         systemPrintln("  ATI32 - Dump the NVM unique ID table");
+        systemPrintln("  ATI33 - Display the VC states");
         return true;
 
       case ('0'): //ATI0 - Show user settable parameters
@@ -769,6 +770,17 @@ bool commandAT(const char * commandString)
             systemPrintln("Empty");
         }
         return true;
+
+      case ('3'): //ATI33 - Display the VC states
+        for (int vcIndex = 0; vcIndex < MAX_VC; vcIndex++)
+        {
+          systemPrint("VC ");
+          systemPrint(vcIndex);
+          systemPrint(": ");
+          systemPrintln(vcStateNames[virtualCircuitList[vcIndex].vcState]);
+        }
+        return true;
+
     }
   }
   if ((commandString[2] == 'I') && (commandString[3] == '5') && (commandLength == 5))
