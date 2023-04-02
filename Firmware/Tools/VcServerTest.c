@@ -715,6 +715,7 @@ void radioRuntime(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint8_t len
 
 void radioCommandComplete(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint8_t length)
 {
+  int activeCommand;
   VC_COMMAND_COMPLETE_MESSAGE * vcMsg;
   uint8_t srcVc;
 
@@ -746,14 +747,22 @@ void radioCommandComplete(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uin
   {
     if (pcActiveCommand < CMD_LIST_SIZE)
     {
-      if (pcCommandVc < MAX_VC)
+      activeCommand = pcActiveCommand;
+
+      //Done with the PC command
+      COMMAND_COMPLETE(pcCommandQueue, pcActiveCommand);
+
+      //Determine if a VC command moved to the PC queue
+      if ((pcCommandVc < MAX_VC)
+        && COMMAND_PENDING(virtualCircuitList[pcCommandVc].commandQueue,
+                           activeCommand))
       {
+        //Done with the VC command
         COMMAND_COMPLETE(virtualCircuitList[pcCommandVc].commandQueue,
                          virtualCircuitList[pcCommandVc].activeCommand);
       }
-      COMMAND_COMPLETE(pcCommandQueue, pcActiveCommand);
     }
-    else if (virtualCircuitList[pcCommandVc].activeCommand < CMD_LIST_SIZE)
+    else if (virtualCircuitList[srcVc].activeCommand < CMD_LIST_SIZE)
     {
       //This was a VC command
       COMMAND_COMPLETE(virtualCircuitList[srcVc].commandQueue,
