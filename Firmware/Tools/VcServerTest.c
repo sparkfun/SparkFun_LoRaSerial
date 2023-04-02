@@ -1097,7 +1097,13 @@ void issuePcCommands()
         }
       }
     }
+
+    //No more PC commands to process
+    if (DEBUG_CMD_ISSUE && pcCommandTimer)
+      printf("PC command list empty\n");
     pcActiveCommand = CMD_LIST_SIZE;
+    pcCommandTimer = 0;
+    pcCommandVc = MAX_VC;
   }
 }
 
@@ -1296,8 +1302,13 @@ bool issueVcCommands(int vcIndex)
             }
           }
         }
-        virtualCircuitList[vcIndex].activeCommand = CMD_LIST_SIZE;
       }
+
+      //Done processing VC commands
+      if (DEBUG_CMD_ISSUE && virtualCircuitList[vcIndex].commandTimer)
+        printf ("VC %d command list empty\n", vcIndex);
+      virtualCircuitList[vcIndex].activeCommand = CMD_LIST_SIZE;
+      virtualCircuitList[vcIndex].commandTimer = 0;
     }
   }
   return false;
