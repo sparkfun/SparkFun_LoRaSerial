@@ -928,14 +928,14 @@ bool xmitDatagramP2PFindPartner()
   endOfTxData += sizeof(unsigned long);
 
   /*
-                                              endOfTxData ---.
-                                                             |
-                                                             V
-      +----------+---------+----------+------------+---------+----------+
-      | Optional |         | Optional | Optional   |         |          |
-      | NET ID   | Control | C-Timer  | SF6 Length | Millis  | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 4 bytes | n Bytes  |
-      +----------+---------+----------+------------+---------+----------+
+                                                         endOfTxData ---.
+                                                                        |
+                                                                        V
+      +----------+---------+----------+----------+------------+---------+----------+
+      | Optional |         | Optional | Optional | Optional   |         |          |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length | Millis  | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     | 4 bytes | n Bytes  |
+      +----------+---------+----------+----------+------------+---------+----------+
   */
 
   //Verify the data length
@@ -965,14 +965,14 @@ bool xmitDatagramP2PSyncClocks()
   endOfTxData += sizeof(unsigned long);
 
   /*
-                                                        endOfTxData ---.
-                                                                       |
-                                                                       V
-      +----------+---------+----------+------------+---------+---------+----------+
-      | Optional |         | Optional | Optional   | Channel |         |          |
-      | NET ID   | Control | C-Timer  | SF6 Length | Number  | Millis  | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 1 byte  | 4 bytes | n Bytes  |
-      +----------+---------+----------+------------+---------+---------+----------+
+                                                                   endOfTxData ---.
+                                                                                  |
+                                                                                  V
+      +----------+---------+----------+----------+------------+---------+---------+----------+
+      | Optional |         | Optional | Optional | Optional   | Channel |         |          |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length | Number  | Millis  | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     | 1 byte  | 4 bytes | n Bytes  |
+      +----------+---------+----------+----------+------------+---------+---------+----------+
   */
 
   //Verify the data length
@@ -996,14 +996,14 @@ bool xmitDatagramP2PZeroAcks()
   endOfTxData += sizeof(unsigned long);
 
   /*
-                                              endOfTxData ---.
-                                                             |
-                                                             V
-      +----------+---------+----------+------------+---------+----------+
-      | Optional |         | Optional | Optional   |         |          |
-      | NET ID   | Control | C-Timer  | SF6 Length | Millis  | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 4 bytes | n Bytes  |
-      +----------+---------+----------+------------+---------+----------+
+                                                         endOfTxData ---.
+                                                                        |
+                                                                        V
+      +----------+---------+----------+----------+------------+---------+----------+
+      | Optional |         | Optional | Optional | Optional   |         |          |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length | Millis  | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     | 4 bytes | n Bytes  |
+      +----------+---------+----------+----------+------------+---------+----------+
   */
 
   //Verify the data length
@@ -1024,14 +1024,14 @@ bool xmitDatagramP2PCommand()
   radioCallHistory[RADIO_CALL_xmitDatagramP2PCommand] = millis();
 
   /*
-                                                  endOfTxData ---.
-                                                                 |
-                                                                 V
-      +----------+---------+----------+------------+---  ...  ---+----------+
-      | Optional |         | Optional | Optional   |             | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length |   Data      | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     |   n bytes   | n Bytes  |
-      +----------+---------+----------+------------+-------------+----------+
+                                                             endOfTxData ---.
+                                                                            |
+                                                                            V
+      +----------+---------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |         | Optional | Optional | Optional   |             | Optional |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length |   Data      | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     |   n bytes   | n Bytes  |
+      +----------+---------+----------+----------+------------+-------------+----------+
   */
 
   txControl.datagramType = DATAGRAM_REMOTE_COMMAND;
@@ -1044,14 +1044,14 @@ bool xmitDatagramP2PCommandResponse()
   radioCallHistory[RADIO_CALL_xmitDatagramP2PCommandResponse] = millis();
 
   /*
-                                                  endOfTxData ---.
-                                                                 |
-                                                                 V
-      +----------+---------+----------+------------+---  ...  ---+----------+
-      | Optional |         | Optional | Optional   |             | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length |   Data      | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     |   n bytes   | n Bytes  |
-      +----------+---------+----------+------------+-------------+----------+
+                                                            endOfTxData ---.
+                                                                            |
+                                                                            V
+      +----------+---------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |         | Optional | Optional | Optional   |             | Optional |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length |   Data      | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     |   n bytes   | n Bytes  |
+      +----------+---------+----------+----------+------------+-------------+----------+
   */
 
   txControl.datagramType = DATAGRAM_REMOTE_COMMAND_RESPONSE;
@@ -1064,14 +1064,14 @@ bool xmitDatagramP2PData()
   radioCallHistory[RADIO_CALL_xmitDatagramP2PData] = millis();
 
   /*
-                                                  endOfTxData ---.
-                                                                 |
-                                                                 V
-      +----------+---------+----------+------------+---  ...  ---+----------+
-      | Optional |         | Optional | Optional   |             | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length |   Data      | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     |   n bytes   | n Bytes  |
-      +----------+---------+----------+------------+-------------+----------+
+                                                             endOfTxData ---.
+                                                                            |
+                                                                            V
+      +----------+---------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |         | Optional | Optional | Optional   |             | Optional |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length |   Data      | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     |   n bytes   | n Bytes  |
+      +----------+---------+----------+----------+------------+-------------+----------+
   */
 
   txControl.datagramType = DATAGRAM_DATA;
@@ -1091,14 +1091,14 @@ bool xmitDatagramP2PHeartbeat()
   endOfTxData += sizeof(currentMillis);
 
   /*
-                                              endOfTxData ---.
-                                                             |
-                                                             V
-      +----------+---------+----------+------------+---------+----------+
-      | Optional |         | Optional | Optional   |         | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | Millis  | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 4 bytes | n Bytes  |
-      +----------+---------+----------+------------+---------+----------+
+                                                         endOfTxData ---.
+                                                                        |
+                                                                        V
+      +----------+---------+----------+----------+------------+---------+----------+
+      | Optional |         | Optional | Optional | Optional   |         | Optional |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length | Millis  | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     | 4 bytes | n Bytes  |
+      +----------+---------+----------+----------+------------+---------+----------+
   */
 
   //Verify the data length
@@ -1122,14 +1122,14 @@ bool xmitDatagramP2PAck()
   endOfTxData += sizeof(currentMillis);
 
   /*
-                                              endOfTxData ---.
-                                                             |
-                                                             V
-      +----------+---------+----------+------------+---------+----------+
-      | Optional |         | Optional | Optional   |         | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | Millis  | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 4 bytes | n Bytes  |
-      +----------+---------+----------+------------+---------+----------+
+                                                         endOfTxData ---.
+                                                                        |
+                                                                        V
+      +----------+---------+----------+----------+------------+---------+----------+
+      | Optional |         | Optional | Optional | Optional   |         | Optional |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length | Millis  | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     | 4 bytes | n Bytes  |
+      +----------+---------+----------+----------+------------+---------+----------+
   */
 
   //Verify the data length
@@ -1150,14 +1150,14 @@ bool xmitDatagramMpData()
   radioCallHistory[RADIO_CALL_xmitDatagramMpData] = millis();
 
   /*
-                                                  endOfTxData ---.
-                                                                 |
-                                                                 V
-      +----------+---------+----------+------------+---  ...  ---+----------+
-      | Optional |         | Optional | Optional   |             | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length |   Data      | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     |   n bytes   | n Bytes  |
-      +----------+---------+----------+------------+-------------+----------+
+                                                             endOfTxData ---.
+                                                                            |
+                                                                            V
+      +----------+---------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |         | Optional | Optional | Optional   |             | Optional |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length |   Data      | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     |   n bytes   | n Bytes  |
+      +----------+---------+----------+----------+------------+-------------+----------+
   */
 
   txControl.datagramType = DATAGRAM_DATA;
@@ -1182,14 +1182,14 @@ bool xmitDatagramMpHeartbeat()
   endOfTxData += sizeof(unsigned long);
 
   /*
-                                                        endOfTxData ---.
-                                                                       |
-                                                                       V
-      +----------+---------+----------+------------+---------+---------+----------+
-      | Optional |         | Optional | Optional   | Channel |         |          |
-      | NET ID   | Control | C-Timer  | SF6 Length | Number  | Millis  | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 1 byte  | 4 bytes | n Bytes  |
-      +----------+---------+----------+------------+---------+---------+----------+
+                                                                   endOfTxData ---.
+                                                                                  |
+                                                                                  V
+      +----------+---------+----------+----------+------------+---------+---------+----------+
+      | Optional |         | Optional | Optional | Optional   | Channel |         |          |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length | Number  | Millis  | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     | 1 byte  | 4 bytes | n Bytes  |
+      +----------+---------+----------+----------+------------+---------+---------+----------+
   */
 
   //Verify the data length
@@ -1215,14 +1215,14 @@ bool xmitDatagramTrainingFindPartner()
   *endOfTxData++ = settings.radioBroadcastPower_dbm;
 
   /*
-                                                           endOfTxData ---.
-                                                                          |
-                                                                          V
-      +----------+---------+----------+------------+-----------+----------+----------+
-      | Optional |         | Optional | Optional   |           |          | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | Client ID | Tx Power | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 16 Bytes  |  1 Byte  | n Bytes  |
-      +----------+---------+----------+------------+-----------+----------+----------+
+                                                                      endOfTxData ---.
+                                                                                     |
+                                                                                     V
+      +----------+---------+----------+----------+------------+-----------+----------+----------+
+      | Optional |         | Optional | Optional | Optional   |           |          | Optional |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length | Client ID | Tx Power | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     | 16 Bytes  |  1 Byte  | n Bytes  |
+      +----------+---------+----------+----------+------------+-----------+----------+----------+
   */
 
   txControl.datagramType = DATAGRAM_TRAINING_FIND_PARTNER;
@@ -1243,14 +1243,14 @@ bool xmitDatagramTrainingAck(uint8_t * serverID)
   endOfTxData += UNIQUE_ID_BYTES;
 
   /*
-                                                endOfTxData ---.
-                                                               |
-                                                               V
-      +----------+---------+----------+------------+-----------+----------+
-      | Optional |         | Optional | Optional   |           | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | Client ID | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 16 Bytes  | n Bytes  |
-      +----------+---------+----------+------------+-----------+----------+
+                                                           endOfTxData ---.
+                                                                          |
+                                                                          V
+      +----------+---------+----------+----------+------------+-----------+----------+
+      | Optional |         | Optional | Optional | Optional   |           | Optional |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length | Client ID | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     | 16 Bytes  | n Bytes  |
+      +----------+---------+----------+----------+------------+-----------+----------+
   */
 
   txControl.datagramType = DATAGRAM_TRAINING_ACK;
@@ -1380,14 +1380,14 @@ bool xmitDatagramTrainRadioParameters(const uint8_t * clientID)
   endOfTxData += sizeof(params);
 
   /*
-                                                                          endOfTxData ---.
-                                                                                         |
-                                                                                         V
-      +----------+---------+----------+------------+-----------+-----------+---  ...  ---+----------+
-      | Optional |         | Optional | Optional   |           |           | Radio       | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | Client ID | Server ID | Parameters  | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 16 Bytes  | 16 Bytes  | n bytes     | n Bytes  |
-      +----------+---------+----------+------------+-----------+-----------+-------------+----------+
+                                                                                     endOfTxData ---.
+                                                                                                    |
+                                                                                                    V
+      +----------+---------+----------+----------+------------+-----------+-----------+---  ...  ---+----------+
+      | Optional |         | Optional | Optional | Optional   |           |           | Radio       | Optional |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length | Client ID | Server ID | Parameters  | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     | 16 Bytes  | 16 Bytes  | n bytes     | n Bytes  |
+      +----------+---------+----------+----------+------------+-----------+-----------+-------------+----------+
   */
 
   txControl.datagramType = DATAGRAM_TRAINING_PARAMS;
@@ -1404,14 +1404,14 @@ bool xmitVcDatagram()
   radioCallHistory[RADIO_CALL_xmitVcDatagram] = millis();
 
   /*
-                                                                   endOfTxData ---.
-                                                                                  |
-                                                                                  V
-      +----------+---------+----------+------------+----------+---------+---------+----------+
-      | Optional |         | Optional | Optional   |          |         |         | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | DestAddr | SrcAddr | Data    | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | n Bytes | n Bytes  |
-      +----------+---------+----------+------------+----------+---------+---------+----------+
+                                                                                        endOfTxData ---.
+                                                                                                       |
+                                                                                                       V
+      +----------+---------+----------+----------+------------+---------+----------+---------+---------+----------+
+      | Optional |         | Optional | Optional | Optional   | VC Data |          |         |         | Optional |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length | Length  | DestAddr | SrcAddr | Data    | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     | 1 byte  | 1 byte   | 1 byte  | n Bytes | n Bytes  |
+      +----------+---------+----------+----------+------------+---------+----------+---------+---------+----------+
   */
 
   txControl.datagramType = DATAGRAM_DATAGRAM;
@@ -1427,10 +1427,13 @@ bool xmitVcHeartbeat()
 
 bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
 {
-  uint32_t currentMillis = millis();
+  uint32_t currentMillis;
   uint8_t * startOfData;
   uint8_t * txData;
+  bool txSuccess;
 
+  triggerEvent(TRIGGER_TX_VC_HEARTBEAT);
+  currentMillis = millis();
   radioCallHistory[RADIO_CALL_xmitVcHeartbeat] = currentMillis;
 
   startOfData = endOfTxData;
@@ -1453,14 +1456,14 @@ bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
   *txData = (uint8_t)(endOfTxData - txData);
 
   /*
-                                                                                         endOfTxData ---.
-                                                                                                        |
-                                                                                                        V
-      +----------+---------+----------+------------+----------+----------+---------+----------+---------+----------+
-      | Optional |         | Optional | Optional   |          |          |         |          |         | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length |  Length  | DestAddr | SrcAddr | Src ID   | millis  | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     |  8 bits  | 8 bits   | 8 bits  | 16 Bytes | 4 Bytes | n Bytes  |
-      +----------+---------+----------+------------+----------+----------+---------+----------+---------+----------+
+                                                                                                    endOfTxData ---.
+                                                                                                                   |
+                                                                                                                   V
+      +----------+---------+----------+----------+------------+----------+----------+---------+----------+---------+----------+
+      | Optional |         | Optional | Optional | Optional   |  VC Data |          |         |          |         | Optional |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length |  Length  | DestAddr | SrcAddr | Src ID   | millis  | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     |  1 byte  | 1 byte   | 1 byte  | 16 Bytes | 4 Bytes | n Bytes  |
+      +----------+---------+----------+----------+------------+----------+----------+---------+----------+---------+----------+
   */
 
   //Verify the data length
@@ -1472,7 +1475,16 @@ bool xmitVcHeartbeat(int8_t addr, uint8_t * id)
 
   //Select a random for the next heartbeat
   setVcHeartbeatTimer();
-  return (transmitDatagram());
+  txSuccess = transmitDatagram();
+  if (settings.server && settings.debugHopTimer)
+  {
+    systemPrintTimestamp(txCurrentMillis);
+    systemPrint(" TX channel: ");
+    systemPrint(txChannel);
+    systemPrint(", next hop millis: ");
+    systemPrintln(txMsecToNextHop);
+  }
+  return txSuccess;
 }
 
 //Build the ACK frame
@@ -1489,14 +1501,14 @@ bool xmitVcAckFrame(int8_t destVc)
   endOfTxData += VC_RADIO_HEADER_BYTES;
 
   /*
-                                                         endOfTxData ---.
-                                                                        |
-                                                                        V
-      +----------+---------+----------+------------+----------+---------+----------+
-      | Optional |         | Optional | Optional   |          |         | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | DestAddr | SrcAddr | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | n Bytes  |
-      +----------+---------+----------+------------+----------+---------+----------+
+                                                                    endOfTxData ---.
+                                                                                   |
+                                                                                   V
+      +----------+---------+----------+----------+------------+---------+----------+---------+----------+
+      | Optional |         | Optional | Optional | Optional   | VC Data |          |         | Optional |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length | Length  | DestAddr | SrcAddr | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     | 1 byte  | 1 byte   | 1 byte  | n Bytes  |
+      +----------+---------+----------+----------+------------+---------+----------+---------+----------+
   */
 
   //Finish building the ACK frame
@@ -1518,14 +1530,14 @@ bool xmitVcUnknownAcks(int8_t destVc)
   endOfTxData += VC_RADIO_HEADER_BYTES;
 
   /*
-                                                         endOfTxData ---.
-                                                                        |
-                                                                        V
-      +----------+---------+----------+------------+----------+---------+----------+
-      | Optional |         | Optional | Optional   |          |         | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | DestAddr | SrcAddr | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | n Bytes  |
-      +----------+---------+----------+------------+----------+---------+----------+
+                                                                              endOfTxData ---.
+                                                                                             |
+                                                                                             V
+      +----------+---------+----------+----------+------------+---------+----------+---------+----------+
+      | Optional |         | Optional | Optional | Optional   | VC Data |          |         | Optional |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length | Length  | DestAddr | SrcAddr | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     | 1 byte  | 1 byte   | 1 byte  | n Bytes  |
+      +----------+---------+----------+----------+------------+---------+----------+---------+----------+
   */
 
   txControl.datagramType = DATAGRAM_VC_UNKNOWN_ACKS;
@@ -1553,14 +1565,14 @@ bool xmitVcSyncAcks(int8_t destVc)
   }
 
   /*
-                                                         endOfTxData ---.
-                                                                        |
-                                                                        V
-      +----------+---------+----------+------------+----------+---------+----------+
-      | Optional |         | Optional | Optional   |          |         | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | DestAddr | SrcAddr | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | n Bytes  |
-      +----------+---------+----------+------------+----------+---------+----------+
+                                                                              endOfTxData ---.
+                                                                                             |
+                                                                                             V
+      +----------+---------+----------+----------+------------+---------+----------+---------+----------+
+      | Optional |         | Optional | Optional | Optional   | VC Data |          |         | Optional |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length | Length  | DestAddr | SrcAddr | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     | 1 byte  | 1 byte   | 1 byte  | n Bytes  |
+      +----------+---------+----------+----------+------------+---------+----------+---------+----------+
   */
 
   txControl.datagramType = DATAGRAM_VC_SYNC_ACKS;
@@ -1581,14 +1593,14 @@ bool xmitVcZeroAcks(int8_t destVc)
   endOfTxData += VC_RADIO_HEADER_BYTES;
 
   /*
-                                                         endOfTxData ---.
-                                                                        |
-                                                                        V
-      +----------+---------+----------+------------+----------+---------+----------+
-      | Optional |         | Optional | Optional   |          |         | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length | DestAddr | SrcAddr | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     | 8 bits   | 8 bits  | n Bytes  |
-      +----------+---------+----------+------------+----------+---------+----------+
+                                                                              endOfTxData ---.
+                                                                                             |
+                                                                                             V
+      +----------+---------+----------+----------+------------+---------+----------+---------+----------+
+      | Optional |         | Optional | Optional | Optional   | VC Data |          |         | Optional |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length | Length  | DestAddr | SrcAddr | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     | 1 byte  | 1 byte   | 1 byte  | n Bytes  |
+      +----------+---------+----------+----------+------------+---------+----------+---------+----------+
   */
 
   txControl.datagramType = DATAGRAM_VC_ZERO_ACKS;
@@ -1776,13 +1788,13 @@ PacketType rcvDatagram()
   vcHeader = NULL;
 
   /*
-      |<--------------------------- rxDataBytes --------------------------->|
-      |                                                                     |
-      +----------+---------+----------+------------+---  ...  ---+----------+
-      | Optional |         | Optional | Optional   |             | Optional |
-      | NET ID   | Control | C-Timer  | SF6 Length |   Data      | Trailer  |
-      | 8 bits   | 8 bits  | 2 bytes  | 8 bits     |   n bytes   | n Bytes  |
-      +----------+---------+----------+------------+-------------+----------+
+      |<-------------------------------- rxDataBytes --------------------------------->|
+      |                                                                                |
+      +----------+---------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |         | Optional | Optional | Optional   |             | Optional |
+      | NET ID   | Control | C-Timer  |  Chan #  | SF6 Length |   Data      | Trailer  |
+      | 1 byte   | 1 byte  | 2 bytes  |  1 byte  | 1 byte     |   n bytes   | n Bytes  |
+      +----------+---------+----------+----------+------------+-------------+----------+
       ^
       |
       '---- rxData
@@ -1869,13 +1881,13 @@ PacketType rcvDatagram()
   }
 
   /*
-      |<---------------------- rxDataBytes ---------------------->|
-      |                                                           |
-      +----------+----------+----------+------------+---  ...  ---+----------+
-      | Optional |          | Optional | Optional   |             | Optional |
-      | NET ID   | Control  | C-Timer  | SF6 Length |   Data      | Trailer  |
-      | 8 bits   | 8 bits   | 2 bytes  | 8 bits     |   n bytes   | n Bytes  |
-      +----------+----------+----------+------------+-------------+----------+
+      |<-------------------------------- rxDataBytes ---------------------------------->|
+      |                                                                                 |
+      +----------+----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional | Optional | Optional   |             | Optional |
+      | NET ID   | Control  | C-Timer  |  Chan #  | SF6 Length |   Data      | Trailer  |
+      | 1 byte   | 1 byte   | 2 bytes  |  1 byte  | 1 byte     |   n bytes   | n Bytes  |
+      +----------+----------+----------+----------+------------+-------------+----------+
       ^
       |
       '---- rxData
@@ -1955,13 +1967,13 @@ PacketType rcvDatagram()
   }
 
   /*
-      |<--------------------------- rxDataBytes ---------------------------->|
-      |                                                                      |
-      +----------+----------+----------+------------+---  ...  ---+----------+
-      | Optional |          | Optional | Optional   |             | Optional |
-      | NET ID   | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
-      | 8 bits   | 8 bits   | 2 bytes  | 8 bits     |   n bytes   | n Bytes  |
-      +----------+----------+----------+------------+-------------+----------+
+      |<-------------------------------- rxDataBytes ---------------------------------->|
+      |                                                                                 |
+      +----------+----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional | Optional | Optional   |             | Optional |
+      | NET ID   | Control  | C-Timer  |  Chan #  | SF6 Length |    Data     | Trailer  |
+      | 1 byte   | 1 byte   | 2 bytes  |  1 byte  | 1 byte     |   n bytes   | n Bytes  |
+      +----------+----------+----------+----------+------------+-------------+----------+
                  ^
                  |
                  '---- rxData
@@ -2015,13 +2027,13 @@ PacketType rcvDatagram()
   }
 
   /*
-      |<--------------------------- rxDataBytes ---------------------------->|
-      |                                                                      |
-      +----------+----------+----------+------------+---  ...  ---+----------+
-      | Optional |          | Optional | Optional   |             | Optional |
-      | NET ID   | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
-      | 8 bits   | 8 bits   | 2 bytes  | 8 bits     |   n bytes   | n Bytes  |
-      +----------+----------+----------+------------+-------------+----------+
+      |<-------------------------------- rxDataBytes ---------------------------------->|
+      |                                                                                 |
+      +----------+----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional | Optional | Optional   |             | Optional |
+      | NET ID   | Control  | C-Timer  |  Chan #  | SF6 Length |    Data     | Trailer  |
+      | 1 byte   | 1 byte   | 2 bytes  |  1 byte  | 1 byte     |   n bytes   | n Bytes  |
+      +----------+----------+----------+----------+------------+-------------+----------+
                             ^
                             |
                             '---- rxData
@@ -2031,12 +2043,15 @@ PacketType rcvDatagram()
   {
     memcpy(&msToNextHopRemote, rxData, sizeof(msToNextHopRemote));
     rxData += sizeof(msToNextHopRemote);
+    rmtChannelNumber = *rxData++;
 
     //Display the channel timer
     if (settings.debugReceive)
     {
       systemPrint("    Channel Timer(ms): ");
       systemPrintln(msToNextHopRemote);
+      systemPrint("    Channel #: ");
+      systemPrintln(rmtChannelNumber);
       outputSerialData(true);
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
@@ -2044,16 +2059,16 @@ PacketType rcvDatagram()
   }
 
   /*
-      |<--------------------------- rxDataBytes ---------------------------->|
-      |                                                                      |
-      +----------+----------+----------+------------+---  ...  ---+----------+
-      | Optional |          | Optional | Optional   |             | Optional |
-      | NET ID   | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
-      | 8 bits   | 8 bits   | 2 bytes  | 8 bits     |   n bytes   | n Bytes  |
-      +----------+----------+----------+------------+-------------+----------+
-                                       ^
-                                       |
-                                       '---- rxData
+      |<-------------------------------- rxDataBytes ---------------------------------->|
+      |                                                                                 |
+      +----------+----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional | Optional | Optional   |             | Optional |
+      | NET ID   | Control  | C-Timer  |  Chan #  | SF6 Length |    Data     | Trailer  |
+      | 1 byte   | 1 byte   | 2 bytes  |  1 byte  | 1 byte     |   n bytes   | n Bytes  |
+      +----------+----------+----------+----------+------------+-------------+----------+
+                                                  ^
+                                                  |
+                                                  '---- rxData
   */
 
   //Get the spread factor 6 length
@@ -2091,6 +2106,19 @@ PacketType rcvDatagram()
   else
     rxDataBytes -= minDatagramSize;
 
+  /*
+                                                               |<-- rxDataBytes -->|
+                                                               |                   |
+      +----------+----------+----------+----------+------------+------  ...  ------+----------+
+      | Optional |          | Optional | Optional | Optional   |                   | Optional |
+      | NET ID   | Control  | C-Timer  |  Chan #  | SF6 Length |       Data        | Trailer  |
+      | 1 byte   | 1 byte   | 2 bytes  |  1 byte  | 1 byte     |      n bytes      | n Bytes  |
+      +----------+----------+----------+----------+------------+-------------------+----------+
+                                                               ^
+                                                               |
+                                                               '---- rxData
+  */
+
   //Get the Virtual-Circuit header
   rxVcData = rxData;
   if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
@@ -2111,6 +2139,19 @@ PacketType rcvDatagram()
       badFrames++;
       return DATAGRAM_BAD;
     }
+
+  /*
+                                                               |<--------------- rxDataBytes ---------------->|
+                                                               |                                              |
+      +----------+----------+----------+----------+------------+--------+--------+--------+------  ...  ------+----------+
+      | Optional |          | Optional | Optional | Optional   |        |        |        |                   | Optional |
+      | NET ID   | Control  | C-Timer  |  Chan #  | SF6 Length | Length | dest # | src #  |       Data        | Trailer  |
+      | 1 byte   | 1 byte   | 2 bytes  |  1 byte  | 1 byte     | 1 byte | 1 byte | 1 byte |      n bytes      | n Bytes  |
+      +----------+----------+----------+----------+------------+--------+--------+--------+-------------------+----------+
+                                                               ^
+                                                               |
+                                                               '---- rxData
+  */
 
     //Parse the virtual circuit header
     vcHeader = (VC_RADIO_MESSAGE_HEADER *)rxData;
@@ -2296,16 +2337,16 @@ PacketType rcvDatagram()
   }
 
   /*
-                                                    |<-- rxDataBytes -->|
-                                                    |                                                                      |
-      +----------+----------+----------+------------+------  ...  ------+----------+
-      | Optional |          | Optional | Optional   |                   | Optional |
-      | NET ID   | Control  | C-Timer  | SF6 Length |       Data        | Trailer  |
-      | 8 bits   | 8 bits   | 2 bytes  | 8 bits     |      n bytes      | n Bytes  |
-      +----------+----------+----------+------------+-------------------+----------+
-                                                    ^
-                                                    |
-                                                    '---- rxData
+                                                               |<-- rxDataBytes -->|
+                                                               |                   |
+      +----------+----------+----------+----------+------------+------  ...  ------+----------+
+      | Optional |          | Optional | Optional | Optional   |                   | Optional |
+      | NET ID   | Control  | C-Timer  |  Chan #  | SF6 Length |       Data        | Trailer  |
+      | 1 byte   | 1 byte   | 2 bytes  |  1 byte  | 1 byte     |      n bytes      | n Bytes  |
+      +----------+----------+----------+----------+------------+-------------------+----------+
+                                                               ^
+                                                               |
+                                                               '---- rxData
   */
 
   //Display the packet contents
@@ -2571,17 +2612,17 @@ bool transmitDatagram()
   }
 
   /*
-                                                   endOfTxData ---.
-                                                                  |
-                                                                  V
-      +----------+----------+----------+------------+---  ...  ---+----------+
-      | Optional |          | Optional |  Optional  |             | Optional |
-      |  NET ID  | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
-      |  8 bits  |  8 bits  | 2 bytes  |   8 bits   |   n bytes   | n Bytes  |
-      +----------+----------+----------+------------+-------------+----------+
-      |                                             |             |
-      |                                             |<- Length -->|
-      |<-------------------- txDatagramSize --------------------->|
+                                                              endOfTxData ---.
+                                                                             |
+                                                                             V
+      +----------+----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional | Optional |  Optional  |             | Optional |
+      |  NET ID  | Control  | C-Timer  |  Chan #  | SF6 Length |    Data     | Trailer  |
+      |  1 byte  |  1 byte  | 2 bytes  |  1 byte  |   1 byte   |   n bytes   | n Bytes  |
+      +----------+----------+----------+----------+------------+-------------+----------+
+      |                                                        |             |
+      |                                                        |<- Length -->|
+      |<------------------------- txDatagramSize --------------------------->|
   */
 
   //Display the packet contents
@@ -2617,17 +2658,17 @@ bool transmitDatagram()
   }
 
   /*
-      .------ Header                               endOfTxData ---.
-      |                                                           |
-      V                                                           V
-      +----------+----------+----------+------------+---  ...  ---+----------+
-      | Optional |          | Optional |  Optional  |             | Optional |
-      |  NET ID  | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
-      |  8 bits  |  8 bits  | 2 bytes  |   8 bits   |   n bytes   | n Bytes  |
-      +----------+----------+----------+------------+-------------+----------+
-      |                                             |             |
-      |                                             |<- Length -->|
-      |<-------------------- txDatagramSize --------------------->|
+      .------ Header                                          endOfTxData ---.
+      |                                                                      |
+      V                                                                      V
+      +----------+----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional | Optional |  Optional  |             | Optional |
+      |  NET ID  | Control  | C-Timer  |  Chan #  | SF6 Length |    Data     | Trailer  |
+      |  1 byte  |  1 byte  | 2 bytes  |  1 byte  |   1 byte   |   n bytes   | n Bytes  |
+      +----------+----------+----------+----------+------------+-------------+----------+
+      |                                                        |             |
+      |                                                        |<- Length -->|
+      |<------------------------- txDatagramSize --------------------------->|
   */
 
   //Add the netID if necessary
@@ -2656,17 +2697,17 @@ bool transmitDatagram()
   *header++ = control;
 
   /*
-                            .------ Header         endOfTxData ---.
-                            |                                     |
-                            V                                     V
-      +----------+----------+----------+------------+---  ...  ---+----------+
-      | Optional |          | Optional |  Optional  |             | Optional |
-      |  NET ID  | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
-      |  8 bits  |  8 bits  | 2 bytes  |   8 bits   |   n bytes   | n Bytes  |
-      +----------+----------+----------+------------+-------------+----------+
-      |                                             |             |
-      |                                             |<- Length -->|
-      |<-------------------- txDatagramSize --------------------->|
+                            .------ Header                    endOfTxData ---.
+                            |                                                |
+                            V                                                V
+      +----------+----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional | Optional |  Optional  |             | Optional |
+      |  NET ID  | Control  | C-Timer  |  Chan #  | SF6 Length |    Data     | Trailer  |
+      |  1 byte  |  1 byte  | 2 bytes  |  1 byte  |   1 byte   |   n bytes   | n Bytes  |
+      +----------+----------+----------+----------+------------+-------------+----------+
+      |                                                        |             |
+      |                                                        |<- Length -->|
+      |<------------------------- txDatagramSize --------------------------->|
   */
 
   //Display the control value
@@ -2683,17 +2724,16 @@ bool transmitDatagram()
     //Measure the time to the next hop
     triggerEvent(TRIGGER_TX_LOAD_CHANNEL_TIMER_VALUE);
     txSetChannelTimerMicros = micros();
-    unsigned long currentMillis = millis();
-    uint16_t msToNextHop; //TX channel timer value
+    txCurrentMillis = millis();
     if (channelTimerMsec)
-      msToNextHop = channelTimerMsec - (currentMillis - channelTimerStart);
+      txMsecToNextHop = channelTimerMsec - (txCurrentMillis - channelTimerStart);
     else
-      msToNextHop = settings.maxDwellTime;
+      txMsecToNextHop = settings.maxDwellTime;
 
     //Validate this value
     if (ENABLE_DEVELOPER && (!clockSyncReceiver))
     {
-      if ((msToNextHop < 0) || (msToNextHop > settings.maxDwellTime))
+      if ((txMsecToNextHop < 0) || (txMsecToNextHop > settings.maxDwellTime))
       {
         int16_t channelTimer;
         uint8_t * data;
@@ -2716,10 +2756,10 @@ bool transmitDatagram()
         systemPrintln(channelTimer);
 
         systemPrint("ERROR: Invalid msToNextHop value, ");
-        systemPrintln(msToNextHop);
+        systemPrintln(txMsecToNextHop);
 
         //Set a valid value
-        msToNextHop = settings.maxDwellTime;
+        txMsecToNextHop = settings.maxDwellTime;
       }
       else if (settings.debugSync)
       {
@@ -2728,7 +2768,7 @@ bool transmitDatagram()
           case DATAGRAM_DATA_ACK:
           case DATAGRAM_SYNC_CLOCKS:
             systemPrint("TX msToNextHop: ");
-            systemPrint(msToNextHop);
+            systemPrint(txMsecToNextHop);
             systemPrintln(" mSec");
             break;
         }
@@ -2736,14 +2776,16 @@ bool transmitDatagram()
     } //ENABLE_DEVELOPER
 
     //Set the time in the frame
-    memcpy(header, &msToNextHop, sizeof(msToNextHop));
-    header += sizeof(msToNextHop); //aka CHANNEL_TIMER_BYTES
+    memcpy(header, &txMsecToNextHop, sizeof(txMsecToNextHop));
+    header += sizeof(txMsecToNextHop); //aka CHANNEL_TIMER_BYTES
+    *header++ = channelNumber;
+    txChannel = channelNumber;
 
     if (settings.debugTransmit)
     {
       systemPrintTimestamp();
       systemPrint("    Channel Timer(ms): ");
-      systemPrintln(msToNextHop);
+      systemPrintln(txMsecToNextHop);
       outputSerialData(true);
       if (timeToHop == true) //If the channelTimer has expired, move to next frequency
         hopChannel();
@@ -2753,17 +2795,17 @@ bool transmitDatagram()
     txSetChannelTimerMicros = micros();
 
   /*
-                          Header ------.           endOfTxData ---.
-                                       |                          |
-                                       V                          V
-      +----------+----------+----------+------------+---  ...  ---+----------+
-      | Optional |          | Optional |  Optional  |             | Optional |
-      |  NET ID  | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
-      |  8 bits  |  8 bits  | 2 bytes  |   8 bits   |   n bytes   | n Bytes  |
-      +----------+----------+----------+------------+-------------+----------+
-      |                                             |             |
-      |                                             |<- Length -->|
-      |<-------------------- txDatagramSize --------------------->|
+                                     Header ------.           endOfTxData ---.
+                                                  |                          |
+                                                  V                          V
+      +----------+----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional | Optional |  Optional  |             | Optional |
+      |  NET ID  | Control  | C-Timer  |  Chan #  | SF6 Length |    Data     | Trailer  |
+      |  1 byte  |  1 byte  | 2 bytes  |  1 byte  |   1 byte   |   n bytes   | n Bytes  |
+      +----------+----------+----------+----------+------------+-------------+----------+
+      |                                                        |             |
+      |                                                        |<- Length -->|
+      |<------------------------- txDatagramSize --------------------------->|
   */
 
   //Add the spread factor 6 length if required
@@ -2805,18 +2847,18 @@ bool transmitDatagram()
     }
   }
 
-  /*                                               endOfTxData ---.
-                                       Header ------.             |
-                                                    |             |
-                                                    V             V
-      +----------+----------+----------+------------+---  ...  ---+----------+
-      | Optional |          | Optional |  Optional  |             | Optional |
-      |  NET ID  | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
-      |  8 bits  |  8 bits  | 2 bytes  |   8 bits   |   n bytes   | n Bytes  |
-      +----------+----------+----------+------------+-------------+----------+
-      |                                             |             |
-      |                                             |<- Length -->|
-      |<-------------------- txDatagramSize --------------------->|
+  /*                                                          endOfTxData ---.
+                                                  Header ------.             |
+                                                               |             |
+                                                               V             V
+      +----------+----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional | Optional |  Optional  |             | Optional |
+      |  NET ID  | Control  | C-Timer  |  Chan #  | SF6 Length |    Data     | Trailer  |
+      |  1 byte  |  1 byte  | 2 bytes  |  1 byte  |   1 byte   |   n bytes   | n Bytes  |
+      +----------+----------+----------+----------+------------+-------------+----------+
+      |                                                        |             |
+      |                                                        |<- Length -->|
+      |<------------------------- txDatagramSize --------------------------->|
   */
 
   //Verify the Virtual-Circuit length
@@ -2841,16 +2883,16 @@ bool transmitDatagram()
   }
 
   /*
-                                                   endOfTxData ---.
-                                                                  |
-                                                                  V
-      +----------+----------+----------+------------+---  ...  ---+----------+
-      | Optional |          | Optional |  Optional  |             | Optional |
-      |  NET ID  | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
-      |  8 bits  |  8 bits  | 2 bytes  |   8 bits   |   n bytes   | n Bytes  |
-      +----------+----------+----------+------------+-------------+----------+
-      |                                                           |
-      |<-------------------- txDatagramSize --------------------->|
+                                                              endOfTxData ---.
+                                                                             |
+                                                                             V
+      +----------+----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional | Optional |  Optional  |             | Optional |
+      |  NET ID  | Control  | C-Timer  |  Chan #  | SF6 Length |    Data     | Trailer  |
+      |  1 byte  |  1 byte  | 2 bytes  |  1 byte  |   1 byte   |   n bytes   | n Bytes  |
+      +----------+----------+----------+----------+------------+-------------+----------+
+      |                                                                      |
+      |<------------------------- txDatagramSize --------------------------->|
   */
 
   //Add the datagram trailer
@@ -2899,16 +2941,16 @@ bool transmitDatagram()
   }
 
   /*
-                                                   endOfTxData ---.
-                                                                  |
-                                                                  V
-      +----------+----------+----------+------------+---  ...  ---+----------+
-      | Optional |          | Optional |  Optional  |             | Optional |
-      |  NET ID  | Control  | C-Timer  | SF6 Length |    Data     | Trailer  |
-      |  8 bits  |  8 bits  | 2 bytes  |   8 bits   |   n bytes   | n Bytes  |
-      +----------+----------+----------+------------+-------------+----------+
-      |                                                           |
-      |<-------------------- txDatagramSize --------------------->|
+                                                              endOfTxData ---.
+                                                                             |
+                                                                             V
+      +----------+----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional | Optional |  Optional  |             | Optional |
+      |  NET ID  | Control  | C-Timer  |  Chan #  | SF6 Length |    Data     | Trailer  |
+      |  1 byte  |  1 byte  | 2 bytes  |  1 byte  |   1 byte   |   n bytes   | n Bytes  |
+      +----------+----------+----------+----------+------------+-------------+----------+
+      |                                                                      |
+      |<------------------------- txDatagramSize --------------------------->|
   */
 
   //Display the transmitted packet bytes
@@ -3036,11 +3078,11 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   radioCallHistory[RADIO_CALL_retransmitDatagram] = millis();
 
   /*
-      +----------+----------+----------+------------+---  ...  ---+----------+
-      | Optional |          | Optional | Optional   |             | Optional |
-      | NET ID   | Control  | C-Timer  | SF6 Length |   Data      | Trailer  |
-      | 8 bits   | 8 bits   | 2 bytes  | 8 bits     |   n bytes   | n Bytes  |
-      +----------+----------+----------+------------+-------------+----------+
+      +----------+----------+----------+----------+------------+---  ...  ---+----------+
+      | Optional |          | Optional | Optional |  Optional  |             | Optional |
+      |  NET ID  | Control  | C-Timer  |  Chan #  | SF6 Length |    Data     | Trailer  |
+      |  1 byte  |  1 byte  | 2 bytes  |  1 byte  |   1 byte   |   n bytes   | n Bytes  |
+      +----------+----------+----------+----------+------------+-------------+----------+
       |                                                                      |
       |<------------------------- txDatagramSize --------------------------->|
   */
@@ -3280,14 +3322,9 @@ void stopChannelTimer()
 //adjust our own channelTimer interrupt to be synchronized with the remote unit
 void syncChannelTimer(uint32_t frameAirTimeUsec, bool clockStarting)
 {
-  int16_t adjustment;
-  uint8_t caseNumber;
   unsigned long currentMillis;
-  int8_t delayedHopCount;
-  uint16_t frameAirTimeMsec;
-  int16_t lclHopTimeMsec;
-  int16_t msToNextHop;
-  int16_t rmtHopTimeMsec;
+  unsigned long mSecInHop;
+  int microseconds;
 
   currentMillis = millis();
   radioCallHistory[RADIO_CALL_syncChannelTimer] = currentMillis;
@@ -3295,287 +3332,86 @@ void syncChannelTimer(uint32_t frameAirTimeUsec, bool clockStarting)
   if (!clockSyncReceiver) return; //syncChannelTimer
   if (settings.frequencyHop == false) return;
 
-  //msToNextHopRemote is obtained during rcvDatagram() and is in the range of
-  //0 - settings.maxDwellTime
-  //Validate this range
-  if (ENABLE_DEVELOPER)
-  {
-    if ((msToNextHopRemote < 0) || (msToNextHopRemote > settings.maxDwellTime))
-    {
-      int16_t channelTimer;
-      uint8_t * data;
-
-      systemPrintln("RX Frame");
-      dumpBuffer(incomingBuffer, headerBytes + rxDataBytes + trailerBytes);
-
-      data = incomingBuffer;
-      if ((settings.operatingMode == MODE_POINT_TO_POINT) || settings.verifyRxNetID)
-      {
-        systemPrint("    Net Id: ");
-        systemPrint(*data);
-        systemPrint(" (0x");
-        systemPrint(*data++, HEX);
-        systemPrintln(")");
-      }
-      printControl(*data++);
-      memcpy(&channelTimer, data, sizeof(channelTimer));
-      data += sizeof(channelTimer);
-      systemPrint("    Channel Timer(ms): ");
-      systemPrint(channelTimer);
-      systemPrint(" (0x");
-      systemPrint(channelTimer, HEX);
-      systemPrintln(")");
-
-      systemPrint("ERROR: Invalid msToNextHopRemote value, ");
-      systemPrintln(msToNextHopRemote);
-      return;
-    }
-  } //ENABLE_DEVELOPER
-
-  //----------------------------------------------------------------------
-  // Enter the critical section
-  //----------------------------------------------------------------------
-
-  //Synchronize with the hardware timer
-  channelTimer.disableTimer();
-
-  //When timeToHop is true, a hop is required to match the hops indicated by
-  //the channelTimerStart value.  Delay this hop to avoid adding unaccounted
-  //delay.  After the channel timer is restarted, perform this hop because
-  //the channelTimerStart value indicated that it was done.  The channel
-  //timer update will add only microseconds to when the hop is done.
-  delayedHopCount = timeToHop ? 1 : 0;
-
-  // 4800 BPS operation
-  //
-  //            |<---------------- Millis to HOP ---------------->|
-  //     _____  |                                                 |_____________
-  //          |_|_________________________________________________|
-  //            |                          |                      |
-  //   TX Start ^         TX Complete ^    |<-- rmtHopTimeMsec -->|
-  //                           RX Complete ^
-  //
-  //
   // 150 BPS operation
   //
-  //            |<--- Millis to HOP --->|
-  //     _____  |                       |_________________________
-  //          |_|_______________________|                  |      |_____________
-  //            |                                          |      |
-  //   TX Start ^                         TX Complete ^    |      |
-  //                                           RX Complete ^      |
-  //                                                       |<-  ->|
-  //                                                    rmtHopTimeMsec
+  //        TX Start
+  //            |                               settings.txToRxUsec
+  //            |<- msToNextHopRemote ->|          -->|    |<--
+  //     _____  |                       |_____________|____|______
+  //          |_V_______________________|             |    |      |_____________
+  //          |                                       |    |      |
+  //          |                           TX Complete ^    |      |
+  //          |                                RX Complete ^      |
+  //          |                                            |<-  ->|
+  //          |                                           msToNextHop
+  //          |                                            |
+  //          |<------------ frameAirTimeMsec ------------>|
   //
-  //            Millis to HOP
-  //               |<- ->|
-  //               |     |_________________________                           __
-  //    ___________|_____|                         |_________________________|
-  //               |                                          |              |
+  //
+  //          msToNextHopRemote                     settings.txToRxUsec
+  //               |<- ->|                            -->|    |<--
+  //               |     |_________________________      |    |               __
+  //    ___________|_____|                         |_____|____|______________|
+  //               |                                     |    |              |
   //      TX Start ^                         TX Complete ^    |              |
   //                                              RX Complete ^              |
   //                                                          |<----    ---->|
-  //                                                           rmtHopTimeMsec
+  //                                                             msToNextHop
+  //                                                          |
+  //    ------------------------ frameAirTimeMsec ----------->|
   //
-  //For low speed operation move the TX start into the current dwell time period
-  //to make the rest of the math look like the 4800 BPS operation.
-  frameAirTimeMsec = settings.maxDwellTime - msToNextHopRemote
-                     + (frameAirTimeUsec + settings.txToRxUsec + micros() - transactionCompleteMicros) / 1000;
-  while (frameAirTimeMsec >= (settings.maxDwellTime + (settings.maxDwellTime >> 6)))
+
+  //Compute the time that has pass since the initialization of the TX frame
+  clockSyncData.currentMillis = currentMillis;
+  clockSyncData.msToNextHopRemote = msToNextHopRemote;
+  clockSyncData.frameAirTimeUsec = frameAirTimeUsec;
+  clockSyncData.txToRxUsec = settings.txToRxUsec;
+  clockSyncData.transactionCompleteMicros = transactionCompleteMicros;
+  clockSyncData.maxDwellTime = settings.maxDwellTime;
+  microseconds = micros();
+  clockSyncData.frameAirTimeMsec = settings.maxDwellTime - msToNextHopRemote //mSec to first hop
+                                 + (frameAirTimeUsec + settings.txToRxUsec //uSec until frame received
+                                 + microseconds - transactionCompleteMicros) //uSec processing time to reach here
+                                 / 1000; //uSec to mSec conversion
+  clockSyncData.microseconds = microseconds;
+  mSecInHop = clockSyncData.frameAirTimeMsec;
+
+  //Adjust the channel number
+  clockSyncData.rmtChannelNumber = rmtChannelNumber;
+  clockSyncData.nextChannelNumber = rmtChannelNumber;
+  while (mSecInHop >= settings.maxDwellTime)
   {
-    frameAirTimeMsec -= settings.maxDwellTime;
-    if (clockStarting)
-      delayedHopCount += 1; //Account for the missing hop when the timer is stopped
+    clockSyncData.nextChannelNumber += 1;
+    mSecInHop -= settings.maxDwellTime;
   }
 
-  //The radios are using the same frequencies since the frame was successfully
-  //received.  The goal is to adjust the channel timer to fire in close proximity
-  //to the firing of the remote sysstem's channel timer.  The following cases
-  //need to be identified:
-  //
-  // 1. Both systems are on the same channel
-  //      Adjust channel timer value
-  // 2. Remote system is on next channel (remote hopped, local did not)
-  //      Immediate local hop
-  //      Adjust channel timer value
-  // 3. Remote system on previous channel (local hopped, remote did not)
-  //      Extend channel timer value by maxDwellTime
-  //
-  //For low transmission rates, the transmission may have spanned multiple hops
-  //and all of the frequencies must have matched for the frame to be received
-  //successfully.  Therefore the above cases hold for low frequencies as well.
-  //
-  //Compute the remote system's channel timer firing time offset in milliseconds
-  //using the channel timer value and the adjustments for transmit and receive
-  //time (time of flight)
-  rmtHopTimeMsec = settings.maxDwellTime - frameAirTimeMsec;
+  //Compute the milliseconds for the next hop timer
+  clockSyncData.msToNextHop = settings.maxDwellTime - mSecInHop;
 
-  //Compute when the local system last hopped
-  lclHopTimeMsec = currentMillis - channelTimerStart;
-  adjustment = 0;
+  //Set the next channel number
+  clockSyncData.nextChannelNumber %= settings.numberOfChannels;
+  channelNumber = clockSyncData.nextChannelNumber;
+  clockSyncData.linkUpTime = virtualCircuitList[VC_SERVER].lastTrafficMillis
+                           - virtualCircuitList[VC_SERVER].firstHeartbeatMillis;
 
-#define REMOTE_SYSTEM_LIKELY_TO_HOP_MSEC    2
-#define CHANNEL_TIMER_SYNC_MSEC   (frameAirTimeMsec + REMOTE_SYSTEM_LIKELY_TO_HOP_MSEC)
+  //Restart the hop timer
+  if (clockSyncData.msToNextHop < settings.maxDwellTime)
+    startChannelTimer(clockSyncData.msToNextHop);
 
-  //Determine if the remote has hopped or is likely to hop very soon
-  if (rmtHopTimeMsec <= REMOTE_SYSTEM_LIKELY_TO_HOP_MSEC)
-  {
-    //Adjust the next channel timer value
-    adjustment += settings.maxDwellTime;
+  //Update the radio frequency if necessary
+  if (channelNumber != clockSyncData.nextChannelNumber)
+    setRadioFrequency(true);
 
-    //Determine if the local system has just hopped
-    if (((unsigned long)lclHopTimeMsec) <= CHANNEL_TIMER_SYNC_MSEC)
-    {
-      caseNumber = 1;
-      //Case 1 above, both systems using the same channel
-      //
-      //Remote system
-      //
-      //  channelTimerStart                                        Channel timer fires
-      //    |------...-------------------------------------------->|
-      //                                     Channel Timer value   |
-      //                                 |<----------------------->|
-      //                                 |                         | rmtHopTimeMsec
-      //                                 |                         |<--|
-      //                                 |                             |
-      //                                 |                           Current Time
-      //                                 |<------------>|<------------>|
-      //                                    txTimeUsec     rxTimeUsec  |
-      //                                                               |
-      //Local system                                                   |
-      //                                                lclHopTimeMsec |
-      //                                                      |------->|
-      //                                                      |        | New timer value
-      //                                                      |    |<--|----------------...-->|
-      //                                                      |----------------...-->|
-      //                                      channelTimerStart           Channel timer fires
-      //
-      //No hop is necessary
-    }
-    else
-    {
-      caseNumber = 2;
-      //Case 2 above, the local system did not hop
-      //
-      //Remote system
-      //
-      //  channelTimerStart            Channel timer fires                                    Channel timer fires
-      //    |...---------------------->|------...-------------------------------------------->|
-      //           Channel Timer value |
-      //                       |<----->|
-      //                       |       |   rmtHopTimeMsec
-      //                       |       |<--------------------|
-      //                       |                           Current Time
-      //                       |<------------>|<------------>|
-      //                          txTimeUsec     rxTimeUsec  |
-      //                                                     |
-      //                                                     |
-      //Local system                                         |
-      //                                      Computed value |     New timer value
-      //                               |<--------------------|------...----------------------->|
-      //                                                     |
-      //                            lclHopTimeMsec           |
-      //               |------------------------------------>|
-      //               |------...-------------------------------------------->|
-      //       channelTimerStart                                     Channel timer fires
-      //
-      //A hop is necessary to get to a common channel
-      delayedHopCount += 1;
-    }
-  }
-  else
-  {
-    caseNumber = 3;
-    //Case 3, both systems using the same channel
-    //
-    //  channelTimerStart                                        Channel timer fires
-    //    |------...-------------------------------------------->|
-    //                                Channel Timer value        |
-    //                       |<--------------------------------->|
-    //                       |                                   |
-    //                       |                    rmtHopTimeMsec |
-    //                       |                             |---->|
-    //                       |                       Current Time
-    //                       |<------------>|<------------>|
-    //                          txTimeUsec     rxTimeUsec  |
-    //                                                     |
-    //Local system                                         |
-    //                                                     | New timer value
-    //                                                     |---->|
-    //               |------...-------------------------------------->|
-    //             channelTimerStart                       |          Channel timer fires
-    //                                                     |--------->|
-    //                                                    lclHopTimeMsec
-    //
-    //No hop is necessary
-  }
-
-  //Compute the next hop time
-  msToNextHop = rmtHopTimeMsec + adjustment;
-
-  //For low airspeeds multiple hops may occur resulting in a negative value
-  while (msToNextHop <= 0)
-    msToNextHop += settings.maxDwellTime;
-
-  //If our next hop is very nearly a dwell time, remote has hopped. Add local hop.
-  if (abs(settings.maxDwellTime - msToNextHop) <= 3)
-    delayedHopCount++;
-
-  //When the ISR fires, reload the channel timer with settings.maxDwellTime
-  reloadChannelTimer = true;
-
-  //Log the previous clock sync
-  clockSyncData[clockSyncIndex].msToNextHop = msToNextHop;
-  clockSyncData[clockSyncIndex].frameAirTimeMsec = frameAirTimeMsec;
-  clockSyncData[clockSyncIndex].msToNextHopRemote = msToNextHopRemote;
-  clockSyncData[clockSyncIndex].adjustment = adjustment;
-  clockSyncData[clockSyncIndex].delayedHopCount = delayedHopCount;
-  clockSyncData[clockSyncIndex].lclHopTimeMsec = lclHopTimeMsec;
-  clockSyncData[clockSyncIndex].timeToHop = timeToHop;
-  clockSyncIndex += 1;
-  if (clockSyncIndex >= (sizeof(clockSyncData) / sizeof(CLOCK_SYNC_DATA)) ) clockSyncIndex = 0;
-
-  //Restart the channel timer
-  timeToHop = false;
-  channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
-  digitalWrite(pin_hop_timer, ((channelNumber + delayedHopCount) % settings.numberOfChannels) & 1);
-  channelTimerStart = currentMillis;
-  channelTimerMsec = msToNextHop; //syncChannelTimer update
-  channelTimer.enableTimer();
-
-  //----------------------------------------------------------------------
-  // Leave the critical section
-  //----------------------------------------------------------------------
+  //Save the timer setup
+  clockSyncData.channelTimerStart = channelTimerStart;
+  clockSyncData.channelTimerMsec = channelTimerMsec;
 
   //Trigger after adjustments to timer to avoid skew during debug
   triggerEvent(TRIGGER_SYNC_CHANNEL_TIMER);
 
-  //Hop if the timer fired prior to disabling the timer, resetting the channelTimerStart value
-  if (delayedHopCount)
-    hopChannel(true, delayedHopCount);
-
   //Display the channel sync timer calculations
   if (settings.debugSync)
-  {
-    systemPrint("Case #");
-    systemPrint(caseNumber);
-    systemPrint(", ");
-    systemPrint(delayedHopCount);
-    systemPrint(" Hops, ");
-    systemPrint(msToNextHopRemote);
-    systemPrint(" Nxt Hop - ");
-    systemPrint(frameAirTimeMsec);
-    systemPrint(" (TX + RX)");
-    if (adjustment)
-    {
-      systemPrint(" + ");
-      systemPrint(adjustment);
-      systemPrint(" Adj");
-    }
-    systemPrint(" = ");
-    systemPrint(msToNextHop);
-    systemPrintln(" mSec");
-  }
+    dumpClockSynchronization();
 }
 
 //This function resets the heartbeat time and re-rolls the random time

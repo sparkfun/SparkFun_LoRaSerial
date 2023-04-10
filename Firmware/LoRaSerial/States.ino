@@ -1498,7 +1498,6 @@ void updateRadioState()
             {
               systemPrintln("HEARTBEAT Timeout");
               outputSerialData(true);
-              dumpClockSynchronization();
             }
             changeState(RADIO_DISCOVER_BEGIN);
           }
@@ -2215,7 +2214,6 @@ void updateRadioState()
           {
             if (settings.server)
               blinkHeartbeatLed(true);
-            triggerEvent(TRIGGER_TX_VC_HEARTBEAT);
             if (settings.debugHeartbeat && settings.server)
               systemPrintln(channelNumber);
             if (((uint8_t)myVc) < MAX_VC)
@@ -2556,9 +2554,9 @@ void selectHeaderAndTrailerBytes()
   //Add the control byte to the header
   headerBytes += 1;
 
-  //Add channel timer bytes to header
+  //Add channel timer and channel number bytes to header
   if (settings.frequencyHop == true)
-    headerBytes += CHANNEL_TIMER_BYTES;
+    headerBytes += CHANNEL_TIMER_BYTES + 1;
 
   //Add the byte containing the frame size (only needed in SF6)
   if (settings.radioSpreadFactor == 6)
@@ -2875,40 +2873,97 @@ void displayRadioStateHistory()
 //Dump the clock synchronization data
 void dumpClockSynchronization()
 {
-  if (settings.debugSync)
+  unsigned long days;
+  unsigned long deltaMsec;
+  unsigned long hours;
+  const char * const indent = "    ";
+  unsigned long minutes;
+  unsigned long mSecInHop;
+  unsigned long seconds;
+
+  if (settings.debugHopTimer || settings.debugSync)
   {
-    //Dump the clock sync data
     petWDT();
-    for (uint8_t x = 0; x < (sizeof(clockSyncData) / sizeof(clockSyncData[0])); x++)
+    systemPrintln("Clock Synchronization Data");
+    if (clockSyncData.linkUpTime)
     {
-      uint8_t index = (x + clockSyncIndex) % (sizeof(clockSyncData) / sizeof(clockSyncData[0]));
-      if (clockSyncData[index].frameAirTimeMsec)
+      seconds = clockSyncData.linkUpTime;
+      days = seconds / MILLISECONDS_IN_A_DAY;
+      seconds -= days * MILLISECONDS_IN_A_DAY;
+      hours = seconds / MILLISECONDS_IN_AN_HOUR;
+      seconds -= hours * MILLISECONDS_IN_AN_HOUR;
+      minutes = seconds / MILLISECONDS_IN_A_MINUTE;
+      seconds -= minutes * MILLISECONDS_IN_A_MINUTE;
+      seconds /= MILLISECONDS_IN_A_SECOND;
+      systemPrint(indent);
+      systemPrint("Link uptime: ");
+      if (days)
       {
-        systemPrint("Lcl: ");
-        systemPrint(clockSyncData[index].lclHopTimeMsec);
-        systemPrint(", Rmt: ");
-        systemPrint(clockSyncData[index].msToNextHopRemote);
-        systemPrint(" - ");
-        systemPrint(clockSyncData[index].frameAirTimeMsec);
-        systemPrint(" = ");
-        systemPrint(clockSyncData[index].msToNextHopRemote - clockSyncData[index].frameAirTimeMsec);
-        systemPrint(" + ");
-        systemPrint(clockSyncData[index].adjustment);
-        systemPrint(" = ");
-        systemPrint(clockSyncData[index].msToNextHop);
-        systemPrint(" msToNextHop");
-        if (clockSyncData[index].delayedHopCount)
-        {
-          systemPrint(", timeToHop: ");
-          systemPrint(clockSyncData[index].timeToHop);
-          systemPrint(", Hops: ");
-          systemPrint(clockSyncData[index].delayedHopCount);
-        }
-        systemPrintln();
-        outputSerialData(true);
-        petWDT();
+        systemPrint(days);
+        systemPrint(" ");
       }
+      systemPrint(hours);
+      systemPrint(":");
+      if (minutes < 10)
+        systemPrint("0");
+      systemPrint(minutes);
+      systemPrint(":");
+      if (seconds < 10)
+        systemPrint("0");
+      systemPrintln(seconds);
     }
+
+    systemPrint(indent);
+    systemPrint("TX millsToNextHop: ");
+    systemPrint(clockSyncData.msToNextHopRemote);
+    systemPrint(", on channel: ");
+    systemPrintln(clockSyncData.rmtChannelNumber);
+
+    systemPrint(indent);
+    systemPrint("Previous hop started at: -");
+    systemPrint(clockSyncData.maxDwellTime - clockSyncData.msToNextHopRemote);
+    systemPrint(", RX micros: ");
+    systemPrint(clockSyncData.frameAirTimeUsec + clockSyncData.txToRxUsec);
+    systemPrint(", RX overhead ");
+    systemPrintln(clockSyncData.microseconds - clockSyncData.transactionCompleteMicros);
+
+    systemPrint(indent);
+    systemPrint("frameAirTimeMsec = ");
+    systemPrint(clockSyncData.maxDwellTime - clockSyncData.msToNextHopRemote);
+    systemPrint(" + ((");
+    systemPrint(clockSyncData.frameAirTimeUsec + clockSyncData.txToRxUsec);
+    systemPrint(" + ");
+    systemPrint(clockSyncData.microseconds - clockSyncData.transactionCompleteMicros);
+    systemPrint(") / 1000) = ");
+    systemPrint(clockSyncData.frameAirTimeMsec);
+    systemPrintln(" mSec");
+
+    systemPrint(indent);
+    systemPrint("Next channel: ");
+    systemPrintln(clockSyncData.rmtChannelNumber + (clockSyncData.frameAirTimeMsec / clockSyncData.maxDwellTime));
+
+    systemPrint(indent);
+    systemPrint("Local Hop Timer");
+    if (clockSyncData.channelTimerMsec)
+    {
+      systemPrint(" start: -");
+      systemPrint(clockSyncData.currentMillis - clockSyncData.channelTimerMsec);
+      systemPrint(" mSec, next hop: ");
+      systemPrint(settings.maxDwellTime - clockSyncData.currentMillis);
+      systemPrintln(" mSec");
+    }
+    else
+      systemPrintln(": Not running");
+
+    mSecInHop = clockSyncData.frameAirTimeMsec % clockSyncData.maxDwellTime;
+    systemPrint(indent);
+    systemPrint("mSecInHop: ");
+    systemPrint(mSecInHop);
+    systemPrint(", next channel: ");
+    systemPrint(clockSyncData.rmtChannelNumber + (clockSyncData.frameAirTimeMsec / clockSyncData.maxDwellTime));
+    systemPrint(", msToNextHop: ");
+    deltaMsec = clockSyncData.maxDwellTime - mSecInHop;
+    systemPrintln(deltaMsec);
   }
 }
 
@@ -3115,6 +3170,9 @@ void vcBreakLink(int8_t vcIndex)
     vcChangeState(vcIndex, VC_STATE_LINK_DOWN);
   }
   linkFailures++;
+
+  //Dump the clock synchronization
+  dumpClockSynchronization();
 
   //Flush the buffers
   outputSerialData(true);

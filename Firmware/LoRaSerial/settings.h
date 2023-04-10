@@ -270,6 +270,9 @@ enum
   TRIGGER_RX_VC_ZERO_ACKS,
   TRIGGER_RX_YIELD,
   TRIGGER_RX_ZERO_ACKS,
+  TRIGGER_SYNC_CASE_1,
+  TRIGGER_SYNC_CASE_2,
+  TRIGGER_SYNC_CASE_3,
   TRIGGER_SYNC_CHANNEL_TIMER,
   TRIGGER_TRAINING_CLIENT_RX_PARAMS,
   TRIGGER_TRAINING_CLIENT_TX_ACK_DONE,
@@ -369,13 +372,21 @@ typedef enum
 
 typedef struct _CLOCK_SYNC_DATA
 {
+  unsigned long channelTimerStart;
+  unsigned long currentMillis;
+  unsigned long frameAirTimeMsec;
+  unsigned long mSecInHop;
+  unsigned long msToNextHop;
+  unsigned long linkUpTime;
+  uint32_t frameAirTimeUsec;
+  uint32_t microseconds;
+  uint32_t txToRxUsec;
+  uint32_t transactionCompleteMicros;
+  uint16_t maxDwellTime;
+  int16_t channelTimerMsec;
   int16_t msToNextHopRemote;
-  uint16_t frameAirTimeMsec;
-  uint16_t msToNextHop;
-  int16_t lclHopTimeMsec;
-  int16_t adjustment;
-  int8_t delayedHopCount;
-  bool timeToHop;
+  uint8_t nextChannelNumber;
+  uint8_t rmtChannelNumber;
 } CLOCK_SYNC_DATA;
 
 //These are all the settings that can be set on Serial Terminal Radio. It's recorded to NVM.
@@ -487,6 +498,7 @@ typedef struct struct_settings {
   bool debug = false; //Print basic events: ie, radio state changes
   bool debugDatagrams = false; //Print the datagrams
   bool debugHeartbeat = false; //Print the HEARTBEAT timing values
+  bool debugHopTimer = false; //Print the hop timer when the link fails
 
   bool debugNvm = false; //Debug NVM operation
   bool debugRadio = false; //Print radio info
