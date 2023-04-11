@@ -129,6 +129,7 @@ typedef enum
   //Connect to the remote radio
   CMD_AT_CMDVC,               //Select target VC
   CMD_ATC,                    //Start the 3-way handshake
+
   CMD_WAIT_CONNECTED,         //Wait until the client is connected
 
   //Get remote radio connection status, type and ID
@@ -470,6 +471,7 @@ int hostToStdout(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint8_t byte
   //Write this data to stdout
   bytesSent = 0;
   status = 0;
+  fflush(stdout);
   while (bytesSent < bytesToSend)
   {
     bytesWritten = write(STDOUT, &data[bytesSent], bytesToSend - bytesSent);
