@@ -3,6 +3,7 @@
 #include <sys/time.h>
 #include "settings.h"
 
+#define ISSUE_COMMANDS_IN_PARALLEL      1
 #ifndef POLL_TIMEOUT_USEC
 #define POLL_TIMEOUT_USEC       1000
 #endif  // POLL_TIMEOUT_USEC
@@ -1487,8 +1488,10 @@ int main(int argc, char **argv)
               break;
             if (issueVcCommands(vcIndex))
             {
-  continue;
-//              break;
+              if (ISSUE_COMMANDS_IN_PARALLEL)
+                continue;
+              else
+                break;
             }
           }
         }
