@@ -1224,7 +1224,7 @@ bool issueVcCommands(int vcIndex)
 
               case CMD_WAIT_CONNECTED:
                 if ((virtualCircuitList[vcIndex].vcState != VC_STATE_CONNECTED)
-                    || commandProcessorBusy(vcIndex))
+                    || (!commandProcessorIdle(vcIndex)))
                 {
                   //Mark the list as empty to allow this entry to be executed again
                   virtualCircuitList[vcIndex].activeCommand = CMD_LIST_SIZE;
