@@ -582,13 +582,13 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint
         printf("VC %d ALIVE\n", srcVc);
       COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue,
                     virtualCircuitList[srcVc].commandTimer,
-                    CMD_AT_CMDVC);
+                    CMD_WAIT_CONNECTED);
       COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue,
                     virtualCircuitList[srcVc].commandTimer,
                     CMD_ATC);
       COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue,
                     virtualCircuitList[srcVc].commandTimer,
-                    CMD_WAIT_CONNECTED);
+                    CMD_AT_CMDVC);
     }
 
     if (DISPLAY_VC_STATE)
@@ -621,38 +621,25 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint
     break;
 
   case VC_STATE_CONNECTED:
+    if ((previousState == VC_STATE_LINK_DOWN) && (srcVc < MAX_VC)
+      && (!COMMAND_PENDING(virtualCircuitList[srcVc].commandQueue, CMD_WAIT_CONNECTED)))
+    {
+      //Issue the necessary commands when the link is connected
+      COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue,
+                    virtualCircuitList[srcVc].commandTimer,
+                    CMD_WAIT_CONNECTED);
+    }
     if (DEBUG_PC_CMD_ISSUE)
       printf("VC %d CONNECTED\n", srcVc);
-    if (COMMAND_PENDING(pcCommandQueue, CMD_ATC)
-      && (pcActiveCommand == CMD_ATC) && (srcVc == pcCommandVc))
+    if ((pcActiveCommand == CMD_ATC) && COMMAND_PENDING(pcCommandQueue, CMD_ATC))
     {
-      if (virtualCircuitList[srcVc].activeCommand == CMD_ATC)
-        COMMAND_COMPLETE(virtualCircuitList[srcVc].commandQueue, virtualCircuitList[srcVc].activeCommand);
-      COMMAND_COMPLETE(pcCommandQueue, pcActiveCommand);
+      if (srcVc == pcCommandVc)
+        COMMAND_COMPLETE(pcCommandQueue, pcActiveCommand);
+      if ((pcCommandVc < MAX_VC) && (virtualCircuitList[pcCommandVc].activeCommand == CMD_ATC))
+        COMMAND_COMPLETE(virtualCircuitList[pcCommandVc].commandQueue, virtualCircuitList[srcVc].activeCommand);
     }
     if (DISPLAY_VC_STATE)
       printf("======= VC %d CONNECTED ======\n", srcVc);
-    if (srcVc != myVc)
-    {
-      COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue,
-                    virtualCircuitList[srcVc].commandTimer,
-                    CMD_AT_CMDVC_2);
-      COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue,
-                    virtualCircuitList[srcVc].commandTimer,
-                    CMD_ATI31);
-      COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue,
-                    virtualCircuitList[srcVc].commandTimer,
-                    CMD_ATI_2);
-      COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue,
-                    virtualCircuitList[srcVc].commandTimer,
-                    CMD_ATI8_2);
-      COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue,
-                    virtualCircuitList[srcVc].commandTimer,
-                    CMD_ATI11);
-      COMMAND_ISSUE(virtualCircuitList[srcVc].commandQueue,
-                    virtualCircuitList[srcVc].commandTimer,
-                    CHECK_FOR_UPDATE);
-    }
     break;
   }
 
@@ -1218,9 +1205,9 @@ bool issueVcCommands(int vcIndex)
                 {
                   if (DEBUG_PC_CMD_ISSUE)
                     printf("Migrating AT-CMDVC=%d and ATC commands to PC command queue\n", vcIndex);
-                  COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_AT_CMDVC);
                   if (COMMAND_PENDING(virtualCircuitList[vcIndex].commandQueue, CMD_ATC))
                     COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_ATC);
+                  COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_AT_CMDVC);
                   return true;
                 }
                 virtualCircuitList[vcIndex].activeCommand = CMD_LIST_SIZE;
@@ -1242,23 +1229,37 @@ bool issueVcCommands(int vcIndex)
                 COMMAND_COMPLETE(virtualCircuitList[vcIndex].commandQueue,
                                  virtualCircuitList[vcIndex].activeCommand);
 
+                //Get the sprinkler controller information
+                if (vcIndex != myVc)
+                {
+                  COMMAND_ISSUE(virtualCircuitList[vcIndex].commandQueue,
+                                virtualCircuitList[vcIndex].commandTimer,
+                                CHECK_FOR_UPDATE);
+                  COMMAND_ISSUE(virtualCircuitList[vcIndex].commandQueue,
+                                virtualCircuitList[vcIndex].commandTimer,
+                                CMD_ATI11);
+                  COMMAND_ISSUE(virtualCircuitList[vcIndex].commandQueue,
+                                virtualCircuitList[vcIndex].commandTimer,
+                                CMD_ATI8_2);
+                  COMMAND_ISSUE(virtualCircuitList[vcIndex].commandQueue,
+                                virtualCircuitList[vcIndex].commandTimer,
+                                CMD_ATI_2);
+                }
+
                 //Get the VC state
-                COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_AT_CMDVC_2);
+                if (vcIndex != myVc)
+                  COMMAND_ISSUE(virtualCircuitList[vcIndex].commandQueue,
+                                virtualCircuitList[vcIndex].commandTimer,
+                                CMD_ATI31);
                 COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_ATI31);
+                if (vcIndex != myVc)
+                  COMMAND_ISSUE(virtualCircuitList[vcIndex].commandQueue,
+                                virtualCircuitList[vcIndex].commandTimer,
+                                CMD_AT_CMDVC_2);
+                COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_AT_CMDVC_2);
                 break;
 
               case CMD_AT_CMDVC_2:
-                //Determine if the local command processor is idle
-                if (commandProcessorIdle(vcIndex))
-                {
-                  if (DEBUG_PC_CMD_ISSUE)
-                    printf("Migrating AT-CMDVC_2 and ATI31 commands to PC command queue\n");
-                  COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_AT_CMDVC_2);
-                  if (COMMAND_PENDING(virtualCircuitList[vcIndex].commandQueue, CMD_ATI31))
-                    COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_ATI31);
-                  return true;
-                }
-                virtualCircuitList[vcIndex].activeCommand = CMD_LIST_SIZE;
                 return true;
 
               case CMD_ATI31:
@@ -1277,21 +1278,22 @@ bool issueVcCommands(int vcIndex)
                 return true;
 
               case CHECK_FOR_UPDATE:
+                //Done with the CHECK_FOR_UPDATE command
+                COMMAND_COMPLETE(virtualCircuitList[vcIndex].commandQueue,
+                                 virtualCircuitList[vcIndex].activeCommand);
+
+                //Determine if the sprinkler controller needs to be programmed
                 if ((!virtualCircuitList[vcIndex].programUpdated)
                   || (virtualCircuitList[vcIndex].programUpdated > virtualCircuitList[vcIndex].programmed))
                 {
                   //Complete the programming
                   COMMAND_ISSUE(virtualCircuitList[vcIndex].commandQueue,
                                 virtualCircuitList[vcIndex].commandTimer,
-                                CMD_ATI12);
+                                PROGRAMMING_COMPLETED);
                   COMMAND_ISSUE(virtualCircuitList[vcIndex].commandQueue,
                                 virtualCircuitList[vcIndex].commandTimer,
-                                PROGRAMMING_COMPLETED);
+                                CMD_ATI12);
                 }
-
-                //Done with the CHECK_FOR_UPDATE command
-                COMMAND_COMPLETE(virtualCircuitList[vcIndex].commandQueue,
-                                 virtualCircuitList[vcIndex].activeCommand);
                 return true;
 
               case PROGRAMMING_COMPLETED:
@@ -1419,10 +1421,10 @@ int main(int argc, char **argv)
 
     //Perform the initialization commands
     pcCommandTimer = 1;
-    COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_ATI30); //Get myVC
-    COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_ATI);   //Get Radio type
-    COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_ATI8);  //Get Radio unique ID
     COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_ATA);   //Get all the VC states
+    COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_ATI8);  //Get Radio unique ID
+    COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_ATI);   //Get Radio type
+    COMMAND_ISSUE(pcCommandQueue, pcCommandTimer, CMD_ATI30); //Get myVC
 
     //Break the links if requested
     if (breakLinks)
