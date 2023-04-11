@@ -302,7 +302,7 @@ void updateSerial()
 
   //Assert RTS when there is enough space in the receive buffer
   if ((!rtsAsserted) && (availableRXBytes() < (sizeof(serialReceiveBuffer) / 2))
-      && (availableTXBytes() <= RTS_ON_BYTES))
+      && (availableTXBytes() <= settings.rtsOnBytes))
     updateRTS(true); //We're ready for more data
 
   //Attempt to empty the serialTransmitBuffer
