@@ -562,6 +562,9 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint
     break;
 
   case VC_STATE_LINK_DOWN:
+    //Stop the command processing for this VC
+    virtualCircuitList[srcVc].activeCommand = CMD_LIST_SIZE;
+    virtualCircuitList[srcVc].commandTimer = 0;
     if (DEBUG_PC_CMD_ISSUE)
       printf("VC %d DOWN\n", srcVc);
     if (DISPLAY_VC_STATE)
