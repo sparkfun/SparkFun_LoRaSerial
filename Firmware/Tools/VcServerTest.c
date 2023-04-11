@@ -686,8 +686,27 @@ void radioCommandComplete(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uin
   //The command processor is still running
   commandProcessorRunning = STALL_CHECK_COUNT;
 
-  //Done with this command
+  //Validate the srcVc
   srcVc = header->radio.srcVc;
+  if (srcVc >= PC_REMOTE_COMMAND)
+  {
+    if (srcVc < (uint8_t)VC_RSVD_SPECIAL_VCS)
+      srcVc &= VCAB_NUMBER_MASK;
+    else
+      switch(srcVc)
+      {
+      default:
+        fprintf(stderr, "ERROR: Unknown VC: %d (0x%02x)\n", srcVc, srcVc);
+        exit(-2);
+        break;
+
+      //Ignore this command
+      case (uint8_t)VC_UNASSIGNED:
+        return;
+      }
+  }
+
+  //Done with this command
   if (srcVc == myVc)
   {
     if (pcActiveCommand < CMD_LIST_SIZE)
