@@ -505,6 +505,12 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint
   newState = vcMsg->vcState;
   virtualCircuitList[srcVc].vcState = newState;
 
+  //Display the state if requested
+  if (DISPLAY_STATE_TRANSITION || (newState == VC_STATE_LINK_DOWN)
+    || (previousState == VC_STATE_LINK_DOWN)
+    || ((newState != previousState) && (virtualCircuitList[srcVc].activeCommand < CMD_LIST_SIZE)))
+    printf("VC%d: %s --> %s\n", srcVc, vcStateNames[previousState], vcStateNames[newState]);
+
   //Save the LoRaSerial radio's unique ID
   //Determine if the PC's value is valid
   memset(uniqueId, UNIQUE_ID_ERASE_VALUE, sizeof(uniqueId));
@@ -546,9 +552,6 @@ void radioToPcLinkStatus(VC_SERIAL_MESSAGE_HEADER * header, uint8_t * data, uint
     }
   }
 
-  //Display the state if requested
-  if (DISPLAY_STATE_TRANSITION)
-    printf("VC%d: %s --> %s\n", srcVc, vcStateNames[previousState], vcStateNames[newState]);
   switch (newState)
   {
   default:
