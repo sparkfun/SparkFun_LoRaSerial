@@ -152,6 +152,9 @@ float *channels;
 uint8_t channelNumber = 0;
 uint32_t airSpeed;
 
+uint16_t myRandSeed;
+bool myRandBit;
+
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Encryption

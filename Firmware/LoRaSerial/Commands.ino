@@ -226,6 +226,9 @@ bool commandAT(const char * commandString)
         systemPrintln("  ATI10 - Display radio metrics");
         systemPrintln("  ATI11 - Display the system runtime");
         systemPrintln("  ATI12 - Set programming complete");
+        systemPrintln("  ATI13 - Display the random seed");
+        systemPrintln("  ATI14 - Display the channel table by channel");
+        systemPrintln("  ATI15 - Display the channel table by frequency");
 
         //Virtual circuit information commands
         systemPrintln("  ATI30 - Return myVc value");
@@ -635,6 +638,69 @@ bool commandAT(const char * commandString)
           data = (uint8_t *)&msg;
           for (int index = 0; index < sizeof(msg); index++)
             systemWrite(*data++);
+        }
+        return true;
+
+      case ('3'): //ATI13 - Display the random seed
+        systemPrint("myRandSeed: ");
+        systemPrintln(myRandSeed);
+        return true;
+
+      case ('4'): //ATI14 - Display the channel table by channel
+        systemPrintln("Channel Table");
+        if (!channels)
+          systemPrintln("    Channel table not allocated!");
+        else
+        {
+          for (int index = 0; index < settings.numberOfChannels; index++)
+          {
+            systemPrint("    Channel ");
+            if ((index <= 9) && (settings.numberOfChannels >= 10))
+              systemPrint(" ");
+            systemPrint(index);
+            systemPrint(": ");
+            systemPrint(channels[index],3);
+            systemPrintln(" MHz");
+          }
+        }
+        return true;
+
+      case ('5'): //ATI14 - Display the channel table by frequency
+        systemPrintln("Channel Table by Frequency");
+        if (!channels)
+          systemPrintln("    Channel table not allocated!");
+        else
+        {
+          //Initialize the channel array
+          uint8_t chanIndex[settings.numberOfChannels];
+          for (int index = 0; index < settings.numberOfChannels; index++)
+            chanIndex[index] = index;
+
+          //Sort the channel numbers by frequency
+          for (int index = 0; index < (settings.numberOfChannels - 1); index++)
+          {
+            for (int x = index + 1; x < settings.numberOfChannels; x++)
+            {
+              if (channels[chanIndex[index]] > channels[chanIndex[x]])
+              {
+                uint8_t f = chanIndex[index];
+                chanIndex[index] = chanIndex[x];
+                chanIndex[x] = f;
+              }
+            }
+          }
+
+          //Display the frequencies
+          for (int index = 0; index < settings.numberOfChannels; index++)
+          {
+            systemPrint("    Channel ");
+            if ((chanIndex[index] <= 9) && (settings.numberOfChannels >= 10))
+              systemPrint(" ");
+            systemPrint(chanIndex[index]);
+            systemPrint(": ");
+            systemPrint(channels[chanIndex[index]],3);
+            systemPrintln(" MHz");
+          }
         }
         return true;
     }

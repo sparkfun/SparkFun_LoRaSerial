@@ -482,9 +482,6 @@ uint16_t calcMaxThroughput()
   return (mostBytesPerSecond);
 }
 
-uint16_t myRandSeed;
-bool myRandBit;
-
 //Generate unique hop table based on radio settings
 void generateHopTable()
 {
