@@ -1287,6 +1287,11 @@ void verifyTables()
     if (errorMessage)
       break;
 
+    //Verify the airSpeed table
+    errorMessage = verifyAirSpeedTable();
+    if(errorMessage)
+      break;
+
     //Verify the VC state name table
     errorMessage = verifyVcStateNames();
     if (errorMessage)

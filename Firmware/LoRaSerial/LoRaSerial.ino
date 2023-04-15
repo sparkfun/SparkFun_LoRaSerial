@@ -45,6 +45,9 @@ const int FIRMWARE_VERSION_MINOR = 0;
 #define RADIOLIB_LOW_LEVEL  //Enable access to the module functions
 //#define ENABLE_DEVELOPER true //Uncomment this line to enable special developer modes
 
+#define DEFAULT_AIR_SPEED       4800
+#define DEFAULT_OPERATING_MODE  MODE_POINT_TO_POINT
+
 #define UNUSED(x) (void)(x)
 
 //Define the LoRaSerial board identifier:

@@ -65,6 +65,7 @@ void getDefaultSettings(Settings * newSettings)
 
   //Set the initial radio parameters
   *newSettings = defaultSettings;
+  validateAirSpeed(newSettings, DEFAULT_AIR_SPEED);
 }
 
 //Modify defaults for each radio type (915, 868, 433, etc)

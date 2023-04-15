@@ -1261,25 +1261,7 @@ bool valSpeedAir (void * value, uint32_t valMin, uint32_t valMax)
   UNUSED(valMin);
   UNUSED(valMax);
 
-  valid = ((settingValue == 40)
-           || (settingValue == 150)
-           || (settingValue == 400)
-           || (settingValue == 1200)
-           || (settingValue == 2400)
-           || (settingValue == 4800)
-           || (settingValue == 9600)
-           || (settingValue == 19200)
-           || (settingValue == 28800)
-           || (settingValue == 38400));
-  if (valid)
-  {
-    //Adjust the settings to match the requested airSpeed
-    convertAirSpeedToSettings(&tempSettings, settingValue);
-    airSpeed = settingValue;
-    systemPrintln("Warning: AirSpeed overrides bandwidth, coding rate, spread factor,");
-    systemPrintln("heartbeatTimeout, and txToRxUsec");
-  }
-  return valid;
+  return validateAirSpeed(&tempSettings, settingValue);
 }
 
 //Validate the SerialSpeed value
