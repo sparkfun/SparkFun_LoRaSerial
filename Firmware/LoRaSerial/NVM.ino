@@ -3,6 +3,9 @@ void loadSettings()
 {
   arch.eepromBegin();
 
+  //Use the default settings
+  getDefaultSettings(&settings);
+
   //Check to see if EEPROM is blank
   uint32_t testRead = 0;
   if (EEPROM.get(0, testRead) == 0xFFFFFFFF)
@@ -53,6 +56,15 @@ void loadSettings()
   validateSettings(); //Confirm these settings are within regulatory bounds
 
   recordSystemSettings();
+}
+
+//Merge the default settings with the default radio settings
+void getDefaultSettings(Settings * newSettings)
+{
+  const Settings defaultSettings;
+
+  //Set the initial radio parameters
+  *newSettings = defaultSettings;
 }
 
 //Modify defaults for each radio type (915, 868, 433, etc)

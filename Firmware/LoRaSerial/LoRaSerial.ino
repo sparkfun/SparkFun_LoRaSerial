@@ -518,7 +518,6 @@ unsigned long retransmitTimeout = 0; //Throttle back re-transmits
 
 //Global variables
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const Settings defaultSettings;
 Settings settings; //Active settings used by the radio
 Settings tempSettings; //Temporary settings used for command processing
 Settings trainingSettings; //Settings used for training other radios
@@ -629,6 +628,15 @@ void setup()
   arch.beginBoard(); //Initialize the board specific hardware, and ID platform type
 
   loadSettings(); //Load settings from EEPROM
+
+  //Use the current radio settings if they are already set
+  if (!settings.radioBandwidth)
+  {
+    //Set the initial radio parameters
+    getDefaultSettings(&settings);
+    recordSystemSettings();
+  }
+
   serialOperatingMode = settings.operatingMode;
 
   beginSerial(settings.serialSpeed);
