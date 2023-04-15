@@ -985,8 +985,7 @@ void multiPointLeds()
   blinkRadioRssiLed();
 
   //Update the hop LED
-  if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
-    digitalWrite(YELLOW_LED, LED_OFF);
+  blinkChannelHopLed(false);
 
   //Update the HEARTBEAT LED
   blinkHeartbeatLed(false);
@@ -1006,8 +1005,7 @@ void p2pLeds()
   //Leave the LINK LED (GREEN_LED_2) off
 
   //Update the hop LED
-  if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
-    digitalWrite(YELLOW_LED, LED_OFF);
+  blinkChannelHopLed(false);
 
   //Update the HEARTBEAT LED
   blinkHeartbeatLed(false);
@@ -1049,8 +1047,7 @@ void vcLeds()
   //Serial RX displayed on the LINK LED (GREEN_LED_2) by blinkSerialRxLed
 
   //Update the hop LED
-  if ((millis() - radioCallHistory[RADIO_CALL_hopChannel]) >= RADIO_USE_BLINK_MILLIS)
-    digitalWrite(YELLOW_LED, LED_OFF);
+  blinkChannelHopLed(false);
 
   //Update the HEARTBEAT LED
   blinkHeartbeatLed(false);
