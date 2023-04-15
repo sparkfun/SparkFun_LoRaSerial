@@ -720,19 +720,29 @@ bool commandAT(const char * commandString)
         return true;
 
       case ('1'): //ATI31 - Display the VC details
-        systemPrintTimestamp();
-        systemPrint("VC ");
-        systemPrint(cmdVc);
-        systemPrint(": ");
-        if (!vc->flags.valid)
-          systemPrintln("Down, Not valid");
+        if ((settings.operatingMode == MODE_VIRTUAL_CIRCUIT) && (!vc->flags.valid))
+        {
+          systemPrintTimestamp();
+          systemPrint("VC ");
+          systemPrint(cmdVc);
+          systemPrint(": ");
+          if (!vc->flags.valid)
+            systemPrintln("Down, Not valid");
+        }
         else
         {
-          systemPrintln(vcStateNames[vc->vcState]);
-          systemPrintTimestamp();
-          systemPrint("    ID: ");
-          systemPrintUniqueID(vc->uniqueId);
-          systemPrintln(vc->flags.valid ? " (Valid)" : " (Invalid)");
+          if (settings.operatingMode == MODE_VIRTUAL_CIRCUIT)
+          {
+            systemPrintTimestamp();
+            systemPrint("VC ");
+            systemPrint(cmdVc);
+            systemPrint(": ");
+            systemPrintln(vcStateNames[vc->vcState]);
+            systemPrintTimestamp();
+            systemPrint("    ID: ");
+            systemPrintUniqueID(vc->uniqueId);
+            systemPrintln(vc->flags.valid ? " (Valid)" : " (Invalid)");
+          }
 
           //Heartbeat metrics
           systemPrintTimestamp();
@@ -762,57 +772,60 @@ bool commandAT(const char * commandString)
           outputSerialData(true);
           petWDT();
 
-          //Transmitter metrics
-          systemPrintTimestamp();
-          systemPrintln("    Sent");
-          systemPrintTimestamp();
-          systemPrint("        Frames: ");
-          systemPrintln(vc->framesSent);
-          systemPrintTimestamp();
-          systemPrint("        Messages: ");
-          systemPrintln(vc->messagesSent);
-          outputSerialData(true);
-          petWDT();
-
-          //Receiver metrics
-          systemPrintTimestamp();
-          systemPrintln("    Received");
-          systemPrintTimestamp();
-          systemPrint("        Frames: ");
-          systemPrintln(vc->framesReceived);
-          systemPrintTimestamp();
-          systemPrint("        Messages: ");
-          systemPrintln(vc->messagesReceived);
-          systemPrintTimestamp();
-          systemPrint("        Bad Lengths: ");
-          systemPrintln(vc->badLength);
-          systemPrintTimestamp();
-          systemPrint("        Link Failures: ");
-          systemPrintln(linkFailures);
-          outputSerialData(true);
-          petWDT();
-
-          //ACK Management metrics
-          systemPrintTimestamp();
-          systemPrintln("    ACK Management");
-          systemPrintTimestamp();
-          systemPrint("        Last RX ACK number: ");
-          systemPrintln(vc->rxAckNumber);
-          systemPrintTimestamp();
-          systemPrint("        Next RX ACK number: ");
-          systemPrintln(vc->rmtTxAckNumber);
-          systemPrintTimestamp();
-          systemPrint("        Last TX ACK number: ");
-          systemPrintln(vc->txAckNumber);
-          if (txDestVc == cmdVc)
+          if ((settings.operatingMode == MODE_VIRTUAL_CIRCUIT) && (!vc->flags.valid))
           {
+            //Transmitter metrics
             systemPrintTimestamp();
-            systemPrint("        ackTimer: ");
-            if (ackTimer)
-              systemPrintTimestamp(ackTimer + timestampOffset);
-            else
-              systemPrint("Not Running");
-            systemPrintln();
+            systemPrintln("    Sent");
+            systemPrintTimestamp();
+            systemPrint("        Frames: ");
+            systemPrintln(vc->framesSent);
+            systemPrintTimestamp();
+            systemPrint("        Messages: ");
+            systemPrintln(vc->messagesSent);
+            outputSerialData(true);
+            petWDT();
+
+            //Receiver metrics
+            systemPrintTimestamp();
+            systemPrintln("    Received");
+            systemPrintTimestamp();
+            systemPrint("        Frames: ");
+            systemPrintln(vc->framesReceived);
+            systemPrintTimestamp();
+            systemPrint("        Messages: ");
+            systemPrintln(vc->messagesReceived);
+            systemPrintTimestamp();
+            systemPrint("        Bad Lengths: ");
+            systemPrintln(vc->badLength);
+            systemPrintTimestamp();
+            systemPrint("        Link Failures: ");
+            systemPrintln(linkFailures);
+            outputSerialData(true);
+            petWDT();
+
+            //ACK Management metrics
+            systemPrintTimestamp();
+            systemPrintln("    ACK Management");
+            systemPrintTimestamp();
+            systemPrint("        Last RX ACK number: ");
+            systemPrintln(vc->rxAckNumber);
+            systemPrintTimestamp();
+            systemPrint("        Next RX ACK number: ");
+            systemPrintln(vc->rmtTxAckNumber);
+            systemPrintTimestamp();
+            systemPrint("        Last TX ACK number: ");
+            systemPrintln(vc->txAckNumber);
+            if (txDestVc == cmdVc)
+            {
+              systemPrintTimestamp();
+              systemPrint("        ackTimer: ");
+              if (ackTimer)
+                systemPrintTimestamp(ackTimer + timestampOffset);
+              else
+                systemPrint("Not Running");
+              systemPrintln();
+            }
           }
         }
         return true;

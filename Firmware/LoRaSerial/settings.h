@@ -487,6 +487,7 @@ typedef struct struct_settings {
   bool debug = false; //Print basic events: ie, radio state changes
   bool debugDatagrams = false; //Print the datagrams
   bool debugHeartbeat = false; //Print the HEARTBEAT timing values
+  bool debugHopTimer = false; //Print the hop timer when the link fails
 
   bool debugNvm = false; //Debug NVM operation
   bool debugRadio = false; //Print radio info

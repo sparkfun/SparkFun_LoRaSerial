@@ -1160,6 +1160,8 @@ void updateRadioState()
               //Start and adjust freq hop ISR based on remote's remaining clock
               startChannelTimer();
               channelTimerStart -= settings.maxDwellTime;
+              if (!settings.server)
+                virtualCircuitList[VC_SERVER].firstHeartbeatMillis = millis();
               syncChannelTimer(txSyncClocksUsec, 1);
               triggerEvent(TRIGGER_RX_SYNC_CLOCKS);
 
@@ -1320,6 +1322,8 @@ void updateRadioState()
 
               //Start and adjust freq hop ISR based on remote's remaining clock
               channelTimerStart -= settings.maxDwellTime;
+              if (!settings.server)
+                virtualCircuitList[VC_SERVER].firstHeartbeatMillis = millis();
               syncChannelTimer(txSyncClocksUsec, 1);
 
               if (settings.debugSync)
@@ -1434,6 +1438,9 @@ void updateRadioState()
             //Sync clock if server sent the heartbeat
             if (settings.server == false)
             {
+              if (!settings.server)
+                virtualCircuitList[VC_SERVER].lastTrafficMillis = millis();
+
               //Adjust freq hop ISR based on server's remaining clock
               syncChannelTimer(txHeartbeatUsec, 0);
 
@@ -1495,8 +1502,15 @@ void updateRadioState()
           if ((millis() - lastPacketReceived) > ((uint32_t)settings.heartbeatTimeout * LINK_BREAK_MULTIPLIER))
           {
             if (settings.debugSync)
-            {
               systemPrintln("HEARTBEAT Timeout");
+            if ((!settings.server) && settings.debugHopTimer)
+            {
+              systemPrint("Link Uptime: ");
+              systemPrintln(virtualCircuitList[VC_SERVER].lastTrafficMillis
+                            - virtualCircuitList[VC_SERVER].firstHeartbeatMillis);
+            }
+            if (settings.debugSync || settings.debugHopTimer)
+            {
               outputSerialData(true);
               dumpClockSynchronization();
             }
