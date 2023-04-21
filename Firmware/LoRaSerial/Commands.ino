@@ -130,7 +130,7 @@ bool commandAT(const char * commandString)
         return true;
 
       case ('F'): //ATF - Restore default parameters
-        settings = defaultSettings; //Overwrite all system settings with defaults
+        getDefaultSettings(&settings); //Overwrite all system settings with defaults
 
         validateSettings(); //Modify defaults for each radio type (915, 868, 433, etc)
 

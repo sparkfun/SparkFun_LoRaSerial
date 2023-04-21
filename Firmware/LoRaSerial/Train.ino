@@ -101,7 +101,7 @@ void beginTrainingServer()
 void commonTrainingInitialization()
 {
   //Use common radio settings between the client and server for training
-  settings = defaultSettings;
+  getDefaultSettings(&settings);
   settings.dataScrambling = true;           //Scramble the data
   settings.enableCRC16 = true;              //Use CRC-16
   settings.encryptData = true;              //Enable packet encryption
