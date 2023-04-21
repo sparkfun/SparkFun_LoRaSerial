@@ -105,126 +105,68 @@ bool configureRadio()
   return success;
 }
 
-//Update the settings based upon the airSpeed value
-void convertAirSpeedToSettings(Settings *newSettings, uint16_t airSpeed)
+const char * verifyAirSpeedTable ()
 {
-  switch (airSpeed)
+  bool valid;
+
+  //Verify the length of the airSpeed table
+  valid = (AIR_SPEED_MAX_ENTRIES == airSpeedTableEntries);
+  if (!valid)
+    return "ERROR: Fix difference between AIR_SPEED_MAX_ENTRIES and airSpeedTable";
+  return NULL;
+}
+
+//Validate the AirSpeed value
+bool validateAirSpeed (Settings * newSettings, uint32_t value)
+{
+  int index;
+
+  //Validate the airspeed value
+  for (index = 0; index < airSpeedTableEntries; index++)
   {
-    default:
-      systemPrint("Unknown airSpeed: ");
-      systemPrintln(airSpeed);
-      waitForever("ERROR - Invalid airSpeed value");
-      break;
-    case (40):
-      newSettings->radioSpreadFactor = 11;
-      newSettings->radioBandwidth = 62.5;
-      newSettings->radioCodingRate = 8;
-      //HEARTBEAT bytes worst case
-      //  P2P - 13,
-      //  MP - 7,
-      //  VC - 30,
+    if (value == airSpeedTable[index].airSpeed)
+    {
+      //Adjust the settings to match the requested airSpeed
+      airSpeed = value;
+      newSettings->radioBandwidth = airSpeedTable[index].bandwidth;
+      newSettings->radioCodingRate = airSpeedTable[index].codingRate;
+      newSettings->radioSpreadFactor = airSpeedTable[index].spreadFactor;
+      newSettings->radioPreambleLength = airSpeedTable[index].preambleLength;
+      newSettings->txToRxUsec = airSpeedTable[index].txToRxUsec;
       if (newSettings->operatingMode == MODE_VIRTUAL_CIRCUIT)
-        newSettings->heartbeatTimeout = 60 * 1000;
+        newSettings->heartbeatTimeout = airSpeedTable[index].vcHbMsec;
       else
-        newSettings->heartbeatTimeout = 25 * 1000;
-      //uSec: 26018 26026 26026 26025 26020 26038 ==> ~26026
-      newSettings->txToRxUsec = 26026;
-      break;
-    case (150):
-      newSettings->radioSpreadFactor = 10;
-      newSettings->radioBandwidth = 62.5;
-      newSettings->radioCodingRate = 8;
-      if (newSettings->operatingMode == MODE_VIRTUAL_CIRCUIT)
-        newSettings->heartbeatTimeout = 15 * 1000;
-      else
-        newSettings->heartbeatTimeout = 8 * 1000;
-      //uSec: 12187 12188 12189 12190 12191 12194 ==> ~12190
-      newSettings->txToRxUsec = 12190;
-      break;
-    case (400):
-      newSettings->radioSpreadFactor = 10;
-      newSettings->radioBandwidth = 125;
-      newSettings->radioCodingRate = 8;
-      if (newSettings->operatingMode == MODE_VIRTUAL_CIRCUIT)
-        newSettings->heartbeatTimeout = 9 * 1000;
-      else
-        newSettings->heartbeatTimeout = 5 * 1000;
-      //uSec: 6072 6070 6072 6070 6069 6067 ==> ~6070
-      newSettings->txToRxUsec = 6070;
-      break;
-    case (1200):
-      newSettings->radioSpreadFactor = 9;
-      newSettings->radioBandwidth = 125;
-      newSettings->radioCodingRate = 8;
-      newSettings->heartbeatTimeout = 5 * 1000;
-      //uSec: 2770 2777 2772 2773 2771 2773 ==> ~2773
-      newSettings->txToRxUsec = 2773;
-      break;
-    case (2400):
-      newSettings->radioSpreadFactor = 10;
-      newSettings->radioBandwidth = 500;
-      newSettings->radioCodingRate = 8;
-      newSettings->heartbeatTimeout = 5 * 1000;
-      //uSec: 1495 1481 1482 1481 1482 1481 ==> ~1484
-      newSettings->txToRxUsec = 1484;
-      break;
-    case (4800):
-      newSettings->radioSpreadFactor = 9;
-      newSettings->radioBandwidth = 500;
-      newSettings->radioCodingRate = 8;
-      newSettings->heartbeatTimeout = 5 * 1000;
-      //uSec: 657 657 657 658 657 657 ==> ~657
-      newSettings->txToRxUsec = 657;
-      break;
-    case (9600):
-      newSettings->radioSpreadFactor = 8;
-      newSettings->radioBandwidth = 500;
-      newSettings->radioCodingRate = 7;
-      newSettings->heartbeatTimeout = 5 * 1000;
-      //uSec: 279 279 281 280 280 279 ==> ~280
-      newSettings->txToRxUsec = 280;
-      break;
-    case (19200):
-      newSettings->radioSpreadFactor = 7;
-      newSettings->radioBandwidth = 500;
-      newSettings->radioCodingRate = 7;
-      newSettings->heartbeatTimeout = 5 * 1000;
-      //uSec: 119 118 118 119 120 119 ==> ~119
-      newSettings->txToRxUsec = 119;
-      break;
-    case (28800):
-      newSettings->radioSpreadFactor = 6;
-      newSettings->radioBandwidth = 500;
-      newSettings->radioCodingRate = 6;
-      newSettings->heartbeatTimeout = 5 * 1000;
-      //uSec: ???
-      newSettings->txToRxUsec = 0;
-      break;
-    case (38400):
-      newSettings->radioSpreadFactor = 6;
-      newSettings->radioBandwidth = 500;
-      newSettings->radioCodingRate = 5;
-      newSettings->heartbeatTimeout = 5 * 1000;
-      //uSec: ???
-      newSettings->txToRxUsec = 0;
-      break;
+        newSettings->heartbeatTimeout = airSpeedTable[index].p2pHbMsec;
+      systemPrintln("Warning: AirSpeed overrides bandwidth, coding rate, spread factor,");
+      systemPrintln("heartbeatTimeout, and txToRxUsec");
+      return true;
+    }
   }
+
+  //Unknown airSpeed value
+  systemPrint("Unknown airSpeed: ");
+  systemPrintln(airSpeed);
+  waitForever("ERROR - Invalid airSpeed value");
+  return false;
 }
 
 //Given settings, attempt to ID our airSpeed
 uint16_t convertSettingsToAirSpeed(Settings *newSettings)
 {
-  if ( (newSettings->radioBandwidth == 62.5) && (newSettings->radioSpreadFactor == 11) && (newSettings->radioCodingRate == 8) ) return (40);
-  else if ( (newSettings->radioBandwidth == 62.5) && (newSettings->radioSpreadFactor == 10) && (newSettings->radioCodingRate == 8) ) return (150);
-  else if ( (newSettings->radioBandwidth == 125) && (newSettings->radioSpreadFactor == 10) && (newSettings->radioCodingRate == 8) ) return (400);
-  else if ( (newSettings->radioBandwidth == 125) && (newSettings->radioSpreadFactor == 9) && (newSettings->radioCodingRate == 8) )return (1200);
-  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 10) && (newSettings->radioCodingRate == 8) )return (2400);
-  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 9) && (newSettings->radioCodingRate == 8) )return (4800);
-  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 8) && (newSettings->radioCodingRate == 7) ) return (9600);
-  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 7) && (newSettings->radioCodingRate == 7) ) return (19200);
-  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 6) && (newSettings->radioCodingRate == 6) ) return (28800);
-  else if ( (newSettings->radioBandwidth == 500) && (newSettings->radioSpreadFactor == 6) && (newSettings->radioCodingRate == 5) ) return (38400);
+  int index;
 
+  //Check for a match within the table
+  for (index = 0; index < airSpeedTableEntries; index++)
+  {
+    //bandwidth, codingRate and spreadFactor determine the airSpeed
+    if ((newSettings->radioBandwidth == airSpeedTable[index].bandwidth)
+      && (newSettings->radioCodingRate == airSpeedTable[index].codingRate)
+      && (newSettings->radioPreambleLength == airSpeedTable[index].preambleLength)
+      && (newSettings->radioSpreadFactor == airSpeedTable[index].spreadFactor))
+      return airSpeedTable[index].airSpeed;
+  }
+
+  //Unknown airSpeed
   systemPrint("Unknown airSpeed for Bandwidth: ");
   systemPrint(newSettings->radioBandwidth);
   systemPrint(" SpreadFactor: ");

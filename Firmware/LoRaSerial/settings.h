@@ -378,6 +378,51 @@ typedef struct _CLOCK_SYNC_DATA
   bool timeToHop;
 } CLOCK_SYNC_DATA;
 
+typedef struct _AIR_SPEED_TABLE
+{
+  uint16_t airSpeed;    //Approximate air speed bit rate
+  float bandwidth;      //kHz, possible values 62.5 / 125 / 250 / 500
+  uint8_t codingRate;   //5 to 8. Higher coding rates ensure less packets dropped.
+  uint8_t spreadFactor; //6 to 12. Use higher factor for longer range.
+  uint16_t preambleLength; //Number of symbols. Different lengths does *not* guarantee a remote radio privacy. 8 to 11 works. 8 to 15 drops some. 8 to 20 is silent.
+  uint32_t txToRxUsec;  //TX transactionComplete to RX transactionComplete in microseconds
+  uint16_t p2pHbMsec;   //ms before sending HEARTBEAT to see if link is active
+  uint16_t vcHbMsec;    //ms before sending HEARTBEAT to see if link is active
+} AIR_SPEED_TABLE;
+
+const AIR_SPEED_TABLE airSpeedTable[] =
+{//   air           coding  spread  preamble  txToRx
+ // Speed bandwidth  Rate   Factor   Length    Usec    p2pHbMsec    vcHbMsec
+  {    40,   62.5,    8,      11,       8,    26026,   25 * 1000,  60 * 1000},
+  {   150,   62.5,    8,      10,       8,    12190,    8 * 1000,  15 * 1000},
+  {   400,  125,      8,      10,       8,     6070,    5 * 1000,   9 * 1000},
+  {  1200,  125,      8,       9,       8,     2773,    5 * 1000,   5 * 1000},
+  {  2400,  500,      8,      10,       8,     1484,    5 * 1000,   5 * 1000},
+  {  4800,  500,      8,       9,       8,      657,    5 * 1000,   5 * 1000},
+  {  9600,  500,      7,       8,       8,      280,    5 * 1000,   5 * 1000},
+  { 19200,  500,      7,       7,       8,      119,    5 * 1000,   5 * 1000},
+  { 28800,  500,      6,       6,       8,        0,    5 * 1000,   5 * 1000},
+  { 38400,  500,      5,       6,       8,        0,    5 * 1000,   5 * 1000},
+};
+const int airSpeedTableEntries = sizeof(airSpeedTable) / sizeof(airSpeedTable[0]);
+
+typedef enum
+{
+  AIR_SPEED_40,
+  AIR_SPEED_150,
+  AIR_SPEED_400,
+  AIR_SPEED_1200,
+  AIR_SPEED_2400,
+  AIR_SPEED_4800,
+  AIR_SPEED_9600,
+  AIR_SPEED_19200,
+  AIR_SPEED_28800,
+  AIR_SPEED_38400,
+
+  //Number of airSpeed entries
+  AIR_SPEED_MAX_ENTRIES
+} AIR_SPEED_VALUES;
+
 //These are all the settings that can be set on Serial Terminal Radio. It's recorded to NVM.
 typedef struct struct_settings {
   uint16_t sizeOfSettings = 0; //sizeOfSettings **must** be the first entry and must be int
@@ -389,8 +434,8 @@ typedef struct struct_settings {
 
   float frequencyMin = 902.0; //MHz
   float frequencyMax = 928.0; //MHz
-  float radioBandwidth = 500.0; //kHz 125/250/500 generally. We need 500kHz for higher data.
-  uint32_t txToRxUsec = 657; //TX transactionComplete to RX transactionComplete in microseconds
+  float radioBandwidth = 0;
+  uint32_t txToRxUsec = 0;
 
   bool frequencyHop = true; //Hop between frequencies to avoid dwelling on any one channel for too long
   uint8_t numberOfChannels = 50; //Divide the min/max freq band into this number of channels and hop between.
@@ -402,18 +447,18 @@ typedef struct struct_settings {
 #define TX_POWER_DB     30
 #endif  //ENABLE_DEVELOPER
   uint8_t radioBroadcastPower_dbm = TX_POWER_DB; //Transmit power in dBm. Max is 30dBm (1W), min is 14dBm (25mW).
-  uint8_t radioCodingRate = 8; //5 to 8. Higher coding rates ensure less packets dropped.
-  uint8_t radioSpreadFactor = 9; //6 to 12. Use higher factor for longer range.
+  uint8_t radioCodingRate = 0;
+  uint8_t radioSpreadFactor = 0;
   uint8_t radioSyncWord = 18; //18 = 0x12 is default for custom/private networks. Different sync words does *not* guarantee a remote radio will not get packet.
 
-  uint16_t radioPreambleLength = 8; //Number of symbols. Different lengths does *not* guarantee a remote radio privacy. 8 to 11 works. 8 to 15 drops some. 8 to 20 is silent.
+  uint16_t radioPreambleLength = 0; //Number of symbols. Different lengths does *not* guarantee a remote radio privacy. 8 to 11 works. 8 to 15 drops some. 8 to 20 is silent.
   bool autoTuneFrequency = false; //Based on the last packets frequency error, adjust our next transaction frequency
 
   //----------------------------------------
   //Radio protocol parameters
   //----------------------------------------
 
-  uint8_t operatingMode = MODE_POINT_TO_POINT; //Receiving unit will check netID and ACK. If set to false, receiving unit doesn't check netID or ACK.
+  uint8_t operatingMode = DEFAULT_OPERATING_MODE; //Receiving unit will check netID and ACK. If set to false, receiving unit doesn't check netID or ACK.
 
   uint8_t selectLedUse = LEDS_RSSI; //Select LED use
   bool server = false; //Default to being a client, enable server for multipoint, VC and training
@@ -427,7 +472,7 @@ typedef struct struct_settings {
   bool enableCRC16 = true; //Append CRC-16 to packet, check CRC-16 upon receive
   uint8_t framesToYield = 3; //If remote requests it, supress transmission for this number of max packet frames
 
-  uint16_t heartbeatTimeout = 5000; //ms before sending HEARTBEAT to see if link is active
+  uint16_t heartbeatTimeout = 0;
   uint16_t overheadTime = 10; //ms added to ack and datagram times before ACK timeout occurs
 
   uint8_t maxResends = 0; //Attempt resends up to this number, 0 = infinite retries
