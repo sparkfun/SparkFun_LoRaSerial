@@ -55,5 +55,6 @@ Icon
 *.a
 
 # Executables
+Firmware/Tools/Send_Receive
 Firmware/Tools/Slow_Read
 Firmware/Tools/VcServerTest
