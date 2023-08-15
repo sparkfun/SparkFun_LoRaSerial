@@ -626,6 +626,8 @@ void setup()
 {
   int index;
 
+  arch.beginWDT(); //Start watchdog timer
+
   beginSerial(57600); //Default for debug messages before board begins
 
   arch.beginBoard(); //Initialize the board specific hardware, and ID platform type
@@ -661,8 +663,6 @@ void setup()
   beginButton(); //Start watching the train button
 
   beginChannelTimer(); //Setup (but do not start) hardware timer for channel hopping
-
-  arch.beginWDT(); //Start watchdog timer
 
   updateRTS(true); //We're ready for more data
 
