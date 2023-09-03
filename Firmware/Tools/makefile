@@ -57,6 +57,13 @@ Slow_Read: Slow_Read.c $(COMMON_LIB)
 VcServerTest: VcServerTest.c $(COMMON_LIB)
 	$(CC) -o $@ $^
 
+##########
+# Build the firmware
+##########
+
+LoRaSerial:	../LoRaSerial/LoRaSerial.ino ../LoRaSerial/*.ino ../LoRaSerial/*.h
+	~/Arduino/arduino-cli compile --fqbn SparkFun:samd:LoRaSerial ../LoRaSerial/LoRaSerial.ino --export-binaries -v
+
 ########
 # Clean the build directory
 ##########
