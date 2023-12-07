@@ -2,8 +2,8 @@
 
 LoRaSerial radios can operate in one of two modes.
 
-* [Point to Point](https://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/#point-to-point)
-* [Multipoint](https://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/#multipoint)
+* [Point to Point](https://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/#point-to-point) - Operating mode 1 (see [AT-OperatingMode](https://docs.sparkfun.com/SparkFun_LoRaSerial/at_commands/)).
+* [Multipoint](https://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/#multipoint) - Operating mode 0.
 
 ## Point to Point
 
