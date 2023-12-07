@@ -96,11 +96,13 @@ A table of the subset of the common Radio Link Parameters is available [here](im
 
   After AirSpeed is set, it is possible to modify any of the above five parameters. Note that AirSpeed is just an easy way to set the five parameters to known values. AirSpeed is not a parameter that is transmitted during training, merely a convenient way to set the five parameters in one step.
 
+  Note: The AirSpeed setting can be queried, but it is not back calculated. Said differently, after a system reset, the AirSpeed setting will report 0. This is because calculating the equivalent airspeed based on the user's settings results in non-sensical values that do not map cleanly with the defined AirSpeed options. Currently, the way to verify the device is set to the correct airspeed is to check the 5 parameters shown above against the settings shown on the [AirSpeed calculation page](https://github.com/sparkfun/SparkFun_LoRaSerial/tree/main/Documents).
+
 * **AutoTune** - Enabling autotune will cause the radio to tune the receiver frequency based on the calculated frequency error. This is used for testing and is not recommended for general use.
 
 * **Bandwidth** - The bandwidth used around a given frequency during LoRa transmissions. This setting is in kHz. This setting is overwritten if the AirSpeed setting is changed. It is recommended to use the airspeed setting unless you are very aware of the consequences. In general, a lower bandwidth number provides a longer range, but a lower overall data rate. Allowed bandwidths: 10.4, 15.6, 20.8, 31.25, 41.7, 62.5, 125.0, 250.0, and 500.0kHz.
 
-* **ClientFindPartnerRetryInterval** - In training mode the client will transmit a special packet and then await a response from a server. This is the number of seconds between re-transmits of the FIND_PARTNER packet.
+* **ClientFindPartnerRetryInterval** - In training mode, the client will transmit a special packet and then await a response from a server. This is the number of seconds between re-transmits of the FIND_PARTNER packet.
 
 * **CodingRate** - The coding rate used during LoRa transmissions. It is recommended to use the airspeed setting unless you are very aware of the consequences. This setting is overwritten if the AirSpeed setting is changed. In general, a higher spread factor provides a longer range, but a lower overall data rate. Allowed spread factors: 6 to 12 (inclusive).
 
@@ -108,7 +110,7 @@ A table of the subset of the common Radio Link Parameters is available [here](im
 
 * **EnableCRC16** - When CRC is enabled, any packet that does not have a valid CRC will be ignored. The SX1276 IC has CRC at the radio interface, but because of RF noise, the number of corrupt packets is noticeable. This extra layer ensures packet delivery. Enabling CRC will add two bytes to each frame.
 
-* **EncryptData** - By default all packets are encrypted using 128-bit AES GCM. Disabling this will not achieve a greater range or bandwidth. Disabling encryption will allow all packets to be seen in clear text via an SDR or other monitoring device.
+* **EncryptData** - By default, all packets are encrypted using 128-bit AES GCM. Disabling this will not achieve a greater range or bandwidth. Disabling encryption will allow all packets to be seen in clear text via an SDR or other monitoring device.
 
 * **EncryptionKey** - This is the 16-byte key used for AES encryption. While SparkFun provides a default value, it is strongly recommended to change this value for your own networks. This can be changed via command or via the P2P training method. Please see [P2P Training](http://docs.sparkfun.com/SparkFun_LoRaSerial/training/#point-to-point-training-as-server) for more information.
 
