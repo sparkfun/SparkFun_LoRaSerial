@@ -1,0 +1,1187 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A guide to the SparkFun LoRaSerial hardware, firmware, and features">
+      
+      
+      
+        <link rel="canonical" href="https://sparkfun.github.io/SparkFun_LoRaSerial/at_commands/">
+      
+      
+        <link rel="prev" href="../quick_start/">
+      
+      
+        <link rel="next" href="../led_states/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.3">
+    
+    
+      
+        <title>AT Commands - SparkFun LoRaSerial Product Manual</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.50c56a3b.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+  
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+  
+  <style>:root{--md-admonition-icon--note:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M1 7.775V2.75C1 1.784 1.784 1 2.75 1h5.025c.464 0 .91.184 1.238.513l6.25 6.25a1.75 1.75 0 0 1 0 2.474l-5.026 5.026a1.75 1.75 0 0 1-2.474 0l-6.25-6.25A1.752 1.752 0 0 1 1 7.775Zm1.5 0c0 .066.026.13.073.177l6.25 6.25a.25.25 0 0 0 .354 0l5.025-5.025a.25.25 0 0 0 0-.354l-6.25-6.25a.25.25 0 0 0-.177-.073H2.75a.25.25 0 0 0-.25.25ZM6 5a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z"/></svg>');--md-admonition-icon--abstract:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M2.5 1.75v11.5c0 .138.112.25.25.25h3.17a.75.75 0 0 1 0 1.5H2.75A1.75 1.75 0 0 1 1 13.25V1.75C1 .784 1.784 0 2.75 0h8.5C12.216 0 13 .784 13 1.75v7.736a.75.75 0 0 1-1.5 0V1.75a.25.25 0 0 0-.25-.25h-8.5a.25.25 0 0 0-.25.25Zm13.274 9.537v-.001l-4.557 4.45a.75.75 0 0 1-1.055-.008l-1.943-1.95a.75.75 0 0 1 1.062-1.058l1.419 1.425 4.026-3.932a.75.75 0 1 1 1.048 1.074ZM4.75 4h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM4 7.75A.75.75 0 0 1 4.75 7h2a.75.75 0 0 1 0 1.5h-2A.75.75 0 0 1 4 7.75Z"/></svg>');--md-admonition-icon--info:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>');--md-admonition-icon--tip:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M3.499.75a.75.75 0 0 1 1.5 0v.996C5.9 2.903 6.793 3.65 7.662 4.376l.24.202c-.036-.694.055-1.422.426-2.163C9.1.873 10.794-.045 12.622.26 14.408.558 16 1.94 16 4.25c0 1.278-.954 2.575-2.44 2.734l.146.508.065.22c.203.701.412 1.455.476 2.226.142 1.707-.4 3.03-1.487 3.898C11.714 14.671 10.27 15 8.75 15h-6a.75.75 0 0 1 0-1.5h1.376a4.484 4.484 0 0 1-.563-1.191 3.835 3.835 0 0 1-.05-2.063 4.647 4.647 0 0 1-2.025-.293.75.75 0 0 1 .525-1.406c1.357.507 2.376-.006 2.698-.318l.009-.01a.747.747 0 0 1 1.06 0 .748.748 0 0 1-.012 1.074c-.912.92-.992 1.835-.768 2.586.221.74.745 1.337 1.196 1.621H8.75c1.343 0 2.398-.296 3.074-.836.635-.507 1.036-1.31.928-2.602-.05-.603-.216-1.224-.422-1.93l-.064-.221c-.12-.407-.246-.84-.353-1.29a2.425 2.425 0 0 1-.507-.441 3.075 3.075 0 0 1-.633-1.248.75.75 0 0 1 1.455-.364c.046.185.144.436.31.627.146.168.353.305.712.305.738 0 1.25-.615 1.25-1.25 0-1.47-.95-2.315-2.123-2.51-1.172-.196-2.227.387-2.706 1.345-.46.92-.27 1.774.019 3.062l.042.19a.884.884 0 0 1 .01.05c.348.443.666.949.94 1.553a.75.75 0 1 1-1.365.62c-.553-1.217-1.32-1.94-2.3-2.768L6.7 5.527c-.814-.68-1.75-1.462-2.692-2.619a3.737 3.737 0 0 0-1.023.88c-.406.495-.663 1.036-.722 1.508.116.122.306.21.591.239.388.038.797-.06 1.032-.19a.75.75 0 0 1 .728 1.31c-.515.287-1.23.439-1.906.373-.682-.067-1.473-.38-1.879-1.193L.75 5.677V5.5c0-.984.48-1.94 1.077-2.664.46-.559 1.05-1.055 1.673-1.353V.75Z"/></svg>');--md-admonition-icon--success:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"/></svg>');--md-admonition-icon--question:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.92 6.085h.001a.749.749 0 1 1-1.342-.67c.169-.339.436-.701.849-.977C6.845 4.16 7.369 4 8 4a2.756 2.756 0 0 1 1.637.525c.503.377.863.965.863 1.725 0 .448-.115.83-.329 1.15-.205.307-.47.513-.692.662-.109.072-.22.138-.313.195l-.006.004a6.24 6.24 0 0 0-.26.16.952.952 0 0 0-.276.245.75.75 0 0 1-1.248-.832c.184-.264.42-.489.692-.661.103-.067.207-.132.313-.195l.007-.004c.1-.061.182-.11.258-.161a.969.969 0 0 0 .277-.245C8.96 6.514 9 6.427 9 6.25a.612.612 0 0 0-.262-.525A1.27 1.27 0 0 0 8 5.5c-.369 0-.595.09-.74.187a1.01 1.01 0 0 0-.34.398ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/></svg>');--md-admonition-icon--warning:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/></svg>');--md-admonition-icon--failure:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M2.344 2.343h-.001a8 8 0 0 1 11.314 11.314A8.002 8.002 0 0 1 .234 10.089a8 8 0 0 1 2.11-7.746Zm1.06 10.253a6.5 6.5 0 1 0 9.108-9.275 6.5 6.5 0 0 0-9.108 9.275ZM6.03 4.97 8 6.94l1.97-1.97a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l1.97 1.97a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-1.97 1.97a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734L6.94 8 4.97 6.03a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018Z"/></svg>');--md-admonition-icon--danger:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M9.504.43a1.516 1.516 0 0 1 2.437 1.713L10.415 5.5h2.123c1.57 0 2.346 1.909 1.22 3.004l-7.34 7.142a1.249 1.249 0 0 1-.871.354h-.302a1.25 1.25 0 0 1-1.157-1.723L5.633 10.5H3.462c-1.57 0-2.346-1.909-1.22-3.004L9.503.429Zm1.047 1.074L3.286 8.571A.25.25 0 0 0 3.462 9H6.75a.75.75 0 0 1 .694 1.034l-1.713 4.188 6.982-6.793A.25.25 0 0 0 12.538 7H9.25a.75.75 0 0 1-.683-1.06l2.008-4.418.003-.006a.036.036 0 0 0-.004-.009l-.006-.006-.008-.001c-.003 0-.006.002-.009.004Z"/></svg>');--md-admonition-icon--bug:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M4.72.22a.75.75 0 0 1 1.06 0l1 .999a3.488 3.488 0 0 1 2.441 0l.999-1a.748.748 0 0 1 1.265.332.75.75 0 0 1-.205.729l-.775.776c.616.63.995 1.493.995 2.444v.327c0 .1-.009.197-.025.292.408.14.764.392 1.029.722l1.968-.787a.75.75 0 0 1 .556 1.392L13 7.258V9h2.25a.75.75 0 0 1 0 1.5H13v.5c0 .409-.049.806-.141 1.186l2.17.868a.75.75 0 0 1-.557 1.392l-2.184-.873A4.997 4.997 0 0 1 8 16a4.997 4.997 0 0 1-4.288-2.427l-2.183.873a.75.75 0 0 1-.558-1.392l2.17-.868A5.036 5.036 0 0 1 3 11v-.5H.75a.75.75 0 0 1 0-1.5H3V7.258L.971 6.446a.75.75 0 0 1 .558-1.392l1.967.787c.265-.33.62-.583 1.03-.722a1.677 1.677 0 0 1-.026-.292V4.5c0-.951.38-1.814.995-2.444L4.72 1.28a.75.75 0 0 1 0-1.06Zm.53 6.28a.75.75 0 0 0-.75.75V11a3.5 3.5 0 1 0 7 0V7.25a.75.75 0 0 0-.75-.75ZM6.173 5h3.654A.172.172 0 0 0 10 4.827V4.5a2 2 0 1 0-4 0v.327c0 .096.077.173.173.173Z"/></svg>');--md-admonition-icon--example:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M5 5.782V2.5h-.25a.75.75 0 0 1 0-1.5h6.5a.75.75 0 0 1 0 1.5H11v3.282l3.666 5.76C15.619 13.04 14.543 15 12.767 15H3.233c-1.776 0-2.852-1.96-1.899-3.458Zm-2.4 6.565a.75.75 0 0 0 .633 1.153h9.534a.75.75 0 0 0 .633-1.153L12.225 10.5h-8.45ZM9.5 2.5h-3V6c0 .143-.04.283-.117.403L4.73 9h6.54L9.617 6.403A.746.746 0 0 1 9.5 6Z"/></svg>');--md-admonition-icon--quote:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M1.75 2.5h10.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5Zm4 5h8.5a.75.75 0 0 1 0 1.5h-8.5a.75.75 0 0 1 0-1.5Zm0 5h8.5a.75.75 0 0 1 0 1.5h-8.5a.75.75 0 0 1 0-1.5ZM2.5 7.75v6a.75.75 0 0 1-1.5 0v-6a.75.75 0 0 1 1.5 0Z"/></svg>');}</style>
+
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="grey" data-md-color-accent="red">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#at-commands" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="SparkFun LoRaSerial Product Manual" class="md-header__button md-logo" aria-label="SparkFun LoRaSerial Product Manual" data-md-component="logo">
+      
+  <img src="../img/sfe_logo_sm.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            SparkFun LoRaSerial Product Manual
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              AT Commands
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/sparkfun/SparkFun_LoRaSerial" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    sparkfun/SparkFun_LoRaSerial
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="SparkFun LoRaSerial Product Manual" class="md-nav__button md-logo" aria-label="SparkFun LoRaSerial Product Manual" data-md-component="logo">
+      
+  <img src="../img/sfe_logo_sm.png" alt="logo">
+
+    </a>
+    SparkFun LoRaSerial Product Manual
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/sparkfun/SparkFun_LoRaSerial" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    sparkfun/SparkFun_LoRaSerial
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quick_start/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quick Start Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    AT Commands
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    AT Commands
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#radio-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Radio Commands
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#serial-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Serial Commands
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#info-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Info Commands
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remote-training" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remote Training
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../led_states/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LED States
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../training/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Training
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../operating_modes/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Operating Modes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../firmware_update/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Updating LoRaSerial Firmware
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hardware_overview/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Hardware Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../firmware_build/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Building LoRaSerial Firmware
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#radio-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Radio Commands
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#serial-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Serial Commands
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#info-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Info Commands
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remote-training" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remote Training
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="at-commands">AT Commands</h1>
+<p>LoRaSerial radios are very flexible. By default, the radio is looking for serial communication at 57600bps. Open the terminal of your choice and enter +++ and wait for an OK. The radio is now ready for an AT command.</p>
+<p>A PDF of <em>all</em> AT commands is available <a href="../img/LoRaSerial%20AT%20Commands%20v2.0.pdf">here</a>.</p>
+<p>Below is a brief list of commands:</p>
+<table>
+<thead>
+<tr>
+<th>AT Command</th>
+<th>Command Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>+++</td>
+<td>Enter command mode</td>
+</tr>
+<tr>
+<td>AT</td>
+<td>Reports OK</td>
+</tr>
+<tr>
+<td>AT?</td>
+<td>Display help text</td>
+</tr>
+<tr>
+<td>ATB</td>
+<td>Break the link</td>
+</tr>
+<tr>
+<td>ATD</td>
+<td>Display the debug settings</td>
+</tr>
+<tr>
+<td>ATF</td>
+<td>Restore factory settings</td>
+</tr>
+<tr>
+<td>ATG</td>
+<td>Generate new netID and encryption key</td>
+</tr>
+<tr>
+<td>ATI</td>
+<td>Display the radio version</td>
+</tr>
+<tr>
+<td>ATI?</td>
+<td>Display the information commands</td>
+</tr>
+<tr>
+<td>ATIn</td>
+<td>Display system information</td>
+</tr>
+<tr>
+<td>ATO</td>
+<td>Exit command mode</td>
+</tr>
+<tr>
+<td>ATP</td>
+<td>Display probe trigger settings</td>
+</tr>
+<tr>
+<td>ATR</td>
+<td>Display radio settings</td>
+</tr>
+<tr>
+<td>ATS</td>
+<td>Display the serial settings</td>
+</tr>
+<tr>
+<td>ATT</td>
+<td>Enter training mode</td>
+</tr>
+<tr>
+<td>ATW</td>
+<td>Save current settings to NVM</td>
+</tr>
+<tr>
+<td>ATZ</td>
+<td>Reboot the radio</td>
+</tr>
+<tr>
+<td>AT-Param=xxx</td>
+<td>Set parameter's value to xxx by name (Param)</td>
+</tr>
+<tr>
+<td>AT-Param?</td>
+<td>Print parameter's current value by name (Param)</td>
+</tr>
+<tr>
+<td>AT-?</td>
+<td>Display the setting values</td>
+</tr>
+</tbody>
+</table>
+<p><em>Table of AT Commands</em></p>
+<p>The commands are best discussed in groups:</p>
+<ul>
+<li><a href="http://docs.sparkfun.com/SparkFun_LoRaSerial/at_commands/#radio-commands">Radio Commands</a></li>
+<li><a href="http://docs.sparkfun.com/SparkFun_LoRaSerial/at_commands/#serial-commands">Serial Commands</a></li>
+<li><a href="http://docs.sparkfun.com/SparkFun_LoRaSerial/at_commands/#info-commands">Info Commands</a></li>
+<li>Debug Commands</li>
+</ul>
+<p>A parameter is set using the <strong>AT-</strong> prefix, followed by the name of the command with an equals sign and the value to set. For example, sending <strong>AT-Echo=1**</strong> will enable serial echo. This setting can be stored in NVM (non-volatile memory) by sending the <strong>ATW</strong> command. To query a setting, send the AT command without a value and the device will respond with the current value. For example, sending <strong>AT-FrequencyMax</strong> will generate the response <strong>928.000</strong> followed by <strong>OK</strong>.</p>
+<h2 id="radio-commands">Radio Commands</h2>
+<p><a href="../img/LoRaSerial%20AT%20Radio%20Commands%20-%20v2.0.pdf"><img alt="Table of common radio parameters" src="../img/SparkFun_LoRaSerial_AT_Radio_Commands_v2.0.png" /></a></p>
+<p><em>Table of common radio link parameters</em></p>
+<p>A table of the subset of the common Radio Link Parameters is available <a href="../img/LoRaSerial%20AT%20Commands%20v2.0.pdf">here</a> in PDF format.</p>
+<p><strong>Note:</strong> Some settings must be identical on both radios for the link to be possible. These settings are used to generate the unique hop table. If settings are not compatible between radios, they will not be able to communicate.</p>
+<table>
+<thead>
+<tr>
+<th>AT Command</th>
+<th>Command Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AT-AirSpeed</td>
+<td>Data rate over the air. Overrides bandwidth, spread, and coding.</td>
+</tr>
+<tr>
+<td>AT-AutoTune</td>
+<td>Adjust frequency based on received frequency offset</td>
+</tr>
+<tr>
+<td>AT-Bandwidth</td>
+<td>Low number is longer range, less data rate</td>
+</tr>
+<tr>
+<td>AT-ClientFindPartnerRetryInterval</td>
+<td>Seconds before FIND_PARTNER xmit during training</td>
+</tr>
+<tr>
+<td>AT-CodingRate</td>
+<td>Set LoRa link coding rate denominator</td>
+</tr>
+<tr>
+<td>AT-DataScrambling</td>
+<td>Apply IBM Data Whitening to reduce DC bias</td>
+</tr>
+<tr>
+<td>AT-EnableCRC16</td>
+<td>Include 16-bit CRC with each packet</td>
+</tr>
+<tr>
+<td>AT-EncryptData</td>
+<td>Use AES-128-GCM for each packet</td>
+</tr>
+<tr>
+<td>AT-EncryptionKey</td>
+<td>16 byte key used for AES encryption</td>
+</tr>
+<tr>
+<td>AT-FramesToYield</td>
+<td>Pause transmission for X frames to allow 2-way traffic</td>
+</tr>
+<tr>
+<td>AT-FrequencyHop</td>
+<td>Enable frequency hopping spread spectrum</td>
+</tr>
+<tr>
+<td>AT-FrequencyMax</td>
+<td>Maximum allowed radio frequency</td>
+</tr>
+<tr>
+<td>AT-FrequencyMin</td>
+<td>Minimum allowed radio frequency</td>
+</tr>
+<tr>
+<td>AT-HeartBeatTimeout</td>
+<td>ms wait before sending link ping</td>
+</tr>
+<tr>
+<td>AT-MaxDwellTime</td>
+<td>Amount of time before hopping</td>
+</tr>
+<tr>
+<td>AT-MaxResends</td>
+<td>Attempts before dropping packet</td>
+</tr>
+<tr>
+<td>AT-NetID</td>
+<td>Network ID</td>
+</tr>
+<tr>
+<td>AT-NumberOfChannels</td>
+<td>Divide available spectrum by this amount</td>
+</tr>
+<tr>
+<td>AT-OperatingMode</td>
+<td>Multipoint or P2P</td>
+</tr>
+<tr>
+<td>AT-OverHeadtime</td>
+<td>Additional ms before ACK timeout occurs</td>
+</tr>
+<tr>
+<td>AT-PreambleLength</td>
+<td>Set LoRa preamble length</td>
+</tr>
+<tr>
+<td>AT-SelectLedUse</td>
+<td>Define LED behavior</td>
+</tr>
+<tr>
+<td>AT-Server</td>
+<td>Synchronize network clock</td>
+</tr>
+<tr>
+<td>AT-SpreadFactor</td>
+<td>High number is longer range, less data rate</td>
+</tr>
+<tr>
+<td>AT-SyncWord</td>
+<td>Set LoRa sync word</td>
+</tr>
+<tr>
+<td>AT-TrainingKey</td>
+<td>16 byte AES key used during training</td>
+</tr>
+<tr>
+<td>AT-TrainingTimeout</td>
+<td>Minutes before training mode exits</td>
+</tr>
+<tr>
+<td>AT-TxPower</td>
+<td>Transmit power in dBm</td>
+</tr>
+<tr>
+<td>AT-TxToRxUsec</td>
+<td>μs between when TX sends and RX gets packet</td>
+</tr>
+<tr>
+<td>AT-VerifyRxNetID</td>
+<td>Validate packets against the NetID</td>
+</tr>
+</tbody>
+</table>
+<p><em>Table of Radio Commands</em></p>
+<ul>
+<li>
+<p><strong>AirSpeed</strong> - This is the effective rate in bits-per-second at which data is sent over the air. In general, the lower the airspeed, the greater the transmission distance. LoRaSerial uses buffers to receive and send serial over USB or UART at the <em>SerialSpeed</em> and begins sending that data in chunks over the air at the AirSpeed. The <em>AirSpeed</em> setting does not have to match the SerialSpeed. It is recommended to limit the total incoming data to match the airspeed. For example, regularly sending a group of 300 bytes with an air speed of 4800 bps (480 bytes per second) will allow the radio sufficient bandwidth. Sending 1,000 bytes per second with an air speed of 4800 bps (480 bytes per second) will within a few seconds overwhelm the link leading to buffer overflow and data loss. The default is 4800bps. Allowed values are 400, 1200, 2400, 4800, 9600, and 19200 bits per second. Changing the AirSpeed value overwrites the following 5 parameters:</p>
+</li>
+<li>
+<p>HeartbeatTimeout</p>
+</li>
+<li>RadioBandwidth</li>
+<li>RadioCodingRate</li>
+<li>RadioSpreadFactor</li>
+<li>TxToRxUsec</li>
+</ul>
+<p>After AirSpeed is set, it is possible to modify any of the above five parameters. Note that AirSpeed is just an easy way to set the five parameters to known values. AirSpeed is not a parameter that is transmitted during training, merely a convenient way to set the five parameters in one step.</p>
+<p>Note: The AirSpeed setting can be queried, but it is not back calculated. Said differently, after a system reset, the AirSpeed setting will report 0. This is because calculating the equivalent airspeed based on the user's settings results in non-sensical values that do not map cleanly with the defined AirSpeed options. Currently, the way to verify the device is set to the correct airspeed is to check the 5 parameters shown above against the settings shown on the <a href="https://github.com/sparkfun/SparkFun_LoRaSerial/tree/main/Documents">AirSpeed calculation page</a>.</p>
+<ul>
+<li>
+<p><strong>AutoTune</strong> - Enabling autotune will cause the radio to tune the receiver frequency based on the calculated frequency error. This is used for testing and is not recommended for general use.</p>
+</li>
+<li>
+<p><strong>Bandwidth</strong> - The bandwidth used around a given frequency during LoRa transmissions. This setting is in kHz. This setting is overwritten if the AirSpeed setting is changed. It is recommended to use the airspeed setting unless you are very aware of the consequences. In general, a lower bandwidth number provides a longer range, but a lower overall data rate. Allowed bandwidths: 10.4, 15.6, 20.8, 31.25, 41.7, 62.5, 125.0, 250.0, and 500.0kHz.</p>
+</li>
+<li>
+<p><strong>ClientFindPartnerRetryInterval</strong> - In training mode, the client will transmit a special packet and then await a response from a server. This is the number of seconds between re-transmits of the FIND_PARTNER packet.</p>
+</li>
+<li>
+<p><strong>CodingRate</strong> - The coding rate used during LoRa transmissions. It is recommended to use the airspeed setting unless you are very aware of the consequences. This setting is overwritten if the AirSpeed setting is changed. In general, a higher spread factor provides a longer range, but a lower overall data rate. Allowed spread factors: 6 to 12 (inclusive).</p>
+</li>
+<li>
+<p><strong>DataScrambling</strong> - Enabling data scrambling will send all packets through an <em><a href="https://www.nxp.com/docs/en/application-note/AN5070.pdf">IBM data whitening</a></em> process. This removes long sets of 1s or 0s from the packet to reduce DC bias during transmission. This is generally not needed and is not recommended when AES encryption is enabled. By default, scrambling is turned off.</p>
+</li>
+<li>
+<p><strong>EnableCRC16</strong> - When CRC is enabled, any packet that does not have a valid CRC will be ignored. The SX1276 IC has CRC at the radio interface, but because of RF noise, the number of corrupt packets is noticeable. This extra layer ensures packet delivery. Enabling CRC will add two bytes to each frame.</p>
+</li>
+<li>
+<p><strong>EncryptData</strong> - By default, all packets are encrypted using 128-bit AES GCM. Disabling this will not achieve a greater range or bandwidth. Disabling encryption will allow all packets to be seen in clear text via an SDR or other monitoring device.</p>
+</li>
+<li>
+<p><strong>EncryptionKey</strong> - This is the 16-byte key used for AES encryption. While SparkFun provides a default value, it is strongly recommended to change this value for your own networks. This can be changed via command or via the P2P training method. Please see <a href="http://docs.sparkfun.com/SparkFun_LoRaSerial/training/#point-to-point-training-as-server">P2P Training</a> for more information.</p>
+</li>
+<li>
+<p><strong>FramesToYield</strong> - During large data flows the receiving radio can request a yield within the ACK packet. When the transmitter receives a yield request, data flow is paused for FramesToYield * Frame Transmit Time. This gives the receiver a chance to transmit its own data allowing data to flow in both directions on the link.</p>
+</li>
+<li>
+<p><strong>FrequencyHop</strong> - The LoRaSerial implements frequency hopping spread spectrum (FHSS) by default to meet FCC Part 15.247 compliance. Turning off frequency hopping is not recommended unless You Know What You’re Doing™.</p>
+</li>
+<li>
+<p><strong>FrequencyMin/FrequencyMax</strong> - These are the lower and upper bounds for the allowed transmission frequencies in megahertz. By default, this is 902.0 to 928.0.</p>
+</li>
+<li>
+<p><strong>HeartbeatTimeout</strong> - Heartbeats are transmitted on a regular basis by the server and in point-to-point mode by the clients. This parameter specifies the time in milliseconds during which a HEARTBEAT frame should be transmitted. If a HEARTBEAT frame is not received within three (3) times this interval then the point-to-point link is broken. The default heartbeatTimeout is 5000 milliseconds (5 seconds).</p>
+</li>
+<li>
+<p><strong>MaxDwellTime</strong> - The number of milliseconds of transmission allowed on a given frequency before hopping intra-packet. The default is 400ms to be compliant with FCC Part 15.247. This means the radio will change its frequency to the next channel in the hop table during the packet transmission. Note this is the maximum dwell time; depending on the air speed setting the radio may have a hopping period that is shorter than the dwell time.</p>
+</li>
+<li>
+<p><strong>MaxResends</strong> - Number of retransmission attempts when an ACK is not received from the destination radio. The valid range is 0 to 255. The default of zero represents infinite and retries will continue as long as the two radios are receiving HEARTBEAT frames from each other. The transmission will fail only when the link breaks due to not receiving HEARTBEAT frames.</p>
+</li>
+<li>
+<p><strong>NetID</strong> - When VerifyRxNetID is enabled, each received packet is checked against the radio's network ID. If a packet is received with a non-matching NetID it is discarded. Changing the NetID is a handy way to make sure your radios do not interfere with other radios in the same vicinity.</p>
+</li>
+<li>
+<p><strong>NumberOfChannels</strong> - The available spectrum (default is 902MHz to 928MHz) is divided by this number of channels to create the channel spacing and allowed frequency list (aka the ‘hop table’). The default is 50 channels to meet FCC Part 15.247 compliance and may be changed to meet local regulations.</p>
+</li>
+<li>
+<p><strong>OperatingMode</strong> - The radios can operate in one of two different modes: Multipoint and Point-To-Point. See <a href="http://docs.sparkfun.com/SparkFun_LoRaSerial/operating_modes/">Operating Modes</a> for more information.</p>
+</li>
+<li>
+<p>MODE_MULTIPOINT (0) - A single server with multiple clients. All radios may broadcast to all other radios, but data is not guaranteed to be received by the other radios. This mode is great when real-time transmission is necessary and the application can tolerate some loss of data.</p>
+</li>
+<li>
+<p>MODE_POINT_TO_POINT (1, default) - Communications between two LoRaSerial radios with guaranteed delivery of frames or the link breaks.</p>
+</li>
+<li>
+<p><strong>OverheadTime</strong> - The number of milliseconds to add to ACK and datagram times before ACK timeout occurs. The default is 10 milliseconds.</p>
+</li>
+<li>
+<p><strong>PreambleLength</strong> - The number of sync words to send at the start of a packet. Note that two LoRa radios with the same settings but different preamble lengths have been shown to intermittently receive packets from each other. Therefore, using a unique preamble length does <em>not</em> guarantee exclusivity. Allowed values: 6 to 65535.</p>
+</li>
+<li>
+<p><strong>SelectLedUse</strong> - Select how to display information on the LEDs. See <a href="http://docs.sparkfun.com/SparkFun_LoRaSerial/led_states/">LED States</a> for more information.</p>
+</li>
+<li>
+<p><strong>Server</strong> - Enable (1) or disable (0) the server mode for training and for multipoint operation. The default is client mode (0). The radio designated as Server synchronizes the network. A server is required for Multipoint and Training modes.</p>
+</li>
+<li>
+<p><strong>SpreadFactor</strong> - The spread factor used during LoRa transmissions. It is recommended to use the airspeed setting unless you are very aware of the consequences. This setting is overwritten if the AirSpeed setting is changed. In general, a higher spread factor provides a longer range, but a lower overall data rate. Allowed spread factors: 6 to 12 (inclusive).</p>
+</li>
+<li>
+<p><strong>SyncWord</strong> - The byte used to synchronize LoRa transmissions. In general, this is set to 0x12 for non-LoRaWAN networks. Note that two LoRa radios with the same settings but different sync words have been shown to intermittently receive packets from each other. Therefore, using a unique synch word does <em>not</em> guarantee exclusivity. Allowed values: 0 to 255.</p>
+</li>
+<li>
+<p><strong>TxPower</strong> - The LoRaSerial uses a high-power 1W transceiver. By default, all transmissions are sent at the highest possible power of 30dBm which is compliant with FCC Part 15.247 when used with an antenna that has a gain of 6dBi or less. If your local regulations require lower transmission power this setting can be lowered. Allowed values are 30 down to 14dBm. Note: The chosen setting is the actual measured transmit power at the SMA connector. An internal lookup table sets the radio settings accordingly.</p>
+</li>
+<li>
+<p><strong>TxToRxUsec</strong> - This is the number of microseconds between when the transmitter completes a transmission, and when the receiver completes the reception of that packet. For lower airspeeds, this value increases and generally tracks to 1 symbol time. It is recommended to use the airspeed setting unless you are very aware of the consequences. This setting is overwritten if the AirSpeed setting is changed.</p>
+</li>
+<li>
+<p><strong>VerifyRxNetID</strong> - Enable (1) or disable (0) the verification of the netID value during reception. The default is enabled (1).</p>
+</li>
+</ul>
+<h2 id="serial-commands">Serial Commands</h2>
+<table>
+<thead>
+<tr>
+<th>AT Command</th>
+<th>Command Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AT-CopySerial</td>
+<td>Copy the serial parameters to the training client</td>
+</tr>
+<tr>
+<td>AT-Echo</td>
+<td>Print locally inputted serial</td>
+</tr>
+<tr>
+<td>AT-FlowControl</td>
+<td>Enable the use of CTS/RTS flow control signals</td>
+</tr>
+<tr>
+<td>AT-InvertCts</td>
+<td>Invert the input of CTS</td>
+</tr>
+<tr>
+<td>AT-InvertRts</td>
+<td>Invert the output of RTS</td>
+</tr>
+<tr>
+<td>AT-SerialDelay</td>
+<td>ms of no data before fractional buffer is sent</td>
+</tr>
+<tr>
+<td>AT-SerialSpeed</td>
+<td>Hardware UART baud rate</td>
+</tr>
+<tr>
+<td>AT-UsbSerialWait</td>
+<td>Wait for USB enumeration before radio start</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>
+<p><strong>CopySerial</strong> - False by default. Set to true to transmit Serial settings during training from Server to Clients.</p>
+</li>
+<li>
+<p><strong>Echo</strong> - By default, the radio will not echo the incoming serial. This is helpful at times if a user is typing data directly into a terminal. During AT configuration echo is turned on regardless of this setting.</p>
+</li>
+</ul>
+<p><img alt="Flow control on the SAMD21" src="../img/SAMD21%20Flow%20control.png" /></p>
+<ul>
+<li>
+<p><strong>FlowControl</strong> - If flow control is enabled, LoRaSerial will send data when its CTS pin is driven low (the host system is telling the radio to transmit). If flow control is enabled, LoRaSerial will drive its RTS low if its serial buffer is full (the radio is telling the host system to hold its horses). CTS and RTS pins are only exposed on the UART connector but if flow control is enabled, the UART flow control pins will apply to both USB and serial data streams. Internal pull-ups are used so if flow control is enabled, RTS and CTS must not be left floating. By default, flow control is turned off.</p>
+</li>
+<li>
+<p><strong>InvertCts</strong> - By default, InvertCts is false and CTS is high when data is allowed to flow. Enable InvertCts to do the opposite.</p>
+</li>
+<li>
+<p><strong>InvertRts</strong> - By default, InvertRts is false and RTS is high when data is allowed to flow. Enable InvertRts to do the opposite.</p>
+</li>
+<li>
+<p><strong>SerialDelay</strong> - The number of milliseconds of timeout before a partial packet is sent. For example, if a partial frame of 12 bytes is received, the radio will wait this amount for more bytes before initiating a transmission. The default is 50ms. Allowed values: 10 to 2000ms.</p>
+</li>
+<li>
+<p><strong>SerialSpeed</strong> - Controls the baud rate in bits-per-second used over the UART connector. Data sent over USB will be sent/received regardless of this setting. The default is 57600bps. Allowed values are 2400, 4800, 9600, 14400, 19200, 38400, 57600, and 115200bps.</p>
+</li>
+<li>
+<p><strong>UsbSerialWait</strong> - If enabled, the radio will wait for the USB port to be enumerated and open before beginning operation. The default is false.</p>
+</li>
+</ul>
+<h2 id="info-commands">Info Commands</h2>
+<table>
+<thead>
+<tr>
+<th>AT Command</th>
+<th>Command Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ATI0</td>
+<td>Show user settable parameters</td>
+</tr>
+<tr>
+<td>ATI1</td>
+<td>Show board variant</td>
+</tr>
+<tr>
+<td>ATI2</td>
+<td>Show firmware version</td>
+</tr>
+<tr>
+<td>ATI3</td>
+<td>Display RSSI value</td>
+</tr>
+<tr>
+<td>ATI4</td>
+<td>Get random byte from RSSI</td>
+</tr>
+<tr>
+<td>ATI5</td>
+<td>Show max possible bytes per second</td>
+</tr>
+<tr>
+<td>ATI6</td>
+<td>Display current radio state</td>
+</tr>
+<tr>
+<td>ATI7</td>
+<td>Show current FHSS channel</td>
+</tr>
+<tr>
+<td>ATI8</td>
+<td>Display system unique ID</td>
+</tr>
+<tr>
+<td>ATI9</td>
+<td>Display the maximum datagram size</td>
+</tr>
+<tr>
+<td>ATI10</td>
+<td>Display radio metrics</td>
+</tr>
+<tr>
+<td>ATI13</td>
+<td>Display the SX1276 registers</td>
+</tr>
+<tr>
+<td>ATI14</td>
+<td>Dump the radioTxBuffer</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>
+<p><strong>ATI0</strong> - List all available AT commands.</p>
+</li>
+<li>
+<p><strong>ATI1</strong> - Shows the board variant. For example "SparkFun LoRaSerial SAMD21 1W 915MHz".</p>
+</li>
+<li>
+<p><strong>ATI2</strong> - Shows the LoRaSerial firmware version. For example "2.0".</p>
+</li>
+<li>
+<p><strong>ATI3</strong> - Shows the last RSSI during a successful reception. For example "-76".</p>
+</li>
+<li>
+<p><strong>ATI4</strong> - Queries the radio for a random byte, 0 to 255, based on RF noise. For example "42".</p>
+</li>
+<li>
+<p><strong>ATI5</strong> - Based on settings, returns the ideal number of bytes capable of being transmitted over the link. This number assumes no retransmits and should be used only as a guide to set expectations of the host system.</p>
+</li>
+<li>
+<p><strong>ATI6</strong> - Displays the current radio state. For example: "State: P2P: Receiving Standby LinkUptime:     2:45:08".</p>
+</li>
+<li>
+<p><strong>ATI7</strong> - Displays the current channel number. For example: "29".</p>
+</li>
+<li>
+<p><strong>ATI8</strong> - Displays the unique 32-character, 16-byte, 128-bit value marked into the SAMD21 microcontroller. For example: "5BCEDAE13630595020312E32102317FF".</p>
+</li>
+<li>
+<p><strong>ATI9</strong> - Displays the maximum number of bytes that can be transmitted. Different radio settings will use fewer or a greater number of bytes for overhead. For example: "249".</p>
+</li>
+<li>
+<p><strong>ATI10</strong> - Displays a large number of metrics related to the radio link including datagrams sent, link uptime, ACK counts, buffer states, etc.</p>
+</li>
+<li>
+<p><strong>ATI13</strong> - Displays the contents of all the registers in the SX1276 LoRa transceiver.</p>
+</li>
+<li>
+<p><strong>ATI14</strong> - Displays the contents of the current transmit buffer.</p>
+</li>
+</ul>
+<h2 id="remote-training">Remote Training</h2>
+<p>Currently, only one remote command is supported - <strong>RTT</strong>. Issuing this command to the local radio when the link is up will cause the remote radio to drop from the link and enter training mode. The remote radio will wait in this mode until training is completed, a local <strong>ATZ</strong> command is entered into the remote device, or the Train button is pressed on the remote device.</p>
+<p>This command is generally used to remotely configure a radio. First, the <strong>RTT</strong> command is issued, the local radio is configured (including enabling Server), then the <strong>ATT</strong> is issued to push the local radio into training. Because the local radio is the server, its settings are set to the remote radio. The remote radio will reset and start with these newly issued settings. The local radio needs to reset with an <strong>ATZ</strong> command and the link should be re-established with new settings. Below is a command script to achieve this remote configuration. We assume the radios are currently linked at the start of the script.</p>
+<p><em>Note:</em> RTT is only supported in P2P mode.</p>
+<div class="highlight"><pre><span></span><code>+++
+RTT
+AT-Server=1
+AT-AirSpeed=9600
+ATW
+ATT
+(Wait for the &#39;Client XYZ Trained&#39; message)
+ATZ
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright 2023 SparkFun Electronics (6333 Dry Creek Parkway, Niwot, Colorado 80503)
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["content.code.annotate"], "search": "../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7c377c4.min.js"></script>
+      
+    
+  </body>
+</html>
