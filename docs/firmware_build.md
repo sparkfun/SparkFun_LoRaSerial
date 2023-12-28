@@ -5,7 +5,12 @@ The open source [LoRaSerial firmware](https://github.com/sparkfun/SparkFun_LoRaS
 * [Windows](http://docs.sparkfun.com/SparkFun_LoRaSerial/firmware_build/#Windows)
 * [Linux](http://docs.sparkfun.com/SparkFun_LoRaSerial/firmware_build/#Linux)
 
-# Virtual Machine
+## Ubuntu Build Environment
+
+The following setup and build instructions were tested on Ubuntu 22.04.1. The build can run on a physical or virtual CPU. The following section describes how to setup a virtual machine. Further sections describe the build environment and how to perform the build.
+
+
+### Virtual Machine
 
 Execute the following commands in the [VirualBox](https://www.virtualbox.org/) application to create a virtual machine:
 
@@ -57,10 +62,6 @@ An operating system is needed for the virtual machine to enable it to run applic
         a. ssh-keygen -t rsa -f ~/.ssh/SparkFun_LoRaSerial_22.04.1
         b. ssh-copy-id -o IdentitiesOnly=yes -i ~/.ssh/SparkFun_LoRaSerial_22.04.1  &lt;username&gt;@&lt;IP address&gt;
         c. ssh -Y &lt;username&gt;@&lt;IP address&gt;
-
-## Ubuntu Build Environment
-
-The following setup and build instructions were tested on Ubuntu 22.04.1.  The build can run on a physical or virtual CPU.  The following section describes how to setup the a virtual machine.  Further sections describe the build environment and how to perform the build.
 
 Execute the following commands to create the build environment for the SparkFun LoRaSerial Firmware:
 
