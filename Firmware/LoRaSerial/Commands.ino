@@ -1294,6 +1294,7 @@ const COMMAND_ENTRY commands[] =
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "Debug",                &tempSettings.debug},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugDatagrams",       &tempSettings.debugDatagrams},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugHeartbeat",       &tempSettings.debugHeartbeat},
+  {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "debugHopTimer",        &tempSettings.debugHopTimer},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugNvm",             &tempSettings.debugNvm},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugRadio",           &tempSettings.debugRadio},
   {'D',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "DebugReceive",         &tempSettings.debugReceive},

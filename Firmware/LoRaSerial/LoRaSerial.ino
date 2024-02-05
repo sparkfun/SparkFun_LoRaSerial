@@ -88,6 +88,12 @@ const int FIRMWARE_VERSION_MINOR = 0;
 #define SERIAL_RX_BUFFER_SIZE     1024
 #define RTS_ON_BYTES              (SERIAL_RX_BUFFER_SIZE / 4)
 
+#define MILLISECONDS_IN_A_SECOND  1000
+#define MILLISECONDS_IN_A_MINUTE  (60 * MILLISECONDS_IN_A_SECOND)
+#define MILLISECONDS_IN_AN_HOUR   (60 * MILLISECONDS_IN_A_MINUTE)
+#define MILLISECONDS_IN_A_DAY     (24 * MILLISECONDS_IN_AN_HOUR)
+#define MILLISECONDS_IN_A_WEEK    (7 * MILLISECONDS_IN_A_DAY)
+
 #include "settings.h"
 
 //Hardware connections
@@ -392,7 +398,6 @@ bool cylonPatternGoingLeft;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 uint16_t radioBand = 0; //In MHz. Detected radio module type. Sets the upper/lower frequency bounds.
 uint8_t outgoingPacket[MAX_PACKET_SIZE]; //Contains the current data in route to receiver
-uint32_t frameAirTimeUsec; //Recalc'd with each new packet transmission
 uint8_t frameSentCount = 0; //Increases each time a frame is sent
 
 unsigned long lastPacketReceived = 0; //Controls link LED in broadcast mode
@@ -445,9 +450,6 @@ unsigned long radioCallHistory[RADIO_CALL_MAX];
 unsigned long radioStateHistory[RADIO_MAX_STATE];
 
 uint8_t packetLength = 0; //Total bytes received, used for calculating clock sync times in multi-point mode
-int16_t msToNextHopRemote; //Can become negative
-uint8_t clockSyncIndex;
-CLOCK_SYNC_DATA clockSyncData[16];
 
 bool requestYield = false; //Datagram sender can tell this radio to stop transmitting to enable two-way comm
 unsigned long yieldTimerStart = 0;
@@ -480,6 +482,13 @@ unsigned long linkDownTimer;
 unsigned long rcvTimeMillis;
 unsigned long xmitTimeMillis;
 long timestampOffset;
+uint32_t frameAirTimeUsec; //Recalc'd with each new packet transmission
+int16_t msToNextHopRemote; //Can become negative
+uint8_t rmtChannelNumber;
+CLOCK_SYNC_DATA clockSyncData;
+unsigned long txCurrentMillis; //Local millis value when building TX header
+uint16_t txMsecToNextHop; //Milliseconds remaining until channel hop timer fires
+uint8_t txChannel; //Channel included in TX header
 
 //Transmit control
 uint8_t * endOfTxData;
