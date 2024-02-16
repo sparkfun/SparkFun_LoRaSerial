@@ -71,8 +71,10 @@ void beginSerial(uint16_t serialSpeed)
 //Ensure the watch dog timer does not fire which would cause a CPU hardware reset
 void petWDT()
 {
-  //Petting the dog takes a long time (~4.5ms on SAMD21) so it's only done after we've passed the timeout
-  if (millis() - lastPet > petTimeout)
+  static unsigned long lastPet;
+
+  //Reduce calls to pet the watchdog
+  if (millis() - lastPet > PET_TIMEOUT)
   {
     lastPet = millis();
     arch.petWDT();
