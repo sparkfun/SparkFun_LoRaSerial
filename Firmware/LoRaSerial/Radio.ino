@@ -1845,7 +1845,7 @@ PacketType rcvDatagram()
       netIdMismatch++;
       return (DATAGRAM_NETID_MISMATCH);
     }
-  }
+  } // MODE_POINT_TO_POINT
   CheckChannelHopAndKickWatchdog();
 
   //Process the trailer
@@ -1881,7 +1881,7 @@ PacketType rcvDatagram()
       badCrc++;
       return (DATAGRAM_CRC_ERROR);
     }
-  }
+  } // enableCRC16
 
   /*
       |<--------------------------- rxDataBytes ---------------------------->|
@@ -1915,7 +1915,7 @@ PacketType rcvDatagram()
     }
     badFrames++;
     return (DATAGRAM_BAD);
-  }
+  } // datagramType
 
   //Ignore this frame is requested
   if (rxControl.ignoreFrame)
@@ -1929,7 +1929,7 @@ PacketType rcvDatagram()
     }
     badFrames++;
     return (DATAGRAM_BAD);
-  }
+  } // ignoreFrame
 
   //Display the CRC
   if (settings.enableCRC16 && settings.debugReceive)
@@ -2013,7 +2013,7 @@ PacketType rcvDatagram()
       CheckChannelHop();
     }
   }
-  else
+  else //SF6
     rxDataBytes -= minDatagramSize;
 
   //Get the Virtual-Circuit header
@@ -2120,7 +2120,7 @@ PacketType rcvDatagram()
       }
       return DATAGRAM_NOT_MINE;
     }
-  }
+  } // MODE_VIRTUAL_CIRCUIT
 
   //Verify the packet number last so that the expected datagram or ACK number can be updated
   if (vc && (settings.operatingMode != MODE_MULTIPOINT))
@@ -2202,7 +2202,7 @@ PacketType rcvDatagram()
 
     //Account for this frame
     vc->framesReceived++;
-  }
+  } // !MODE_MULTIPOINT
 
   //If packet is good, check requestYield bit
   //If bit is set, this radio supresses transmissions for X number of frames
@@ -2282,7 +2282,7 @@ PacketType rcvDatagram()
         break;
     }
     outputSerialData(true);
-  }
+  } // debugDatagrams
   CheckChannelHop();
 
   //Process the packet
