@@ -1355,7 +1355,7 @@ const COMMAND_ENTRY commands[] =
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "InvertRts",            &tempSettings.invertRts},
   {'S',   0,   0,    0, SERIAL_RX_BUFFER_SIZE, 0, TYPE_U16, valInt,   "RTSOffBytes",          &tempSettings.rtsOffBytes},
   {'S',   0,   0,    0, SERIAL_RX_BUFFER_SIZE, 0, TYPE_U16, valInt,   "RTSOnBytes",           &tempSettings.rtsOnBytes},
-  {'S',   0,   0,   10, 2000,   0, TYPE_U16,          valInt,         "SerialDelay",          &tempSettings.serialTimeoutBeforeSendingFrame_ms},
+  {'S',   0,   0,   0, 2000,   0, TYPE_U16,          valInt,         "SerialDelay",          &tempSettings.serialTimeoutBeforeSendingFrame_ms},
   {'S',   0,   0,    0,   0,    0, TYPE_SPEED_SERIAL, valSpeedSerial, "SerialSpeed",          &tempSettings.serialSpeed},
   {'S',   0,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "UsbSerialWait",        &tempSettings.usbSerialWait},
 
