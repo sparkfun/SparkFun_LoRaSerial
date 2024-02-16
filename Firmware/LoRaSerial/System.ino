@@ -393,7 +393,6 @@ void decryptBuffer(uint8_t *bufferToDecrypt, uint8_t arraySize)
   gcm.decrypt(bufferToDecrypt, bufferToDecrypt, arraySize);
 }
 
-
 //IBM Whitening process from Semtech "Software Whitening and CRC on SX12xx Devices" app note
 //Removes DC Bias from data with long strings of 1s or 0s
 void radioComputeWhitening(uint8_t *buffer, uint16_t bufferSize)
@@ -404,8 +403,7 @@ void radioComputeWhitening(uint8_t *buffer, uint16_t bufferSize)
 
   for (uint16_t j = 0 ; j < bufferSize ; j++)
   {
-    if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-      hopChannel();
+    CheckChannelHop();
     buffer[j] ^= WhiteningKeyLSB;
 
     for (uint8_t i = 0 ; i < 8 ; i++)
@@ -523,18 +521,14 @@ void dumpBuffer(uint8_t * data, int length)
     {
       systemPrint(" ");
       systemPrint(*data++, HEX);
-      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-        hopChannel();
-      petWDT();
+      CheckChannelHopAndKickWatchdog();
     }
 
     // Space over to the ASCII display
     for (; index < displayWidth; index++)
     {
       systemPrint("   ");
-      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-        hopChannel();
-      petWDT();
+      CheckChannelHopAndKickWatchdog();
     }
     systemPrint("  ");
 
@@ -545,9 +539,7 @@ void dumpBuffer(uint8_t * data, int length)
       systemPrint(((byte[0] < ' ') || (byte[0] >= 0x7f)) ? "." : byte);
     }
     systemPrintln();
-    if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-      hopChannel();
-    petWDT();
+    CheckChannelHopAndKickWatchdog();
   }
 }
 
@@ -590,9 +582,7 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
       for (index = 0; index < delta; index++)
       {
         systemPrint("   ");
-        if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-          hopChannel();
-        petWDT();
+        CheckChannelHopAndKickWatchdog();
       }
     }
 
@@ -607,18 +597,14 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
       systemWrite(' ');
       data = buffer[(offset + index) % bufferLength];
       systemPrint(data, HEX);
-      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-        hopChannel();
-      petWDT();
+      CheckChannelHopAndKickWatchdog();
     }
 
     //Space over to the ASCII display
     for (; (delta + index) < displayWidth; index++)
     {
       systemPrint("   ");
-      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-        hopChannel();
-      petWDT();
+      CheckChannelHopAndKickWatchdog();
     }
     systemPrint("  ");
 
@@ -630,9 +616,7 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
       systemWrite(((data < ' ') || (data >= 0x7f)) ? '.' : data);
     }
     systemPrintln();
-    if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-      hopChannel();
-    petWDT();
+    CheckChannelHopAndKickWatchdog();
     outputSerialData(true);
     offset += bytes;
     length -= bytes;

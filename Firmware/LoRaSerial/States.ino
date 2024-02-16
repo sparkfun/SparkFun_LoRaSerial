@@ -635,8 +635,7 @@ void updateRadioState()
     //Wait for the data transmission to complete
     //====================
     case RADIO_P2P_LINK_UP_WAIT_TX_DONE:
-      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-        hopChannel();
+      CheckChannelHop();
 
       if (transactionComplete)
       {
@@ -669,8 +668,7 @@ void updateRadioState()
     // * Link timeout
     //====================
     case RADIO_P2P_LINK_UP:
-      if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-        hopChannel();
+      CheckChannelHop();
 
       //Check for a received datagram
       if (transactionComplete == true)
@@ -1170,8 +1168,7 @@ void updateRadioState()
                 systemPrint("    Channel Number: ");
                 systemPrintln(channelNumber);
                 outputSerialData(true);
-                if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-                  hopChannel();
+                CheckChannelHop();
               }
 
               frequencyCorrection += radio.getFrequencyError() / 1000000.0;
@@ -1331,8 +1328,7 @@ void updateRadioState()
                 systemPrint("    Channel Number: ");
                 systemPrintln(channelNumber);
                 outputSerialData(true);
-                if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-                  hopChannel();
+                CheckChannelHop();
               }
 
               frequencyCorrection += radio.getFrequencyError() / 1000000.0;
@@ -1370,8 +1366,7 @@ void updateRadioState()
     //====================
     case RADIO_MP_STANDBY:
       //Hop channels when required
-      if (timeToHop == true)
-        hopChannel();
+      CheckChannelHop();
 
       //Process the receive packet
       if (transactionComplete == true)
@@ -1525,8 +1520,7 @@ void updateRadioState()
     //====================
     case RADIO_MP_WAIT_TX_DONE:
       //Hop channels when required
-      if (timeToHop == true)
-        hopChannel();
+      CheckChannelHop();
 
       //If transmit is complete then start receiving
       if (transactionComplete == true)
@@ -1964,8 +1958,7 @@ void updateRadioState()
     //====================
     case RADIO_VC_WAIT_TX_DONE:
       //Hop channels when required
-      if (timeToHop == true)
-        hopChannel();
+      CheckChannelHop();
 
       //If dio0ISR has fired, we are done transmitting
       if (transactionComplete == true)
@@ -1997,8 +1990,7 @@ void updateRadioState()
     //====================
     case RADIO_VC_WAIT_RECEIVE:
       //Hop channels when required
-      if (timeToHop == true)
-        hopChannel();
+      CheckChannelHop();
 
       //If dio0ISR has fired, a packet has arrived
       currentMillis = millis();
