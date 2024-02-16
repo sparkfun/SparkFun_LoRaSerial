@@ -1166,7 +1166,8 @@ void updateRadioState()
               if (settings.debugSync)
               {
                 systemPrint("    Channel Number: ");
-                systemPrintln(channelNumber);
+                systemPrintDec(channelNumber, 2);
+                systemPrintln();
                 outputSerialData(true);
                 CheckChannelHop();
               }
@@ -1326,7 +1327,8 @@ void updateRadioState()
               if (settings.debugSync)
               {
                 systemPrint("    Channel Number: ");
-                systemPrintln(channelNumber);
+                systemPrintDec(channelNumber, 2);
+                systemPrintln();
                 outputSerialData(true);
                 CheckChannelHop();
               }
@@ -2891,24 +2893,24 @@ void dumpClockSynchronization()
       if (clockSyncData[index].frameAirTimeMsec)
       {
         systemPrint("Lcl: ");
-        systemPrint(clockSyncData[index].lclHopTimeMsec);
+        systemPrintDec(clockSyncData[index].lclHopTimeMsec, 3);
         systemPrint(", Rmt: ");
-        systemPrint(clockSyncData[index].msToNextHopRemote);
+        systemPrintDec(clockSyncData[index].msToNextHopRemote, 3);
         systemPrint(" - ");
-        systemPrint(clockSyncData[index].frameAirTimeMsec);
+        systemPrintDec(clockSyncData[index].frameAirTimeMsec, 3);
         systemPrint(" = ");
-        systemPrint(clockSyncData[index].msToNextHopRemote - clockSyncData[index].frameAirTimeMsec);
+        systemPrintDec(clockSyncData[index].msToNextHopRemote - clockSyncData[index].frameAirTimeMsec, 3);
         systemPrint(" + ");
-        systemPrint(clockSyncData[index].adjustment);
+        systemPrintDec(clockSyncData[index].adjustment, 3);
         systemPrint(" = ");
-        systemPrint(clockSyncData[index].msToNextHop);
+        systemPrintDec(clockSyncData[index].msToNextHop, 3);
         systemPrint(" msToNextHop");
         if (clockSyncData[index].delayedHopCount)
         {
           systemPrint(", timeToHop: ");
-          systemPrint(clockSyncData[index].timeToHop);
+          systemPrintDec(clockSyncData[index].timeToHop, 3);
           systemPrint(", Hops: ");
-          systemPrint(clockSyncData[index].delayedHopCount);
+          systemPrintDec(clockSyncData[index].delayedHopCount, 2);
         }
         systemPrintln();
         outputSerialData(true);

@@ -2257,10 +2257,6 @@ PacketType rcvDatagram()
     systemPrint(radioDatagramType[datagramType]);
     switch (datagramType)
     {
-      default:
-        systemPrintln();
-        break;
-
       case DATAGRAM_DATA:
       case DATAGRAM_DATA_ACK:
       case DATAGRAM_REMOTE_COMMAND:
@@ -2278,11 +2274,17 @@ PacketType rcvDatagram()
           if (rxControl.requestYield)
             systemPrint(" (Y)");
         }
-        systemPrintln();
         break;
     }
+    if (settings.frequencyHop == true)
+    {
+      systemPrint(" ");
+      systemPrintDec(channelNumber, 2);
+    }
+    systemPrintln();
     outputSerialData(true);
   } // debugDatagrams
+
   CheckChannelHop();
 
   //Process the packet
@@ -2454,10 +2456,6 @@ bool transmitDatagram()
     systemPrint(radioDatagramType[txControl.datagramType]);
     switch (txControl.datagramType)
     {
-      default:
-        systemPrintln();
-        break;
-
       case DATAGRAM_DATA:
       case DATAGRAM_DATA_ACK:
       case DATAGRAM_REMOTE_COMMAND:
@@ -2475,9 +2473,15 @@ bool transmitDatagram()
           if (txControl.requestYield)
             systemPrint(" (requestYield)");
         }
-        systemPrintln();
         break;
     }
+    if (settings.frequencyHop == true)
+    {
+      systemPrint(" ");
+      systemPrintDec(channelNumber, 2);
+    }
+    systemPrintln();
+
     outputSerialData(true);
     CheckChannelHop();
   }
@@ -3450,20 +3454,20 @@ void syncChannelTimer(uint32_t frameAirTimeUsec, bool clockStarting)
     systemPrint("Case #");
     systemPrint(caseNumber);
     systemPrint(", ");
-    systemPrint(delayedHopCount);
+    systemPrintDec(delayedHopCount, 3);
     systemPrint(" Hops, ");
-    systemPrint(msToNextHopRemote);
+    systemPrintDec(msToNextHopRemote, 3);
     systemPrint(" Nxt Hop - ");
-    systemPrint(frameAirTimeMsec);
+    systemPrintDec(frameAirTimeMsec, 3);
     systemPrint(" (TX + RX)");
     if (adjustment)
     {
       systemPrint(" + ");
-      systemPrint(adjustment);
+      systemPrintDec(adjustment, 3);
       systemPrint(" Adj");
     }
     systemPrint(" = ");
-    systemPrint(msToNextHop);
+    systemPrintDec(msToNextHop, 3);
     systemPrintln(" mSec");
   }
 }
