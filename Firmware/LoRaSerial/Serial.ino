@@ -316,8 +316,7 @@ void updateSerial()
     blinkSerialRxLed(true); //Turn on LED during serial reception
 
     //Take a break if there are ISRs to attend to
-    petWDT();
-    if (timeToHop == true) hopChannel();
+    CheckChannelHopAndKickWatchdog();
 
     byte incoming = systemRead();
 
@@ -340,7 +339,7 @@ void updateSerial()
       systemPrint(sizeof(serialReceiveBuffer) - previousHead + rxHead);
     systemPrintln(" bytes into serialReceiveBuffer");
     outputSerialData(true);
-    petWDT();
+    CheckChannelHopAndKickWatchdog();
   }
 
   //Process the serial data
@@ -371,7 +370,7 @@ void updateSerial()
       systemPrint(commandLength);
       systemPrintln(" bytes from commandRXBuffer into commandBuffer");
       outputSerialData(true);
-      petWDT();
+      CheckChannelHopAndKickWatchdog();
     }
 
     if (commandBuffer[0] == 'R') //Error check
@@ -403,8 +402,7 @@ void processSerialInput()
          && (transactionComplete == false))
   {
     //Take a break if there are ISRs to attend to
-    petWDT();
-    if (timeToHop == true) hopChannel();
+    CheckChannelHopAndKickWatchdog();
 
     byte incoming = serialReceiveBuffer[rxTail++];
     rxTail %= sizeof(serialReceiveBuffer);
@@ -571,8 +569,7 @@ void outputSerialData(bool ignoreISR)
     blinkSerialTxLed(true); //Turn on LED during serial transmissions
 
     //Take a break if there are ISRs to attend to
-    petWDT();
-    if (timeToHop == true) hopChannel();
+    CheckChannelHopAndKickWatchdog();
 
     arch.serialWrite(serialTransmitBuffer[txTail]);
     systemFlush(); //Prevent serial hardware from blocking more than this one write
@@ -773,8 +770,7 @@ void vcProcessSerialInput()
          && (transactionComplete == false))
   {
     //Take a break if there are ISRs to attend to
-    petWDT();
-    if (timeToHop == true) hopChannel();
+    CheckChannelHopAndKickWatchdog();
 
     //Skip any garbage in the input stream
     data = serialReceiveBuffer[rxTail];
@@ -934,8 +930,7 @@ void vcProcessSerialInput()
   }
 
   //Take a break if there are ISRs to attend to
-  petWDT();
-  if (timeToHop == true) hopChannel();
+  CheckChannelHopAndKickWatchdog();
 }
 
 //Display any serial data for output, discard:

@@ -79,6 +79,26 @@ void petWDT()
   }
 }
 
+//=========================================================================================
+
+void CheckChannelHopAndKickWatchdog(void)
+{
+  if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+    hopChannel();
+      
+  petWDT(); 
+}
+
+//=========================================================================================
+
+void CheckChannelHop(void)
+{
+  if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+    hopChannel();
+}
+
+//=========================================================================================
+
 //Start the timer measuring the dwell interval and indicating that it is time to
 //hop channels
 void beginChannelTimer()
