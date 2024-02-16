@@ -1861,7 +1861,7 @@ PacketType rcvDatagram()
       crc = crc16Table[*data ^ (uint8_t)(crc >> (16 - 8))] ^ (crc << 8);
     CheckChannelHop();
     if ((incomingBuffer[rxDataBytes - 2] != (crc >> 8))
-        && (incomingBuffer[rxDataBytes - 1] != (crc & 0xff)))
+        || (incomingBuffer[rxDataBytes - 1] != (crc & 0xff)))
     {
       //Display the packet contents
       if (settings.printPktData || settings.debugReceive || settings.debugDatagrams)
