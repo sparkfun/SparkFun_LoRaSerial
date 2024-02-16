@@ -1466,6 +1466,7 @@ bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer
 {
   const char * digit;
   double doubleSettingValue;
+  char * nextDigit;
   uint32_t settingValue;
   bool valid;
 
@@ -1482,25 +1483,37 @@ bool commandSetOrDisplayValue(const COMMAND_ENTRY * command, const char * buffer
       break;
 
     //Verify the input value
-    for (digit = buffer; *digit != 0; digit++)
-      if ((*digit < '0') || (*digit > '9'))
-      {
-        //Floating point values may contain a decimal point
-        if ((command->type == TYPE_FLOAT) && (*digit == '.'))
-          continue;
-
-        //Hexadecimal values may contain A through F
-        if ((toupper(*digit) >= 'A') && (toupper(*digit) <= 'F')
-            && (command->type == TYPE_KEY))
-          continue;
+    if ((buffer[0] == '0') && (buffer[1] == 'X'))
+    {
+      digit = buffer + 2;
+      settingValue = strtoul(digit, &nextDigit, 16);
+      if (*nextDigit)
         break;
-      }
-    if (*digit)
-      break;
+      doubleSettingValue = settingValue;
+    }
+    else
+    {
+      //Verify the input value
+      for (digit = buffer; *digit != 0; digit++)
+        if ((*digit < '0') || (*digit > '9'))
+        {
+          //Floating point values may contain a decimal point
+          if ((command->type == TYPE_FLOAT) && (*digit == '.'))
+            continue;
 
-    //Get the value
-    doubleSettingValue = strtod(buffer, NULL);
-    settingValue = doubleSettingValue;
+          //Hexadecimal values may contain A through F
+          if ((toupper(*digit) >= 'A') && (toupper(*digit) <= 'F')
+              && (command->type == TYPE_KEY))
+            continue;
+          break;
+        }
+      if (*digit)
+        break;
+
+      //Get the value
+      doubleSettingValue = strtod(buffer, NULL);
+      settingValue = doubleSettingValue;
+    }
 
     //Validate and set the value
     valid = false;
