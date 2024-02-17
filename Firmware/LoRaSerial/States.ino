@@ -1,3 +1,7 @@
+//=========================================================================================
+// States.ino
+//=========================================================================================
+
 #define SAVE_TX_BUFFER()                                  \
   {                                                       \
     petWDT();                                             \
@@ -55,6 +59,8 @@
     timestampOffset = remoteSystemMillis + (deltaUsec / 1000) - millis();              \
     timestampOffset >>= rShift;                                                        \
   }
+
+//=========================================================================================
 
 //Process the radio states
 void updateRadioState()
@@ -2583,6 +2589,8 @@ void selectHeaderAndTrailerBytes()
   maxDatagramSize = sizeof(outgoingPacket) - minDatagramSize;
 }
 
+//=========================================================================================
+
 //Return true if the radio is in a linked state
 //This is used for determining if we can do remote AT commands or not
 bool isLinked()
@@ -2594,11 +2602,15 @@ bool isLinked()
   return (false);
 }
 
+//=========================================================================================
+
 //Determine if multi-point sync is achieved
 bool isMultiPointSync()
 {
   return ((radioState >= RADIO_MP_STANDBY) && (radioState <= RADIO_MP_WAIT_TX_DONE));
 }
+
+//=========================================================================================
 
 //Verify the radio state definitions against the radioStateTable
 const char * verifyRadioStateTable()
@@ -2769,6 +2781,8 @@ const char * verifyRadioStateTable()
   return NULL;
 }
 
+//=========================================================================================
+
 //Verify the PacketType enums against the radioDatagramType
 const char * verifyRadioDatagramType()
 {
@@ -2779,6 +2793,8 @@ const char * verifyRadioDatagramType()
     return "ERROR - Please update the radioDatagramTable";
   return NULL;
 }
+
+//=========================================================================================
 
 //Change states and print the new state
 void changeState(RadioStates newState)
@@ -2792,6 +2808,8 @@ void changeState(RadioStates newState)
   displayState(newState);
   outputSerialData(true);
 }
+
+//=========================================================================================
 
 //Display the state transition
 void displayState(RadioStates newState)
@@ -2845,6 +2863,8 @@ void displayState(RadioStates newState)
   systemPrintln();
 }
 
+//=========================================================================================
+
 //Display the radio state history
 void displayRadioStateHistory()
 {
@@ -2879,6 +2899,8 @@ void displayRadioStateHistory()
     }
   petWDT();
 }
+
+//=========================================================================================
 
 //Dump the clock synchronization data
 void dumpClockSynchronization()
@@ -2919,6 +2941,8 @@ void dumpClockSynchronization()
     }
   }
 }
+
+//=========================================================================================
 
 //Break a point-to-point link
 void breakLink()
@@ -2964,6 +2988,8 @@ void breakLink()
   changeState(RADIO_RESET);
 }
 
+//=========================================================================================
+
 //Point-to-point link is now up, following a 3-way handshake
 void enterLinkUp()
 {
@@ -3002,6 +3028,8 @@ void enterLinkUp()
   }
 }
 
+//=========================================================================================
+
 //Empty the remote command receive buffer
 void discardPreviousData()
 {
@@ -3015,6 +3043,8 @@ void discardPreviousData()
   commandTXTail = commandTXHead;
   waitRemoteCommandResponse = false;
 }
+
+//=========================================================================================
 
 //Output VC link status
 void vcChangeState(int8_t vcIndex, uint8_t state)
@@ -3073,6 +3103,8 @@ void vcChangeState(int8_t vcIndex, uint8_t state)
   vcSendPcStateMessage(vcIndex, state);
 }
 
+//=========================================================================================
+
 //Send the PC the state message
 void vcSendPcStateMessage(int8_t vcIndex, uint8_t state)
 {
@@ -3095,6 +3127,8 @@ void vcSendPcStateMessage(int8_t vcIndex, uint8_t state)
   systemWrite((uint8_t *)&header, sizeof(header));
   systemWrite((uint8_t *)&message, sizeof(message));
 }
+
+//=========================================================================================
 
 //Break the virtual-circuit link
 void vcBreakLink(int8_t vcIndex)
@@ -3134,6 +3168,8 @@ void vcBreakLink(int8_t vcIndex)
   }
 }
 
+//=========================================================================================
+
 //Place VC in LINK-UP state since it is receiving HEARTBEATs from the remote radio
 int8_t vcLinkAlive(int8_t vcIndex)
 {
@@ -3149,6 +3185,8 @@ int8_t vcLinkAlive(int8_t vcIndex)
   }
   return vcIndex;
 }
+
+//=========================================================================================
 
 void vcZeroAcks(int8_t vcIndex)
 {
@@ -3233,6 +3271,8 @@ int8_t vcIdToAddressByte(int8_t srcAddr, uint8_t * id)
   vc->flags.valid = true;
   return vcLinkAlive(vcIndex);
 }
+
+//=========================================================================================
 
 //Process a received HEARTBEAT frame from a VC
 void vcReceiveHeartbeat(uint32_t rxMillis)

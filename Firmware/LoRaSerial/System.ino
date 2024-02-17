@@ -1,3 +1,7 @@
+//=========================================================================================
+//  System.ino
+//=========================================================================================
+
 //Copy the string into the serialTransmitBuffer or command response buffer (commandTXBuffer)
 void systemPrint(const char* string)
 {
@@ -8,12 +12,16 @@ void systemPrint(const char* string)
     serialOutputByte(string[x]);
 }
 
+//=========================================================================================
+
 //Print a string with a carriage return and linefeed
 void systemPrintln(const char* value)
 {
   systemPrint(value);
   systemPrint("\r\n");
 }
+
+//=========================================================================================
 
 //Print an integer value
 void systemPrint(int value)
@@ -23,6 +31,8 @@ void systemPrint(int value)
   systemPrint(temp);
 }
 
+//=========================================================================================
+
 //Print an integer value
 void systemPrintU64(uint64_t value)
 {
@@ -30,6 +40,8 @@ void systemPrintU64(uint64_t value)
   sprintf(temp, "%ld", value);
   systemPrint(temp);
 }
+
+//=========================================================================================
 
 //Print an integer value as HEX or decimal
 void systemPrint(int value, uint8_t printType)
@@ -44,6 +56,8 @@ void systemPrint(int value, uint8_t printType)
   systemPrint(temp);
 }
 
+//=========================================================================================
+
 //Print a uint32_t value as HEX or decimal
 void systemPrint(uint32_t value, uint8_t printType)
 {
@@ -57,6 +71,8 @@ void systemPrint(uint32_t value, uint8_t printType)
   systemPrint(temp);
 }
 
+//=========================================================================================
+
 //Print a uint32_t value as HEX or decimal
 void systemPrintln(uint32_t value, uint8_t printType)
 {
@@ -64,12 +80,16 @@ void systemPrintln(uint32_t value, uint8_t printType)
   systemPrintln();
 }
 
+//=========================================================================================
+
 //Print an integer value with a carriage return and line feed
 void systemPrintln(int value)
 {
   systemPrint(value);
   systemPrint("\r\n");
 }
+
+//=========================================================================================
 
 //Print an 8-bit value as HEX or decimal
 void systemPrint(uint8_t value, uint8_t printType)
@@ -84,12 +104,16 @@ void systemPrint(uint8_t value, uint8_t printType)
   systemPrint(temp);
 }
 
+//=========================================================================================
+
 //Print an 8-bit value as HEX or decimal with a carriage return and linefeed
 void systemPrintln(uint8_t value, uint8_t printType)
 {
   systemPrint(value, printType);
   systemPrint("\r\n");
 }
+
+//=========================================================================================
 
 //Print a 16-bit value as HEX or decimal
 void systemPrint(uint16_t value, uint8_t printType)
@@ -104,12 +128,16 @@ void systemPrint(uint16_t value, uint8_t printType)
   systemPrint(temp);
 }
 
+//=========================================================================================
+
 //Print a 16-bit value as HEX or decimal with a carriage return and linefeed
 void systemPrintln(uint16_t value, uint8_t printType)
 {
   systemPrint(value, printType);
   systemPrint("\r\n");
 }
+
+//=========================================================================================
 
 //Print a floating point value with a specified number of decimal places
 void systemPrint(float value, uint8_t decimals)
@@ -119,6 +147,8 @@ void systemPrint(float value, uint8_t decimals)
   systemPrint(temp);
 }
 
+//=========================================================================================
+
 //Print a floating point value with a specified number of decimal places and a
 //carriage return and linefeed
 void systemPrintln(float value, uint8_t decimals)
@@ -126,6 +156,8 @@ void systemPrintln(float value, uint8_t decimals)
   systemPrint(value, decimals);
   systemPrint("\r\n");
 }
+
+//=========================================================================================
 
 //Print a double precision floating point value with a specified number of decimal
 //places
@@ -136,6 +168,8 @@ void systemPrint(double value, uint8_t decimals)
   systemPrint(temp);
 }
 
+//=========================================================================================
+
 //Print a double precision floating point value with a specified number of decimal
 //places and a carriage return and linefeed
 void systemPrintln(double value, uint8_t decimals)
@@ -144,11 +178,15 @@ void systemPrintln(double value, uint8_t decimals)
   systemPrint("\r\n");
 }
 
+//=========================================================================================
+
 //Print a carriage return and linefeed
 void systemPrintln()
 {
   systemPrint("\r\n");
 }
+
+//=========================================================================================
 
 //Print a timestamp value: days hours:minutes:seconds.milliseconds
 void systemPrintTimestamp(unsigned int milliseconds)
@@ -203,6 +241,8 @@ void systemPrintTimestamp(unsigned int milliseconds)
   petWDT();
 }
 
+//=========================================================================================
+
 //Print a timestamp value with an offset
 void systemPrintTimestamp()
 {
@@ -223,6 +263,8 @@ void systemPrintTimestamp()
   }
 }
 
+//=========================================================================================
+
 //Print the unique ID value
 void systemPrintUniqueID(uint8_t * uniqueID)
 {
@@ -232,6 +274,8 @@ void systemPrintUniqueID(uint8_t * uniqueID)
   for (index = 0; index < UNIQUE_ID_BYTES; index++)
     systemPrint(uniqueID[index], HEX);
 }
+
+//=========================================================================================
 
 void systemPrintDec(int x, int y)
 {
@@ -257,11 +301,15 @@ void systemPrintDec(int x, int y)
   systemPrint(s);
 }
 
+//=========================================================================================
+
 //Output a byte to the serial port
 void systemWrite(uint8_t value)
 {
   serialOutputByte(value);
 }
+
+//=========================================================================================
 
 //Output a buffer of the specified length to the serial port
 void systemWrite(uint8_t * buffer, uint16_t length)
@@ -274,17 +322,23 @@ void systemWrite(uint8_t * buffer, uint16_t length)
     serialOutputByte(*buffer++);
 }
 
+//=========================================================================================
+
 //Ensure all serial output has been transmitted, FIFOs are empty
 void systemFlush()
 {
   arch.serialFlush();
 }
 
+//=========================================================================================
+
 //Read a byte from the serial port
 uint8_t systemRead()
 {
   return (arch.serialRead());
 }
+
+//=========================================================================================
 
 //Check the train button and change state accordingly
 void updateButton()
@@ -382,11 +436,15 @@ void updateButton()
   }
 }
 
+//=========================================================================================
+
 //Platform specific reset commands
 void systemReset()
 {
   arch.systemReset();
 }
+
+//=========================================================================================
 
 //Display any debug serial data and then loop forever
 void waitForever(const char * errorMessage)
@@ -399,6 +457,8 @@ void waitForever(const char * errorMessage)
   }
 }
 
+//=========================================================================================
+
 //Encrypt a given array in place
 void encryptBuffer(uint8_t *bufferToEncrypt, uint8_t arraySize)
 {
@@ -408,6 +468,8 @@ void encryptBuffer(uint8_t *bufferToEncrypt, uint8_t arraySize)
   gcm.encrypt(bufferToEncrypt, bufferToEncrypt, arraySize);
 }
 
+//=========================================================================================
+
 //Decrypt a given array in place
 void decryptBuffer(uint8_t *bufferToDecrypt, uint8_t arraySize)
 {
@@ -416,6 +478,8 @@ void decryptBuffer(uint8_t *bufferToDecrypt, uint8_t arraySize)
 
   gcm.decrypt(bufferToDecrypt, bufferToDecrypt, arraySize);
 }
+
+//=========================================================================================
 
 //IBM Whitening process from Semtech "Software Whitening and CRC on SX12xx Devices" app note
 //Removes DC Bias from data with long strings of 1s or 0s
@@ -438,6 +502,8 @@ void radioComputeWhitening(uint8_t *buffer, uint16_t bufferSize)
     }
   }
 }
+
+//=========================================================================================
 
 //Toggle a pin. Used for logic analyzer debugging.
 void triggerEvent(uint8_t triggerNumber)
@@ -474,6 +540,8 @@ void triggerEvent(uint8_t triggerNumber)
   }
 }
 
+//=========================================================================================
+
 //Copy the contents of settings struct to outgoing array
 //Note: All variables in struct_settings must be fully cast (uint16_t, int32_t, etc, not int)
 //so that we will have alignment between radios using different platforms (ie ESP32 vs SAMD)
@@ -486,6 +554,8 @@ void moveSettingsToPacket(Settings settings, uint8_t* packetBuffer)
     packetBuffer[x] = bytePtr[x];
 }
 
+//=========================================================================================
+
 //Used to move an incoming packet into the remoteSettings temp buffer
 void movePacketToSettings(Settings settings, uint8_t* packetBuffer)
 {
@@ -495,6 +565,8 @@ void movePacketToSettings(Settings settings, uint8_t* packetBuffer)
   for (uint8_t x = 0 ; x < sizeof(settings) ; x++)
     bytePtr[x] = packetBuffer[x];
 }
+
+//=========================================================================================
 
 //Convert ASCII character to base 16
 int8_t charToHex(char a)
@@ -507,6 +579,8 @@ int8_t charToHex(char a)
   return a;
 }
 
+//=========================================================================================
+
 //Given two letters, convert to base 10
 uint8_t charHexToDec(char a, char b)
 {
@@ -514,6 +588,8 @@ uint8_t charHexToDec(char a, char b)
   b = charToHex(b);
   return ((a << 4) | b);
 }
+
+//=========================================================================================
 
 //Dump a buffer with offset from buffer start, 16 bytes per row, displaying hex and ASCII
 void dumpBuffer(uint8_t * data, int length)
@@ -567,6 +643,8 @@ void dumpBuffer(uint8_t * data, int length)
   }
 }
 
+//=========================================================================================
+
 //Dump a buffer assuming that it contains text
 void dumpBufferRaw(uint8_t * data, int length)
 {
@@ -578,6 +656,8 @@ void dumpBufferRaw(uint8_t * data, int length)
   }
   systemPrintln();
 }
+
+//=========================================================================================
 
 //Dump a circular buffer with offset from buffer start, 16 bytes per row, displaying hex and ASCII
 void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, int length)
@@ -647,6 +727,8 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
   }
 }
 
+//=========================================================================================
+
 //Update the state of the 4 green LEDs
 void setRSSI(uint8_t ledBits)
 {
@@ -671,12 +753,16 @@ void setRSSI(uint8_t ledBits)
     digitalWrite(pin_green_4_LED, LOW);
 }
 
+//=========================================================================================
+
 //Start the cylon LEDs
 void startCylonLEDs()
 {
   cylonLedPattern = 0b0001;
   cylonPatternGoingLeft = false;
 }
+
+//=========================================================================================
 
 //Update the RSSI LED or LEDs
 void blinkRadioRssiLed()
@@ -761,6 +847,8 @@ void blinkRadioRssiLed()
   }
 }
 
+//=========================================================================================
+
 //Set the serial TX (blue) LED value
 void blinkSerialTxLed(bool illuminate)
 {
@@ -777,6 +865,8 @@ void blinkSerialTxLed(bool illuminate)
       break;
   }
 }
+
+//=========================================================================================
 
 //Set the serial RX (yellow) LED value
 void blinkSerialRxLed(bool illuminate)
@@ -798,6 +888,8 @@ void blinkSerialRxLed(bool illuminate)
       break;
   }
 }
+
+//=========================================================================================
 
 //Blink the RX LED
 void blinkRadioRxLed(bool on)
@@ -823,6 +915,8 @@ void blinkRadioRxLed(bool on)
   }
 }
 
+//=========================================================================================
+
 //BLink the TX LED
 void blinkRadioTxLed(bool on)
 {
@@ -846,6 +940,8 @@ void blinkRadioTxLed(bool on)
       break;
   }
 }
+
+//=========================================================================================
 
 //Radio LED display
 // Green1: Radio RX data received
@@ -908,6 +1004,8 @@ void radioLeds()
   }
 }
 
+//=========================================================================================
+
 //Blink the heartbeat LED
 void blinkHeartbeatLed(bool on)
 {
@@ -929,6 +1027,8 @@ void blinkHeartbeatLed(bool on)
   }
 }
 
+//=========================================================================================
+
 //Blink the channel hop LED
 void blinkChannelHopLed(bool on)
 {
@@ -944,6 +1044,8 @@ void blinkChannelHopLed(bool on)
       break;
   }
 }
+
+//=========================================================================================
 
 //Blink the error LED
 void blinkErrorLed(const char * errorMessage)
@@ -977,6 +1079,8 @@ void blinkErrorLed(const char * errorMessage)
   }
 }
 
+//=========================================================================================
+
 //Display the multi-point LED pattern
 void multiPointLeds()
 {
@@ -999,6 +1103,8 @@ void multiPointLeds()
   blinkHeartbeatLed(false);
 }
 
+//=========================================================================================
+
 void p2pLeds()
 {
   //Turn off the RX LED to end the blink
@@ -1018,6 +1124,8 @@ void p2pLeds()
   //Update the HEARTBEAT LED
   blinkHeartbeatLed(false);
 }
+
+//=========================================================================================
 
 //Display the VC LED pattern
 void vcLeds()
@@ -1061,6 +1169,8 @@ void vcLeds()
   blinkHeartbeatLed(false);
 }
 
+//=========================================================================================
+
 //Update the cylon LEDs
 void updateCylonLEDs()
 {
@@ -1074,6 +1184,8 @@ void updateCylonLEDs()
   //Turn off the TX LED to end the blink
   blinkRadioTxLed(false);
 }
+
+//=========================================================================================
 
 //Acknowledge the button press
 void buttonLeds()
@@ -1106,6 +1218,8 @@ void buttonLeds()
       digitalWrite(YELLOW_LED, on);
   }
 }
+
+//=========================================================================================
 
 //Update the LED values depending upon the selected display
 //This is the only function that touches the LEDs
@@ -1210,6 +1324,8 @@ void updateLeds()
   }
 }
 
+//=========================================================================================
+
 //Case independent string comparison
 int stricmp(const char * str1, const char * str2)
 {
@@ -1225,6 +1341,8 @@ int stricmp(const char * str1, const char * str2)
   //Return the difference between the two strings
   return char1 - char2;
 }
+
+//=========================================================================================
 
 //Case independent string comparison with specified maximum length
 int strnicmp(const char * str1, const char * str2, int length)
@@ -1242,6 +1360,8 @@ int strnicmp(const char * str1, const char * str2, int length)
   return char1 - char2;
 }
 
+//=========================================================================================
+
 //Display the RSSI, SNR and frequency error values
 void printPacketQuality()
 {
@@ -1258,6 +1378,8 @@ void printPacketQuality()
   }
 }
 
+//=========================================================================================
+
 //Toggle a pin. Used for logic analyzer debugging.
 void triggerFrequency(uint16_t frequency)
 {
@@ -1265,6 +1387,8 @@ void triggerFrequency(uint16_t frequency)
   delayMicroseconds(frequency);
   digitalWrite(pin_trigger, HIGH);
 }
+
+//=========================================================================================
 
 //Verify the VC_STATE_TYPE enums against the vcStateNames table
 const char * verifyVcStateNames()
@@ -1277,6 +1401,8 @@ const char * verifyVcStateNames()
     return "ERROR: Fix difference between VC_STATE_TYPE and vcStateNames";
   return NULL;
 }
+
+//=========================================================================================
 
 //Verify the enums .vs. name tables, stop on failure to force software fix
 void verifyTables()
