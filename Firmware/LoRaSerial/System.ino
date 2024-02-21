@@ -233,6 +233,30 @@ void systemPrintUniqueID(uint8_t * uniqueID)
     systemPrint(uniqueID[index], HEX);
 }
 
+void systemPrintDec(int x, int y)
+{
+  char string[16];
+  char *s = string + sizeof(string) - 1;
+
+  // Zero terminate the string
+  *--s = 0;
+
+  // Convert from binary to decimal least significant digit first
+  do
+  {
+    *--s = '0' + (x % 10);
+    x = x / 10;
+    y--;
+  } while (x);
+
+  // Blank fill any space to the left of the value
+  while (y-- > 0)
+    *--s = ' ';
+
+  // Output the number
+  systemPrint(s);
+}
+
 //Output a byte to the serial port
 void systemWrite(uint8_t value)
 {
