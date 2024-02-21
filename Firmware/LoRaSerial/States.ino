@@ -1344,7 +1344,7 @@ void updateRadioState()
                 systemPrintln("Received HB, leaving DISCOVER standby");
 
               changeState(RADIO_MP_STANDBY);
-            }
+            } // !server
 
             break;
 
