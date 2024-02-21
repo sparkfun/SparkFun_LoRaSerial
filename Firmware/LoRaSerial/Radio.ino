@@ -2823,8 +2823,10 @@ bool transmitDatagram()
     outputSerialData(true);
     CheckChannelHopAndKickWatchdog();
     if (settings.printRfData)
+    {
       dumpBuffer(outgoingPacket, txDatagramSize);
-    outputSerialData(true);
+      outputSerialData(true);
+    }
   }
 
   //Print raw packet bytes before encryption
@@ -2858,8 +2860,10 @@ bool transmitDatagram()
     outputSerialData(true);
     CheckChannelHopAndKickWatchdog();
     if (settings.printRfData)
+    {
       dumpBuffer(outgoingPacket, txDatagramSize);
-    outputSerialData(true);
+      outputSerialData(true);
+    }
   }
 
   //If we are trainsmitting at high data rates the receiver is often not ready
@@ -2951,8 +2955,10 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
     outputSerialData(true);
     CheckChannelHopAndKickWatchdog();
     if (settings.printRfData)
+    {
       dumpBuffer(outgoingPacket, txDatagramSize);
-    outputSerialData(true);
+      outputSerialData(true);
+    }
   }
 
   //Transmit this frame
