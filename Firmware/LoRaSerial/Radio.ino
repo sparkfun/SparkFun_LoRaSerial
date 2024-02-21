@@ -3409,13 +3409,13 @@ void syncChannelTimer(uint32_t frameAirTimeUsec, bool clockStarting)
   reloadChannelTimer = true;
 
   //Log the previous clock sync
-  clockSyncData[clockSyncIndex].msToNextHop = msToNextHop;
-  clockSyncData[clockSyncIndex].frameAirTimeMsec = frameAirTimeMsec;
+  clockSyncData[clockSyncIndex].msToNextHop       = msToNextHop;
+  clockSyncData[clockSyncIndex].frameAirTimeMsec  = frameAirTimeMsec;
   clockSyncData[clockSyncIndex].msToNextHopRemote = msToNextHopRemote;
-  clockSyncData[clockSyncIndex].adjustment = adjustment;
-  clockSyncData[clockSyncIndex].delayedHopCount = delayedHopCount;
-  clockSyncData[clockSyncIndex].lclHopTimeMsec = lclHopTimeMsec;
-  clockSyncData[clockSyncIndex].timeToHop = timeToHop;
+  clockSyncData[clockSyncIndex].adjustment        = adjustment;
+  clockSyncData[clockSyncIndex].delayedHopCount   = delayedHopCount;
+  clockSyncData[clockSyncIndex].lclHopTimeMsec    = lclHopTimeMsec;
+  clockSyncData[clockSyncIndex].timeToHop         = timeToHop;
   clockSyncIndex += 1;
   if (clockSyncIndex >= (sizeof(clockSyncData) / sizeof(CLOCK_SYNC_DATA)) ) clockSyncIndex = 0;
 

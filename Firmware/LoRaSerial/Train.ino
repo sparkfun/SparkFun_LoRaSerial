@@ -102,17 +102,18 @@ void commonTrainingInitialization()
 {
   //Use common radio settings between the client and server for training
   getDefaultSettings(&settings);
-  settings.dataScrambling = true;           //Scramble the data
-  settings.enableCRC16 = true;              //Use CRC-16
-  settings.encryptData = true;              //Enable packet encryption
+
+  settings.dataScrambling           = true;             //Scramble the data
+  settings.enableCRC16              = true;             //Use CRC-16
+  settings.encryptData              = true;             //Enable packet encryption
   memcpy(&settings.encryptionKey, &trainingSettings.trainingKey, AES_KEY_BYTES); //Common encryption key
-  settings.frequencyHop = false;            //Stay on the training frequency
-  settings.maxResends = 1;                  //Don't waste time retransmitting
-  settings.netID = 'T';                     //NetID for training
-  settings.operatingMode = MODE_MULTIPOINT; //Use datagrams
-  settings.radioBroadcastPower_dbm = trainingSettings.trainingTxPower_dbm;    //Minimum, assume radios are near each other
-  settings.selectLedUse = LEDS_CYLON;       //Display the CYLON pattern on the LEDs
-  settings.verifyRxNetID = true;            //Disable netID checking
+  settings.frequencyHop             = false;            //Stay on the training frequency
+  settings.maxResends               = 1;                //Don't waste time retransmitting
+  settings.netID                    = 'T';              //NetID for training
+  settings.operatingMode            = MODE_MULTIPOINT;  //Use datagrams
+  settings.radioBroadcastPower_dbm  = 14;               //Minimum, assume radios are near each other
+  settings.selectLedUse             = LEDS_CYLON;       //Display the CYLON pattern on the LEDs
+  settings.verifyRxNetID            = true;             //Disable netID checking
 
   //Determine the components of the frame header and trailer
   selectHeaderAndTrailerBytes();
@@ -120,34 +121,34 @@ void commonTrainingInitialization()
   //Debug training if requested
   if (trainingSettings.debugTraining)
   {
-    settings.selectLedUse = trainingSettings.selectLedUse;
+    settings.selectLedUse       = trainingSettings.selectLedUse;
     //Ignore copyDebug
-    settings.debug = trainingSettings.debug;
-    settings.debugDatagrams = trainingSettings.debugDatagrams;
-    settings.debugHeartbeat = trainingSettings.debugHeartbeat;
-    settings.debugNvm = trainingSettings.debugNvm;
-    settings.debugRadio = trainingSettings.debugRadio;
-    settings.debugReceive = trainingSettings.debugReceive;
-    settings.debugSerial = trainingSettings.debugSerial;
-    settings.debugStates = trainingSettings.debugStates;
-    settings.debugSync = trainingSettings.debugSync;
-    settings.debugTraining = trainingSettings.debugTraining;
-    settings.debugTransmit = trainingSettings.debugTransmit;
-    settings.displayRealMillis = trainingSettings.displayRealMillis;
-    settings.printAckNumbers = trainingSettings.printAckNumbers;
-    settings.printChannel = trainingSettings.printChannel;
-    settings.printFrequency = trainingSettings.printFrequency;
-    settings.printLinkUpDown = trainingSettings.printLinkUpDown;
+    settings.debug              = trainingSettings.debug;
+    settings.debugDatagrams     = trainingSettings.debugDatagrams;
+    settings.debugHeartbeat     = trainingSettings.debugHeartbeat;
+    settings.debugNvm           = trainingSettings.debugNvm;
+    settings.debugRadio         = trainingSettings.debugRadio;
+    settings.debugReceive       = trainingSettings.debugReceive;
+    settings.debugSerial        = trainingSettings.debugSerial;
+    settings.debugStates        = trainingSettings.debugStates;
+    settings.debugSync          = trainingSettings.debugSync;
+    settings.debugTraining      = trainingSettings.debugTraining;
+    settings.debugTransmit      = trainingSettings.debugTransmit;
+    settings.displayRealMillis  = trainingSettings.displayRealMillis;
+    settings.printAckNumbers    = trainingSettings.printAckNumbers;
+    settings.printChannel       = trainingSettings.printChannel;
+    settings.printFrequency     = trainingSettings.printFrequency;
+    settings.printLinkUpDown    = trainingSettings.printLinkUpDown;
     settings.printPacketQuality = trainingSettings.printPacketQuality;
-    settings.printPktData = trainingSettings.printPktData;
-    settings.printRfData = trainingSettings.printRfData;
-    settings.printTimestamp = trainingSettings.printTimestamp;
-    settings.printTxErrors = trainingSettings.printTxErrors;
+    settings.printPktData       = trainingSettings.printPktData;
+    settings.printRfData        = trainingSettings.printRfData;
+    settings.printTimestamp     = trainingSettings.printTimestamp;
+    settings.printTxErrors      = trainingSettings.printTxErrors;
 
     //Ignore copyTriggers
-    settings.triggerEnable = trainingSettings.triggerEnable;
-    settings.triggerEnable2 = trainingSettings.triggerEnable2;
-    settings.triggerWidth = trainingSettings.triggerWidth;
+    settings.triggerEnable            = trainingSettings.triggerEnable;
+    settings.triggerEnable2           = trainingSettings.triggerEnable2;
+    settings.triggerWidth             = trainingSettings.triggerWidth;
     settings.triggerWidthIsMultiplier = trainingSettings.triggerWidthIsMultiplier;
   }
 
