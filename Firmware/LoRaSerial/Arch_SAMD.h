@@ -1,5 +1,11 @@
+//=========================================================================================
+// Arch_SAMD.h
+//=========================================================================================
+
 #if defined(ARDUINO_ARCH_SAMD)
 #ifndef __SAMD_H__
+
+//=========================================================================================
 
 #include <FlashAsEEPROM_SAMD.h> //Click here to get the library: http://librarymanager/All#FlashStorage_SAMD21 v1.3.2 by Khoi Hoang
 #include <WDTZero.h> //https://github.com/javos65/WDTZero
@@ -10,7 +16,8 @@ WDTZero myWatchDog;
 
 #define PET_TIMEOUT             1800 // Milliseconds
 
-/*
+/*=========================================================================================
+
   Data flow
                    +--------------+
                    |     SAMD     |
@@ -63,7 +70,8 @@ WDTZero myWatchDog;
                           |      PA23 21 |---> SCL
                           |      PA22 20 |---> SDA
                           +--------------+
-*/
+
+=========================================================================================*/
 
 //Initialize the LoRaSerial board
 void samdBeginBoard()
@@ -152,6 +160,8 @@ void samdBeginBoard()
   }
 }
 
+//=========================================================================================
+
 //Initialize the USB serial port and the UART
 void samdBeginSerial(uint16_t serialSpeed)
 {
@@ -162,22 +172,30 @@ void samdBeginSerial(uint16_t serialSpeed)
   Serial1.begin(serialSpeed);
 }
 
+//=========================================================================================
+
 //Initialize the watch dog timer
 void samdBeginWDT()
 {
   myWatchDog.setup(WDT_HARDCYCLE2S);  // Initialize WDT with 2s timeout
 }
 
+//=========================================================================================
+
 //Initilaize the EEPROM controller or simulation
 void samdEepromBegin()
 {
 }
+
+//=========================================================================================
 
 //Write any remaining data to EEPROM
 void samdEepromCommit()
 {
   EEPROM.commit();
 }
+
+//=========================================================================================
 
 //Perform the necessary action to "pet" the watch dog timer
 void samdPetWDT()
@@ -186,11 +204,15 @@ void samdPetWDT()
   myWatchDog.clear();
 }
 
+//=========================================================================================
+
 //Initialize the radio module
 Module * samdRadio()
 {
   return new Module(pin_cs, pin_dio0, pin_rst, pin_dio1);
 }
+
+//=========================================================================================
 
 //Determine if serial input data is available
 bool samdSerialAvailable()
@@ -198,12 +220,16 @@ bool samdSerialAvailable()
   return (Serial.available() || Serial1.available());
 }
 
+//=========================================================================================
+
 //Ensure that all serial output data has been sent over USB and via the UART
 void samdSerialFlush()
 {
   Serial.flush();
   Serial1.flush();
 }
+
+//=========================================================================================
 
 //Read in the serial input data
 uint8_t samdSerialRead()
@@ -216,6 +242,8 @@ uint8_t samdSerialRead()
   return (incoming);
 }
 
+//=========================================================================================
+
 //Provide the serial output data to the USB layer or the UART TX FIFO
 void samdSerialWrite(uint8_t value)
 {
@@ -223,11 +251,15 @@ void samdSerialWrite(uint8_t value)
   Serial1.write(value);
 }
 
+//=========================================================================================
+
 //Reset the CPU
 void samdSystemReset()
 {
   NVIC_SystemReset();
 }
+
+//=========================================================================================
 
 //Get the CPU's unique ID value
 void samdUniqueID(uint8_t * unique128_BitID)
@@ -242,6 +274,8 @@ void samdUniqueID(uint8_t * unique128_BitID)
 
   memcpy(unique128_BitID, id, UNIQUE_ID_BYTES);
 }
+
+//=========================================================================================
 
 //Provide the hardware abstraction layer (HAL) interface
 const ARCH_TABLE arch = {
@@ -259,6 +293,8 @@ const ARCH_TABLE arch = {
   samdSystemReset,            //systemReset
   samdUniqueID,               //uniqueID
 };
+
+//=========================================================================================
 
 #endif  //__SAMD_H__
 #endif  //ARDUINO_ARCH_SAMD

@@ -1,3 +1,7 @@
+//=========================================================================================
+//  Begin.ino
+//=========================================================================================
+
 //Blink LEDs to indicate the completion of system setup
 void blinkStartup()
 {
@@ -21,6 +25,8 @@ void blinkStartup()
   }
 }
 
+//=========================================================================================
+
 //Initialize the radio layer
 void beginLoRa()
 {
@@ -40,6 +46,8 @@ void beginLoRa()
   changeState(RADIO_RESET);
 }
 
+//=========================================================================================
+
 //Initialize the button driver
 void beginButton()
 {
@@ -49,6 +57,8 @@ void beginButton()
     trainBtn->begin();
   }
 }
+
+//=========================================================================================
 
 //Delay with pets of WDT when needed
 void delayWDT(uint16_t delayAmount)
@@ -61,12 +71,16 @@ void delayWDT(uint16_t delayAmount)
   }
 }
 
+//=========================================================================================
+
 //Initialize the serial drivers
 void beginSerial(uint16_t serialSpeed)
 {
   Serial.begin(serialSpeed);
   arch.beginSerial(serialSpeed);
 }
+
+//=========================================================================================
 
 //Ensure the watch dog timer does not fire which would cause a CPU hardware reset
 void petWDT()
@@ -110,6 +124,8 @@ void beginChannelTimer()
 
   stopChannelTimer(); //Start timer in state machine - beginChannelTimer
 }
+
+//=========================================================================================
 
 //ISR that fires when channel timer expires
 void channelTimerHandler()

@@ -1,3 +1,7 @@
+//=========================================================================================
+//  Train.ino
+//=========================================================================================
+
 //Select the training protocol
 void selectTraining()
 {
@@ -6,6 +10,8 @@ void selectTraining()
   else
     beginTrainingClient();
 }
+
+//=========================================================================================
 
 //Generate new netID/AES key to share
 //We assume the user needs to maintain their settings (airSpeed, numberOfChannels, freq min/max, bandwidth/spread/hop)
@@ -64,6 +70,8 @@ void beginTrainingClient()
     changeState(RADIO_TRAIN_WAIT_RX_RADIO_PARAMETERS);
 }
 
+//=========================================================================================
+
 //Start the training in server mode
 void beginTrainingServer()
 {
@@ -96,6 +104,8 @@ void beginTrainingServer()
   //Set the next state
   changeState(RADIO_TRAIN_WAIT_FOR_FIND_PARTNER);
 }
+
+//=========================================================================================
 
 //Perform the common training initialization
 void commonTrainingInitialization()
@@ -170,6 +180,8 @@ void commonTrainingInitialization()
   petWDT();
   configureRadio(); //Setup radio with settings
 }
+
+//=========================================================================================
 
 //Upon successful exchange of parameters, switch to the new radio settings
 void endClientServerTraining(uint8_t event)

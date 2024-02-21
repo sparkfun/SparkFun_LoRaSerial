@@ -1,4 +1,6 @@
-/*
+/*=========================================================================================
+  LoRaSerial.ino
+
   December 15th, 2021
   SparkFun Electronics
   Nathan Seidle
@@ -37,7 +39,7 @@
     ~14k RAM for serial RX/TX and radio buffers
 
   Compiled with Arduino v1.8.15
-*/
+=========================================================================================*/
 
 const int FIRMWARE_VERSION_MAJOR = 2;
 const int FIRMWARE_VERSION_MINOR = 0;
@@ -616,7 +618,8 @@ void updateRTS(bool assertRTS);
 
 #include "Arch_ESP32.h"
 #include "Arch_SAMD.h"
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+//=========================================================================================
 
 //Initial entrypoint following any runtime library initialization
 void setup()
@@ -671,6 +674,8 @@ void setup()
 
   blinkStartup(); //Blink LEDs to indicate the completion of system setup
 }
+
+//=========================================================================================
 
 //Idle loop for the CPU
 void loop()
