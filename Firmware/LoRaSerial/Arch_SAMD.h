@@ -8,6 +8,8 @@ WDTZero myWatchDog;
 #define NVM_ERASE_VALUE         0xff
 #define NVM_UNIQUE_ID_OFFSET    (EEPROM_EMULATION_SIZE - (MAX_VC * UNIQUE_ID_BYTES))
 
+#define PET_TIMEOUT             1800 // Milliseconds
+
 /*
   Data flow
                    +--------------+
@@ -164,7 +166,6 @@ void samdBeginSerial(uint16_t serialSpeed)
 void samdBeginWDT()
 {
   myWatchDog.setup(WDT_HARDCYCLE2S);  // Initialize WDT with 2s timeout
-  petTimeout = 1800;
 }
 
 //Initilaize the EEPROM controller or simulation

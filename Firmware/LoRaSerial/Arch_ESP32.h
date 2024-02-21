@@ -7,6 +7,8 @@
 #define NVM_ERASE_VALUE         0xff
 #define NVM_UNIQUE_ID_OFFSET    (EEPROM_SIZE - (MAX_VC * UNIQUE_ID_BYTES))
 
+#define PET_TIMEOUT             500 // Milliseconds
+
 /*
   Data flow
                    +--------+
@@ -57,7 +59,6 @@ void esp32BeginSerial(uint16_t serialSpeed)
 //Initialize the watch dog timer
 void esp32BeginWDT()
 {
-  petTimeout = 1000 / 2;
 }
 
 //Initilaize the EEPROM controller or simulation
