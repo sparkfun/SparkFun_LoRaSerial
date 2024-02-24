@@ -1,5 +1,26 @@
 //=========================================================================================
 // Radio.ino
+//
+// Hop synchronization between LoRaSerial radios is maintained with a
+// hardware timer (channelTimer) interrupt routine.  The hop timer
+// interrupt needs to switch frequencies which requires a SPI
+// transaction with the radio.  To prevent other SPI transactions with
+// the radio from being interrupted, all SPI transactions need to be
+// done within a critical section (interrupts disabled).  The following
+// radio support routines are the only routines that reference the radio
+// structure.  No other radio. calls should be made!
+//=========================================================================================
+
+static SX1276 radio = NULL; //We can't instantiate here because we don't yet know what pin numbers to use
+
+int16_t radioAutoLDRO()
+{
+  int16_t status;
+
+  status = radio.autoLDRO();
+  return status;
+}
+
 //=========================================================================================
 
 //Initialize the radio layer
@@ -32,6 +53,359 @@ void radioBeginLoRa()
 
 //=========================================================================================
 
+void radioClearFHSSInt()
+{
+  radio.clearFHSSInt();
+}
+
+//=========================================================================================
+
+int16_t radioExplicitHeader()
+{
+  int16_t status;
+
+  status = radio.explicitHeader();
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioForceLDRO(bool enable)
+{
+  int16_t status;
+
+  status = radio.forceLDRO(enable);
+  return status;
+}
+
+//=========================================================================================
+
+float radioGetFrequencyError()
+{
+  float frequencyError;
+
+  frequencyError = radio.getFrequencyError();
+  return frequencyError;
+}
+
+//=========================================================================================
+
+uint16_t radioGetIRQFlags()
+{
+  uint16_t irqFlags;
+
+  irqFlags = radio.getIRQFlags();
+  return irqFlags;
+}
+
+//=========================================================================================
+
+uint8_t radioGetModemStatus()
+{
+  uint8_t radioStatus;
+
+  radioStatus = radio.getModemStatus();
+  return radioStatus;
+}
+
+//=========================================================================================
+
+size_t radioGetPacketLength()
+{
+  size_t packetLength;
+
+  packetLength = radio.getPacketLength();
+  return packetLength;
+}
+
+//=========================================================================================
+
+int radioGetRSSI()
+{
+  int RSSI;
+
+  RSSI = radio.getRSSI();
+  return RSSI;
+}
+
+//=========================================================================================
+
+float radioGetSNR()
+{
+  float signalToNoiseRatio;
+
+  signalToNoiseRatio = radio.getSNR();
+  return signalToNoiseRatio;
+}
+
+//=========================================================================================
+
+int16_t radioImplicitHeader(size_t len)
+{
+  int16_t status;
+
+  status = radio.implicitHeader(len);
+  return status;
+}
+
+//=========================================================================================
+
+uint8_t radioRandomByte()
+{
+  int16_t status;
+
+  status = radio.randomByte();
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioReadData(uint8_t * buffer, size_t bufferLength)
+{
+  int16_t status;
+
+  status = radio.readData(buffer, bufferLength);
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetBandwidth(float bandwidth)
+{
+  int16_t status;
+
+  status = radio.setBandwidth(bandwidth);
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetCodingRate(uint8_t codingRate)
+{
+  int16_t status;
+
+  status = radio.setCodingRate(codingRate);
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetCRC(bool enable)
+{
+  int16_t status;
+
+  status = radio.setCRC(enable);
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetDio0Action(void (*function)(void))
+{
+  int16_t status;
+
+  radio.setDio0Action(function);
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetDio1Action(void (*function)(void))
+{
+  int16_t status;
+
+  radio.setDio1Action(function);
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetFHSSHoppingPeriod(uint8_t freqHoppingPeriod)
+{
+  int16_t status;
+
+  status = radio.setFHSSHoppingPeriod(freqHoppingPeriod);
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetFrequency(float frequency)
+{
+  int16_t status;
+
+  status = radio.setFrequency(frequency);
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetOutputPower(int8_t power)
+{
+  int16_t status;
+
+  status = radio.setOutputPower(power);
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetPreambleLength(uint16_t preambleLength)
+{
+  int16_t status;
+
+  status = radio.setPreambleLength(preambleLength);
+  return status;
+}
+
+//=========================================================================================
+
+void radioSetRfSwitchPins(RADIOLIB_PIN_TYPE rxEn, RADIOLIB_PIN_TYPE txEn)
+{
+  radio.setRfSwitchPins(rxEn, txEn);
+}
+
+//=========================================================================================
+
+int16_t radioSetSpreadingFactor(uint8_t spreadFactor)
+{
+  int16_t status;
+
+  status = radio.setSpreadingFactor(spreadFactor);
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetSyncWord(uint8_t syncWord)
+{
+  int16_t status;
+
+  status = radio.setSyncWord(syncWord);
+  return status;
+}
+
+//=========================================================================================
+
+int radioStartReceive()
+{
+  int state;
+
+  state = radio.startReceive();
+  return state;
+}
+
+int radioStartReceive(uint8_t expectedSize)
+{
+  int state;
+
+  state = radio.startReceive(expectedSize);
+  return state;
+}
+
+//=========================================================================================
+
+int radioStartTransmit(uint8_t * buffer, uint8_t lengthInBytes)
+{
+  int state;
+
+  state = radio.startTransmit(buffer, lengthInBytes);
+  return state;
+}
+
+//=========================================================================================
+#ifdef  RADIOLIB_LOW_LEVEL
+//=========================================================================================
+
+//Read a register from the SX1276 chip
+uint8_t readSX1276Register(uint8_t reg)
+{
+  uint8_t data;
+
+  radioCallHistory[RADIO_CALL_readSX1276Register] = millis();
+
+  noInterrupts();
+  data = radio._mod->SPIreadRegister(reg);
+  interrupts();
+  return data;
+}
+
+//=========================================================================================
+
+//SX1276 LoRa Register Names
+const char * const sx1276RegisterNames[] =
+{
+  NULL,           "RegOpMode",      NULL,                 NULL,                 // 0 -  3
+  NULL,           NULL,             "RegFrfMsb",          "RegFrfMid",          // 4 -  7
+  "RegFrfLsb",    "RegPaConfig",    "RegPaRamp",          "RegOcp",             // 8 -  b
+  "RegLna",       "RegFifoAddrPtr", "RegFifoTxBaseAddr",  "regFifoRxBaseAddr",  // c -  f
+
+  "FifoRxCurrentAddr", "RegIrqFlagsMask", "RegIrqFlags",  "RegRxNbBytes",       //10 - 13
+  "RegRxHeaderCntValueMsb", "RegRxHeaderCntValueLsb", "RegRxPacketCntValueMsb", "RegRxPacketCntValueLsb", //14 - 17
+  "RegModemStat", "RegPktSnrValue", "RegPktRssiValue",    "RegRssiValue",       //18 - 1b
+  "RegHopChannel", "RegModemConfig1", "RegModemConfig2",   "RegSymbTimeoutLsb", //1c - 1f
+
+  "RegPreambleMsb", "RegPreambleLsb", "RegPayloadLength", "RegMaxPayloadLength",//20 - 23
+  "RegHopPeriod", "RegFifoRxByteAddr", "RegModemConfig3", NULL,                 //24 - 27
+  "RegFeiMsb",    "RegFeiMid",        "RegFeiLsb",        NULL,                 //28 - 2b
+  "RegRssiWideband", NULL,              NULL,             "RegIfFreq1",         //2c - 2f
+
+  "RegIfFreq2",   "ReqDetectOptimize",  NULL,             "ReqInvertIQ",        //30 - 33
+  NULL,           NULL,         "RegHighBwOpimize1",  "RegDetectionThreshold",  //34 - 37
+  NULL,           "RegSyncWord",      "RegHighBwOptimize2", "RegInvertIQ2",     //38 - 3b
+  NULL,           NULL,               NULL,               NULL,                 //3c - 3f
+
+  "RegDioMapping1", "RegDioMapping2", "RegVersion",       NULL,                 //40 - 43
+  NULL,           NULL,               NULL,               NULL,                 //44 - 47
+  NULL,           NULL,               NULL,               "RegTcxo",            //48 - 4b
+  NULL,           "RegPaDac",         NULL,               NULL,                 //4C - 4F
+
+  NULL,           NULL,               NULL,               NULL,                 //50 - 53
+  NULL,           NULL,               NULL,               NULL,                 //54 - 57
+  NULL,           NULL,               NULL,               "RegFormerTemp",      //58 - 5b
+  NULL,           NULL,               NULL,               NULL,                 //5c - 5f
+
+  NULL,           "RegAgcRef",        "RegAgcThresh1",    "RegAgcThresh2",      //60 - 63
+  "RegAgcThresh3", NULL,              NULL,               NULL,                 //64 - 67
+  NULL,           NULL,               NULL,               NULL,                 //68 - 6b
+  NULL,           NULL,               NULL,               NULL,                 //6c - 6f
+
+  "RegPII",                                                                     //70
+};
+
+//Print the SX1276 LoRa registers
+void printSX1276Registers()
+{
+  radioCallHistory[RADIO_CALL_printSX1276Registers] = millis();
+
+  petWDT();
+  systemPrintln("SX1276 Registers:");
+  systemPrintln("     Reg Value  Name");
+  for (uint8_t i = 0; i < (sizeof(sx1276RegisterNames) / sizeof(sx1276RegisterNames[0])); i++)
+  {
+    //Only read and print the valid registers
+    if (sx1276RegisterNames[i])
+    {
+      systemPrint("    0x");
+      systemPrint(i, HEX);
+      systemPrint(": 0x");
+      systemPrint(readSX1276Register(i), HEX);
+      systemPrint(", ");
+      systemPrintln(sx1276RegisterNames[i]);
+      outputSerialData(true);
+      petWDT();
+    }
+  }
+}
+
+//=========================================================================================
+#endif  //RADIOLIB_LOW_LEVEL
+//=========================================================================================
+
+//=========================================================================================
+//*****  All "radio." references must be in this module and above this line!!!  *****
+//=========================================================================================
+
 //Apply settings to radio
 //Called after begin() and once user exits from command interface
 bool configureRadio()
@@ -48,36 +422,36 @@ bool configureRadio()
   //Measuring actual power output the radio will output 14dBm (25mW) to 27.9dBm (617mW) in constant transmission
   //So we use a lookup to convert between the user's chosen power and the radio setting
   int radioPowerSetting = covertdBmToSetting(settings.radioBroadcastPower_dbm);
-  if (radio.setOutputPower(radioPowerSetting) == RADIOLIB_ERR_INVALID_OUTPUT_POWER)
+  if (radioSetOutputPower(radioPowerSetting) == RADIOLIB_ERR_INVALID_OUTPUT_POWER)
     success = false;
 
-  if (radio.setBandwidth(settings.radioBandwidth) == RADIOLIB_ERR_INVALID_BANDWIDTH)
+  if (radioSetBandwidth(settings.radioBandwidth) == RADIOLIB_ERR_INVALID_BANDWIDTH)
     success = false;
 
-  if (radio.setSpreadingFactor(settings.radioSpreadFactor) == RADIOLIB_ERR_INVALID_SPREADING_FACTOR)
+  if (radioSetSpreadingFactor(settings.radioSpreadFactor) == RADIOLIB_ERR_INVALID_SPREADING_FACTOR)
     success = false;
 
-  if (radio.setCodingRate(settings.radioCodingRate) == RADIOLIB_ERR_INVALID_CODING_RATE)
+  if (radioSetCodingRate(settings.radioCodingRate) == RADIOLIB_ERR_INVALID_CODING_RATE)
     success = false;
 
-  if (radio.setSyncWord(settings.radioSyncWord) != RADIOLIB_ERR_NONE)
+  if (radioSetSyncWord(settings.radioSyncWord) != RADIOLIB_ERR_NONE)
     success = false;
 
-  if (radio.setPreambleLength(settings.radioPreambleLength) == RADIOLIB_ERR_INVALID_PREAMBLE_LENGTH)
+  if (radioSetPreambleLength(settings.radioPreambleLength) == RADIOLIB_ERR_INVALID_PREAMBLE_LENGTH)
     success = false;
 
-  if (radio.setCRC(true) == RADIOLIB_ERR_INVALID_CRC_CONFIGURATION) //Enable hardware CRC
+  if (radioSetCRC(true) == RADIOLIB_ERR_INVALID_CRC_CONFIGURATION) //Enable hardware CRC
     success = false;
 
   //SF6 requires an implicit header. We will transmit 255 bytes for most packets and 2 bytes for ACK packets.
   if (settings.radioSpreadFactor == 6)
   {
-    if (radio.implicitHeader(MAX_PACKET_SIZE) != RADIOLIB_ERR_NONE)
+    if (radioImplicitHeader(MAX_PACKET_SIZE) != RADIOLIB_ERR_NONE)
       success = false;
   }
   else
   {
-    if (radio.explicitHeader() != RADIOLIB_ERR_NONE)
+    if (radioExplicitHeader() != RADIOLIB_ERR_NONE)
       success = false;
   }
 
@@ -85,20 +459,20 @@ bool configureRadio()
   uint16_t airSpeed = convertSettingsToAirSpeed(&settings);
   if (airSpeed <= 400)
   {
-    if (radio.forceLDRO(true) != RADIOLIB_ERR_NONE)
+    if (radioForceLDRO(true) != RADIOLIB_ERR_NONE)
       success = false;
   }
   else
   {
-    if (radio.autoLDRO() != RADIOLIB_ERR_NONE)
+    if (radioAutoLDRO() != RADIOLIB_ERR_NONE)
       success = false;
   }
 
-  radio.setDio0Action(transactionCompleteISR); //Called when transmission is finished
-  radio.setDio1Action(hopISR); //Called after a transmission has started, so we can move to next freq
+  radioSetDio0Action(transactionCompleteISR); //Called when transmission is finished
+  radioSetDio1Action(hopISR); //Called after a transmission has started, so we can move to next freq
 
   if (pin_rxen != PIN_UNDEFINED)
-    radio.setRfSwitchPins(pin_rxen, pin_txen);
+    radioSetRfSwitchPins(pin_rxen, pin_txen);
 
   // HoppingPeriod = Tsym * FreqHoppingPeriod
   // Given defaults of spreadfactor = 9, bandwidth = 125, it follows Tsym = 4.10ms
@@ -106,7 +480,7 @@ bool configureRadio()
   uint16_t hoppingPeriod = settings.maxDwellTime / calcSymbolTimeMsec(); //Limit FHSS dwell time to 400ms max. / automatically floors number
   if (hoppingPeriod > 255) hoppingPeriod = 255; //Limit to 8 bits.
   if (settings.frequencyHop == false) hoppingPeriod = 0; //Disable
-  if (radio.setFHSSHoppingPeriod(hoppingPeriod) != RADIOLIB_ERR_NONE)
+  if (radioSetFHSSHoppingPeriod(hoppingPeriod) != RADIOLIB_ERR_NONE)
     success = false;
 
   if ((settings.debug == true) || (settings.debugRadio == true))
@@ -231,7 +605,7 @@ bool setRadioFrequency(bool rxAdjust)
     radioFrequency -= frequencyCorrection;
 
   //Set the new frequency
-  if (radio.setFrequency(radioFrequency) == RADIOLIB_ERR_INVALID_FREQUENCY)
+  if (radioSetFrequency(radioFrequency) == RADIOLIB_ERR_INVALID_FREQUENCY)
     return false;
 
   if (settings.debugSync)
@@ -274,14 +648,14 @@ void returnToReceiving()
   int state;
   if (settings.radioSpreadFactor > 6)
   {
-    state = radio.startReceive();
+    state = radioStartReceive();
   }
   else
   {
     if (settings.operatingMode == MODE_POINT_TO_POINT)
     {
-      radio.implicitHeader(sf6ExpectedSize);
-      state = radio.startReceive(sf6ExpectedSize); //Set the size we expect to see
+      radioImplicitHeader(sf6ExpectedSize);
+      state = radioStartReceive(sf6ExpectedSize); //Set the size we expect to see
 
       if (sf6ExpectedSize < MAX_PACKET_SIZE)
         triggerEvent(TRIGGER_RTR_SHORT_PACKET);
@@ -692,7 +1066,7 @@ unsigned long mSecToChannelZero()
 //Returns true if the radio indicates we have an ongoing reception
 bool receiveInProcess(bool startClock)
 {
-  uint8_t radioStatus = radio.getModemStatus();
+  uint8_t radioStatus = radioGetModemStatus();
   radioStatus &= 0b11011; //Get bits 0, 1, 3, and 4
 
   //Known states where a reception is in progress
@@ -742,88 +1116,6 @@ uint8_t covertdBmToSetting(uint8_t userSetting)
 }
 
 //=========================================================================================
-#ifdef  RADIOLIB_LOW_LEVEL
-//=========================================================================================
-
-//Read a register from the SX1276 chip
-uint8_t readSX1276Register(uint8_t reg)
-{
-  radioCallHistory[RADIO_CALL_readSX1276Register] = millis();
-
-  return radio._mod->SPIreadRegister(reg);
-}
-
-//=========================================================================================
-
-//SX1276 LoRa Register Names
-const char * const sx1276RegisterNames[] =
-{
-  NULL,           "RegOpMode",      NULL,                 NULL,                 // 0 -  3
-  NULL,           NULL,             "RegFrfMsb",          "RegFrfMid",          // 4 -  7
-  "RegFrfLsb",    "RegPaConfig",    "RegPaRamp",          "RegOcp",             // 8 -  b
-  "RegLna",       "RegFifoAddrPtr", "RegFifoTxBaseAddr",  "regFifoRxBaseAddr",  // c -  f
-
-  "FifoRxCurrentAddr", "RegIrqFlagsMask", "RegIrqFlags",  "RegRxNbBytes",       //10 - 13
-  "RegRxHeaderCntValueMsb", "RegRxHeaderCntValueLsb", "RegRxPacketCntValueMsb", "RegRxPacketCntValueLsb", //14 - 17
-  "RegModemStat", "RegPktSnrValue", "RegPktRssiValue",    "RegRssiValue",       //18 - 1b
-  "RegHopChannel", "RegModemConfig1", "RegModemConfig2",   "RegSymbTimeoutLsb", //1c - 1f
-
-  "RegPreambleMsb", "RegPreambleLsb", "RegPayloadLength", "RegMaxPayloadLength",//20 - 23
-  "RegHopPeriod", "RegFifoRxByteAddr", "RegModemConfig3", NULL,                 //24 - 27
-  "RegFeiMsb",    "RegFeiMid",        "RegFeiLsb",        NULL,                 //28 - 2b
-  "RegRssiWideband", NULL,              NULL,             "RegIfFreq1",         //2c - 2f
-
-  "RegIfFreq2",   "ReqDetectOptimize",  NULL,             "ReqInvertIQ",        //30 - 33
-  NULL,           NULL,         "RegHighBwOpimize1",  "RegDetectionThreshold",  //34 - 37
-  NULL,           "RegSyncWord",      "RegHighBwOptimize2", "RegInvertIQ2",     //38 - 3b
-  NULL,           NULL,               NULL,               NULL,                 //3c - 3f
-
-  "RegDioMapping1", "RegDioMapping2", "RegVersion",       NULL,                 //40 - 43
-  NULL,           NULL,               NULL,               NULL,                 //44 - 47
-  NULL,           NULL,               NULL,               "RegTcxo",            //48 - 4b
-  NULL,           "RegPaDac",         NULL,               NULL,                 //4C - 4F
-
-  NULL,           NULL,               NULL,               NULL,                 //50 - 53
-  NULL,           NULL,               NULL,               NULL,                 //54 - 57
-  NULL,           NULL,               NULL,               "RegFormerTemp",      //58 - 5b
-  NULL,           NULL,               NULL,               NULL,                 //5c - 5f
-
-  NULL,           "RegAgcRef",        "RegAgcThresh1",    "RegAgcThresh2",      //60 - 63
-  "RegAgcThresh3", NULL,              NULL,               NULL,                 //64 - 67
-  NULL,           NULL,               NULL,               NULL,                 //68 - 6b
-  NULL,           NULL,               NULL,               NULL,                 //6c - 6f
-
-  "RegPII",                                                                     //70
-};
-
-//Print the SX1276 LoRa registers
-void printSX1276Registers()
-{
-  radioCallHistory[RADIO_CALL_printSX1276Registers] = millis();
-
-  petWDT();
-  systemPrintln("SX1276 Registers:");
-  systemPrintln("     Reg Value  Name");
-  for (uint8_t i = 0; i < (sizeof(sx1276RegisterNames) / sizeof(sx1276RegisterNames[0])); i++)
-  {
-    //Only read and print the valid registers
-    if (sx1276RegisterNames[i])
-    {
-      systemPrint("    0x");
-      systemPrint(i, HEX);
-      systemPrint(": 0x");
-      systemPrint(readSX1276Register(i), HEX);
-      systemPrint(", ");
-      systemPrintln(sx1276RegisterNames[i]);
-      outputSerialData(true);
-      petWDT();
-    }
-  }
-}
-
-//=========================================================================================
-#endif  //RADIOLIB_LOW_LEVEL
-//=========================================================================================
 
 //ISR when DIO0 goes low
 //Called when transmission is complete or when RX is received
@@ -865,7 +1157,7 @@ void updateHopISR()
   if (hop) //Clear hop ISR as needed
   {
     hop = false;
-    radio.clearFHSSInt(); //Clear the interrupt
+    radioClearFHSSInt(); //Clear the interrupt
   }
 }
 
@@ -1804,11 +2096,11 @@ PacketType rcvDatagram()
   rcvTimeMillis = millis();
 
   //Get the IRQ flags
-  irqFlags = radio.getIRQFlags();
+  irqFlags = radioGetIRQFlags();
 
   //Get the received datagram
   framesReceived++;
-  int state = radio.readData(incomingBuffer, MAX_PACKET_SIZE);
+  int state = radioReadData(incomingBuffer, MAX_PACKET_SIZE);
 
   printPacketQuality(); //Display the RSSI, SNR and frequency error values
 
@@ -1816,7 +2108,7 @@ PacketType rcvDatagram()
   {
     rxSuccessMillis = rcvTimeMillis;
     triggerEvent(TRIGGER_RX_SPI_DONE);
-    packetRSSI = radio.getRSSI();
+    packetRSSI = radioGetRSSI();
   }
   else
   {
@@ -1847,7 +2139,7 @@ PacketType rcvDatagram()
     }
   }
 
-  rxDataBytes = radio.getPacketLength();
+  rxDataBytes = radioGetPacketLength();
   packetLength = rxDataBytes; //Total bytes received, used for calculating clock sync times in multi-point mode
 
   returnToReceiving(); //Immediately begin listening while we process new data
@@ -2848,7 +3140,7 @@ bool transmitDatagram()
         break;
     }
 
-    radio.implicitHeader(txDatagramSize); //Set header size so that hardware CRC is calculated correctly
+    radioImplicitHeader(txDatagramSize); //Set header size so that hardware CRC is calculated correctly
 
     endOfTxData = &outgoingPacket[txDatagramSize];
     if (settings.debugTransmit)
@@ -3164,7 +3456,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   else
   {
     //Move the data to the radio over SPI
-    int state = radio.startTransmit(outgoingPacket, txDatagramSize);
+    int state = radioStartTransmit(outgoingPacket, txDatagramSize);
 
     if (state == RADIOLIB_ERR_NONE)
     {
@@ -3915,7 +4207,7 @@ void dummyRead()
   triggerEvent(TRIGGER_DUMMY_READ);
   systemPrintln("Dummy read");
 
-  int state = radio.readData(incomingBuffer, MAX_PACKET_SIZE);
+  int state = radioReadData(incomingBuffer, MAX_PACKET_SIZE);
 
   if (state != RADIOLIB_ERR_NONE)
   {

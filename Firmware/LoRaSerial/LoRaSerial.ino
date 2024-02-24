@@ -151,7 +151,6 @@ uint8_t pin_hop_timer = PIN_UNDEFINED;
 //Radio Library
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 #include <RadioLib.h> //Click here to get the library: http://librarymanager/All#RadioLib v5.6.0
-SX1276 radio = NULL; //We can't instantiate here because we don't yet know what pin numbers to use
 
 float *channels;
 uint8_t channelNumber = 0;

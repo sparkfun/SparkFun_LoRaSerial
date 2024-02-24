@@ -1383,9 +1383,9 @@ void printPacketQuality()
     systemPrint("R:");
     systemPrint(rssi);
     systemPrint("\tS:");
-    systemPrint(radio.getSNR());
+    systemPrint(radioGetSNR());
     systemPrint("\tfE:");
-    systemPrint(radio.getFrequencyError());
+    systemPrint(radioGetFrequencyError());
     systemPrintln();
   }
 }

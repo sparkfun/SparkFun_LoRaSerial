@@ -258,11 +258,11 @@ bool commandAT(const char * commandString)
         return true;
 
       case ('3'): //ATI3 - Display latest RSSI
-        systemPrintln(radio.getRSSI());
+        systemPrintln(radioGetRSSI());
         return true;
 
       case ('4'): //ATI4 - Get random byte from RSSI
-        systemPrintln(radio.randomByte());
+        systemPrintln(radioRandomByte());
         return true;
 
       case ('5'): //ATI5 - Show max possible bytes per second
@@ -559,12 +559,12 @@ bool commandAT(const char * commandString)
         }
         else
           systemPrintln("None");
-        systemPrint("        radio.startReceive Failure: ");
+        systemPrint("        radioStartReceive Failure: ");
         if (startReceiveFailureMillis)
         {
           systemPrintTimestamp(startReceiveFailureMillis + timestampOffset);
           systemPrintln();
-          systemPrint("        radio.startReceive Status: ");
+          systemPrint("        radioStartReceive Status: ");
           systemPrintln(startReceiveFailureState);
         }
         else

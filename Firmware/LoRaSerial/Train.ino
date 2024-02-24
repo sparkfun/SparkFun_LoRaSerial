@@ -25,7 +25,7 @@ void generateRandomKeysID(Settings * radioSettings)
   }
 
   //Seed random number based on RF noise. We use Arduino random() because platform specific generation does not matter
-  randomSeed(radio.randomByte());
+  randomSeed(radioRandomByte());
 
   //Generate new NetID
   radioSettings->netID = random(0, 256); //Inclusive, exclusive

@@ -23,7 +23,7 @@
 #define P2P_SEND_ACK(trigger)                                                   \
   {                                                                             \
     /*Compute the frequency correction*/                                        \
-    frequencyCorrection += radio.getFrequencyError() / 1000000.0;               \
+    frequencyCorrection += radioGetFrequencyError() / 1000000.0;               \
     \
     /*Send the ACK to the remote system*/                                       \
     triggerEvent(trigger);                                                      \
@@ -105,7 +105,7 @@ void updateRadioState()
 
       //Initialize the radio
       rssi = -200;
-      radioSeed = radio.randomByte(); //Puts radio into standy-by state
+      radioSeed = radioRandomByte(); //Puts radio into standy-by state
       randomSeed(radioSeed);
       if ((settings.debug == true) || (settings.debugRadio == true))
       {
@@ -356,7 +356,7 @@ void updateRadioState()
       {
         triggerEvent(TRIGGER_TX_DONE);
         transactionComplete = false; //Reset ISR flag
-        irqFlags = radio.getIRQFlags();
+        irqFlags = radioGetIRQFlags();
         startChannelTimerPending = true; //Starts at RX of SYNC_CLOCKS frame
         returnToReceiving();
         changeState(RADIO_P2P_WAIT_SYNC_CLOCKS);
@@ -479,7 +479,7 @@ void updateRadioState()
       {
         triggerEvent(TRIGGER_TX_DONE);
         transactionComplete = false; //Reset ISR flag
-        irqFlags = radio.getIRQFlags();
+        irqFlags = radioGetIRQFlags();
 
         //Hop to the next channel
         hopChannel();
@@ -566,7 +566,7 @@ void updateRadioState()
       if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
-        irqFlags = radio.getIRQFlags();
+        irqFlags = radioGetIRQFlags();
         setHeartbeatShort(); //We sent the last ack so be responsible for sending the next heartbeat
 
         //Bring up the link
@@ -647,7 +647,7 @@ void updateRadioState()
       {
         transactionComplete = false; //Reset ISR flag
         triggerEvent(TRIGGER_TX_DONE);
-        irqFlags = radio.getIRQFlags();
+        irqFlags = radioGetIRQFlags();
 
         //Determine the next packet size for SF6
         if (ackTimer)
@@ -762,7 +762,7 @@ void updateRadioState()
             STOP_ACK_TIMER();
 
             setHeartbeatLong(); //Those who send an ACK have short time to next heartbeat. Those who send a heartbeat or data have long time to next heartbeat.
-            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+            frequencyCorrection += radioGetFrequencyError() / 1000000.0;
             break;
 
           case DATAGRAM_REMOTE_COMMAND:
@@ -1178,7 +1178,7 @@ void updateRadioState()
                 checkChannelHop();
               }
 
-              frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+              frequencyCorrection += radioGetFrequencyError() / 1000000.0;
 
               lastPacketReceived = millis(); //Reset
               changeState(RADIO_MP_STANDBY);
@@ -1238,7 +1238,7 @@ void updateRadioState()
       if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
-        irqFlags = radio.getIRQFlags();
+        irqFlags = radioGetIRQFlags();
         returnToReceiving();
         changeState(RADIO_DISCOVER_SCANNING);
       }
@@ -1339,7 +1339,7 @@ void updateRadioState()
                 checkChannelHop();
               }
 
-              frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+              frequencyCorrection += radioGetFrequencyError() / 1000000.0;
 
               lastPacketReceived = millis(); //Update timestamp for Link LED
 
@@ -1418,7 +1418,7 @@ void updateRadioState()
           case DATAGRAM_REMOTE_COMMAND:
           case DATAGRAM_REMOTE_COMMAND_RESPONSE:
             //We should not be receiving these datagrams, but if we do, just ignore
-            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+            frequencyCorrection += radioGetFrequencyError() / 1000000.0;
             triggerEvent(TRIGGER_BAD_PACKET);
             break;
 
@@ -1450,7 +1450,7 @@ void updateRadioState()
               //Received heartbeat - do not ack.
               triggerEvent(TRIGGER_RX_HEARTBEAT);
 
-              frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+              frequencyCorrection += radioGetFrequencyError() / 1000000.0;
 
               lastPacketReceived = millis(); //Update timestamp for Link LED
 
@@ -1465,7 +1465,7 @@ void updateRadioState()
             //Place any available data in the serial output buffer
             serialBufferOutput(rxData, rxDataBytes);
 
-            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+            frequencyCorrection += radioGetFrequencyError() / 1000000.0;
 
             lastPacketReceived = millis(); //Update timestamp for Link LED
             break;
@@ -1534,7 +1534,7 @@ void updateRadioState()
       if (transactionComplete == true)
       {
         transactionComplete = false; //Reset ISR flag
-        irqFlags = radio.getIRQFlags();
+        irqFlags = radioGetIRQFlags();
         returnToReceiving();
         changeState(RADIO_MP_STANDBY);
       }
@@ -1596,7 +1596,7 @@ void updateRadioState()
 
         //Indicate that the receive is complete
         triggerEvent(TRIGGER_TRAINING_CLIENT_TX_FIND_PARTNER_DONE);
-        irqFlags = radio.getIRQFlags();
+        irqFlags = radioGetIRQFlags();
 
         //Start the receive operation
         returnToReceiving();
@@ -1674,7 +1674,7 @@ void updateRadioState()
       if (transactionComplete == true)
       {
         transactionComplete = false;
-        irqFlags = radio.getIRQFlags();
+        irqFlags = radioGetIRQFlags();
         endClientServerTraining(TRIGGER_TRAINING_CLIENT_TX_ACK_DONE);
       }
       break;
@@ -1761,7 +1761,7 @@ void updateRadioState()
               systemPrintUniqueID(rxData);
               systemPrintln();
               int radioPowerSetting = covertdBmToSetting(settings.radioBroadcastPower_dbm);
-              radio.setOutputPower(radioPowerSetting);
+              radioSetOutputPower(radioPowerSetting);
             }
 
             //Find a slot in the NVM unique ID table
@@ -1829,7 +1829,7 @@ void updateRadioState()
 
         //Indicate that the receive is complete
         triggerEvent(TRIGGER_TRAINING_SERVER_TX_PARAMS_DONE);
-        irqFlags = radio.getIRQFlags();
+        irqFlags = radioGetIRQFlags();
 
         //Start the receive operation
         returnToReceiving();
@@ -1974,7 +1974,7 @@ void updateRadioState()
         //Indicate that the transmission is complete
         transactionComplete = false;
         triggerEvent(TRIGGER_TX_DONE);
-        irqFlags = radio.getIRQFlags();
+        irqFlags = radioGetIRQFlags();
 
         //Start the receive operation
         returnToReceiving();
@@ -2066,7 +2066,7 @@ void updateRadioState()
             break;
 
           case DATAGRAM_DUPLICATE:
-            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+            frequencyCorrection += radioGetFrequencyError() / 1000000.0;
 
             if (xmitVcAckFrame(rxSrcVc))
             {
@@ -2120,7 +2120,7 @@ void updateRadioState()
             }
             petWDT();
 
-            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+            frequencyCorrection += radioGetFrequencyError() / 1000000.0;
 
             //Transmit ACK
             if (xmitVcAckFrame(rxSrcVc))
@@ -2204,7 +2204,7 @@ void updateRadioState()
               serialBufferOutput(&rxData[index], length);
             }
 
-            frequencyCorrection += radio.getFrequencyError() / 1000000.0;
+            frequencyCorrection += radioGetFrequencyError() / 1000000.0;
 
             //ACK the command response
             if (xmitVcAckFrame(rxSrcVc)) //Transmit ACK
