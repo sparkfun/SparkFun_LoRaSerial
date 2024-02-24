@@ -17,7 +17,9 @@ int16_t radioAutoLDRO()
 {
   int16_t status;
 
+  noInterrupts();
   status = radio.autoLDRO();
+  interrupts();
   return status;
 }
 
@@ -31,6 +33,11 @@ void radioBeginLoRa()
   float centerFrequency = (settings.frequencyMax - settings.frequencyMin) / 2;
   centerFrequency += settings.frequencyMin;
 
+  // Disabling interrupts here causes the system to crash!!!
+  //
+  // Since this call is made only during setup and the channel timer is
+  // not running yet, it is not possible for the SPI operations to get
+  // interrupted during these radio calls.
   radio = arch.radio();
   status = radio.begin(centerFrequency); //Doesn't matter what freq we start at
   if (status != RADIOLIB_ERR_NONE)
@@ -55,7 +62,9 @@ void radioBeginLoRa()
 
 void radioClearFHSSInt()
 {
+  noInterrupts();
   radio.clearFHSSInt();
+  interrupts();
 }
 
 //=========================================================================================
@@ -64,7 +73,9 @@ int16_t radioExplicitHeader()
 {
   int16_t status;
 
+  noInterrupts();
   status = radio.explicitHeader();
+  interrupts();
   return status;
 }
 
@@ -74,7 +85,9 @@ int16_t radioForceLDRO(bool enable)
 {
   int16_t status;
 
+  noInterrupts();
   status = radio.forceLDRO(enable);
+  interrupts();
   return status;
 }
 
@@ -84,7 +97,9 @@ float radioGetFrequencyError()
 {
   float frequencyError;
 
+  noInterrupts();
   frequencyError = radio.getFrequencyError();
+  interrupts();
   return frequencyError;
 }
 
@@ -94,7 +109,9 @@ uint16_t radioGetIRQFlags()
 {
   uint16_t irqFlags;
 
+  noInterrupts();
   irqFlags = radio.getIRQFlags();
+  interrupts();
   return irqFlags;
 }
 
@@ -104,7 +121,9 @@ uint8_t radioGetModemStatus()
 {
   uint8_t radioStatus;
 
+  noInterrupts();
   radioStatus = radio.getModemStatus();
+  interrupts();
   return radioStatus;
 }
 
@@ -114,7 +133,9 @@ size_t radioGetPacketLength()
 {
   size_t packetLength;
 
+  noInterrupts();
   packetLength = radio.getPacketLength();
+  interrupts();
   return packetLength;
 }
 
@@ -124,7 +145,9 @@ int radioGetRSSI()
 {
   int RSSI;
 
+  noInterrupts();
   RSSI = radio.getRSSI();
+  interrupts();
   return RSSI;
 }
 
@@ -134,7 +157,9 @@ float radioGetSNR()
 {
   float signalToNoiseRatio;
 
+  noInterrupts();
   signalToNoiseRatio = radio.getSNR();
+  interrupts();
   return signalToNoiseRatio;
 }
 
@@ -144,7 +169,9 @@ int16_t radioImplicitHeader(size_t len)
 {
   int16_t status;
 
+  noInterrupts();
   status = radio.implicitHeader(len);
+  interrupts();
   return status;
 }
 
@@ -154,6 +181,14 @@ uint8_t radioRandomByte()
 {
   int16_t status;
 
+  // Disabling interrupts around this call causes the system to reset!!!
+  //
+  // Instead disable the channel (hop) timer to eliminate any SPI
+  // transactions interrupting the SPI transactions made by calling
+  // radio.randomByte
+  //
+  // This routine is called only during the RADIO_RESET state and training
+  stopChannelTimer();
   status = radio.randomByte();
   return status;
 }
@@ -164,7 +199,9 @@ int16_t radioReadData(uint8_t * buffer, size_t bufferLength)
 {
   int16_t status;
 
+  noInterrupts();
   status = radio.readData(buffer, bufferLength);
+  interrupts();
   return status;
 }
 
@@ -174,7 +211,9 @@ int16_t radioSetBandwidth(float bandwidth)
 {
   int16_t status;
 
+  noInterrupts();
   status = radio.setBandwidth(bandwidth);
+  interrupts();
   return status;
 }
 
@@ -184,7 +223,9 @@ int16_t radioSetCodingRate(uint8_t codingRate)
 {
   int16_t status;
 
+  noInterrupts();
   status = radio.setCodingRate(codingRate);
+  interrupts();
   return status;
 }
 
@@ -194,7 +235,9 @@ int16_t radioSetCRC(bool enable)
 {
   int16_t status;
 
+  noInterrupts();
   status = radio.setCRC(enable);
+  interrupts();
   return status;
 }
 
@@ -204,7 +247,9 @@ int16_t radioSetDio0Action(void (*function)(void))
 {
   int16_t status;
 
+  noInterrupts();
   radio.setDio0Action(function);
+  interrupts();
   return status;
 }
 
@@ -214,7 +259,9 @@ int16_t radioSetDio1Action(void (*function)(void))
 {
   int16_t status;
 
+  noInterrupts();
   radio.setDio1Action(function);
+  interrupts();
   return status;
 }
 
@@ -224,7 +271,9 @@ int16_t radioSetFHSSHoppingPeriod(uint8_t freqHoppingPeriod)
 {
   int16_t status;
 
+  noInterrupts();
   status = radio.setFHSSHoppingPeriod(freqHoppingPeriod);
+  interrupts();
   return status;
 }
 
@@ -234,7 +283,9 @@ int16_t radioSetFrequency(float frequency)
 {
   int16_t status;
 
+  noInterrupts();
   status = radio.setFrequency(frequency);
+  interrupts();
   return status;
 }
 
@@ -244,7 +295,9 @@ int16_t radioSetOutputPower(int8_t power)
 {
   int16_t status;
 
+  noInterrupts();
   status = radio.setOutputPower(power);
+  interrupts();
   return status;
 }
 
@@ -254,7 +307,9 @@ int16_t radioSetPreambleLength(uint16_t preambleLength)
 {
   int16_t status;
 
+  noInterrupts();
   status = radio.setPreambleLength(preambleLength);
+  interrupts();
   return status;
 }
 
@@ -262,7 +317,9 @@ int16_t radioSetPreambleLength(uint16_t preambleLength)
 
 void radioSetRfSwitchPins(RADIOLIB_PIN_TYPE rxEn, RADIOLIB_PIN_TYPE txEn)
 {
+  noInterrupts();
   radio.setRfSwitchPins(rxEn, txEn);
+  interrupts();
 }
 
 //=========================================================================================
@@ -271,7 +328,9 @@ int16_t radioSetSpreadingFactor(uint8_t spreadFactor)
 {
   int16_t status;
 
+  noInterrupts();
   status = radio.setSpreadingFactor(spreadFactor);
+  interrupts();
   return status;
 }
 
@@ -281,7 +340,9 @@ int16_t radioSetSyncWord(uint8_t syncWord)
 {
   int16_t status;
 
+  noInterrupts();
   status = radio.setSyncWord(syncWord);
+  interrupts();
   return status;
 }
 
@@ -291,7 +352,9 @@ int radioStartReceive()
 {
   int state;
 
+  noInterrupts();
   state = radio.startReceive();
+  interrupts();
   return state;
 }
 
@@ -299,7 +362,9 @@ int radioStartReceive(uint8_t expectedSize)
 {
   int state;
 
+  noInterrupts();
   state = radio.startReceive(expectedSize);
+  interrupts();
   return state;
 }
 
@@ -309,7 +374,9 @@ int radioStartTransmit(uint8_t * buffer, uint8_t lengthInBytes)
 {
   int state;
 
+  noInterrupts();
   state = radio.startTransmit(buffer, lengthInBytes);
+  interrupts();
   return state;
 }
 
