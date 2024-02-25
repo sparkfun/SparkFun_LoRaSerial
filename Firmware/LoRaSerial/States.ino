@@ -274,7 +274,7 @@ void updateRadioState()
       if (channelNumber != 0)
       {
         channelNumber = 0;
-        setRadioFrequency(false);
+        setRadioFrequency(false, false);
       }
 
       //Stop the channel timer if it is running
@@ -1072,7 +1072,7 @@ void updateRadioState()
       if (((frameAirTimeUsec + txDataAckUsec + settings.txToRxUsec) / 1000) > (settings.maxDwellTime / 2))
       {
         channelNumber = 0;
-        setRadioFrequency(false);
+        setRadioFrequency(false, false);
         stopChannelTimer();
         changeState(RADIO_DISCOVER_STANDBY);
       }
@@ -1155,7 +1155,7 @@ void updateRadioState()
             {
               //Change to the server's channel number
               channelNumber = rxData[0];
-              setRadioFrequency(false);
+              setRadioFrequency(false, false);
 
               //Update the timestamp
               COMPUTE_TIMESTAMP_OFFSET(rxData + 1, 0, txSyncClocksUsec);
@@ -1216,7 +1216,7 @@ void updateRadioState()
 
             //Give up, return to channel 0, and wait in Standby for Server to Xmit HB
             channelNumber = 0;
-            setRadioFrequency(false);
+            setRadioFrequency(false, false);
             changeState(RADIO_DISCOVER_STANDBY);
           }
 
@@ -1255,7 +1255,7 @@ void updateRadioState()
       {
         //Return to channel zero
         channelNumber = 0;
-        setRadioFrequency(false);
+        setRadioFrequency(false, false);
       }
 
       rssi = -200; //Force RSSI LEDs off until link is up
@@ -1322,7 +1322,7 @@ void updateRadioState()
             {
               //Change to the server's channel number
               channelNumber = rxData[0];
-              setRadioFrequency(false);
+              setRadioFrequency(false, false);
 
               //Start and adjust freq hop ISR based on remote's remaining clock
               channelTimerStart -= settings.maxDwellTime;
@@ -1929,7 +1929,7 @@ void updateRadioState()
       if (channelNumber != 0)
       {
         channelNumber = 0;
-        setRadioFrequency(false);
+        setRadioFrequency(false, false);
       }
 
       //If dio0ISR has fired, a packet has arrived

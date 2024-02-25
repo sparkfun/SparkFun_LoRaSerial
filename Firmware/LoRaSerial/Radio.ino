@@ -279,10 +279,16 @@ int16_t radioSetFHSSHoppingPeriod(uint8_t freqHoppingPeriod)
 
 //=========================================================================================
 
-int16_t radioSetFrequency(float frequency)
+int16_t radioSetFrequency(bool inInterruptRoutine, float frequency)
 {
   int16_t status;
 
+  if (inInterruptRoutine)
+    return radio.setFrequency(frequency);
+
+  // Disable interrupts to prevent the channel (hop) timer interrupt
+  // from interrupting and corrupting the SPI operations necessary to
+  // change the frequency.
   noInterrupts();
   status = radio.setFrequency(frequency);
   interrupts();
@@ -482,7 +488,7 @@ bool configureRadio()
   radioCallHistory[RADIO_CALL_configureRadio] = millis();
 
   channelNumber = 0;
-  if (!setRadioFrequency(false))
+  if (!setRadioFrequency(false, false))
     success = false;
 
   //The SX1276 and RadioLib accepts a value of 2 to 17, with 20 enabling the power amplifier
@@ -658,7 +664,7 @@ uint16_t convertSettingsToAirSpeed(Settings *newSettings)
 //=========================================================================================
 
 //Set radio frequency
-bool setRadioFrequency(bool rxAdjust)
+bool setRadioFrequency(bool inInterruptRoutine, bool rxAdjust)
 {
   float previousFrequency;
   static uint8_t previousChannelNumber;
@@ -672,7 +678,7 @@ bool setRadioFrequency(bool rxAdjust)
     radioFrequency -= frequencyCorrection;
 
   //Set the new frequency
-  if (radioSetFrequency(radioFrequency) == RADIOLIB_ERR_INVALID_FREQUENCY)
+  if (radioSetFrequency(inInterruptRoutine, radioFrequency) == RADIOLIB_ERR_INVALID_FREQUENCY)
     return false;
 
   if (settings.debugSync)
@@ -1071,7 +1077,7 @@ void channelTimerHandler()
 //at the beginning and during of a transmission or reception
 void hopChannel()
 {
-  hopChannel(true, 1); //Move forward
+  hopChannel(false, true, 1); //Move forward
 }
 
 //=========================================================================================
@@ -1079,13 +1085,13 @@ void hopChannel()
 //Hop to the previous channel in the frequency list
 void hopChannelReverse()
 {
-  hopChannel(false, 1); //Move backward
+  hopChannel(false, false, 1); //Move backward
 }
 
 //=========================================================================================
 
 //Set the next radio frequency given the hop direction and frequency table
-void hopChannel(bool moveForwardThroughTable, uint8_t channelCount)
+void hopChannel(bool inInterruptRoutine, bool moveForwardThroughTable, uint8_t channelCount)
 {
   radioCallHistory[RADIO_CALL_hopChannel] = millis();
 
@@ -1098,7 +1104,7 @@ void hopChannel(bool moveForwardThroughTable, uint8_t channelCount)
   channelNumber %= settings.numberOfChannels;
 
   //Select the new frequency
-  setRadioFrequency(radioStateTable[radioState].rxState);
+  setRadioFrequency(inInterruptRoutine, radioStateTable[radioState].rxState);
   blinkChannelHopLed(true);
 }
 
@@ -3969,7 +3975,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec, bool clockStarting)
 
   //Hop if the timer fired prior to disabling the timer, resetting the channelTimerStart value
   if (delayedHopCount)
-    hopChannel(true, delayedHopCount);
+    hopChannel(false, true, delayedHopCount);
 
   //Display the channel sync timer calculations
   if (settings.debugSync)
