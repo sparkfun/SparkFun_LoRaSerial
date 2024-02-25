@@ -1064,9 +1064,11 @@ void channelTimerHandler()
 
   if (settings.frequencyHop)
   {
-    digitalWrite(pin_hop_timer, ((channelNumber + 1) % settings.numberOfChannels) & 1);
+    // Move to the next channel
+    hopChannel(true, true, 1); //Move forward
+
+    digitalWrite(pin_hop_timer, (channelNumber % settings.numberOfChannels) & 1);
     triggerEvent(TRIGGER_CHANNEL_TIMER_ISR);
-    timeToHop = true;
   }
 }
 
@@ -1112,8 +1114,6 @@ void hopChannel(bool inInterruptRoutine, bool moveForwardThroughTable, uint8_t c
 
 void checkChannelHop(void)
 {
-  if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-    hopChannel();
 }
 
 //=========================================================================================
