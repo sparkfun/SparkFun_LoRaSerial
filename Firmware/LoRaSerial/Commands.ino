@@ -1375,6 +1375,7 @@ const COMMAND_ENTRY commands[] =
   {'P',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,         "CopyTriggers",         &tempSettings.copyTriggers},
   {'P',   1,   0,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable_31-0",   &tempSettings.triggerEnable},
   {'P',   1,   0,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable_63-32",  &tempSettings.triggerEnable2},
+  {'P',   1,   0,    0, 0xffffffff, 0, TYPE_U32,      valInt,         "TriggerEnable_95-64",  &tempSettings.triggerEnable3},
   {'P',   1,   0,    1, 255,    0, TYPE_U8,           valInt,         "TriggerWidth",         &tempSettings.triggerWidth},
   {'P',   1,   0,    0,   1,    0, TYPE_BOOL,         valInt,     "TriggerWidthIsMultiplier", &tempSettings.triggerWidthIsMultiplier},
 
