@@ -1243,9 +1243,6 @@ void updateRadioState()
     //Wait for the Server to transmit a HB on Channel 0
     //====================
     case RADIO_DISCOVER_STANDBY:
-      //Hop channels when required
-      if (timeToHop == true)
-        hopChannel();
       if (channelNumber && (!channelTimerMsec))
       {
         //Return to channel zero
@@ -2911,8 +2908,6 @@ void dumpClockSynchronization()
         systemPrint(" msToNextHop");
         if (clockSyncData[index].delayedHopCount)
         {
-          systemPrint(", timeToHop: ");
-          systemPrintDec(clockSyncData[index].timeToHop, 3);
           systemPrint(", Hops: ");
           systemPrintDec(clockSyncData[index].delayedHopCount, 2);
         }

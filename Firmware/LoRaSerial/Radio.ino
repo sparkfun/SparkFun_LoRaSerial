@@ -1097,8 +1097,6 @@ void hopChannel(bool inInterruptRoutine, bool moveForwardThroughTable, uint8_t c
 {
   radioCallHistory[RADIO_CALL_hopChannel] = millis();
 
-  timeToHop = false;
-
   if (moveForwardThroughTable)
     channelNumber += channelCount;
   else
@@ -3607,7 +3605,6 @@ void startChannelTimer(int16_t startAmount)
   channelTimer.setInterval_MS(startAmount, channelTimerHandler);
   digitalWrite(pin_hop_timer, channelNumber & 1);
   reloadChannelTimer = (startAmount != settings.maxDwellTime);
-  timeToHop = false;
   channelTimerStart = millis(); //startChannelTimer - ISR updates value
   channelTimerMsec = startAmount; //startChannelTimer - ISR updates value
   channelTimer.enableTimer();
@@ -3627,7 +3624,6 @@ void stopChannelTimer()
   channelTimerMsec = 0; //Indicate that the timer is off
 
   triggerEvent(TRIGGER_HOP_TIMER_STOP);
-  timeToHop = false;
 }
 
 //=========================================================================================
@@ -3694,13 +3690,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec, bool clockStarting)
 
   //Synchronize with the hardware timer
   channelTimer.disableTimer();
-
-  //When timeToHop is true, a hop is required to match the hops indicated by
-  //the channelTimerStart value.  Delay this hop to avoid adding unaccounted
-  //delay.  After the channel timer is restarted, perform this hop because
-  //the channelTimerStart value indicated that it was done.  The channel
-  //timer update will add only microseconds to when the hop is done.
-  delayedHopCount = timeToHop ? 1 : 0;
+  delayedHopCount = 0;
 
   // 4800 BPS operation
   //
@@ -3887,12 +3877,10 @@ void syncChannelTimer(uint32_t frameAirTimeUsec, bool clockStarting)
   clockSyncData[clockSyncIndex].adjustment        = adjustment;
   clockSyncData[clockSyncIndex].delayedHopCount   = delayedHopCount;
   clockSyncData[clockSyncIndex].lclHopTimeMsec    = lclHopTimeMsec;
-  clockSyncData[clockSyncIndex].timeToHop         = timeToHop;
   clockSyncIndex += 1;
   if (clockSyncIndex >= (sizeof(clockSyncData) / sizeof(CLOCK_SYNC_DATA)) ) clockSyncIndex = 0;
 
   //Restart the channel timer
-  timeToHop = false;
   channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
   digitalWrite(pin_hop_timer, ((channelNumber + delayedHopCount) % settings.numberOfChannels) & 1);
   channelTimerStart = currentMillis;

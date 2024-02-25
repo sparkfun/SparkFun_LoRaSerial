@@ -379,7 +379,6 @@ typedef struct _CLOCK_SYNC_DATA
   int16_t   lclHopTimeMsec;
   int16_t   adjustment;
   int8_t    delayedHopCount;
-  bool      timeToHop;
 } CLOCK_SYNC_DATA;
 
 typedef struct _AIR_SPEED_TABLE
