@@ -340,9 +340,6 @@ void updateSerial()
   while (bufferSpace-- && arch.serialAvailable() && (transactionComplete == false))
   {
     blinkSerialRxLed(true); //Turn on LED during serial reception
-
-    //Take a break if there are ISRs to attend to
-    checkChannelHop();
     petWDT();
 
     byte incoming = systemRead();
@@ -366,7 +363,6 @@ void updateSerial()
       systemPrint(sizeof(serialReceiveBuffer) - previousHead + rxHead);
     systemPrintln(" bytes into serialReceiveBuffer");
     outputSerialData(true);
-    checkChannelHop();
     petWDT();
   }
 
@@ -398,7 +394,6 @@ void updateSerial()
       systemPrint(commandLength);
       systemPrintln(" bytes from commandRXBuffer into commandBuffer");
       outputSerialData(true);
-      checkChannelHop();
       petWDT();
     }
 
@@ -432,8 +427,6 @@ void processSerialInput()
          && ((!inCommandMode) || (!waitRemoteCommandResponse))
          && (transactionComplete == false))
   {
-    //Take a break if there are ISRs to attend to
-    checkChannelHop();
     petWDT();
 
     byte incoming = serialReceiveBuffer[rxTail++];
@@ -601,9 +594,6 @@ void outputSerialData(bool ignoreISR)
   while (dataBytes-- && isCTS() && (ignoreISR || (!transactionComplete)))
   {
     blinkSerialTxLed(true); //Turn on LED during serial transmissions
-
-    //Take a break if there are ISRs to attend to
-    checkChannelHop();
     petWDT();
 
     arch.serialWrite(serialTransmitBuffer[txTail]);
@@ -810,8 +800,6 @@ void vcProcessSerialInput()
   while (dataBytes && (availableRadioTXBytes() < (sizeof(radioTxBuffer) - 256))
          && (transactionComplete == false))
   {
-    //Take a break if there are ISRs to attend to
-    checkChannelHop();
     petWDT();
 
     //Skip any garbage in the input stream
@@ -970,9 +958,6 @@ void vcProcessSerialInput()
     //Determine how much data is left in the buffer
     dataBytes = availableRXBytes();
   }
-
-  //Take a break if there are ISRs to attend to
-  checkChannelHop();
   petWDT();
 }
 

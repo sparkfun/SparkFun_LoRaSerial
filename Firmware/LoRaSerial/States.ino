@@ -641,8 +641,6 @@ void updateRadioState()
     //Wait for the data transmission to complete
     //====================
     case RADIO_P2P_LINK_UP_WAIT_TX_DONE:
-      checkChannelHop();
-
       if (transactionComplete)
       {
         transactionComplete = false; //Reset ISR flag
@@ -674,8 +672,6 @@ void updateRadioState()
     // * Link timeout
     //====================
     case RADIO_P2P_LINK_UP:
-      checkChannelHop();
-
       //Check for a received datagram
       if (transactionComplete == true)
       {
@@ -1175,7 +1171,6 @@ void updateRadioState()
                 systemPrintDec(channelNumber, 2);
                 systemPrintln();
                 outputSerialData(true);
-                checkChannelHop();
               }
 
               frequencyCorrection += radioGetFrequencyError() / 1000000.0;
@@ -1336,7 +1331,6 @@ void updateRadioState()
                 systemPrintDec(channelNumber, 2);
                 systemPrintln();
                 outputSerialData(true);
-                checkChannelHop();
               }
 
               frequencyCorrection += radioGetFrequencyError() / 1000000.0;
@@ -1373,9 +1367,6 @@ void updateRadioState()
     // * Link timeout
     //====================
     case RADIO_MP_STANDBY:
-      //Hop channels when required
-      checkChannelHop();
-
       //Process the receive packet
       if (transactionComplete == true)
       {
@@ -1527,9 +1518,6 @@ void updateRadioState()
     //Wait for the frame transmission to complete
     //====================
     case RADIO_MP_WAIT_TX_DONE:
-      //Hop channels when required
-      checkChannelHop();
-
       //If transmit is complete then start receiving
       if (transactionComplete == true)
       {
@@ -1965,9 +1953,6 @@ void updateRadioState()
     //Wait for the transmission to complete
     //====================
     case RADIO_VC_WAIT_TX_DONE:
-      //Hop channels when required
-      checkChannelHop();
-
       //If dio0ISR has fired, we are done transmitting
       if (transactionComplete == true)
       {
@@ -1997,9 +1982,6 @@ void updateRadioState()
     // * Link timeout
     //====================
     case RADIO_VC_WAIT_RECEIVE:
-      //Hop channels when required
-      checkChannelHop();
-
       //If dio0ISR has fired, a packet has arrived
       currentMillis = millis();
       if (transactionComplete == true)

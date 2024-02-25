@@ -491,7 +491,6 @@ void radioComputeWhitening(uint8_t *buffer, uint16_t bufferSize)
 
   for (uint16_t j = 0 ; j < bufferSize ; j++)
   {
-    checkChannelHop();
     buffer[j] ^= WhiteningKeyLSB;
 
     for (uint8_t i = 0 ; i < 8 ; i++)
@@ -626,7 +625,6 @@ void dumpBuffer(uint8_t * data, int length)
     {
       systemPrint(" ");
       systemPrint(*data++, HEX);
-      checkChannelHop();
       petWDT();
     }
 
@@ -634,7 +632,6 @@ void dumpBuffer(uint8_t * data, int length)
     for (; index < displayWidth; index++)
     {
       systemPrint("   ");
-      checkChannelHop();
       petWDT();
     }
     systemPrint("  ");
@@ -646,7 +643,6 @@ void dumpBuffer(uint8_t * data, int length)
       systemPrint(((byte[0] < ' ') || (byte[0] >= 0x7f)) ? "." : byte);
     }
     systemPrintln();
-    checkChannelHop();
     petWDT();
   }
 }
@@ -694,7 +690,6 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
       for (index = 0; index < delta; index++)
       {
         systemPrint("   ");
-        checkChannelHop();
         petWDT();
       }
     }
@@ -710,7 +705,6 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
       systemWrite(' ');
       data = buffer[(offset + index) % bufferLength];
       systemPrint(data, HEX);
-      checkChannelHop();
       petWDT();
     }
 
@@ -718,7 +712,6 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
     for (; (delta + index) < displayWidth; index++)
     {
       systemPrint("   ");
-      checkChannelHop();
       petWDT();
     }
     systemPrint("  ");
@@ -731,7 +724,6 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
       systemWrite(((data < ' ') || (data >= 0x7f)) ? '.' : data);
     }
     systemPrintln();
-    checkChannelHop();
     petWDT();
     outputSerialData(true);
     offset += bytes;
