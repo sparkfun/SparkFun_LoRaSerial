@@ -658,7 +658,7 @@ void setup()
 
   arch.uniqueID(myUniqueId); //Get the unique ID
 
-  beginLoRa(); //Start radio
+  radioBeginLoRa(); //Start radio
 
   beginButton(); //Start watching the train button
 
