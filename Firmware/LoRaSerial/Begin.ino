@@ -94,16 +94,3 @@ void petWDT()
     arch.petWDT();
   }
 }
-
-//=========================================================================================
-
-//Start the timer measuring the dwell interval and indicating that it is time to
-//hop channels
-void beginChannelTimer()
-{
-  if (channelTimer.attachInterruptInterval_MS(settings.maxDwellTime, channelTimerHandler) == false)
-    systemPrintln("Error starting ChannelTimer!");
-
-  stopChannelTimer(); //Start timer in state machine - beginChannelTimer
-}
-

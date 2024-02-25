@@ -19,6 +19,14 @@ void radioBeginLoRa()
     waitForever("Radio init failed!");
   }
 
+  // Establish the channel (hop) timer interrupt handler
+  if (!channelTimer.attachInterruptInterval_MS(settings.maxDwellTime,
+                                               channelTimerHandler))
+    waitForever("Error starting ChannelTimer!");
+
+  // Stop the timer
+  stopChannelTimer(); //Start timer in state machine - beginChannelTimer
+
   changeState(RADIO_RESET);
 }
 
