@@ -519,7 +519,12 @@ void triggerEvent(uint8_t triggerNumber)
   //Determine which trigger enable to use
   triggerBitNumber = triggerNumber;
   triggerEnable = settings.triggerEnable;
-  if (triggerNumber >= 32)
+  if (triggerNumber >= 64)
+  {
+    triggerBitNumber -= 64;
+    triggerEnable = settings.triggerEnable3;
+  }
+  else if (triggerNumber >= 32)
   {
     triggerBitNumber -= 32;
     triggerEnable = settings.triggerEnable2;

@@ -526,7 +526,7 @@ typedef struct struct_settings {
 
   uint32_t triggerEnable = 0; //Determine which triggers are enabled: 31 - 0
   uint32_t triggerEnable2 = 0; //Determine which triggers are enabled: 63 - 32
-
+  uint32_t triggerEnable3 = 0; //Determine which triggers are enabled: 95 - 64
 
   //----------------------------------------
   //Debug parameters
