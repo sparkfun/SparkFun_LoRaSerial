@@ -662,8 +662,6 @@ void setup()
 
   beginButton(); //Start watching the train button
 
-  beginChannelTimer(); //Setup (but do not start) hardware timer for channel hopping
-
   updateRTS(true); //We're ready for more data
 
   systemPrintTimestamp();
