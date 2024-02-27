@@ -27,27 +27,6 @@ void blinkStartup()
 
 //=========================================================================================
 
-//Initialize the radio layer
-void beginLoRa()
-{
-  radio = arch.radio();
-
-  float centerFreq = (settings.frequencyMax - settings.frequencyMin) / 2;
-  centerFreq += settings.frequencyMin;
-
-  int state = radio.begin(centerFreq); //Doesn't matter what freq we start at
-  if (state != RADIOLIB_ERR_NONE)
-  {
-    systemPrint("Radio init failed with code: ");
-    systemPrintln(state);
-    waitForever("Radio init failed!");
-  }
-
-  changeState(RADIO_RESET);
-}
-
-//=========================================================================================
-
 //Initialize the button driver
 void beginButton()
 {

@@ -1,5 +1,28 @@
 //=========================================================================================
 // Radio.ino
+//
+// Hop synchronization between LoRaSerial radios is maintained with a
+// hardware timer (channelTimer) interrupt routine.  The hop timer
+// interrupt needs to switch frequencies which requires a SPI
+// transaction with the radio.  To prevent other SPI transactions with
+// the radio from being interrupted, all SPI transactions need to be
+// done within a critical section (interrupts disabled).  The following
+// radio support routines are the only routines that reference the radio
+// structure.  No other radio. calls should be made!
+//=========================================================================================
+
+static SX1276 radio = NULL; //We can't instantiate here because we don't yet know what pin numbers to use
+
+int16_t radioAutoLDRO()
+{
+  int16_t status;
+
+  noInterrupts();
+  status = radio.autoLDRO();
+  interrupts();
+  return status;
+}
+
 //=========================================================================================
 
 //Initialize the radio layer
@@ -10,6 +33,11 @@ void radioBeginLoRa()
   float centerFrequency = (settings.frequencyMax - settings.frequencyMin) / 2;
   centerFrequency += settings.frequencyMin;
 
+  // Disabling interrupts here causes the system to crash!!!
+  //
+  // Since this call is made only during setup and the channel timer is
+  // not running yet, it is not possible for the SPI operations to get
+  // interrupted during these radio calls.
   radio = arch.radio();
   status = radio.begin(centerFrequency); //Doesn't matter what freq we start at
   if (status != RADIOLIB_ERR_NONE)
@@ -32,6 +60,425 @@ void radioBeginLoRa()
 
 //=========================================================================================
 
+void radioClearFHSSInt()
+{
+  noInterrupts();
+  radio.clearFHSSInt();
+  interrupts();
+}
+
+//=========================================================================================
+
+int16_t radioExplicitHeader()
+{
+  int16_t status;
+
+  noInterrupts();
+  status = radio.explicitHeader();
+  interrupts();
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioForceLDRO(bool enable)
+{
+  int16_t status;
+
+  noInterrupts();
+  status = radio.forceLDRO(enable);
+  interrupts();
+  return status;
+}
+
+//=========================================================================================
+
+float radioGetFrequencyError()
+{
+  float frequencyError;
+
+  noInterrupts();
+  frequencyError = radio.getFrequencyError();
+  interrupts();
+  return frequencyError;
+}
+
+//=========================================================================================
+
+uint16_t radioGetIRQFlags()
+{
+  uint16_t irqFlags;
+
+  noInterrupts();
+  irqFlags = radio.getIRQFlags();
+  interrupts();
+  return irqFlags;
+}
+
+//=========================================================================================
+
+uint8_t radioGetModemStatus()
+{
+  uint8_t radioStatus;
+
+  noInterrupts();
+  radioStatus = radio.getModemStatus();
+  interrupts();
+  return radioStatus;
+}
+
+//=========================================================================================
+
+size_t radioGetPacketLength()
+{
+  size_t packetLength;
+
+  noInterrupts();
+  packetLength = radio.getPacketLength();
+  interrupts();
+  return packetLength;
+}
+
+//=========================================================================================
+
+int radioGetRSSI()
+{
+  int RSSI;
+
+  noInterrupts();
+  RSSI = radio.getRSSI();
+  interrupts();
+  return RSSI;
+}
+
+//=========================================================================================
+
+float radioGetSNR()
+{
+  float signalToNoiseRatio;
+
+  noInterrupts();
+  signalToNoiseRatio = radio.getSNR();
+  interrupts();
+  return signalToNoiseRatio;
+}
+
+//=========================================================================================
+
+int16_t radioImplicitHeader(size_t len)
+{
+  int16_t status;
+
+  noInterrupts();
+  status = radio.implicitHeader(len);
+  interrupts();
+  return status;
+}
+
+//=========================================================================================
+
+uint8_t radioRandomByte()
+{
+  int16_t status;
+
+  // Disabling interrupts around this call causes the system to reset!!!
+  //
+  // Instead disable the channel (hop) timer to eliminate any SPI
+  // transactions interrupting the SPI transactions made by calling
+  // radio.randomByte
+  //
+  // This routine is called only during the RADIO_RESET state and training
+  stopChannelTimer();
+  status = radio.randomByte();
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioReadData(uint8_t * buffer, size_t bufferLength)
+{
+  int16_t status;
+
+  noInterrupts();
+  status = radio.readData(buffer, bufferLength);
+  interrupts();
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetBandwidth(float bandwidth)
+{
+  int16_t status;
+
+  noInterrupts();
+  status = radio.setBandwidth(bandwidth);
+  interrupts();
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetCodingRate(uint8_t codingRate)
+{
+  int16_t status;
+
+  noInterrupts();
+  status = radio.setCodingRate(codingRate);
+  interrupts();
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetCRC(bool enable)
+{
+  int16_t status;
+
+  noInterrupts();
+  status = radio.setCRC(enable);
+  interrupts();
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetDio0Action(void (*function)(void))
+{
+  int16_t status;
+
+  noInterrupts();
+  radio.setDio0Action(function);
+  interrupts();
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetDio1Action(void (*function)(void))
+{
+  int16_t status;
+
+  noInterrupts();
+  radio.setDio1Action(function);
+  interrupts();
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetFHSSHoppingPeriod(uint8_t freqHoppingPeriod)
+{
+  int16_t status;
+
+  noInterrupts();
+  status = radio.setFHSSHoppingPeriod(freqHoppingPeriod);
+  interrupts();
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetFrequency(bool inInterruptRoutine, float frequency)
+{
+  int16_t status;
+
+  if (inInterruptRoutine)
+    return radio.setFrequency(frequency);
+
+  // Disable interrupts to prevent the channel (hop) timer interrupt
+  // from interrupting and corrupting the SPI operations necessary to
+  // change the frequency.
+  noInterrupts();
+  status = radio.setFrequency(frequency);
+  interrupts();
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetOutputPower(int8_t power)
+{
+  int16_t status;
+
+  noInterrupts();
+  status = radio.setOutputPower(power);
+  interrupts();
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetPreambleLength(uint16_t preambleLength)
+{
+  int16_t status;
+
+  noInterrupts();
+  status = radio.setPreambleLength(preambleLength);
+  interrupts();
+  return status;
+}
+
+//=========================================================================================
+
+void radioSetRfSwitchPins(RADIOLIB_PIN_TYPE rxEn, RADIOLIB_PIN_TYPE txEn)
+{
+  noInterrupts();
+  radio.setRfSwitchPins(rxEn, txEn);
+  interrupts();
+}
+
+//=========================================================================================
+
+int16_t radioSetSpreadingFactor(uint8_t spreadFactor)
+{
+  int16_t status;
+
+  noInterrupts();
+  status = radio.setSpreadingFactor(spreadFactor);
+  interrupts();
+  return status;
+}
+
+//=========================================================================================
+
+int16_t radioSetSyncWord(uint8_t syncWord)
+{
+  int16_t status;
+
+  noInterrupts();
+  status = radio.setSyncWord(syncWord);
+  interrupts();
+  return status;
+}
+
+//=========================================================================================
+
+int radioStartReceive()
+{
+  int state;
+
+  noInterrupts();
+  state = radio.startReceive();
+  interrupts();
+  return state;
+}
+
+int radioStartReceive(uint8_t expectedSize)
+{
+  int state;
+
+  noInterrupts();
+  state = radio.startReceive(expectedSize);
+  interrupts();
+  return state;
+}
+
+//=========================================================================================
+
+int radioStartTransmit(uint8_t * buffer, uint8_t lengthInBytes)
+{
+  int state;
+
+  noInterrupts();
+  state = radio.startTransmit(buffer, lengthInBytes);
+  interrupts();
+  return state;
+}
+
+//=========================================================================================
+#ifdef  RADIOLIB_LOW_LEVEL
+//=========================================================================================
+
+//Read a register from the SX1276 chip
+uint8_t readSX1276Register(uint8_t reg)
+{
+  uint8_t data;
+
+  radioCallHistory[RADIO_CALL_readSX1276Register] = millis();
+
+  noInterrupts();
+  data = radio._mod->SPIreadRegister(reg);
+  interrupts();
+  return data;
+}
+
+//=========================================================================================
+
+//SX1276 LoRa Register Names
+const char * const sx1276RegisterNames[] =
+{
+  NULL,           "RegOpMode",      NULL,                 NULL,                 // 0 -  3
+  NULL,           NULL,             "RegFrfMsb",          "RegFrfMid",          // 4 -  7
+  "RegFrfLsb",    "RegPaConfig",    "RegPaRamp",          "RegOcp",             // 8 -  b
+  "RegLna",       "RegFifoAddrPtr", "RegFifoTxBaseAddr",  "regFifoRxBaseAddr",  // c -  f
+
+  "FifoRxCurrentAddr", "RegIrqFlagsMask", "RegIrqFlags",  "RegRxNbBytes",       //10 - 13
+  "RegRxHeaderCntValueMsb", "RegRxHeaderCntValueLsb", "RegRxPacketCntValueMsb", "RegRxPacketCntValueLsb", //14 - 17
+  "RegModemStat", "RegPktSnrValue", "RegPktRssiValue",    "RegRssiValue",       //18 - 1b
+  "RegHopChannel", "RegModemConfig1", "RegModemConfig2",   "RegSymbTimeoutLsb", //1c - 1f
+
+  "RegPreambleMsb", "RegPreambleLsb", "RegPayloadLength", "RegMaxPayloadLength",//20 - 23
+  "RegHopPeriod", "RegFifoRxByteAddr", "RegModemConfig3", NULL,                 //24 - 27
+  "RegFeiMsb",    "RegFeiMid",        "RegFeiLsb",        NULL,                 //28 - 2b
+  "RegRssiWideband", NULL,              NULL,             "RegIfFreq1",         //2c - 2f
+
+  "RegIfFreq2",   "ReqDetectOptimize",  NULL,             "ReqInvertIQ",        //30 - 33
+  NULL,           NULL,         "RegHighBwOpimize1",  "RegDetectionThreshold",  //34 - 37
+  NULL,           "RegSyncWord",      "RegHighBwOptimize2", "RegInvertIQ2",     //38 - 3b
+  NULL,           NULL,               NULL,               NULL,                 //3c - 3f
+
+  "RegDioMapping1", "RegDioMapping2", "RegVersion",       NULL,                 //40 - 43
+  NULL,           NULL,               NULL,               NULL,                 //44 - 47
+  NULL,           NULL,               NULL,               "RegTcxo",            //48 - 4b
+  NULL,           "RegPaDac",         NULL,               NULL,                 //4C - 4F
+
+  NULL,           NULL,               NULL,               NULL,                 //50 - 53
+  NULL,           NULL,               NULL,               NULL,                 //54 - 57
+  NULL,           NULL,               NULL,               "RegFormerTemp",      //58 - 5b
+  NULL,           NULL,               NULL,               NULL,                 //5c - 5f
+
+  NULL,           "RegAgcRef",        "RegAgcThresh1",    "RegAgcThresh2",      //60 - 63
+  "RegAgcThresh3", NULL,              NULL,               NULL,                 //64 - 67
+  NULL,           NULL,               NULL,               NULL,                 //68 - 6b
+  NULL,           NULL,               NULL,               NULL,                 //6c - 6f
+
+  "RegPII",                                                                     //70
+};
+
+//Print the SX1276 LoRa registers
+void printSX1276Registers()
+{
+  radioCallHistory[RADIO_CALL_printSX1276Registers] = millis();
+
+  petWDT();
+  systemPrintln("SX1276 Registers:");
+  systemPrintln("     Reg Value  Name");
+  for (uint8_t i = 0; i < (sizeof(sx1276RegisterNames) / sizeof(sx1276RegisterNames[0])); i++)
+  {
+    //Only read and print the valid registers
+    if (sx1276RegisterNames[i])
+    {
+      systemPrint("    0x");
+      systemPrint(i, HEX);
+      systemPrint(": 0x");
+      systemPrint(readSX1276Register(i), HEX);
+      systemPrint(", ");
+      systemPrintln(sx1276RegisterNames[i]);
+      outputSerialData(true);
+      petWDT();
+    }
+  }
+}
+
+//=========================================================================================
+#endif  //RADIOLIB_LOW_LEVEL
+//=========================================================================================
+
+//=========================================================================================
+//*****  All "radio." references must be in this module and above this line!!!  *****
+//=========================================================================================
+
 //Apply settings to radio
 //Called after begin() and once user exits from command interface
 bool configureRadio()
@@ -41,43 +488,43 @@ bool configureRadio()
   radioCallHistory[RADIO_CALL_configureRadio] = millis();
 
   channelNumber = 0;
-  if (!setRadioFrequency(false))
+  if (!setRadioFrequency(false, false))
     success = false;
 
   //The SX1276 and RadioLib accepts a value of 2 to 17, with 20 enabling the power amplifier
   //Measuring actual power output the radio will output 14dBm (25mW) to 27.9dBm (617mW) in constant transmission
   //So we use a lookup to convert between the user's chosen power and the radio setting
   int radioPowerSetting = covertdBmToSetting(settings.radioBroadcastPower_dbm);
-  if (radio.setOutputPower(radioPowerSetting) == RADIOLIB_ERR_INVALID_OUTPUT_POWER)
+  if (radioSetOutputPower(radioPowerSetting) == RADIOLIB_ERR_INVALID_OUTPUT_POWER)
     success = false;
 
-  if (radio.setBandwidth(settings.radioBandwidth) == RADIOLIB_ERR_INVALID_BANDWIDTH)
+  if (radioSetBandwidth(settings.radioBandwidth) == RADIOLIB_ERR_INVALID_BANDWIDTH)
     success = false;
 
-  if (radio.setSpreadingFactor(settings.radioSpreadFactor) == RADIOLIB_ERR_INVALID_SPREADING_FACTOR)
+  if (radioSetSpreadingFactor(settings.radioSpreadFactor) == RADIOLIB_ERR_INVALID_SPREADING_FACTOR)
     success = false;
 
-  if (radio.setCodingRate(settings.radioCodingRate) == RADIOLIB_ERR_INVALID_CODING_RATE)
+  if (radioSetCodingRate(settings.radioCodingRate) == RADIOLIB_ERR_INVALID_CODING_RATE)
     success = false;
 
-  if (radio.setSyncWord(settings.radioSyncWord) != RADIOLIB_ERR_NONE)
+  if (radioSetSyncWord(settings.radioSyncWord) != RADIOLIB_ERR_NONE)
     success = false;
 
-  if (radio.setPreambleLength(settings.radioPreambleLength) == RADIOLIB_ERR_INVALID_PREAMBLE_LENGTH)
+  if (radioSetPreambleLength(settings.radioPreambleLength) == RADIOLIB_ERR_INVALID_PREAMBLE_LENGTH)
     success = false;
 
-  if (radio.setCRC(true) == RADIOLIB_ERR_INVALID_CRC_CONFIGURATION) //Enable hardware CRC
+  if (radioSetCRC(true) == RADIOLIB_ERR_INVALID_CRC_CONFIGURATION) //Enable hardware CRC
     success = false;
 
   //SF6 requires an implicit header. We will transmit 255 bytes for most packets and 2 bytes for ACK packets.
   if (settings.radioSpreadFactor == 6)
   {
-    if (radio.implicitHeader(MAX_PACKET_SIZE) != RADIOLIB_ERR_NONE)
+    if (radioImplicitHeader(MAX_PACKET_SIZE) != RADIOLIB_ERR_NONE)
       success = false;
   }
   else
   {
-    if (radio.explicitHeader() != RADIOLIB_ERR_NONE)
+    if (radioExplicitHeader() != RADIOLIB_ERR_NONE)
       success = false;
   }
 
@@ -85,20 +532,20 @@ bool configureRadio()
   uint16_t airSpeed = convertSettingsToAirSpeed(&settings);
   if (airSpeed <= 400)
   {
-    if (radio.forceLDRO(true) != RADIOLIB_ERR_NONE)
+    if (radioForceLDRO(true) != RADIOLIB_ERR_NONE)
       success = false;
   }
   else
   {
-    if (radio.autoLDRO() != RADIOLIB_ERR_NONE)
+    if (radioAutoLDRO() != RADIOLIB_ERR_NONE)
       success = false;
   }
 
-  radio.setDio0Action(transactionCompleteISR); //Called when transmission is finished
-  radio.setDio1Action(hopISR); //Called after a transmission has started, so we can move to next freq
+  radioSetDio0Action(transactionCompleteISR); //Called when transmission is finished
+  radioSetDio1Action(hopISR); //Called after a transmission has started, so we can move to next freq
 
   if (pin_rxen != PIN_UNDEFINED)
-    radio.setRfSwitchPins(pin_rxen, pin_txen);
+    radioSetRfSwitchPins(pin_rxen, pin_txen);
 
   // HoppingPeriod = Tsym * FreqHoppingPeriod
   // Given defaults of spreadfactor = 9, bandwidth = 125, it follows Tsym = 4.10ms
@@ -106,7 +553,7 @@ bool configureRadio()
   uint16_t hoppingPeriod = settings.maxDwellTime / calcSymbolTimeMsec(); //Limit FHSS dwell time to 400ms max. / automatically floors number
   if (hoppingPeriod > 255) hoppingPeriod = 255; //Limit to 8 bits.
   if (settings.frequencyHop == false) hoppingPeriod = 0; //Disable
-  if (radio.setFHSSHoppingPeriod(hoppingPeriod) != RADIOLIB_ERR_NONE)
+  if (radioSetFHSSHoppingPeriod(hoppingPeriod) != RADIOLIB_ERR_NONE)
     success = false;
 
   if ((settings.debug == true) || (settings.debugRadio == true))
@@ -217,7 +664,7 @@ uint16_t convertSettingsToAirSpeed(Settings *newSettings)
 //=========================================================================================
 
 //Set radio frequency
-bool setRadioFrequency(bool rxAdjust)
+bool setRadioFrequency(bool inInterruptRoutine, bool rxAdjust)
 {
   float previousFrequency;
   static uint8_t previousChannelNumber;
@@ -231,7 +678,7 @@ bool setRadioFrequency(bool rxAdjust)
     radioFrequency -= frequencyCorrection;
 
   //Set the new frequency
-  if (radio.setFrequency(radioFrequency) == RADIOLIB_ERR_INVALID_FREQUENCY)
+  if (radioSetFrequency(inInterruptRoutine, radioFrequency) == RADIOLIB_ERR_INVALID_FREQUENCY)
     return false;
 
   if (settings.debugSync)
@@ -274,14 +721,14 @@ void returnToReceiving()
   int state;
   if (settings.radioSpreadFactor > 6)
   {
-    state = radio.startReceive();
+    state = radioStartReceive();
   }
   else
   {
     if (settings.operatingMode == MODE_POINT_TO_POINT)
     {
-      radio.implicitHeader(sf6ExpectedSize);
-      state = radio.startReceive(sf6ExpectedSize); //Set the size we expect to see
+      radioImplicitHeader(sf6ExpectedSize);
+      state = radioStartReceive(sf6ExpectedSize); //Set the size we expect to see
 
       if (sf6ExpectedSize < MAX_PACKET_SIZE)
         triggerEvent(TRIGGER_RTR_SHORT_PACKET);
@@ -617,9 +1064,11 @@ void channelTimerHandler()
 
   if (settings.frequencyHop)
   {
-    digitalWrite(pin_hop_timer, ((channelNumber + 1) % settings.numberOfChannels) & 1);
+    // Move to the next channel
+    hopChannel(true, true, 1); //Move forward
+
+    digitalWrite(pin_hop_timer, (channelNumber % settings.numberOfChannels) & 1);
     triggerEvent(TRIGGER_CHANNEL_TIMER_ISR);
-    timeToHop = true;
   }
 }
 
@@ -630,7 +1079,7 @@ void channelTimerHandler()
 //at the beginning and during of a transmission or reception
 void hopChannel()
 {
-  hopChannel(true, 1); //Move forward
+  hopChannel(false, true, 1); //Move forward
 }
 
 //=========================================================================================
@@ -638,17 +1087,15 @@ void hopChannel()
 //Hop to the previous channel in the frequency list
 void hopChannelReverse()
 {
-  hopChannel(false, 1); //Move backward
+  hopChannel(false, false, 1); //Move backward
 }
 
 //=========================================================================================
 
 //Set the next radio frequency given the hop direction and frequency table
-void hopChannel(bool moveForwardThroughTable, uint8_t channelCount)
+void hopChannel(bool inInterruptRoutine, bool moveForwardThroughTable, uint8_t channelCount)
 {
   radioCallHistory[RADIO_CALL_hopChannel] = millis();
-
-  timeToHop = false;
 
   if (moveForwardThroughTable)
     channelNumber += channelCount;
@@ -657,16 +1104,8 @@ void hopChannel(bool moveForwardThroughTable, uint8_t channelCount)
   channelNumber %= settings.numberOfChannels;
 
   //Select the new frequency
-  setRadioFrequency(radioStateTable[radioState].rxState);
+  setRadioFrequency(inInterruptRoutine, radioStateTable[radioState].rxState);
   blinkChannelHopLed(true);
-}
-
-//=========================================================================================
-
-void checkChannelHop(void)
-{
-  if (timeToHop == true) //If the channelTimer has expired, move to next frequency
-    hopChannel();
 }
 
 //=========================================================================================
@@ -692,7 +1131,7 @@ unsigned long mSecToChannelZero()
 //Returns true if the radio indicates we have an ongoing reception
 bool receiveInProcess(bool startClock)
 {
-  uint8_t radioStatus = radio.getModemStatus();
+  uint8_t radioStatus = radioGetModemStatus();
   radioStatus &= 0b11011; //Get bits 0, 1, 3, and 4
 
   //Known states where a reception is in progress
@@ -742,88 +1181,6 @@ uint8_t covertdBmToSetting(uint8_t userSetting)
 }
 
 //=========================================================================================
-#ifdef  RADIOLIB_LOW_LEVEL
-//=========================================================================================
-
-//Read a register from the SX1276 chip
-uint8_t readSX1276Register(uint8_t reg)
-{
-  radioCallHistory[RADIO_CALL_readSX1276Register] = millis();
-
-  return radio._mod->SPIreadRegister(reg);
-}
-
-//=========================================================================================
-
-//SX1276 LoRa Register Names
-const char * const sx1276RegisterNames[] =
-{
-  NULL,           "RegOpMode",      NULL,                 NULL,                 // 0 -  3
-  NULL,           NULL,             "RegFrfMsb",          "RegFrfMid",          // 4 -  7
-  "RegFrfLsb",    "RegPaConfig",    "RegPaRamp",          "RegOcp",             // 8 -  b
-  "RegLna",       "RegFifoAddrPtr", "RegFifoTxBaseAddr",  "regFifoRxBaseAddr",  // c -  f
-
-  "FifoRxCurrentAddr", "RegIrqFlagsMask", "RegIrqFlags",  "RegRxNbBytes",       //10 - 13
-  "RegRxHeaderCntValueMsb", "RegRxHeaderCntValueLsb", "RegRxPacketCntValueMsb", "RegRxPacketCntValueLsb", //14 - 17
-  "RegModemStat", "RegPktSnrValue", "RegPktRssiValue",    "RegRssiValue",       //18 - 1b
-  "RegHopChannel", "RegModemConfig1", "RegModemConfig2",   "RegSymbTimeoutLsb", //1c - 1f
-
-  "RegPreambleMsb", "RegPreambleLsb", "RegPayloadLength", "RegMaxPayloadLength",//20 - 23
-  "RegHopPeriod", "RegFifoRxByteAddr", "RegModemConfig3", NULL,                 //24 - 27
-  "RegFeiMsb",    "RegFeiMid",        "RegFeiLsb",        NULL,                 //28 - 2b
-  "RegRssiWideband", NULL,              NULL,             "RegIfFreq1",         //2c - 2f
-
-  "RegIfFreq2",   "ReqDetectOptimize",  NULL,             "ReqInvertIQ",        //30 - 33
-  NULL,           NULL,         "RegHighBwOpimize1",  "RegDetectionThreshold",  //34 - 37
-  NULL,           "RegSyncWord",      "RegHighBwOptimize2", "RegInvertIQ2",     //38 - 3b
-  NULL,           NULL,               NULL,               NULL,                 //3c - 3f
-
-  "RegDioMapping1", "RegDioMapping2", "RegVersion",       NULL,                 //40 - 43
-  NULL,           NULL,               NULL,               NULL,                 //44 - 47
-  NULL,           NULL,               NULL,               "RegTcxo",            //48 - 4b
-  NULL,           "RegPaDac",         NULL,               NULL,                 //4C - 4F
-
-  NULL,           NULL,               NULL,               NULL,                 //50 - 53
-  NULL,           NULL,               NULL,               NULL,                 //54 - 57
-  NULL,           NULL,               NULL,               "RegFormerTemp",      //58 - 5b
-  NULL,           NULL,               NULL,               NULL,                 //5c - 5f
-
-  NULL,           "RegAgcRef",        "RegAgcThresh1",    "RegAgcThresh2",      //60 - 63
-  "RegAgcThresh3", NULL,              NULL,               NULL,                 //64 - 67
-  NULL,           NULL,               NULL,               NULL,                 //68 - 6b
-  NULL,           NULL,               NULL,               NULL,                 //6c - 6f
-
-  "RegPII",                                                                     //70
-};
-
-//Print the SX1276 LoRa registers
-void printSX1276Registers()
-{
-  radioCallHistory[RADIO_CALL_printSX1276Registers] = millis();
-
-  petWDT();
-  systemPrintln("SX1276 Registers:");
-  systemPrintln("     Reg Value  Name");
-  for (uint8_t i = 0; i < (sizeof(sx1276RegisterNames) / sizeof(sx1276RegisterNames[0])); i++)
-  {
-    //Only read and print the valid registers
-    if (sx1276RegisterNames[i])
-    {
-      systemPrint("    0x");
-      systemPrint(i, HEX);
-      systemPrint(": 0x");
-      systemPrint(readSX1276Register(i), HEX);
-      systemPrint(", ");
-      systemPrintln(sx1276RegisterNames[i]);
-      outputSerialData(true);
-      petWDT();
-    }
-  }
-}
-
-//=========================================================================================
-#endif  //RADIOLIB_LOW_LEVEL
-//=========================================================================================
 
 //ISR when DIO0 goes low
 //Called when transmission is complete or when RX is received
@@ -865,7 +1222,7 @@ void updateHopISR()
   if (hop) //Clear hop ISR as needed
   {
     hop = false;
-    radio.clearFHSSInt(); //Clear the interrupt
+    radioClearFHSSInt(); //Clear the interrupt
   }
 }
 
@@ -1804,11 +2161,11 @@ PacketType rcvDatagram()
   rcvTimeMillis = millis();
 
   //Get the IRQ flags
-  irqFlags = radio.getIRQFlags();
+  irqFlags = radioGetIRQFlags();
 
   //Get the received datagram
   framesReceived++;
-  int state = radio.readData(incomingBuffer, MAX_PACKET_SIZE);
+  int state = radioReadData(incomingBuffer, MAX_PACKET_SIZE);
 
   printPacketQuality(); //Display the RSSI, SNR and frequency error values
 
@@ -1816,7 +2173,7 @@ PacketType rcvDatagram()
   {
     rxSuccessMillis = rcvTimeMillis;
     triggerEvent(TRIGGER_RX_SPI_DONE);
-    packetRSSI = radio.getRSSI();
+    packetRSSI = radioGetRSSI();
   }
   else
   {
@@ -1847,7 +2204,7 @@ PacketType rcvDatagram()
     }
   }
 
-  rxDataBytes = radio.getPacketLength();
+  rxDataBytes = radioGetPacketLength();
   packetLength = rxDataBytes; //Total bytes received, used for calculating clock sync times in multi-point mode
 
   returnToReceiving(); //Immediately begin listening while we process new data
@@ -1882,7 +2239,6 @@ PacketType rcvDatagram()
     systemPrint(rxDataBytes, HEX);
     systemPrintln(") bytes");
     outputSerialData(true);
-    checkChannelHop();
     petWDT();
     if (settings.printRfData && rxDataBytes)
       dumpBuffer(incomingBuffer, rxDataBytes);
@@ -1893,10 +2249,7 @@ PacketType rcvDatagram()
     radioComputeWhitening(incomingBuffer, rxDataBytes);
 
   if (settings.encryptData == true)
-  {
     decryptBuffer(incomingBuffer, rxDataBytes);
-    checkChannelHop();
-  }
 
   if (settings.debugReceive)
   {
@@ -1915,7 +2268,6 @@ PacketType rcvDatagram()
     systemPrint(rxDataBytes, HEX);
     systemPrintln(") bytes");
     outputSerialData(true);
-    checkChannelHop();
     petWDT();
     if (settings.printRfData && rxDataBytes)
       dumpBuffer(incomingBuffer, rxDataBytes);
@@ -1935,7 +2287,6 @@ PacketType rcvDatagram()
       systemPrint(rxDataBytes, HEX);
       systemPrintln(") bytes");
       outputSerialData(true);
-      checkChannelHop();
       petWDT();
       if (settings.printRfData && rxDataBytes)
         dumpBuffer(incomingBuffer, rxDataBytes);
@@ -1980,7 +2331,6 @@ PacketType rcvDatagram()
         systemPrintln();
         outputSerialData(true);
       }
-      checkChannelHop();
       petWDT();
       if (settings.debugReceive && settings.printPktData && rxDataBytes)
         dumpBuffer(incomingBuffer, rxDataBytes);
@@ -1989,7 +2339,6 @@ PacketType rcvDatagram()
       return (DATAGRAM_NETID_MISMATCH);
     }
   } // MODE_POINT_TO_POINT
-  checkChannelHop();
   petWDT();
 
   //Process the trailer
@@ -2000,10 +2349,8 @@ PacketType rcvDatagram()
 
     //Compute the CRC-16 value
     crc = 0xffff;
-    checkChannelHop();
     for (data = incomingBuffer; data < &incomingBuffer[rxDataBytes - 2]; data++)
       crc = crc16Table[*data ^ (uint8_t)(crc >> (16 - 8))] ^ (crc << 8);
-    checkChannelHop();
     if ((incomingBuffer[rxDataBytes - 2] != (crc >> 8))
         || (incomingBuffer[rxDataBytes - 1] != (crc & 0xff)))
     {
@@ -2017,7 +2364,6 @@ PacketType rcvDatagram()
         systemPrint(" expected 0x");
         systemPrintln(crc, HEX);
         outputSerialData(true);
-        checkChannelHop();
         petWDT();
         if (settings.printRfData && rxDataBytes)
           dumpBuffer(incomingBuffer, rxDataBytes);
@@ -2084,7 +2430,6 @@ PacketType rcvDatagram()
     systemPrint(incomingBuffer[rxDataBytes - 2], HEX);
     systemPrintln(incomingBuffer[rxDataBytes - 1], HEX);
     outputSerialData(true);
-    checkChannelHop();
   }
 
   /*
@@ -2111,7 +2456,6 @@ PacketType rcvDatagram()
       systemPrint("    Channel Timer(ms): ");
       systemPrintln(msToNextHopRemote);
       outputSerialData(true);
-      checkChannelHop();
     }
   }
 
@@ -2144,7 +2488,6 @@ PacketType rcvDatagram()
         systemPrint((int)rxDataBytes - minDatagramSize);
         systemPrintln(" received bytes");
         outputSerialData(true);
-        checkChannelHop();
       }
       badFrames++;
       return (DATAGRAM_BAD);
@@ -2155,7 +2498,6 @@ PacketType rcvDatagram()
       systemPrint("    SF6 Length: ");
       systemPrintln(rxDataBytes);
       outputSerialData(true);
-      checkChannelHop();
     }
   }
   else //SF6
@@ -2175,7 +2517,6 @@ PacketType rcvDatagram()
         systemPrint(rxDataBytes);
         systemPrintln(" bytes, expecting at least 3 bytes");
         outputSerialData(true);
-        checkChannelHop();
       }
       badFrames++;
       return DATAGRAM_BAD;
@@ -2204,7 +2545,6 @@ PacketType rcvDatagram()
       else
         systemPrintln(rxSrcVc);
       outputSerialData(true);
-      checkChannelHop();
     }
 
     //Validate the source VC
@@ -2219,7 +2559,6 @@ PacketType rcvDatagram()
           systemPrint("Invalid source VC: ");
           systemPrintln(rxSrcVc);
           outputSerialData(true);
-          checkChannelHop();
           if (settings.printRfData && rxDataBytes)
             dumpBuffer(incomingBuffer, rxDataBytes);
           outputSerialData(true);
@@ -2242,7 +2581,6 @@ PacketType rcvDatagram()
         systemPrintln(rxDataBytes);
         outputSerialData(true);
       }
-      checkChannelHop();
       if (vc)
         vc->badLength++;
       badFrames++;
@@ -2258,7 +2596,6 @@ PacketType rcvDatagram()
         systemPrint("Not my VC: ");
         systemPrintln(rxDestVc);
         outputSerialData(true);
-        checkChannelHop();
         if (settings.printPktData && rxDataBytes)
           dumpBuffer(incomingBuffer, rxDataBytes);
         outputSerialData(true);
@@ -2286,7 +2623,6 @@ PacketType rcvDatagram()
             systemPrint(" expecting ");
             systemPrintln(vc->txAckNumber);
             outputSerialData(true);
-            checkChannelHop();
           }
           badFrames++;
           return (DATAGRAM_BAD);
@@ -2382,7 +2718,6 @@ PacketType rcvDatagram()
     systemPrint(rxDataBytes, HEX);
     systemPrintln(") bytes");
     outputSerialData(true);
-    checkChannelHop();
     petWDT();
     if (settings.printPktData && rxDataBytes)
       dumpBuffer(rxData, rxDataBytes);
@@ -2431,8 +2766,6 @@ PacketType rcvDatagram()
     outputSerialData(true);
   } // debugDatagrams
 
-  checkChannelHop();
-
   //Process the packet
   datagramsReceived++;
   linkDownTimer = millis();
@@ -2464,7 +2797,6 @@ PacketType validateDatagram(VIRTUAL_CIRCUIT * vc, PacketType datagramType, uint8
         systemPrint("Duplicate datagram received, ACK ");
         systemPrintln(ackNumber);
         outputSerialData(true);
-        checkChannelHop();
       }
       linkDownTimer = millis();
       duplicateFrames++;
@@ -2480,7 +2812,6 @@ PacketType validateDatagram(VIRTUAL_CIRCUIT * vc, PacketType datagramType, uint8
       systemPrint(" expecting ");
       systemPrintln(vc->rmtTxAckNumber);
       outputSerialData(true);
-      checkChannelHop();
     }
     badFrames++;
     return DATAGRAM_BAD;
@@ -2544,8 +2875,6 @@ bool transmitDatagram()
   uint8_t * vcData;
   VIRTUAL_CIRCUIT * vc;
   VC_RADIO_MESSAGE_HEADER * vcHeader;
-
-  checkChannelHop();
 
   //Remove some jitter by getting this time after the hopChannel
   txDatagramMicros = micros();
@@ -2631,7 +2960,6 @@ bool transmitDatagram()
     systemPrintln();
 
     outputSerialData(true);
-    checkChannelHop();
   }
 
   /*
@@ -2657,7 +2985,6 @@ bool transmitDatagram()
     systemPrint(" (0x");
     systemPrint(length, HEX);
     systemPrintln(") bytes");
-    checkChannelHop();
     petWDT();
     if (settings.printPktData)
       dumpBuffer(&endOfTxData[-length], length);
@@ -2675,7 +3002,6 @@ bool transmitDatagram()
     systemPrint(headerBytes);
     systemPrintln(") bytes");
     outputSerialData(true);
-    checkChannelHop();
   }
 
   /*
@@ -2707,7 +3033,6 @@ bool transmitDatagram()
       systemPrint(settings.netID, HEX);
       systemPrintln(")");
       outputSerialData(true);
-      checkChannelHop();
       petWDT();
     }
   }
@@ -2737,9 +3062,6 @@ bool transmitDatagram()
   //Add the clock sync information
   if (settings.frequencyHop == true)
   {
-    //Make sure that the transmitted msToNextHop is in the range 0 - maxDwellTime
-    checkChannelHop();
-
     //Measure the time to the next hop
     triggerEvent(TRIGGER_TX_LOAD_CHANNEL_TIMER_VALUE);
     txSetChannelTimerMicros = micros();
@@ -2805,7 +3127,6 @@ bool transmitDatagram()
       systemPrint("    Channel Timer(ms): ");
       systemPrintln(msToNextHop);
       outputSerialData(true);
-      checkChannelHop();
     }
   }
   else
@@ -2848,7 +3169,7 @@ bool transmitDatagram()
         break;
     }
 
-    radio.implicitHeader(txDatagramSize); //Set header size so that hardware CRC is calculated correctly
+    radioImplicitHeader(txDatagramSize); //Set header size so that hardware CRC is calculated correctly
 
     endOfTxData = &outgoingPacket[txDatagramSize];
     if (settings.debugTransmit)
@@ -2859,7 +3180,6 @@ bool transmitDatagram()
       systemPrint("    SF6 TX Header Size: ");
       systemPrintln(txDatagramSize);
       outputSerialData(true);
-      checkChannelHop();
     }
   }
 
@@ -2894,7 +3214,6 @@ bool transmitDatagram()
     else
       systemPrintln(srcVc);
     outputSerialData(true);
-    checkChannelHop();
   }
 
   /*
@@ -2916,8 +3235,6 @@ bool transmitDatagram()
     uint16_t crc;
     uint8_t * txData;
 
-    checkChannelHop();
-
     //Compute the CRC-16 value
     crc = 0xffff;
     for (txData = outgoingPacket; txData < endOfTxData; txData++)
@@ -2926,7 +3243,6 @@ bool transmitDatagram()
     *endOfTxData++ = (uint8_t)(crc & 0xff);
   }
   txDatagramSize += trailerBytes;
-  checkChannelHop();
 
   //Display the trailer
   if (trailerBytes && settings.debugTransmit)
@@ -2938,7 +3254,6 @@ bool transmitDatagram()
     systemPrint(trailerBytes);
     systemPrintln(") bytes");
     outputSerialData(true);
-    checkChannelHop();
 
     //Display the CRC
     if (settings.enableCRC16 && (settings.printPktData || settings.debugReceive))
@@ -2948,7 +3263,6 @@ bool transmitDatagram()
       systemPrint(endOfTxData[-2], HEX);
       systemPrintln(endOfTxData[-1], HEX);
       outputSerialData(true);
-      checkChannelHop();
     }
   }
 
@@ -2975,7 +3289,6 @@ bool transmitDatagram()
     systemPrint(txDatagramSize, HEX);
     systemPrintln(") bytes");
     outputSerialData(true);
-    checkChannelHop();
     petWDT();
     if (settings.printRfData)
     {
@@ -2993,10 +3306,7 @@ bool transmitDatagram()
 
   //Encrypt the datagram
   if (settings.encryptData == true)
-  {
     encryptBuffer(outgoingPacket, txDatagramSize);
-    checkChannelHop();
-  }
 
   //Scramble the datagram
   if (settings.dataScrambling == true)
@@ -3013,7 +3323,6 @@ bool transmitDatagram()
     systemPrint(txDatagramSize, HEX);
     systemPrintln(") bytes");
     outputSerialData(true);
-    checkChannelHop();
     petWDT();
     if (settings.printRfData)
     {
@@ -3046,13 +3355,9 @@ void printControl(uint8_t value)
   systemPrint("    Control: 0x");
   systemPrintln(value, HEX);
 
-  checkChannelHop();
-
   systemPrintTimestamp();
   systemPrint("        ACK # ");
   systemPrintln(value & 3);
-
-  checkChannelHop();
 
   systemPrintTimestamp();
   systemPrint("        datagramType ");
@@ -3077,8 +3382,6 @@ void printControl(uint8_t value)
   }
 
   outputSerialData(true);
-
-  checkChannelHop();
   petWDT();
 }
 
@@ -3100,8 +3403,6 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
       |<------------------------- txDatagramSize --------------------------->|
   */
 
-  checkChannelHop();
-
   //Display the transmitted frame bytes
   if (frameSentCount && (settings.printRfData || settings.debugTransmit))
   {
@@ -3114,7 +3415,6 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
     systemPrint(txDatagramSize, HEX);
     systemPrintln(") bytes");
     outputSerialData(true);
-    checkChannelHop();
     petWDT();
     if (settings.printRfData)
     {
@@ -3124,8 +3424,6 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   }
 
   //Transmit this frame
-  checkChannelHop();
-
   frameAirTimeUsec = calcAirTimeUsec(txDatagramSize); //Calculate frame air size while we're transmitting in the background
 
   uint16_t responseDelay = frameAirTimeUsec / responseDelayDivisor; //Give the receiver a bit of wiggle time to respond
@@ -3164,7 +3462,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   else
   {
     //Move the data to the radio over SPI
-    int state = radio.startTransmit(outgoingPacket, txDatagramSize);
+    int state = radioStartTransmit(outgoingPacket, txDatagramSize);
 
     if (state == RADIOLIB_ERR_NONE)
     {
@@ -3192,14 +3490,12 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
         systemPrint(frameAirTimeUsec);
         systemPrintln(" uSec");
         outputSerialData(true);
-        checkChannelHop();
 
         systemPrintTimestamp();
         systemPrint("TX: responseDelay ");
         systemPrint(responseDelay);
         systemPrintln(" mSec");
         outputSerialData(true);
-        checkChannelHop();
       }
     }
     else
@@ -3309,7 +3605,6 @@ void startChannelTimer(int16_t startAmount)
   channelTimer.setInterval_MS(startAmount, channelTimerHandler);
   digitalWrite(pin_hop_timer, channelNumber & 1);
   reloadChannelTimer = (startAmount != settings.maxDwellTime);
-  timeToHop = false;
   channelTimerStart = millis(); //startChannelTimer - ISR updates value
   channelTimerMsec = startAmount; //startChannelTimer - ISR updates value
   channelTimer.enableTimer();
@@ -3329,7 +3624,6 @@ void stopChannelTimer()
   channelTimerMsec = 0; //Indicate that the timer is off
 
   triggerEvent(TRIGGER_HOP_TIMER_STOP);
-  timeToHop = false;
 }
 
 //=========================================================================================
@@ -3396,13 +3690,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec, bool clockStarting)
 
   //Synchronize with the hardware timer
   channelTimer.disableTimer();
-
-  //When timeToHop is true, a hop is required to match the hops indicated by
-  //the channelTimerStart value.  Delay this hop to avoid adding unaccounted
-  //delay.  After the channel timer is restarted, perform this hop because
-  //the channelTimerStart value indicated that it was done.  The channel
-  //timer update will add only microseconds to when the hop is done.
-  delayedHopCount = timeToHop ? 1 : 0;
+  delayedHopCount = 0;
 
   // 4800 BPS operation
   //
@@ -3589,12 +3877,10 @@ void syncChannelTimer(uint32_t frameAirTimeUsec, bool clockStarting)
   clockSyncData[clockSyncIndex].adjustment        = adjustment;
   clockSyncData[clockSyncIndex].delayedHopCount   = delayedHopCount;
   clockSyncData[clockSyncIndex].lclHopTimeMsec    = lclHopTimeMsec;
-  clockSyncData[clockSyncIndex].timeToHop         = timeToHop;
   clockSyncIndex += 1;
   if (clockSyncIndex >= (sizeof(clockSyncData) / sizeof(CLOCK_SYNC_DATA)) ) clockSyncIndex = 0;
 
   //Restart the channel timer
-  timeToHop = false;
   channelTimer.setInterval_MS(msToNextHop, channelTimerHandler); //Adjust our hardware timer to match our mate's
   digitalWrite(pin_hop_timer, ((channelNumber + delayedHopCount) % settings.numberOfChannels) & 1);
   channelTimerStart = currentMillis;
@@ -3610,7 +3896,7 @@ void syncChannelTimer(uint32_t frameAirTimeUsec, bool clockStarting)
 
   //Hop if the timer fired prior to disabling the timer, resetting the channelTimerStart value
   if (delayedHopCount)
-    hopChannel(true, delayedHopCount);
+    hopChannel(false, true, delayedHopCount);
 
   //Display the channel sync timer calculations
   if (settings.debugSync)
@@ -3915,7 +4201,7 @@ void dummyRead()
   triggerEvent(TRIGGER_DUMMY_READ);
   systemPrintln("Dummy read");
 
-  int state = radio.readData(incomingBuffer, MAX_PACKET_SIZE);
+  int state = radioReadData(incomingBuffer, MAX_PACKET_SIZE);
 
   if (state != RADIOLIB_ERR_NONE)
   {

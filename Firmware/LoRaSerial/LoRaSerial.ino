@@ -151,7 +151,6 @@ uint8_t pin_hop_timer = PIN_UNDEFINED;
 //Radio Library
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 #include <RadioLib.h> //Click here to get the library: http://librarymanager/All#RadioLib v5.6.0
-SX1276 radio = NULL; //We can't instantiate here because we don't yet know what pin numbers to use
 
 float *channels;
 uint8_t channelNumber = 0;
@@ -190,7 +189,6 @@ bool inTraining; //True if training is in process
 SAMDTimer channelTimer(TIMER_TCC); //Available: TC3, TC4, TC5, TCC, TCC1 or TCC2
 volatile uint16_t channelTimerMsec; //Last value programmed into the channel timer
 volatile unsigned long channelTimerStart = 0; //Tracks how long our timer has been running since last hop
-volatile bool timeToHop = false; //Set by channelTimerHandler to indicate that hopChannel needs to be called
 volatile bool reloadChannelTimer = false; //When set channel timer interval needs to be reloaded with settings.maxDwellTime
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
