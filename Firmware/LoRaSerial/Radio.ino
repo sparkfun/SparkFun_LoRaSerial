@@ -609,6 +609,14 @@ void hopChannel(bool moveForwardThroughTable, uint8_t channelCount)
 
 //=========================================================================================
 
+void checkChannelHop(void)
+{
+  if (timeToHop == true) //If the channelTimer has expired, move to next frequency
+    hopChannel();
+}
+
+//=========================================================================================
+
 //Determine the time in milliseconds when channel zero is reached again
 unsigned long mSecToChannelZero()
 {
@@ -1820,7 +1828,8 @@ PacketType rcvDatagram()
     systemPrint(rxDataBytes, HEX);
     systemPrintln(") bytes");
     outputSerialData(true);
-    CheckChannelHopAndKickWatchdog();
+    checkChannelHop();
+    petWDT();
     if (settings.printRfData && rxDataBytes)
       dumpBuffer(incomingBuffer, rxDataBytes);
     outputSerialData(true);
@@ -1832,7 +1841,7 @@ PacketType rcvDatagram()
   if (settings.encryptData == true)
   {
     decryptBuffer(incomingBuffer, rxDataBytes);
-    CheckChannelHop();
+    checkChannelHop();
   }
 
   if (settings.debugReceive)
@@ -1852,7 +1861,8 @@ PacketType rcvDatagram()
     systemPrint(rxDataBytes, HEX);
     systemPrintln(") bytes");
     outputSerialData(true);
-    CheckChannelHopAndKickWatchdog();
+    checkChannelHop();
+    petWDT();
     if (settings.printRfData && rxDataBytes)
       dumpBuffer(incomingBuffer, rxDataBytes);
     outputSerialData(true);
@@ -1871,7 +1881,8 @@ PacketType rcvDatagram()
       systemPrint(rxDataBytes, HEX);
       systemPrintln(") bytes");
       outputSerialData(true);
-      CheckChannelHopAndKickWatchdog();
+      checkChannelHop();
+      petWDT();
       if (settings.printRfData && rxDataBytes)
         dumpBuffer(incomingBuffer, rxDataBytes);
       outputSerialData(true);
@@ -1915,7 +1926,8 @@ PacketType rcvDatagram()
         systemPrintln();
         outputSerialData(true);
       }
-      CheckChannelHopAndKickWatchdog();
+      checkChannelHop();
+      petWDT();
       if (settings.debugReceive && settings.printPktData && rxDataBytes)
         dumpBuffer(incomingBuffer, rxDataBytes);
       outputSerialData(true);
@@ -1923,7 +1935,8 @@ PacketType rcvDatagram()
       return (DATAGRAM_NETID_MISMATCH);
     }
   } // MODE_POINT_TO_POINT
-  CheckChannelHopAndKickWatchdog();
+  checkChannelHop();
+  petWDT();
 
   //Process the trailer
   if (settings.enableCRC16)
@@ -1933,10 +1946,10 @@ PacketType rcvDatagram()
 
     //Compute the CRC-16 value
     crc = 0xffff;
-    CheckChannelHop();
+    checkChannelHop();
     for (data = incomingBuffer; data < &incomingBuffer[rxDataBytes - 2]; data++)
       crc = crc16Table[*data ^ (uint8_t)(crc >> (16 - 8))] ^ (crc << 8);
-    CheckChannelHop();
+    checkChannelHop();
     if ((incomingBuffer[rxDataBytes - 2] != (crc >> 8))
         || (incomingBuffer[rxDataBytes - 1] != (crc & 0xff)))
     {
@@ -1950,7 +1963,8 @@ PacketType rcvDatagram()
         systemPrint(" expected 0x");
         systemPrintln(crc, HEX);
         outputSerialData(true);
-        CheckChannelHopAndKickWatchdog();
+        checkChannelHop();
+        petWDT();
         if (settings.printRfData && rxDataBytes)
           dumpBuffer(incomingBuffer, rxDataBytes);
         outputSerialData(true);
@@ -2016,7 +2030,7 @@ PacketType rcvDatagram()
     systemPrint(incomingBuffer[rxDataBytes - 2], HEX);
     systemPrintln(incomingBuffer[rxDataBytes - 1], HEX);
     outputSerialData(true);
-    CheckChannelHop();
+    checkChannelHop();
   }
 
   /*
@@ -2043,7 +2057,7 @@ PacketType rcvDatagram()
       systemPrint("    Channel Timer(ms): ");
       systemPrintln(msToNextHopRemote);
       outputSerialData(true);
-      CheckChannelHop();
+      checkChannelHop();
     }
   }
 
@@ -2076,7 +2090,7 @@ PacketType rcvDatagram()
         systemPrint((int)rxDataBytes - minDatagramSize);
         systemPrintln(" received bytes");
         outputSerialData(true);
-        CheckChannelHop();
+        checkChannelHop();
       }
       badFrames++;
       return (DATAGRAM_BAD);
@@ -2087,7 +2101,7 @@ PacketType rcvDatagram()
       systemPrint("    SF6 Length: ");
       systemPrintln(rxDataBytes);
       outputSerialData(true);
-      CheckChannelHop();
+      checkChannelHop();
     }
   }
   else //SF6
@@ -2107,7 +2121,7 @@ PacketType rcvDatagram()
         systemPrint(rxDataBytes);
         systemPrintln(" bytes, expecting at least 3 bytes");
         outputSerialData(true);
-        CheckChannelHop();
+        checkChannelHop();
       }
       badFrames++;
       return DATAGRAM_BAD;
@@ -2136,7 +2150,7 @@ PacketType rcvDatagram()
       else
         systemPrintln(rxSrcVc);
       outputSerialData(true);
-      CheckChannelHop();
+      checkChannelHop();
     }
 
     //Validate the source VC
@@ -2151,7 +2165,7 @@ PacketType rcvDatagram()
           systemPrint("Invalid source VC: ");
           systemPrintln(rxSrcVc);
           outputSerialData(true);
-          CheckChannelHop();
+          checkChannelHop();
           if (settings.printRfData && rxDataBytes)
             dumpBuffer(incomingBuffer, rxDataBytes);
           outputSerialData(true);
@@ -2174,7 +2188,7 @@ PacketType rcvDatagram()
         systemPrintln(rxDataBytes);
         outputSerialData(true);
       }
-      CheckChannelHop();
+      checkChannelHop();
       if (vc)
         vc->badLength++;
       badFrames++;
@@ -2190,7 +2204,7 @@ PacketType rcvDatagram()
         systemPrint("Not my VC: ");
         systemPrintln(rxDestVc);
         outputSerialData(true);
-        CheckChannelHop();
+        checkChannelHop();
         if (settings.printPktData && rxDataBytes)
           dumpBuffer(incomingBuffer, rxDataBytes);
         outputSerialData(true);
@@ -2218,7 +2232,7 @@ PacketType rcvDatagram()
             systemPrint(" expecting ");
             systemPrintln(vc->txAckNumber);
             outputSerialData(true);
-            CheckChannelHop();
+            checkChannelHop();
           }
           badFrames++;
           return (DATAGRAM_BAD);
@@ -2314,7 +2328,8 @@ PacketType rcvDatagram()
     systemPrint(rxDataBytes, HEX);
     systemPrintln(") bytes");
     outputSerialData(true);
-    CheckChannelHopAndKickWatchdog();
+    checkChannelHop();
+    petWDT();
     if (settings.printPktData && rxDataBytes)
       dumpBuffer(rxData, rxDataBytes);
   }
@@ -2362,7 +2377,7 @@ PacketType rcvDatagram()
     outputSerialData(true);
   } // debugDatagrams
 
-  CheckChannelHop();
+  checkChannelHop();
 
   //Process the packet
   datagramsReceived++;
@@ -2395,7 +2410,7 @@ PacketType validateDatagram(VIRTUAL_CIRCUIT * vc, PacketType datagramType, uint8
         systemPrint("Duplicate datagram received, ACK ");
         systemPrintln(ackNumber);
         outputSerialData(true);
-        CheckChannelHop();
+        checkChannelHop();
       }
       linkDownTimer = millis();
       duplicateFrames++;
@@ -2411,7 +2426,7 @@ PacketType validateDatagram(VIRTUAL_CIRCUIT * vc, PacketType datagramType, uint8
       systemPrint(" expecting ");
       systemPrintln(vc->rmtTxAckNumber);
       outputSerialData(true);
-      CheckChannelHop();
+      checkChannelHop();
     }
     badFrames++;
     return DATAGRAM_BAD;
@@ -2476,7 +2491,7 @@ bool transmitDatagram()
   VIRTUAL_CIRCUIT * vc;
   VC_RADIO_MESSAGE_HEADER * vcHeader;
 
-  CheckChannelHop();
+  checkChannelHop();
 
   //Remove some jitter by getting this time after the hopChannel
   txDatagramMicros = micros();
@@ -2562,7 +2577,7 @@ bool transmitDatagram()
     systemPrintln();
 
     outputSerialData(true);
-    CheckChannelHop();
+    checkChannelHop();
   }
 
   /*
@@ -2588,7 +2603,8 @@ bool transmitDatagram()
     systemPrint(" (0x");
     systemPrint(length, HEX);
     systemPrintln(") bytes");
-    CheckChannelHopAndKickWatchdog();
+    checkChannelHop();
+    petWDT();
     if (settings.printPktData)
       dumpBuffer(&endOfTxData[-length], length);
     outputSerialData(true);
@@ -2605,7 +2621,7 @@ bool transmitDatagram()
     systemPrint(headerBytes);
     systemPrintln(") bytes");
     outputSerialData(true);
-    CheckChannelHop();
+    checkChannelHop();
   }
 
   /*
@@ -2637,7 +2653,8 @@ bool transmitDatagram()
       systemPrint(settings.netID, HEX);
       systemPrintln(")");
       outputSerialData(true);
-      CheckChannelHopAndKickWatchdog();
+      checkChannelHop();
+      petWDT();
     }
   }
 
@@ -2667,7 +2684,7 @@ bool transmitDatagram()
   if (settings.frequencyHop == true)
   {
     //Make sure that the transmitted msToNextHop is in the range 0 - maxDwellTime
-    CheckChannelHop();
+    checkChannelHop();
 
     //Measure the time to the next hop
     triggerEvent(TRIGGER_TX_LOAD_CHANNEL_TIMER_VALUE);
@@ -2734,7 +2751,7 @@ bool transmitDatagram()
       systemPrint("    Channel Timer(ms): ");
       systemPrintln(msToNextHop);
       outputSerialData(true);
-      CheckChannelHop();
+      checkChannelHop();
     }
   }
   else
@@ -2788,7 +2805,7 @@ bool transmitDatagram()
       systemPrint("    SF6 TX Header Size: ");
       systemPrintln(txDatagramSize);
       outputSerialData(true);
-      CheckChannelHop();
+      checkChannelHop();
     }
   }
 
@@ -2823,7 +2840,7 @@ bool transmitDatagram()
     else
       systemPrintln(srcVc);
     outputSerialData(true);
-    CheckChannelHop();
+    checkChannelHop();
   }
 
   /*
@@ -2845,7 +2862,7 @@ bool transmitDatagram()
     uint16_t crc;
     uint8_t * txData;
 
-    CheckChannelHop();
+    checkChannelHop();
 
     //Compute the CRC-16 value
     crc = 0xffff;
@@ -2855,7 +2872,7 @@ bool transmitDatagram()
     *endOfTxData++ = (uint8_t)(crc & 0xff);
   }
   txDatagramSize += trailerBytes;
-  CheckChannelHop();
+  checkChannelHop();
 
   //Display the trailer
   if (trailerBytes && settings.debugTransmit)
@@ -2867,7 +2884,7 @@ bool transmitDatagram()
     systemPrint(trailerBytes);
     systemPrintln(") bytes");
     outputSerialData(true);
-    CheckChannelHop();
+    checkChannelHop();
 
     //Display the CRC
     if (settings.enableCRC16 && (settings.printPktData || settings.debugReceive))
@@ -2877,7 +2894,7 @@ bool transmitDatagram()
       systemPrint(endOfTxData[-2], HEX);
       systemPrintln(endOfTxData[-1], HEX);
       outputSerialData(true);
-      CheckChannelHop();
+      checkChannelHop();
     }
   }
 
@@ -2904,7 +2921,8 @@ bool transmitDatagram()
     systemPrint(txDatagramSize, HEX);
     systemPrintln(") bytes");
     outputSerialData(true);
-    CheckChannelHopAndKickWatchdog();
+    checkChannelHop();
+    petWDT();
     if (settings.printRfData)
     {
       dumpBuffer(outgoingPacket, txDatagramSize);
@@ -2923,7 +2941,7 @@ bool transmitDatagram()
   if (settings.encryptData == true)
   {
     encryptBuffer(outgoingPacket, txDatagramSize);
-    CheckChannelHop();
+    checkChannelHop();
   }
 
   //Scramble the datagram
@@ -2941,7 +2959,8 @@ bool transmitDatagram()
     systemPrint(txDatagramSize, HEX);
     systemPrintln(") bytes");
     outputSerialData(true);
-    CheckChannelHopAndKickWatchdog();
+    checkChannelHop();
+    petWDT();
     if (settings.printRfData)
     {
       dumpBuffer(outgoingPacket, txDatagramSize);
@@ -2973,13 +2992,13 @@ void printControl(uint8_t value)
   systemPrint("    Control: 0x");
   systemPrintln(value, HEX);
 
-  CheckChannelHop();
+  checkChannelHop();
 
   systemPrintTimestamp();
   systemPrint("        ACK # ");
   systemPrintln(value & 3);
 
-  CheckChannelHop();
+  checkChannelHop();
 
   systemPrintTimestamp();
   systemPrint("        datagramType ");
@@ -3005,7 +3024,8 @@ void printControl(uint8_t value)
 
   outputSerialData(true);
 
-  CheckChannelHopAndKickWatchdog();
+  checkChannelHop();
+  petWDT();
 }
 
 //=========================================================================================
@@ -3026,7 +3046,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
       |<------------------------- txDatagramSize --------------------------->|
   */
 
-  CheckChannelHop();
+  checkChannelHop();
 
   //Display the transmitted frame bytes
   if (frameSentCount && (settings.printRfData || settings.debugTransmit))
@@ -3040,7 +3060,8 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
     systemPrint(txDatagramSize, HEX);
     systemPrintln(") bytes");
     outputSerialData(true);
-    CheckChannelHopAndKickWatchdog();
+    checkChannelHop();
+    petWDT();
     if (settings.printRfData)
     {
       dumpBuffer(outgoingPacket, txDatagramSize);
@@ -3049,7 +3070,7 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
   }
 
   //Transmit this frame
-  CheckChannelHop();
+  checkChannelHop();
 
   frameAirTimeUsec = calcAirTimeUsec(txDatagramSize); //Calculate frame air size while we're transmitting in the background
 
@@ -3117,14 +3138,14 @@ bool retransmitDatagram(VIRTUAL_CIRCUIT * vc)
         systemPrint(frameAirTimeUsec);
         systemPrintln(" uSec");
         outputSerialData(true);
-        CheckChannelHop();
+        checkChannelHop();
 
         systemPrintTimestamp();
         systemPrint("TX: responseDelay ");
         systemPrint(responseDelay);
         systemPrintln(" mSec");
         outputSerialData(true);
-        CheckChannelHop();
+        checkChannelHop();
       }
     }
     else

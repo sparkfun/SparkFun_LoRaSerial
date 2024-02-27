@@ -491,7 +491,7 @@ void radioComputeWhitening(uint8_t *buffer, uint16_t bufferSize)
 
   for (uint16_t j = 0 ; j < bufferSize ; j++)
   {
-    CheckChannelHop();
+    checkChannelHop();
     buffer[j] ^= WhiteningKeyLSB;
 
     for (uint8_t i = 0 ; i < 8 ; i++)
@@ -626,14 +626,16 @@ void dumpBuffer(uint8_t * data, int length)
     {
       systemPrint(" ");
       systemPrint(*data++, HEX);
-      CheckChannelHopAndKickWatchdog();
+      checkChannelHop();
+      petWDT();
     }
 
     // Space over to the ASCII display
     for (; index < displayWidth; index++)
     {
       systemPrint("   ");
-      CheckChannelHopAndKickWatchdog();
+      checkChannelHop();
+      petWDT();
     }
     systemPrint("  ");
 
@@ -644,7 +646,8 @@ void dumpBuffer(uint8_t * data, int length)
       systemPrint(((byte[0] < ' ') || (byte[0] >= 0x7f)) ? "." : byte);
     }
     systemPrintln();
-    CheckChannelHopAndKickWatchdog();
+    checkChannelHop();
+    petWDT();
   }
 }
 
@@ -691,7 +694,8 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
       for (index = 0; index < delta; index++)
       {
         systemPrint("   ");
-        CheckChannelHopAndKickWatchdog();
+        checkChannelHop();
+        petWDT();
       }
     }
 
@@ -706,14 +710,16 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
       systemWrite(' ');
       data = buffer[(offset + index) % bufferLength];
       systemPrint(data, HEX);
-      CheckChannelHopAndKickWatchdog();
+      checkChannelHop();
+      petWDT();
     }
 
     //Space over to the ASCII display
     for (; (delta + index) < displayWidth; index++)
     {
       systemPrint("   ");
-      CheckChannelHopAndKickWatchdog();
+      checkChannelHop();
+      petWDT();
     }
     systemPrint("  ");
 
@@ -725,7 +731,8 @@ void dumpCircularBuffer(uint8_t * buffer, uint16_t tail, uint16_t bufferLength, 
       systemWrite(((data < ' ') || (data >= 0x7f)) ? '.' : data);
     }
     systemPrintln();
-    CheckChannelHopAndKickWatchdog();
+    checkChannelHop();
+    petWDT();
     outputSerialData(true);
     offset += bytes;
     length -= bytes;
