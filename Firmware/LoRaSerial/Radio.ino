@@ -2,6 +2,28 @@
 // Radio.ino
 //=========================================================================================
 
+//Initialize the radio layer
+void radioBeginLoRa()
+{
+  int16_t status;
+
+  float centerFrequency = (settings.frequencyMax - settings.frequencyMin) / 2;
+  centerFrequency += settings.frequencyMin;
+
+  radio = arch.radio();
+  status = radio.begin(centerFrequency); //Doesn't matter what freq we start at
+  if (status != RADIOLIB_ERR_NONE)
+  {
+    systemPrint("Radio init failed with code: ");
+    systemPrintln(status);
+    waitForever("Radio init failed!");
+  }
+
+  changeState(RADIO_RESET);
+}
+
+//=========================================================================================
+
 //Apply settings to radio
 //Called after begin() and once user exits from command interface
 bool configureRadio()
