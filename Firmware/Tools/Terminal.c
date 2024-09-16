@@ -8,13 +8,21 @@ int openLoRaSerial(const char *terminal)
   radio = open (terminal, O_RDWR);
   if (radio < 0)
   {
-    perror ("ERROR: Failed to open the terminal");
-    return errno;
+    status = errno;
+    fflush(stdout);
+    fprintf(stderr, "ERROR: Failed to open the terminal");
+    fprintf(stderr, "%s\n", strerror(status));
+    fflush(stderr);
+    return status;
   }
 
   if (tcgetattr(radio, &params) != 0) {
-      perror("ERROR: tcgetattr failed!");
-      return errno;
+      status = errno;
+      fflush(stdout);
+      fprintf(stderr, "ERROR: tcgetattr failed!");
+      fprintf(stderr, "%s\n", strerror(status));
+      fflush(stderr);
+      return status;
   }
 
   //Initialize the terminal parameters
@@ -31,8 +39,12 @@ int openLoRaSerial(const char *terminal)
   cfsetospeed(&params, B57600);
 
   if (tcsetattr(radio, TCSANOW, &params) != 0) {
-      perror("ERROR: tcsetattr failed!");
-      return errno;
+      status = errno;
+      fflush(stdout);
+      fprintf(stderr, "ERROR: tcsetattr failed!");
+      fprintf(stderr, "%s\n", strerror(status));
+      fflush(stderr);
+      return status;
   }
 
   usingTerminal = true;
